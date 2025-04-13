@@ -102,7 +102,6 @@ class Charm(ops.CharmBase):
             event.fail(f'Exception: {e!r}')
             return
         results = {'user': path.owner(), 'group': path.group()}
-        logger.error(results)
         self.remove_path(path)
         self.rmusers()
         event.set_results(results)
@@ -110,14 +109,11 @@ class Charm(ops.CharmBase):
     def addusers(self) -> None:
         for user in self.users:
             self.exec([
-                'adduser',
-                '--disabled-password',
-                '--no-create-home',
-                '--comment=""',  # don't ask for info interactively
+                'useradd',
                 user,
             ])
 
     def rmusers(self) -> None:
         for user in self.users:
-            self.exec(['deluser', user])
-            self.exec(['delgroup', user])
+            self.exec(['userdel', '--remove', user])
+            self.exec(['groupdel', user])
