@@ -20,6 +20,7 @@ The contents of kubernetes/src/common.py and machine/src/common.py should be ide
 from __future__ import annotations
 
 import logging
+import typing
 
 import ops
 
@@ -28,11 +29,23 @@ import ops
 #       https://github.com/microsoft/pyright/issues/10203
 import charmlibs.pathops as pathops
 
+if typing.TYPE_CHECKING:
+    from typing import Sequence
+
 logger = logging.getLogger(__name__)
 
 
 class Charm(ops.CharmBase):
+    """Substrate agnostic charm base class.
+
+    Subclasses must provide the following substrate aware attributes/methods:
+        - root
+        - remove_path
+        - exec
+    """
+
     root: pathops.PathProtocol
+    users = ('temp-user',)
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
@@ -41,6 +54,9 @@ class Charm(ops.CharmBase):
         framework.observe(self.on['chown'].action, self._on_chown)
 
     def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
+        raise NotImplementedError()
+
+    def exec(self, cmd: Sequence[str]) -> None:
         raise NotImplementedError()
 
     def _on_ensure_contents(self, event: ops.ActionEvent) -> None:
@@ -64,6 +80,7 @@ class Charm(ops.CharmBase):
         event.set_results({'files': str(result)})
 
     def _on_chown(self, event: ops.ActionEvent) -> None:
+        self.addusers()
         path = self.root / 'unique-temp-name'
         if path.exists():
             event.fail('File already exists.')
@@ -87,4 +104,14 @@ class Charm(ops.CharmBase):
         results = {'user': path.owner(), 'group': path.group()}
         logger.error(results)
         self.remove_path(path)
+        self.rmusers()
         event.set_results(results)
+
+    def addusers(self) -> None:
+        for user in self.users:
+            self.exec(['adduser', user])
+
+    def rmusers(self) -> None:
+        for user in self.users:
+            self.exec(['deluser', user])
+            self.exec(['delgroup', user])
