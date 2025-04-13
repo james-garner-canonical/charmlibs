@@ -75,6 +75,6 @@ def test_chown(juju: jubilant.Juju, charm: str, method: str, user: str | None, g
         raise
     print(result)
     expected_user = user if user is not None else 'root'
-    expected_group = group if group is not None else user
+    expected_group = group if group is not None else expected_user
     assert result.results['user'] == expected_user
     assert result.results['group'] == expected_group
