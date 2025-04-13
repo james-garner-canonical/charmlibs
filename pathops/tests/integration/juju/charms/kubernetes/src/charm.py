@@ -54,8 +54,13 @@ class Charm(common.Charm):
         if path.exists():
             self.container.remove_path(str(path), recursive=recursive)
 
-    def exec(self, cmd: Sequence[str]) -> None:
-        self.container.exec(list(cmd)).wait()
+    def exec(self, cmd: Sequence[str]) -> int:
+        process = self.container.exec(list(cmd))
+        try:
+            process.wait()
+            return 0
+        except ops.pebble.ExecError as e:
+            return e.exit_code
 
 
 if __name__ == '__main__':  # pragma: nocover

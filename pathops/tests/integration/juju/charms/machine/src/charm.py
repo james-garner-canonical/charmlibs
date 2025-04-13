@@ -58,8 +58,9 @@ class Charm(common.Charm):
             return path.rmdir()
         shutil.rmtree(path)
 
-    def exec(self, cmd: Sequence[str]) -> None:
-        subprocess.run(cmd, check=True)
+    def exec(self, cmd: Sequence[str]) -> int:
+        process = subprocess.run(cmd)
+        return process.returncode
 
 
 if __name__ == '__main__':  # pragma: nocover

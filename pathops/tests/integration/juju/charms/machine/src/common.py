@@ -56,7 +56,7 @@ class Charm(ops.CharmBase):
     def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
         raise NotImplementedError()
 
-    def exec(self, cmd: Sequence[str]) -> None:
+    def exec(self, cmd: Sequence[str]) -> int:
         raise NotImplementedError()
 
     def _on_ensure_contents(self, event: ops.ActionEvent) -> None:
@@ -109,11 +109,16 @@ class Charm(ops.CharmBase):
 
     def addusers(self) -> None:
         for user in self.users:
-            self.exec([
-                'useradd',
-                user,
-            ])
+            retcode = self.exec(['useradd', user])
+            assert retcode in (
+                0,  # success
+                9,  # already exists
+            )
 
     def rmusers(self) -> None:
         for user in self.users:
-            self.exec(['userdel', '--remove', user])
+            retcode = self.exec(['userdel', '--remove', user])
+            assert retcode in (
+                0,  # success
+                6,  # doesn't exist
+            )
