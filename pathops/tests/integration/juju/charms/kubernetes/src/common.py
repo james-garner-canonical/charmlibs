@@ -80,7 +80,6 @@ class Charm(ops.CharmBase):
         event.set_results({'files': str(result)})
 
     def _on_chown(self, event: ops.ActionEvent) -> None:
-        self.addusers()
         path = self.root / 'unique-temp-name'
         if path.exists():
             event.fail('File already exists.')
@@ -88,6 +87,7 @@ class Charm(ops.CharmBase):
         user: str | None = event.params['user'] or None
         group: str | None = event.params['group'] or None
         method: str = event.params['method']
+        self.addusers()
         try:
             if method == 'mkdir':
                 path.mkdir(user=user, group=group)
@@ -98,13 +98,14 @@ class Charm(ops.CharmBase):
             else:
                 event.fail(f'Unknown method: {method!r}')
                 return
+            results = {'user': path.owner(), 'group': path.group()}
+            event.set_results(results)
         except Exception as e:
             event.fail(f'Exception: {e!r}')
             return
-        results = {'user': path.owner(), 'group': path.group()}
-        self.remove_path(path)
-        self.rmusers()
-        event.set_results(results)
+        finally:
+            self.remove_path(path)
+            self.rmusers()
 
     def addusers(self) -> None:
         for user in self.users:
@@ -116,4 +117,3 @@ class Charm(ops.CharmBase):
     def rmusers(self) -> None:
         for user in self.users:
             self.exec(['userdel', '--remove', user])
-            self.exec(['groupdel', user])
