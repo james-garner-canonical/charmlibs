@@ -17,12 +17,9 @@
 from __future__ import annotations
 
 import ast
-import typing
 
+import jubilant
 import pytest
-
-if typing.TYPE_CHECKING:
-    import jubilant
 
 
 def test_deploy(juju: jubilant.Juju, charm: str):
