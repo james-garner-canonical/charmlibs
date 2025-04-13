@@ -109,7 +109,7 @@ class Charm(ops.CharmBase):
 
     def addusers(self) -> None:
         for user in self.users:
-            self.exec(['adduser', user])
+            self.exec(['adduser', '--disabled-password', '--comment', '', user])
 
     def rmusers(self) -> None:
         for user in self.users:
