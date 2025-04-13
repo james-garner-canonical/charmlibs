@@ -69,7 +69,7 @@ def test_chown(juju: jubilant.Juju, charm: str, method: str, user: str | None, g
             # we expect the group only case to fail unless Pebble is updated to handle it
             prefix = 'Exception :'
             assert e.task.message.startswith(prefix)
-            msg = e.task.message.removeprefix(prefix)
+            msg = e.task.message[len(prefix) :]
             assert msg.startswith('LookupError')
             return
         raise
