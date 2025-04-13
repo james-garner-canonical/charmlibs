@@ -102,7 +102,6 @@ class Charm(ops.CharmBase):
             event.set_results(results)
         except Exception as e:
             event.fail(f'Exception: {e!r}')
-            return
         finally:
             self.remove_path(path)
             self.rmusers()
