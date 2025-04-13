@@ -59,7 +59,7 @@ class Charm(common.Charm):
         try:
             process.wait()
             return 0
-        except ops.pebble.ExecError as e:
+        except ops.pebble.ExecError[str] as e:
             return e.exit_code
 
 
