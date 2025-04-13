@@ -51,7 +51,8 @@ class Charm(common.Charm):
 
     def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
         assert isinstance(path, pathops.ContainerPath)
-        self.container.remove_path(str(path), recursive=recursive)
+        if path.exists():
+            self.container.remove_path(str(path), recursive=recursive)
 
     def exec(self, cmd: Sequence[str]) -> None:
         self.container.exec(list(cmd)).wait()
