@@ -55,7 +55,7 @@ class Charm(common.Charm):
         self.container.remove_path(str(path), recursive=recursive)
 
     def exec(self, cmd: Sequence[str]) -> None:
-        self.container.exec(list(cmd))
+        self.container.exec(list(cmd)).wait()
 
 
 if __name__ == '__main__':  # pragma: nocover
