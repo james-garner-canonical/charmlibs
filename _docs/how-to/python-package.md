@@ -75,7 +75,7 @@ on:
       - 'v*.*.*'
 jobs:
   build-n-publish:
-     environment: pypi
+    environment: pypi
     runs-on: ubuntu-latest
     permissions:
       id-token: write
