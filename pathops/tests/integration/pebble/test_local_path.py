@@ -209,7 +209,7 @@ class TestMkdirChmod:
         assert local_dict == container_dict
         assert _oct(local_info.permissions) == _oct(container_info.permissions)
 
-    def test_exists(self, container: ops.Container, tmp_path: pathlib.Path, mode_str: str  |None):
+    def test_exists(self, container: ops.Container, tmp_path: pathlib.Path, mode_str: str | None):
         mode = int(mode_str, base=8) if mode_str is not None else None
         path = tmp_path / 'directory'
         path.mkdir()
