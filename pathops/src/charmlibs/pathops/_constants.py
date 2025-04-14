@@ -24,7 +24,7 @@ Pathlib's default value is 0o777 (511) 'drwxrwxrwx'.
 assert DEFAULT_MKDIR_MODE == 0o755
 
 DEFAULT_WRITE_MODE = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
-"""Pebble's default of 0o644 (420) '-rw-rw-r--'.
+"""Pebble's default of 0o644 (420) '-rw-r--r--'.
 
 Pathlib's default value is 0o666 (438) '-rw-rw-rw-'.
 """

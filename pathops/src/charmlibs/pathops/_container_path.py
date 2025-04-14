@@ -45,11 +45,13 @@ class RelativePathError(ValueError):
 class ContainerPath:
     r"""Implementation of :class:`PathProtocol` for Pebble-based workload containers.
 
-    Example::
+    The following examples are all equivalent::
 
         container = self.unit.get_container('c')
-        ContainerPath(pathlib.Path('/foo'), container=container)
+        ContainerPath('/foo', container=container)
         ContainerPath('/', 'foo', container=container)
+        ContainerPath(pathlib.PurePath('/foo'), container=container)
+        ContainerPath(pathlib.PurePath('/'), 'foo', container=container)
 
     :class:`str` follows the :mod:`pathlib` convention and returns the string representation of
     the path. :class:`ContainerPath` return the string representation of the path in the remote
@@ -502,7 +504,7 @@ class ContainerPath:
         Args:
             data: The bytes to write. If data is a :class:`bytearray` or :class:`memoryview`, it
                 will be converted to :class:`bytes` in memory first.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-rw-r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
             user: The name of the user to set for the file.
                 If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory.
@@ -555,7 +557,7 @@ class ContainerPath:
         Args:
             data: The string to write. Will be encoded to :class:`bytes` in memory as UTF-8,
                 raising any errors. Newlines are not modified on writing.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-rw-r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
             user: The name of the user to set for the file.
                 If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory.
