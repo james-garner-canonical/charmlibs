@@ -209,6 +209,33 @@ class TestMkdirChmod:
         assert local_dict == container_dict
         assert _oct(local_info.permissions) == _oct(container_info.permissions)
 
+    def test_exists(self, container: ops.Container, tmp_path: pathlib.Path, mode_str: str | None):
+        mode = int(mode_str, base=8) if mode_str is not None else None
+        path = tmp_path / 'directory'
+        path.mkdir()
+        # container
+        container_path = ContainerPath(path, container=container)
+        if mode is not None:
+            container_path.mkdir(exist_ok=True, mode=mode)
+        else:
+            container_path.mkdir(exist_ok=True)
+        container_info = _get_fileinfo(container_path)
+        # local
+        container_path = LocalPath(path)
+        if mode is not None:
+            container_path.mkdir(exist_ok=True, mode=mode)
+        else:
+            container_path.mkdir(exist_ok=True)
+        local_info = _get_fileinfo(container_path)
+        # cleanup -- pytest is bad at cleaning up when permissions are funky
+        _rmdirs(path)
+        # comparison
+        exclude = ('last_modified', 'permissions')
+        container_dict = utils.info_to_dict(container_info, exclude=exclude)
+        local_dict = utils.info_to_dict(local_info, exclude=exclude)
+        assert local_dict == container_dict
+        assert _oct(local_info.permissions) == _oct(container_info.permissions)
+
     @pytest.mark.parametrize('subdir_path', ['1/2', '1/2/3'])
     def test_parents(
         self,
