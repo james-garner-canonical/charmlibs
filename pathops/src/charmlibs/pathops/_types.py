@@ -356,7 +356,7 @@ class PathProtocol(typing.Protocol):
         self,
         data: bytes,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -389,7 +389,7 @@ class PathProtocol(typing.Protocol):
         self,
         data: str,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:

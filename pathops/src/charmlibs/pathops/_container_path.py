@@ -492,7 +492,7 @@ class ContainerPath:
         self,
         data: bytes | bytearray | memoryview,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -542,7 +542,7 @@ class ContainerPath:
         self,
         data: str,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
