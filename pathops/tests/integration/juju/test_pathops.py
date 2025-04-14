@@ -58,15 +58,12 @@ def test_iterdir(juju: jubilant.Juju, charm: str):
 )
 @pytest.mark.parametrize('method', ['mkdir', 'write_bytes', 'write_text'])
 def test_chown(juju: jubilant.Juju, charm: str, method: str, user: str | None, group: str | None):
+    params = {'method': method, 'user': user or '', 'group': group or ''}
     try:
-        result = juju.run(
-            f'{charm}/0',
-            'chown',
-            params={'method': method, 'user': user or '', 'group': group or ''},
-        )
+        result = juju.run(f'{charm}/0', 'chown', params=params)
     except jubilant.TaskError as e:
         if charm == 'kubernetes' and user is None and group is not None:
-            # we expect the group only case to fail unless Pebble is updated to handle it
+            # we expect the group-only case to fail (unless Pebble is updated to handle it)
             prefix = 'Exception: '
             assert e.task.message.startswith(prefix)
             msg = e.task.message[len(prefix) :]
