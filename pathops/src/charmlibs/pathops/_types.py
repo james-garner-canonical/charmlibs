@@ -368,16 +368,18 @@ class PathProtocol(typing.Protocol):
         Args:
             data: The bytes to write, typically a :class:`bytes` object, but may also be a
                 :class:`bytearray` or :class:`memoryview`.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-rw-r--).
-            user: The name of the user to set for the file.
-            group: The name of the group to set for the file.
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
+            user: The name of the user to set for the directory.
+                If ``group`` isn't provided, the user's default group is used.
+            group: The name of the group to set for the directory. For :class:`ContainerPath`,
+                it is an error to provide ``group`` if ``user`` isn't provided.
 
         Returns:
             The number of bytes written.
 
         Raises:
             FileNotFoundError: if the parent directory does not exist.
-            LookupError: if the user or group is unknown.
+            LookupError: if the user or group is unknown, or a group is provided without a user.
             NotADirectoryError: if the parent exists as a non-directory file.
             PermissionError: if the user does not have permissions for the operation.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
@@ -401,16 +403,18 @@ class PathProtocol(typing.Protocol):
 
         Args:
             data: The string to write. Newlines are not modified on writing.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-rw-r--).
-            user: The name of the user to set for the file.
-            group: The name of the group to set for the file.
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
+            user: The name of the user to set for the directory.
+                If ``group`` isn't provided, the user's default group is used.
+            group: The name of the group to set for the directory. For :class:`ContainerPath`,
+                it is an error to provide ``group`` if ``user`` isn't provided.
 
         Returns:
             The number of bytes written.
 
         Raises:
             FileNotFoundError: if the parent directory does not exist.
-            LookupError: if the user or group is unknown.
+            LookupError: if the user or group is unknown, or a group is provided without a user.
             NotADirectoryError: if the parent exists as a non-directory file.
             PermissionError: if the user does not have permissions for the operation.
             UnicodeError: if the provided data is not valid UTF-8.
@@ -443,12 +447,14 @@ class PathProtocol(typing.Protocol):
                 If ``False`` (default) and the directory already exists,
                 a :class:`FileExistsError` will be raised.
             user: The name of the user to set for the directory.
-            group: The name of the group to set for the directory.
+                If ``group`` isn't provided, the user's default group is used.
+            group: The name of the group to set for the directory. For :class:`ContainerPath`,
+                it is an error to provide ``group`` if ``user`` isn't provided.
 
         Raises:
             FileExistsError: if the directory already exists and ``exist_ok`` is ``False``.
             FileNotFoundError: if the parent directory does not exist and ``parents`` is ``False``.
-            LookupError: if the user or group is unknown.
+            LookupError: if the user or group is unknown, or a group is provided without a user.
             NotADirectoryError: if the parent exists as a non-directory file.
             PermissionError: if the local user does not have permissions for the operation.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
