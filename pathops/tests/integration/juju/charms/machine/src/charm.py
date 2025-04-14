@@ -15,8 +15,12 @@
 
 """Charm the application."""
 
+from __future__ import annotations
+
 import logging
 import shutil
+import subprocess
+import typing
 
 import common
 import ops
@@ -25,6 +29,9 @@ import ops
 #       after next pyright release fixes:
 #       https://github.com/microsoft/pyright/issues/10203
 import charmlibs.pathops as pathops
+
+if typing.TYPE_CHECKING:
+    from typing import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +50,17 @@ class Charm(common.Charm):
 
     def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
         assert isinstance(path, pathops.LocalPath)
+        if not path.exists():
+            return
         if not path.is_dir():
             return path.unlink()
         if not recursive:
             return path.rmdir()
         shutil.rmtree(path)
+
+    def exec(self, cmd: Sequence[str]) -> int:
+        process = subprocess.run(cmd)
+        return process.returncode
 
 
 if __name__ == '__main__':  # pragma: nocover

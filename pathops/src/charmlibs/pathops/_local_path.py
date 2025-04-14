@@ -189,11 +189,10 @@ def _validate_user_and_group(user: str | None, group: str | None):
 
 
 def _chown_if_needed(path: pathlib.Path, user: str | int | None, group: str | int | None) -> None:
-    # shutil.chown is happy as long as either user or group is not None
-    # but the type checker doesn't like that, so we have to be more explicit
-    if user is not None and group is not None:
+    if user is not None:
+        if group is None:  # use the user's group, following Pebble
+            info = pwd.getpwnam(user) if isinstance(user, str) else pwd.getpwuid(user)
+            group = info.pw_gid
         shutil.chown(path, user=user, group=group)
-    elif user is not None:
-        shutil.chown(path, user=user)
     elif group is not None:
         shutil.chown(path, group=group)
