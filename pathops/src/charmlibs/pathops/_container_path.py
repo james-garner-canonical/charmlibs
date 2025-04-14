@@ -607,23 +607,39 @@ class ContainerPath:
             PebbleConnectionError: if the remote Pebble client cannot be reached.
         """
         if parents and not exist_ok and self.exists():
-            raise _errors.raise_file_exists(repr(self))
-        elif not parents and exist_ok and not self.parent.exists():
+            _errors.raise_file_exists(repr(self))
+        if exist_ok and not parents and not self.parent.exists():
             _errors.raise_file_not_found(repr(self.parent))
-        if parents:
+        if parents and mode != _constants.DEFAULT_MKDIR_MODE:
             # create parents with default permissions, following pathlib
-            self._container.make_dir(
+            self._mkdir(
                 path=self._path.parent,
                 make_parents=True,
                 permissions=_constants.DEFAULT_MKDIR_MODE,
             )
+        self._mkdir(
+            path=self._path,
+            make_parents=exist_ok or parents,
+            permissions=mode,
+            user=user,
+            group=group,
+        )
+
+    def _mkdir(
+        self,
+        path: str | pathlib.PurePath,
+        make_parents: bool,
+        permissions: int,
+        user: str | None = None,
+        group: str | None = None,
+    ) -> None:
         try:
             self._container.make_dir(
-                path=self._path,
-                make_parents=exist_ok,  # parents created separately above
-                permissions=mode,
-                user=user if isinstance(user, str) else None,
-                group=group if isinstance(group, str) else None,
+                path=path,
+                make_parents=make_parents,
+                permissions=permissions,
+                user=user,
+                group=group,
             )
         except pebble.PathError as e:
             _errors.raise_if_matches_lookup(e, msg=e.message)
