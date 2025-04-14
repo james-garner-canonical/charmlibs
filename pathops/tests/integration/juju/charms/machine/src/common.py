@@ -45,7 +45,6 @@ class Charm(ops.CharmBase):
     """
 
     root: pathops.PathProtocol
-    users = ('temp-user',)
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
@@ -87,7 +86,8 @@ class Charm(ops.CharmBase):
         user: str | None = event.params['user'] or None
         group: str | None = event.params['group'] or None
         method: str = event.params['method']
-        self.addusers()
+        temp_user = 'temp-user'
+        self.adduser(temp_user)
         try:
             if method == 'mkdir':
                 path.mkdir(user=user, group=group)
@@ -104,20 +104,18 @@ class Charm(ops.CharmBase):
             event.fail(f'Exception: {e!r}')
         finally:
             self.remove_path(path)
-            self.rmusers()
+            self.rmuser(temp_user)
 
-    def addusers(self) -> None:
-        for user in self.users:
-            retcode = self.exec(['useradd', user])
-            assert retcode in (
-                0,  # success
-                9,  # already exists
-            )
+    def adduser(self, user: str) -> None:
+        retcode = self.exec(['useradd', user])
+        assert retcode in (
+            0,  # success
+            9,  # already exists
+        )
 
-    def rmusers(self) -> None:
-        for user in self.users:
-            retcode = self.exec(['userdel', '--remove', user])
-            assert retcode in (
-                0,  # success
-                6,  # doesn't exist
-            )
+    def rmuser(self, user: str) -> None:
+        retcode = self.exec(['userdel', '--remove', user])
+        assert retcode in (
+            0,  # success
+            6,  # doesn't exist
+        )
