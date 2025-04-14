@@ -83,9 +83,9 @@ class Charm(ops.CharmBase):
         if path.exists():
             event.fail('File already exists.')
             return
+        method: str = event.params['method']
         user: str | None = event.params['user'] or None
         group: str | None = event.params['group'] or None
-        method: str = event.params['method']
         temp_user = 'temp-user'
         self.add_user(temp_user)
         try:
