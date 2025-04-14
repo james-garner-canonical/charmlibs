@@ -22,6 +22,7 @@ import re
 import shutil
 import sys
 import typing
+from dataclasses import dataclass
 
 import pytest
 
@@ -42,6 +43,19 @@ class MockChown:
     ) -> None:
         self.calls.append((path, user, group))
         return
+
+
+@dataclass
+class MockGetPwNam:
+    pw_gid: int
+
+    def __call__(self, _: str) -> MockPwdStruct:
+        return MockPwdStruct(1)
+
+
+@dataclass
+class MockPwdStruct:
+    pw_gid: int
 
 
 def mock_pass(*args: object, **kwargs: object) -> None:
@@ -75,8 +89,9 @@ def test_file_creation_methods_call_chown(
     user: str | None,
     group: str | None,
 ):
+    stubbed_gid = 1
     monkeypatch.setattr(shutil, 'chown', mock_chown)
-    monkeypatch.setattr(pwd, 'getpwnam', mock_pass)
+    monkeypatch.setattr(pwd, 'getpwnam', MockGetPwNam(stubbed_gid))
     monkeypatch.setattr(grp, 'getgrnam', mock_pass)
     args = [content] if content is not None else ()
     path = LocalPath(tmp_path, 'subdirectory')
@@ -97,7 +112,8 @@ def test_file_creation_methods_call_chown(
         assert not mock_chown.calls
     else:
         (call,) = mock_chown.calls
-        assert call == (path, user, group)
+        expected_group = group if group is not None else stubbed_gid
+        assert call == (path, user, expected_group)
 
 
 @pytest.mark.parametrize(

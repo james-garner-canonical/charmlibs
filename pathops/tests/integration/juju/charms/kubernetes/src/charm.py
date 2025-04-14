@@ -15,8 +15,10 @@
 
 """Charm the application."""
 
+from __future__ import annotations
+
 import logging
-import pathlib
+import typing
 
 import common
 import ops
@@ -25,6 +27,9 @@ import ops
 #       after next pyright release fixes:
 #       https://github.com/microsoft/pyright/issues/10203
 import charmlibs.pathops as pathops
+
+if typing.TYPE_CHECKING:
+    from typing import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +43,7 @@ class Charm(common.Charm):
         super().__init__(framework)
         framework.observe(self.on[CONTAINER].pebble_ready, self._on_pebble_ready)
         self.container = self.unit.get_container(CONTAINER)
-        self.root = pathops.ContainerPath(pathlib.Path('/', 'tmp'), container=self.container)
+        self.root = pathops.ContainerPath('/', 'tmp', container=self.container)
 
     def _on_pebble_ready(self, event: ops.PebbleReadyEvent):
         """Handle pebble-ready event."""
@@ -46,7 +51,16 @@ class Charm(common.Charm):
 
     def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
         assert isinstance(path, pathops.ContainerPath)
-        self.container.remove_path(str(path), recursive=recursive)
+        if path.exists():
+            self.container.remove_path(str(path), recursive=recursive)
+
+    def exec(self, cmd: Sequence[str]) -> int:
+        process = self.container.exec(list(cmd))
+        try:
+            process.wait()
+            return 0
+        except ops.pebble.ExecError[str] as e:
+            return e.exit_code
 
 
 if __name__ == '__main__':  # pragma: nocover

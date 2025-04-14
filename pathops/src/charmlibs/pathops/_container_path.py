@@ -506,13 +506,15 @@ class ContainerPath:
                 will be converted to :class:`bytes` in memory first.
             mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
             user: The name of the user to set for the file.
-            group: The name of the group to set for the file.
+                If ``group`` isn't provided, the user's default group is used.
+            group: The name of the group to set for the directory.
+                It is an error to provide ``group`` if ``user`` isn't provided.
 
         Returns: The number of bytes written.
 
         Raises:
             FileNotFoundError: if the parent directory does not exist.
-            LookupError: if the user or group is unknown.
+            LookupError: if the user or group is unknown, or a group is provided without a user.
             NotADirectoryError: if the parent exists as a non-directory file.
             PermissionError: if the Pebble user does not have permissions for the operation.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
@@ -565,13 +567,15 @@ class ContainerPath:
                 raising any errors. Newlines are not modified on writing.
             mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
             user: The name of the user to set for the file.
-            group: The name of the group to set for the file.
+                If ``group`` isn't provided, the user's default group is used.
+            group: The name of the group to set for the directory.
+                It is an error to provide ``group`` if ``user`` isn't provided.
 
         Returns: The number of bytes written.
 
         Raises:
-            LookupError: if the user or group is unknown.
             FileNotFoundError: if the parent directory does not exist.
+            LookupError: if the user or group is unknown, or a group is provided without a user.
             NotADirectoryError: if the parent exists as a non-directory file.
             PermissionError: if the Pebble user does not have permissions for the operation.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
@@ -604,12 +608,14 @@ class ContainerPath:
                 If ``False`` (default) and the directory already exists,
                 a :class:`FileExistsError` will be raised.
             user: The name of the user to set for the directory.
+                If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory.
+                It is an error to provide ``group`` if ``user`` isn't provided.
 
         Raises:
             FileExistsError: if the directory already exists and ``exist_ok`` is ``False``.
             FileNotFoundError: if the parent directory does not exist and ``parents`` is ``False``.
-            LookupError: if the user or group is unknown.
+            LookupError: if the user or group is unknown, or a group is provided without a user.
             NotADirectoryError: if the parent exists as a non-directory file.
             PermissionError: if the remote user does not have permissions for the operation.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
