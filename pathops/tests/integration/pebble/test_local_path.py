@@ -25,6 +25,7 @@ import pytest
 
 import utils
 from charmlibs.pathops import ContainerPath, LocalPath, _constants
+from charmlibs.pathops._constants import DEFAULT_WRITE_MODE
 from charmlibs.pathops._functions import _get_fileinfo
 
 if typing.TYPE_CHECKING:
@@ -134,21 +135,21 @@ class TestChown:
 
 @pytest.mark.parametrize(('method', 'data'), [('write_bytes', b'bytes'), ('write_text', 'text')])
 @pytest.mark.parametrize('mode_str', [None, *ALL_MODES])
-@pytest.mark.parametrize('exists', [True, False])
+@pytest.mark.parametrize('already_exists', [True, False])
 def test_write_methods_chmod(
     container: ops.Container,
     tmp_path: pathlib.Path,
     method: str,
     data: str | bytes,
     mode_str: str | None,
-    exists: bool,
+    already_exists: bool,
 ):
     mode = int(mode_str, base=8) if mode_str is not None else None
     path = tmp_path / 'path'
     # container
     container_path = ContainerPath(path, container=container)
     container_path_method = getattr(container_path, method)
-    if exists:
+    if already_exists:
         path.write_bytes(b'')
     else:
         assert not path.exists()
@@ -163,7 +164,7 @@ def test_write_methods_chmod(
     # local
     local_path = LocalPath(path)
     local_path_method = getattr(local_path, method)
-    if exists:
+    if already_exists:
         path.write_bytes(b'')
     else:
         assert not path.exists()
@@ -179,6 +180,8 @@ def test_write_methods_chmod(
     container_dict = utils.info_to_dict(container_info, exclude=exclude)
     local_dict = utils.info_to_dict(local_info, exclude=exclude)
     assert local_dict == container_dict
+    expected_permissions = mode if mode is not None else DEFAULT_WRITE_MODE
+    assert local_dict['permissions'] == expected_permissions
 
 
 @pytest.mark.parametrize('mode_str', [*ALL_MODES, None])
