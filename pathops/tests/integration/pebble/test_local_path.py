@@ -157,10 +157,7 @@ def test_write_methods_chmod(
         path.chmod(exists_with_mode)
     else:
         assert not path.exists()
-    if mode is not None:
-        container_path_method(data, mode=mode)
-    else:
-        container_path_method(data)
+    container_path_method(data, mode=mode)
     assert path.exists()
     container_info = _get_fileinfo(container_path)
     # cleanup
@@ -173,10 +170,7 @@ def test_write_methods_chmod(
         path.chmod(exists_with_mode)
     else:
         assert not path.exists()
-    if mode is not None:
-        local_path_method(data, mode=mode)
-    else:
-        local_path_method(data)
+    local_path_method(data, mode=mode)
     assert path.exists()
     local_info = _get_fileinfo(local_path)
     # cleanup
@@ -185,8 +179,12 @@ def test_write_methods_chmod(
     container_dict = utils.info_to_dict(container_info, exclude=exclude)
     local_dict = utils.info_to_dict(local_info, exclude=exclude)
     assert local_dict == container_dict
-    expected_permissions = mode if mode is not None else DEFAULT_WRITE_MODE
-    assert local_dict['permissions'] == expected_permissions
+    if mode is not None:
+        assert local_dict['permissions'] == mode
+    elif exists_with_mode is not None:
+        assert local_dict['permissions'] == exists_with_mode
+    else:
+        assert local_dict['permissions'] == DEFAULT_WRITE_MODE
 
 
 @pytest.mark.parametrize('mode_str', [*ALL_MODES, None])
