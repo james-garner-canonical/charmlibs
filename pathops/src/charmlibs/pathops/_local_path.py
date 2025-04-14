@@ -179,7 +179,6 @@ class LocalPath(pathlib.PosixPath):
         """
         _validate_user_and_group(user=user, group=group)
         super().mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
-        self.chmod(mode)
         _chown_if_needed(self, user=user, group=group)
 
 
