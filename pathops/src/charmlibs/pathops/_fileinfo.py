@@ -49,6 +49,7 @@ def from_container_path(path: ContainerPath) -> pebble.FileInfo:
     except pebble.APIError as e:
         msg = repr(path)
         _errors.raise_if_matches_file_not_found(e, msg=msg)
+        _errors.raise_if_matches_not_a_directory(e, msg=msg)
         _errors.raise_if_matches_too_many_levels_of_symlinks(e, msg=msg)
         raise
     return info
