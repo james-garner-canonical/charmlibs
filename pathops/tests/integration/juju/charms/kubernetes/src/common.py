@@ -87,7 +87,7 @@ class Charm(ops.CharmBase):
         group: str | None = event.params['group'] or None
         method: str = event.params['method']
         temp_user = 'temp-user'
-        self.adduser(temp_user)
+        self.add_user(temp_user)
         try:
             if method == 'mkdir':
                 path.mkdir(user=user, group=group)
@@ -96,24 +96,22 @@ class Charm(ops.CharmBase):
             elif method == 'write_text':
                 path.write_text('', user=user, group=group)
             else:
-                event.fail(f'Unknown method: {method!r}')
-                return
-            results = {'user': path.owner(), 'group': path.group()}
-            event.set_results(results)
+                raise ValueError(f'Unknown method: {method!r}')
+            event.set_results({'user': path.owner(), 'group': path.group()})
         except Exception as e:
             event.fail(f'Exception: {e!r}')
         finally:
             self.remove_path(path)
-            self.rmuser(temp_user)
+            self.remove_user(temp_user)
 
-    def adduser(self, user: str) -> None:
+    def add_user(self, user: str) -> None:
         retcode = self.exec(['useradd', user])
         assert retcode in (
             0,  # success
             9,  # already exists
         )
 
-    def rmuser(self, user: str) -> None:
+    def remove_user(self, user: str) -> None:
         retcode = self.exec(['userdel', '--remove', user])
         assert retcode in (
             0,  # success
