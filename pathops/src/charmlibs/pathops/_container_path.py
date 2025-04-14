@@ -520,6 +520,14 @@ class ContainerPath:
         if isinstance(data, (bytearray, memoryview)):
             # TODO: update ops to correctly test for bytearray and memoryview in push
             data = bytes(data)
+        if mode is None:
+            # if the file already exists, then don't change permissions unless explicitly requested
+            try:
+                info = _fileinfo.from_container_path(self)
+            except FileNotFoundError:
+                pass
+            else:
+                mode = info.permissions
         try:
             self._container.push(
                 path=self._path,
