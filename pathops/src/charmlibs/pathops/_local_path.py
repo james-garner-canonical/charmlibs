@@ -156,7 +156,8 @@ class LocalPath(pathlib.PosixPath):
         will not have their ownership set.
 
         Args:
-            mode: The permissions to set on the created directory. Any parents created will have
+            mode: The permissions to set on the created directory. If the directory already
+                exists the permissions are still set. Any parents created will have
                 their permissions set to the default value of 0o755 (drwxr-xr-x).
             parents: Whether to create any missing parent directories as well. If ``False``
                 (default) and a parent directory does not exist, a :class:`FileNotFound` error will
@@ -178,6 +179,7 @@ class LocalPath(pathlib.PosixPath):
         """
         _validate_user_and_group(user=user, group=group)
         super().mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
+        self.chmod(mode)
         _chown_if_needed(self, user=user, group=group)
 
 
