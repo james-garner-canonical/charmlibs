@@ -329,9 +329,9 @@ def test_exists_reraises_unhandled_os_error(
         ('read_bytes', 'pull', (), {}),
         ('read_text', 'pull', (), {}),
         ('write_bytes', 'list_files', (b'',), {}),
-        ('write_bytes', 'push', (b'',), {'mode': _constants.DEFAULT_WRITE_MODE}),
+        ('write_bytes', 'push', (b'',), {'mode': _constants.DEFAULT_WRITE_MODE, 'user': ''}),
         ('write_text', 'list_files', ('',), {}),
-        ('write_text', 'push', ('',), {'mode': _constants.DEFAULT_WRITE_MODE}),
+        ('write_text', 'push', ('',), {'mode': _constants.DEFAULT_WRITE_MODE, 'user': ''}),
         ('mkdir', 'make_dir', (), {}),
     ),
 )

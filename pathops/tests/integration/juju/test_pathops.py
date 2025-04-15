@@ -57,20 +57,53 @@ def test_iterdir(juju: jubilant.Juju, charm: str):
     ),
 )
 @pytest.mark.parametrize('method', ['mkdir', 'write_bytes', 'write_text'])
-def test_chown(juju: jubilant.Juju, charm: str, method: str, user: str | None, group: str | None):
-    params = {'method': method, 'user': user or '', 'group': group or ''}
+@pytest.mark.parametrize('already_exists', [True, False])
+def test_chown(
+    juju: jubilant.Juju,
+    charm: str,
+    method: str,
+    user: str | None,
+    group: str | None,
+    already_exists: bool,
+):
+    params = {
+        'method': method,
+        'user': user or '',
+        'group': group or '',
+        'already-exists': already_exists,
+    }
     try:
         result = juju.run(f'{charm}/0', 'chown', params=params)
     except jubilant.TaskError as e:
-        if charm == 'kubernetes' and user is None and group is not None:
+        print(e)
+        print(e.task.message)
+        if (
+            charm == 'kubernetes'
+            and user is None
+            and group is not None
+            and (method == 'mkdir' or not already_exists)
+        ):
             # we expect the group-only case to fail (unless Pebble is updated to handle it)
+            # although if the file already exists and the method is write_{bytes,text} then
+            # it succeeds because we look up the user to avoid clobbering the file ownership
             prefix = 'Exception: '
             assert e.task.message.startswith(prefix)
             msg = e.task.message[len(prefix) :]
             assert msg.startswith('LookupError')
             return
         raise
-    expected_user = user if user is not None else 'root'
-    expected_group = group if group is not None else expected_user
-    assert result.results['user'] == expected_user
-    assert result.results['group'] == expected_group
+    user_result = result.results['user']
+    group_result = result.results['group']
+    if already_exists:
+        if method == 'mkdir':
+            expected_user = 'temp-user'
+            expected_group = 'temp-user'
+            assert (user_result, group_result) == (expected_user, expected_group)
+        else:  # write_{bytes,text}
+            expected_user = user if user is not None else 'temp-user'
+            expected_group = group if group is not None else expected_user
+            assert (user_result, group_result) == (expected_user, expected_group)
+    else:  # not already_exists
+        expected_user = user if user is not None else 'root'
+        expected_group = group if group is not None else expected_user
+        assert (result.results['user'], result.results['group']) == (expected_user, expected_group)

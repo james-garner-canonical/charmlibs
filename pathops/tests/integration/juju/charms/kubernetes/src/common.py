@@ -20,6 +20,7 @@ The contents of kubernetes/src/common.py and machine/src/common.py should be ide
 from __future__ import annotations
 
 import logging
+import traceback
 import typing
 
 import ops
@@ -53,9 +54,11 @@ class Charm(ops.CharmBase):
         framework.observe(self.on['chown'].action, self._on_chown)
 
     def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
+        """Remove a path following Pebble remove_path semantics if it exists."""
         raise NotImplementedError()
 
     def exec(self, cmd: Sequence[str]) -> int:
+        """Run a command and return the exit code."""
         raise NotImplementedError()
 
     def _on_ensure_contents(self, event: ops.ActionEvent) -> None:
@@ -83,14 +86,22 @@ class Charm(ops.CharmBase):
         if path.exists():
             event.fail('File already exists.')
             return
-        method: str = event.params['method']
-        user: str | None = event.params['user'] or None
-        group: str | None = event.params['group'] or None
         temp_user = 'temp-user'
-        self.add_user(temp_user)
         try:
+            method: str = event.params['method']
+            user: str | None = event.params['user'] or None
+            group: str | None = event.params['group'] or None
+            already_exists: bool = event.params['already-exists']
+            self.add_user(temp_user)
+            if already_exists:
+                if method == 'mkdir':
+                    path.mkdir(user=temp_user)
+                else:
+                    path.write_bytes(b'', user=temp_user, mode=0o777)
+                assert path.owner() == temp_user
+                assert path.owner() == temp_user
             if method == 'mkdir':
-                path.mkdir(user=user, group=group)
+                path.mkdir(user=user, group=group, exist_ok=True)
             elif method == 'write_bytes':
                 path.write_bytes(b'', user=user, group=group)
             elif method == 'write_text':
@@ -99,7 +110,9 @@ class Charm(ops.CharmBase):
                 raise ValueError(f'Unknown method: {method!r}')
             event.set_results({'user': path.owner(), 'group': path.group()})
         except Exception as e:
-            event.fail(f'Exception: {e!r}')
+            tb = traceback.format_exc()
+            msg = f'Exception: {e!r}\n{tb}'
+            event.fail(msg)
         finally:
             self.remove_path(path)
             self.remove_user(temp_user)

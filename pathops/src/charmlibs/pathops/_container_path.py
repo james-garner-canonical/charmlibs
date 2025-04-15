@@ -513,8 +513,12 @@ class ContainerPath:
                 unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file.
                 If ``group`` isn't provided, the user's default group is used.
+                If the file already exists, its user and group will be changed,
+                unless ``user`` is ``None`` (default).
             group: The name of the group to set for the directory.
                 It is an error to provide ``group`` if ``user`` isn't provided.
+                If the file already exists, its group will be changed,
+                unless ``user`` and ``group`` are ``None`` (default).
 
         Returns: The number of bytes written.
 
@@ -528,22 +532,25 @@ class ContainerPath:
         if isinstance(data, (bytearray, memoryview)):
             # TODO: update ops to correctly test for bytearray and memoryview in push
             data = bytes(data)
-        if mode is None:
-            # if the file already exists, then don't change permissions unless explicitly requested
+        if mode is None or user is None:
+            # if the file already exists, don't change owner or mode unless explicitly requested
             try:
                 info = _fileinfo.from_container_path(self)
             except FileNotFoundError:
                 pass
             else:
-                mode = info.permissions
+                if mode is None:
+                    mode = info.permissions
+                if user is None:
+                    user = info.user
         try:
             self._container.push(
                 path=self._path,
                 source=data,
                 make_dirs=False,
                 permissions=mode,
-                user=user if isinstance(user, str) else None,
-                group=group if isinstance(group, str) else None,
+                user=user,
+                group=group,
             )
         except pebble.PathError as e:
             _errors.raise_if_matches_lookup(e, msg=e.message)
@@ -576,8 +583,12 @@ class ContainerPath:
                 unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file.
                 If ``group`` isn't provided, the user's default group is used.
+                If the file already exists, its user and group will be changed,
+                unless ``user`` is ``None`` (default).
             group: The name of the group to set for the directory.
                 It is an error to provide ``group`` if ``user`` isn't provided.
+                If the file already exists, its group will be changed,
+                unless ``user`` and ``group`` are ``None`` (default).
 
         Returns: The number of bytes written.
 
@@ -609,6 +620,7 @@ class ContainerPath:
         Args:
             mode: The permissions to set on the created directory. Any parents created will have
                 their permissions set to the default value of 0o755 (drwxr-xr-x).
+                The permissions are not changed if the directory already exists.
             parents: Whether to create any missing parent directories as well. If ``False``
                 (default) and a parent directory does not exist, a :class:`FileNotFound` error will
                 be raised.
@@ -617,8 +629,10 @@ class ContainerPath:
                 a :class:`FileExistsError` will be raised.
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
+                The user and group are not changed if the directory already exists.
             group: The name of the group to set for the directory.
                 It is an error to provide ``group`` if ``user`` isn't provided.
+                The user and group are not changed if the directory already exists.
 
         Raises:
             FileExistsError: if the directory already exists and ``exist_ok`` is ``False``.
