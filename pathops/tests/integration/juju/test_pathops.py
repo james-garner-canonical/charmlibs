@@ -57,8 +57,21 @@ def test_iterdir(juju: jubilant.Juju, charm: str):
     ),
 )
 @pytest.mark.parametrize('method', ['mkdir', 'write_bytes', 'write_text'])
-def test_chown(juju: jubilant.Juju, charm: str, method: str, user: str | None, group: str | None):
-    params = {'method': method, 'user': user or '', 'group': group or ''}
+@pytest.mark.parametrize('already_exists', [True, False])
+def test_chown(
+    juju: jubilant.Juju,
+    charm: str,
+    method: str,
+    user: str | None,
+    group: str | None,
+    already_exists: bool,
+):
+    params = {
+        'method': method,
+        'user': user or '',
+        'group': group or '',
+        'already-exists': already_exists
+    }
     try:
         result = juju.run(f'{charm}/0', 'chown', params=params)
     except jubilant.TaskError as e:
@@ -70,7 +83,11 @@ def test_chown(juju: jubilant.Juju, charm: str, method: str, user: str | None, g
             assert msg.startswith('LookupError')
             return
         raise
-    expected_user = user if user is not None else 'root'
-    expected_group = group if group is not None else expected_user
-    assert result.results['user'] == expected_user
-    assert result.results['group'] == expected_group
+    if already_exists and method == 'mkdir':
+        expected_user = 'temp-user'
+        expected_group = 'temp-user'
+        assert (result.results['user'], result.results['group']) == (expected_user, expected_group)
+    else:
+        expected_user = user if user is not None else 'root'
+        expected_group = group if group is not None else expected_user
+        assert (result.results['user'], result.results['group']) == (expected_user, expected_group)
