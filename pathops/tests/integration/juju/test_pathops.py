@@ -75,6 +75,8 @@ def test_chown(
     try:
         result = juju.run(f'{charm}/0', 'chown', params=params)
     except jubilant.TaskError as e:
+        print(e)
+        print(e.task.message)
         if charm == 'kubernetes' and user is None and group is not None:
             # we expect the group-only case to fail (unless Pebble is updated to handle it)
             prefix = 'Exception: '

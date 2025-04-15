@@ -526,14 +526,21 @@ class ContainerPath:
         if isinstance(data, (bytearray, memoryview)):
             # TODO: update ops to correctly test for bytearray and memoryview in push
             data = bytes(data)
+        if user is None:
+            try:
+                info = _fileinfo.from_container_path(self)
+            except FileNotFoundError:
+                pass
+            else:
+                user = info.user
         try:
             self._container.push(
                 path=self._path,
                 source=data,
                 make_dirs=False,
                 permissions=mode,
-                user=user if isinstance(user, str) else None,
-                group=group if isinstance(group, str) else None,
+                user=user,
+                group=group,
             )
         except pebble.PathError as e:
             _errors.raise_if_matches_lookup(e, msg=e.message)
