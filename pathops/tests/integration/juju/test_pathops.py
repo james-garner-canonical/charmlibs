@@ -77,8 +77,15 @@ def test_chown(
     except jubilant.TaskError as e:
         print(e)
         print(e.task.message)
-        if charm == 'kubernetes' and user is None and group is not None:
+        if (
+            charm == 'kubernetes'
+            and user is None
+            and group is not None
+            and (method == 'mkdir' or not already_exists)
+        ):
             # we expect the group-only case to fail (unless Pebble is updated to handle it)
+            # although if the file already exists and the method is write_{bytes,text} then
+            # it succeeds because we look up the user to avoid clobbering the file ownership
             prefix = 'Exception: '
             assert e.task.message.startswith(prefix)
             msg = e.task.message[len(prefix) :]
