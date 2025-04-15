@@ -373,8 +373,12 @@ class PathProtocol(typing.Protocol):
                 unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
+                If the file already exists, its user and group will be changed,
+                unless ``user`` is ``None`` (default).
             group: The name of the group to set for the directory. For :class:`ContainerPath`,
                 it is an error to provide ``group`` if ``user`` isn't provided.
+                If the file already exists, its group will be changed,
+                unless ``user`` and ``group`` are ``None`` (default).
 
         Returns:
             The number of bytes written.
@@ -410,8 +414,12 @@ class PathProtocol(typing.Protocol):
                 unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
+                If the file already exists, its user and group will be changed,
+                unless ``user`` is ``None`` (default).
             group: The name of the group to set for the directory. For :class:`ContainerPath`,
                 it is an error to provide ``group`` if ``user`` isn't provided.
+                If the file already exists, its group will be changed,
+                unless ``user`` and ``group`` are ``None`` (default).
 
         Returns:
             The number of bytes written.
