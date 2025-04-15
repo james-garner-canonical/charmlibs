@@ -356,7 +356,7 @@ class PathProtocol(typing.Protocol):
         self,
         data: bytes,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -368,7 +368,9 @@ class PathProtocol(typing.Protocol):
         Args:
             data: The bytes to write, typically a :class:`bytes` object, but may also be a
                 :class:`bytearray` or :class:`memoryview`.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, its permissions will be changed,
+                unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory. For :class:`ContainerPath`,
@@ -391,7 +393,7 @@ class PathProtocol(typing.Protocol):
         self,
         data: str,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -403,7 +405,9 @@ class PathProtocol(typing.Protocol):
 
         Args:
             data: The string to write. Newlines are not modified on writing.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, its permissions will be changed,
+                unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory. For :class:`ContainerPath`,

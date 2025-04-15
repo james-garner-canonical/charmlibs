@@ -48,7 +48,7 @@ class LocalPath(pathlib.PosixPath):
         self,
         data: Buffer,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -60,8 +60,9 @@ class LocalPath(pathlib.PosixPath):
         Args:
             data: The bytes to write, typically a :class:`bytes` object, but may also be a
                 :class:`bytearray` or :class:`memoryview`.
-            mode: The permissions to set on the file using :meth:`pathlib.PosixPath.chmod`.
-                Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, its permissions will be changed, using
+                :meth:`pathlib.PosixPath.chmod`, unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file using :func:`shutil.chown`.
                 Validated to be an existing user before writing.
             group: The name of the group to set for the file using :func:`shutil.chown`.
@@ -77,9 +78,15 @@ class LocalPath(pathlib.PosixPath):
             PermissionError: if the local user does not have permissions for the operation.
         """
         _validate_user_and_group(user=user, group=group)
+        if mode is None:
+            # create the file with Pebble's default write mode if it doesn't exist
+            # doesn't change the mode if the file already exists
+            self.touch(mode=_constants.DEFAULT_WRITE_MODE)
         bytes_written = super().write_bytes(data)
         _chown_if_needed(self, user=user, group=group)
-        self.chmod(mode)
+        if mode is not None:
+            # explicitly set the mode if the user requested it
+            self.chmod(mode)
         return bytes_written
 
     def write_text(
@@ -89,7 +96,7 @@ class LocalPath(pathlib.PosixPath):
         errors: str | None = None,
         newline: str | None = None,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -113,8 +120,9 @@ class LocalPath(pathlib.PosixPath):
             newline: If ``None``, ``''``, or ``'\n'``, then '\n' will be written as is.
                 This is the default behaviour. If ``newline`` is ``'\r'`` or ``'\r\n'``,
                 then ``'\n'`` will be replaced with ``newline`` in memory before writing.
-            mode: The permissions to set on the file using :meth:`pathlib.PosixPath.chmod`.
-                Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, its permissions will be changed, using
+                :meth:`pathlib.PosixPath.chmod`, unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file using :func:`shutil.chown`.
                 Validated to be an existing user before writing.
             group: The name of the group to set for the file using :func:`shutil.chown`.
@@ -135,9 +143,14 @@ class LocalPath(pathlib.PosixPath):
             data = data.replace('\n', newline)
         elif newline not in ('', '\n', None):
             raise ValueError(f'illegal newline value: {newline!r}')
+        if mode is None:
+            # create the file with Pebble's default write mode
+            self.touch(mode=_constants.DEFAULT_WRITE_MODE)
         bytes_written = super().write_text(data, encoding=encoding, errors=errors)
         _chown_if_needed(self, user=user, group=group)
-        self.chmod(mode)
+        if mode is not None:
+            # explicitly set the mode if the user requested it
+            self.chmod(mode)
         return bytes_written
 
     def mkdir(
