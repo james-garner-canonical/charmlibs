@@ -105,6 +105,20 @@ def _as_bytes(source: bytes | str | BinaryIO | TextIO) -> bytes:
 
 
 def remove_path(path: str | os.PathLike[str] | PathProtocol, *, recursive: bool = False) -> None:
+    """Remove a file or directory following Pebble's file removal semantics.
+
+    Args:
+        path: The path to remove. If it is a non-empty directory, a :class:`DirectoryNotEmpty`
+            error will be raised, unless ``recursive`` is ``True``.
+        recursive: Whether to remove the contents of a non-empty directory ``path``.
+            Also suppresses :class:`FileNotFoundError`.
+
+    Raises:
+        DirectoryNotEmpty: if ``path`` is a non-empty directory and ``recursive`` is ``False``.
+        FileNotFoundError: if ``path`` does not exist and ``recursive`` is ``False``.
+        PermissionError: if the Pebble user does not have permissions for the operation.
+        PebbleConnectionError: if the remote Pebble client cannot be reached.
+    """
     if isinstance(path, ContainerPath):
         return _remove_container_path(path, recursive=recursive)
     assert _is_str_pathlike(path)
