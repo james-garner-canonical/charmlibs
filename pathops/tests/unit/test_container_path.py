@@ -25,7 +25,7 @@ import pytest
 from ops import pebble
 
 import utils
-from charmlibs.pathops import ContainerPath, LocalPath, RelativePathError, _fileinfo
+from charmlibs.pathops import ContainerPath, LocalPath, RelativePathError, _constants, _fileinfo
 
 if typing.TYPE_CHECKING:
     from typing import Any, Callable
@@ -324,13 +324,15 @@ def test_exists_reraises_unhandled_os_error(
 
 
 @pytest.mark.parametrize(
-    ('path_method', 'container_method', 'args'),
+    ('path_method', 'container_method', 'args', 'kwargs'),
     (
-        ('read_bytes', 'pull', ()),
-        ('read_text', 'pull', ()),
-        ('write_bytes', 'list_files', (b'',)),
-        ('write_text', 'list_files', ('',)),
-        ('mkdir', 'make_dir', ()),
+        ('read_bytes', 'pull', (), {}),
+        ('read_text', 'pull', (), {}),
+        ('write_bytes', 'list_files', (b'',), {}),
+        ('write_bytes', 'push', (b'',), {'mode': _constants.DEFAULT_WRITE_MODE}),
+        ('write_text', 'list_files', ('',), {}),
+        ('write_text', 'push', ('',), {'mode': _constants.DEFAULT_WRITE_MODE}),
+        ('mkdir', 'make_dir', (), {}),
     ),
 )
 @pytest.mark.parametrize(
@@ -349,11 +351,12 @@ def test_methods_handle_or_reraise_pebble_errors(
     path_method: str,
     container_method: str,
     args: tuple[object],
+    kwargs: dict[str, object],
 ):
     monkeypatch.setattr(container, container_method, mock)
     containerpath_method = getattr(ContainerPath, path_method)
     with pytest.raises(error):
-        containerpath_method(ContainerPath('/', container=container), *args)
+        containerpath_method(ContainerPath('/', container=container), *args, **kwargs)
 
 
 @pytest.mark.parametrize(
