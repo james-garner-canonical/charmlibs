@@ -97,7 +97,7 @@ class Charm(ops.CharmBase):
                 if method == 'mkdir':
                     path.mkdir(user=temp_user)
                 else:
-                    path.write_bytes(b'', user=temp_user)
+                    path.write_bytes(b'', user=temp_user, mode=0o777)
                 assert path.owner() == temp_user
                 assert path.owner() == temp_user
             if method == 'mkdir':
