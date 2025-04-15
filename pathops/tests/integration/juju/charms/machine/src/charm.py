@@ -42,7 +42,7 @@ class Charm(common.Charm):
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         framework.observe(self.on.start, self._on_start)
-        self.root = pathops.LocalPath('/', 'tmp')
+        self.root = pathops.LocalPath('/')
 
     def _on_start(self, event: ops.StartEvent):
         """Handle start event."""
