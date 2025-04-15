@@ -373,8 +373,12 @@ class PathProtocol(typing.Protocol):
                 unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
+                If the file already exists, its user and group will be changed,
+                unless ``user`` is ``None`` (default).
             group: The name of the group to set for the directory. For :class:`ContainerPath`,
                 it is an error to provide ``group`` if ``user`` isn't provided.
+                If the file already exists, its group will be changed,
+                unless ``user`` and ``group`` are ``None`` (default).
 
         Returns:
             The number of bytes written.
@@ -410,8 +414,12 @@ class PathProtocol(typing.Protocol):
                 unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
+                If the file already exists, its user and group will be changed,
+                unless ``user`` is ``None`` (default).
             group: The name of the group to set for the directory. For :class:`ContainerPath`,
                 it is an error to provide ``group`` if ``user`` isn't provided.
+                If the file already exists, its group will be changed,
+                unless ``user`` and ``group`` are ``None`` (default).
 
         Returns:
             The number of bytes written.
@@ -444,6 +452,7 @@ class PathProtocol(typing.Protocol):
         Args:
             mode: The permissions to set on the created directory. Any parents created will have
                 their permissions set to the default value of 0o755 (drwxr-xr-x).
+                The permissions are not changed if the directory already exists.
             parents: Whether to create any missing parent directories as well. If ``False``
                 (default) and a parent directory does not exist, a :class:`FileNotFound` error will
                 be raised.
@@ -452,8 +461,10 @@ class PathProtocol(typing.Protocol):
                 a :class:`FileExistsError` will be raised.
             user: The name of the user to set for the directory.
                 If ``group`` isn't provided, the user's default group is used.
+                The user and group are not changed if the directory already exists.
             group: The name of the group to set for the directory. For :class:`ContainerPath`,
                 it is an error to provide ``group`` if ``user`` isn't provided.
+                The user and group are not changed if the directory already exists.
 
         Raises:
             FileExistsError: if the directory already exists and ``exist_ok`` is ``False``.

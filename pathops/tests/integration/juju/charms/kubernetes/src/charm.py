@@ -43,7 +43,7 @@ class Charm(common.Charm):
         super().__init__(framework)
         framework.observe(self.on[CONTAINER].pebble_ready, self._on_pebble_ready)
         self.container = self.unit.get_container(CONTAINER)
-        self.root = pathops.ContainerPath('/', 'tmp', container=self.container)
+        self.root = pathops.ContainerPath('/', container=self.container)
 
     def _on_pebble_ready(self, event: ops.PebbleReadyEvent):
         """Handle pebble-ready event."""
