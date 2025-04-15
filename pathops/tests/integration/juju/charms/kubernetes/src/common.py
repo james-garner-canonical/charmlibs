@@ -101,7 +101,7 @@ class Charm(ops.CharmBase):
                 assert path.owner() == temp_user
                 assert path.owner() == temp_user
             if method == 'mkdir':
-                path.mkdir(user=user, group=group)
+                path.mkdir(user=user, group=group, exist_ok=True)
             elif method == 'write_bytes':
                 path.write_bytes(b'', user=user, group=group)
             elif method == 'write_text':
@@ -111,7 +111,9 @@ class Charm(ops.CharmBase):
             event.set_results({'user': path.owner(), 'group': path.group()})
         except Exception as e:
             tb = traceback.format_exc()
-            event.fail(f'Exception: {e!r}\n{tb}')
+            msg = f'Exception: {e!r}\n{tb}'
+            event.fail(msg)
+            logger.error('chown action failed: %s', msg)
         finally:
             self.remove_path(path)
             self.remove_user(temp_user)
