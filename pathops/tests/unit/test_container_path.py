@@ -328,8 +328,8 @@ def test_exists_reraises_unhandled_os_error(
     (
         ('read_bytes', 'pull', ()),
         ('read_text', 'pull', ()),
-        ('write_bytes', 'push', (b'',)),
-        ('write_text', 'push', ('',)),
+        ('write_bytes', 'list_files', (b'',)),
+        ('write_text', 'list_files', ('',)),
         ('mkdir', 'make_dir', ()),
     ),
 )
