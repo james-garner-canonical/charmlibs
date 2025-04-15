@@ -177,8 +177,10 @@ class LocalPath(pathlib.PosixPath):
             PermissionError: if the local user does not have permissions for the operation.
         """
         _validate_user_and_group(user=user, group=group)
+        already_exists = self.exists()
         super().mkdir(mode=mode, parents=parents, exist_ok=exist_ok)
-        _chown_if_needed(self, user=user, group=group)
+        if not already_exists:
+            _chown_if_needed(self, user=user, group=group)
 
 
 def _validate_user_and_group(user: str | None, group: str | None):
