@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import errno
 import io
 import pathlib
 import typing
@@ -90,6 +91,31 @@ class TestRemovePath:
         remove_path(container_path, recursive=True)
         assert not contents.exists()
         assert not path.exists()
+
+    def test_non_empty_dir_not_ok(self, tmp_path: pathlib.Path, container: ops.Container):
+        path = tmp_path / 'directory'
+        assert not path.exists()
+        contents = path / 'file'
+        assert not contents.exists()
+        # setup
+        path.mkdir()
+        assert path.exists()
+        contents.touch()
+        assert contents.exists()
+        # local
+        local_path = LocalPath(path)
+        with pytest.raises(OSError) as ctx:
+            remove_path(local_path, recursive=False)
+        assert ctx.value.errno == errno.ENOTEMPTY
+        assert contents.exists()
+        assert path.exists()
+        # container
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(OSError) as ctx:
+            remove_path(container_path, recursive=False)
+        assert ctx.value.errno == errno.ENOTEMPTY
+        assert contents.exists()
+        assert path.exists()
 
 
 @pytest.mark.parametrize('exists', [True, False])
