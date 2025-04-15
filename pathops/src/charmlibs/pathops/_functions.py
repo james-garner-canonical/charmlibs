@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import pathlib
+import shutil
 import typing
 
 from . import _constants, _fileinfo
@@ -100,3 +101,22 @@ def _as_bytes(source: bytes | str | BinaryIO | TextIO) -> bytes:
     if isinstance(source, str):
         return source.encode()
     return _as_bytes(source.read())
+
+
+def remove_path(path: str | os.PathLike[str] | PathProtocol, *, recursive: bool = False) -> None:
+    if isinstance(path, ContainerPath):
+        return _remove_container_path(path, recursive=recursive)
+    assert _is_str_pathlike(path)
+    return _remove_pathlib_path(pathlib.Path(path), recursive=recursive)
+
+
+def _remove_container_path(path: ContainerPath, recursive: bool) -> None:
+    path._container.remove_path(path._path, recursive=recursive)
+
+
+def _remove_pathlib_path(path: pathlib.Path, recursive: bool) -> None:
+    if not path.is_dir():
+        return path.unlink()
+    if not recursive:
+        return path.rmdir()
+    shutil.rmtree(path)
