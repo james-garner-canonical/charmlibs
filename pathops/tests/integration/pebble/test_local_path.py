@@ -19,6 +19,7 @@ from __future__ import annotations
 import grp
 import os
 import pwd
+import stat
 import typing
 
 import pytest
@@ -134,23 +135,29 @@ class TestChown:
 
 @pytest.mark.parametrize(('method', 'data'), [('write_bytes', b'bytes'), ('write_text', 'text')])
 @pytest.mark.parametrize('mode_str', [None, *ALL_MODES])
+@pytest.mark.parametrize(
+    'exists_with_mode',
+    (None, _constants.DEFAULT_WRITE_MODE, _constants.DEFAULT_WRITE_MODE | stat.S_IXOTH),
+)
 def test_write_methods_chmod(
     container: ops.Container,
     tmp_path: pathlib.Path,
     method: str,
     data: str | bytes,
     mode_str: str | None,
+    exists_with_mode: int | None,
 ):
     mode = int(mode_str, base=8) if mode_str is not None else None
     path = tmp_path / 'path'
     # container
     container_path = ContainerPath(path, container=container)
     container_path_method = getattr(container_path, method)
-    assert not path.exists()
-    if mode is not None:
-        container_path_method(data, mode=mode)
+    if exists_with_mode is not None:
+        path.write_bytes(b'')
+        path.chmod(exists_with_mode)
     else:
-        container_path_method(data)
+        assert not path.exists()
+    container_path_method(data, mode=mode)
     assert path.exists()
     container_info = _get_fileinfo(container_path)
     # cleanup
@@ -158,11 +165,12 @@ def test_write_methods_chmod(
     # local
     local_path = LocalPath(path)
     local_path_method = getattr(local_path, method)
-    assert not path.exists()
-    if mode is not None:
-        local_path_method(data, mode=mode)
+    if exists_with_mode is not None:
+        path.write_bytes(b'')
+        path.chmod(exists_with_mode)
     else:
-        local_path_method(data)
+        assert not path.exists()
+    local_path_method(data, mode=mode)
     assert path.exists()
     local_info = _get_fileinfo(local_path)
     # cleanup
@@ -171,6 +179,12 @@ def test_write_methods_chmod(
     container_dict = utils.info_to_dict(container_info, exclude=exclude)
     local_dict = utils.info_to_dict(local_info, exclude=exclude)
     assert local_dict == container_dict
+    if mode is not None:
+        assert local_dict['permissions'] == mode
+    elif exists_with_mode is not None:
+        assert local_dict['permissions'] == exists_with_mode
+    else:
+        assert local_dict['permissions'] == _constants.DEFAULT_WRITE_MODE
 
 
 @pytest.mark.parametrize('mode_str', [*ALL_MODES, None])

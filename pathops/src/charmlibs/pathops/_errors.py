@@ -75,6 +75,10 @@ def raise_if_matches_lookup(error: pebble.Error, msg: str) -> None:
 
 def matches_not_a_directory(error: pebble.Error) -> bool:
     return (
+        isinstance(error, pebble.APIError)
+        and error.code == 400
+        and 'not a directory' in error.message
+    ) or (
         isinstance(error, pebble.PathError)
         and error.kind == 'generic-file-error'
         and 'not a directory' in error.message

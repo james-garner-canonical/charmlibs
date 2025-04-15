@@ -496,7 +496,7 @@ class ContainerPath:
         self,
         data: bytes | bytearray | memoryview,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -508,7 +508,9 @@ class ContainerPath:
         Args:
             data: The bytes to write. If data is a :class:`bytearray` or :class:`memoryview`, it
                 will be converted to :class:`bytes` in memory first.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, its permissions will be changed,
+                unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file.
                 If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory.
@@ -526,13 +528,17 @@ class ContainerPath:
         if isinstance(data, (bytearray, memoryview)):
             # TODO: update ops to correctly test for bytearray and memoryview in push
             data = bytes(data)
-        if user is None:
+        if mode is None or user is None:
+            # if the file already exists, don't change owner or mode unless explicitly requested
             try:
                 info = _fileinfo.from_container_path(self)
             except FileNotFoundError:
                 pass
             else:
-                user = info.user
+                if mode is None:
+                    mode = info.permissions
+                if user is None:
+                    user = info.user
         try:
             self._container.push(
                 path=self._path,
@@ -555,7 +561,7 @@ class ContainerPath:
         self,
         data: str,
         *,
-        mode: int = _constants.DEFAULT_WRITE_MODE,
+        mode: int | None = None,
         user: str | None = None,
         group: str | None = None,
     ) -> int:
@@ -568,7 +574,9 @@ class ContainerPath:
         Args:
             data: The string to write. Will be encoded to :class:`bytes` in memory as UTF-8,
                 raising any errors. Newlines are not modified on writing.
-            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, its permissions will be changed,
+                unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file.
                 If ``group`` isn't provided, the user's default group is used.
             group: The name of the group to set for the directory.
