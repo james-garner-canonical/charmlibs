@@ -184,7 +184,7 @@ def test_write_methods_chmod(
     elif exists_with_mode is not None:
         assert local_dict['permissions'] == exists_with_mode
     else:
-        assert local_dict['permissions'] == DEFAULT_WRITE_MODE
+        assert local_dict['permissions'] == _constants.DEFAULT_WRITE_MODE
 
 
 @pytest.mark.parametrize('mode_str', [*ALL_MODES, None])
