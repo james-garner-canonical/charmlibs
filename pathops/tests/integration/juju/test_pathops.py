@@ -88,6 +88,6 @@ def test_chown(
         expected_group = 'temp-user'
         assert (result.results['user'], result.results['group']) == (expected_user, expected_group)
     else:
-        expected_user = user if user is not None else 'root'
+        expected_user = user if user is not None else 'temp-user'
         expected_group = group if group is not None else expected_user
         assert (result.results['user'], result.results['group']) == (expected_user, expected_group)
