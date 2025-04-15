@@ -83,11 +83,18 @@ def test_chown(
             assert msg.startswith('LookupError')
             return
         raise
-    if already_exists and method == 'mkdir':
-        expected_user = 'temp-user'
-        expected_group = 'temp-user'
-        assert (result.results['user'], result.results['group']) == (expected_user, expected_group)
-    else:
-        expected_user = user if user is not None else 'temp-user'
+    user_result = result.results['user']
+    group_result = result.results['group']
+    if already_exists:
+        if method == 'mkdir':
+            expected_user = 'temp-user'
+            expected_group = 'temp-user'
+            assert (user_result, group_result) == (expected_user, expected_group)
+        else:  # write_{bytes,text}
+            expected_user = user if user is not None else 'temp-user'
+            expected_group = group if group is not None else expected_user
+            assert (user_result, group_result) == (expected_user, expected_group)
+    else:  # not already_exists
+        expected_user = user if user is not None else 'root'
         expected_group = group if group is not None else expected_user
         assert (result.results['user'], result.results['group']) == (expected_user, expected_group)
