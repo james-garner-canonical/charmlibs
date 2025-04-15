@@ -179,6 +179,7 @@ class LocalPath(pathlib.PosixPath):
         Args:
             mode: The permissions to set on the created directory. Any parents created will have
                 their permissions set to the default value of 0o755 (drwxr-xr-x).
+                The permissions are not changed if the directory already exists.
             parents: Whether to create any missing parent directories as well. If ``False``
                 (default) and a parent directory does not exist, a :class:`FileNotFound` error will
                 be raised.
@@ -187,8 +188,10 @@ class LocalPath(pathlib.PosixPath):
                 a :class:`FileExistsError` will be raised.
             user: The name of the user to set for the directory using :func:`shutil.chown`.
                 Validated to be an existing user before writing.
+                The user and group are not changed if the directory already exists.
             group: The name of the group to set for the directory using :func:`shutil.chown`.
                 Validated to be an existing group before writing.
+                The user and group are not changed if the directory already exists.
 
         Raises:
             FileExistsError: if the directory already exists and ``exist_ok`` is ``False``.
