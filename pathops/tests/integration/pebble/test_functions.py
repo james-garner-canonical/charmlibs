@@ -129,6 +129,16 @@ class TestRemovePath:
         with pytest.raises(FileNotFoundError):
             remove_path(container_path)
 
+    def test_missing_file_ok_w_recursive(self, tmp_path: pathlib.Path, container: ops.Container):
+        path = tmp_path / 'file'
+        assert not path.exists()
+        # local
+        local_path = LocalPath(path)
+        remove_path(local_path, recursive=True)
+        # container
+        container_path = ContainerPath(path, container=container)
+        remove_path(container_path, recursive=True)
+
 
 @pytest.mark.parametrize('exists', [True, False])
 @pytest.mark.parametrize('mode', [_constants.DEFAULT_WRITE_MODE, 0o600])
