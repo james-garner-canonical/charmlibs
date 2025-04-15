@@ -337,24 +337,24 @@ class ContainerPathMethod(typing.Protocol):
 @pytest.mark.parametrize(
     ('containerpath_method', 'container_method', 'args', 'kwargs'),
     (
-        (ContainerPath.read_bytes, 'pull', (), {}),
-        (ContainerPath.read_text, 'pull', (), {}),
-        (ContainerPath.write_bytes, 'list_files', (b'',), {}),
+        (ContainerPath.read_bytes, 'pull', [], {}),
+        (ContainerPath.read_text, 'pull', [], {}),
+        (ContainerPath.write_bytes, 'list_files', [b''], {}),
         (
             ContainerPath.write_bytes,
             'push',
-            (b'',),
+            [b''],
             {'mode': _constants.DEFAULT_WRITE_MODE, 'user': ''},
         ),
-        (ContainerPath.write_text, 'list_files', ('',), {}),
+        (ContainerPath.write_text, 'list_files', [''], {}),
         (
             ContainerPath.write_text,
             'push',
-            ('',),
+            [''],
             {'mode': _constants.DEFAULT_WRITE_MODE, 'user': ''},
         ),
-        (ContainerPath.mkdir, 'make_dir', (), {}),
-        (_functions.remove_path, 'remove_path', (), {}),
+        (ContainerPath.mkdir, 'make_dir', [], {}),
+        (_functions.remove_path, 'remove_path', [], {}),
     ),
 )
 @pytest.mark.parametrize(
