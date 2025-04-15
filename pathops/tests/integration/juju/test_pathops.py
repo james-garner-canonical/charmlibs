@@ -70,7 +70,7 @@ def test_chown(
         'method': method,
         'user': user or '',
         'group': group or '',
-        'already-exists': already_exists
+        'already-exists': already_exists,
     }
     try:
         result = juju.run(f'{charm}/0', 'chown', params=params)
