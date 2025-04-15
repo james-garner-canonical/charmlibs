@@ -60,8 +60,9 @@ class LocalPath(pathlib.PosixPath):
         Args:
             data: The bytes to write, typically a :class:`bytes` object, but may also be a
                 :class:`bytearray` or :class:`memoryview`.
-            mode: The permissions to set on the file using :meth:`pathlib.PosixPath.chmod`.
-                Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, it's permissions will be changed, using
+                :meth:`pathlib.PosixPath.chmod`, unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file using :func:`shutil.chown`.
                 Validated to be an existing user before writing.
             group: The name of the group to set for the file using :func:`shutil.chown`.
@@ -119,8 +120,9 @@ class LocalPath(pathlib.PosixPath):
             newline: If ``None``, ``''``, or ``'\n'``, then '\n' will be written as is.
                 This is the default behaviour. If ``newline`` is ``'\r'`` or ``'\r\n'``,
                 then ``'\n'`` will be replaced with ``newline`` in memory before writing.
-            mode: The permissions to set on the file using :meth:`pathlib.PosixPath.chmod`.
-                Defaults to 0o644 (-rw-r--r--).
+            mode: The permissions to set on the file. Defaults to 0o644 (-rw-r--r--) for new files.
+                If the file already exists, it's permissions will be changed, using
+                :meth:`pathlib.PosixPath.chmod`, unless ``mode`` is ``None`` (default).
             user: The name of the user to set for the file using :func:`shutil.chown`.
                 Validated to be an existing user before writing.
             group: The name of the group to set for the file using :func:`shutil.chown`.
