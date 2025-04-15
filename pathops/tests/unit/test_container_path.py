@@ -335,7 +335,7 @@ class ContainerPathMethod(typing.Protocol):
 
 
 @pytest.mark.parametrize(
-    ('path_method', 'container_method', 'args', 'kwargs'),
+    ('containerpath_method', 'container_method', 'args', 'kwargs'),
     (
         (ContainerPath.read_bytes, 'pull', (), {}),
         (ContainerPath.read_text, 'pull', (), {}),
