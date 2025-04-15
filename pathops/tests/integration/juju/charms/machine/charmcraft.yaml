@@ -33,3 +33,6 @@ actions:
         type: string
       group:
         type: string
+      already-exists:
+        type: boolean
+        default: false
