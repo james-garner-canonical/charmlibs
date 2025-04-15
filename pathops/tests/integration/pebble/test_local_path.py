@@ -26,7 +26,6 @@ import pytest
 
 import utils
 from charmlibs.pathops import ContainerPath, LocalPath, _constants
-from charmlibs.pathops._constants import DEFAULT_WRITE_MODE
 from charmlibs.pathops._functions import _get_fileinfo
 
 if typing.TYPE_CHECKING:
@@ -137,7 +136,8 @@ class TestChown:
 @pytest.mark.parametrize(('method', 'data'), [('write_bytes', b'bytes'), ('write_text', 'text')])
 @pytest.mark.parametrize('mode_str', [None, *ALL_MODES])
 @pytest.mark.parametrize(
-    'exists_with_mode', [None, DEFAULT_WRITE_MODE, DEFAULT_WRITE_MODE | stat.S_IXOTH]
+    'exists_with_mode',
+    (None, _constants.DEFAULT_WRITE_MODE, _constants.DEFAULT_WRITE_MODE | stat.S_IXOTH),
 )
 def test_write_methods_chmod(
     container: ops.Container,
