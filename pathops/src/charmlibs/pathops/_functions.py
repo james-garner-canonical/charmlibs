@@ -20,7 +20,9 @@ import pathlib
 import shutil
 import typing
 
-from . import _constants, _fileinfo
+from ops import pebble
+
+from . import _constants, _errors, _fileinfo
 from ._container_path import ContainerPath
 from ._local_path import LocalPath
 
@@ -28,7 +30,6 @@ if typing.TYPE_CHECKING:
     import os
     from typing import BinaryIO, TextIO
 
-    from ops import pebble
     from typing_extensions import TypeIs
 
     from ._types import PathProtocol
@@ -111,7 +112,13 @@ def remove_path(path: str | os.PathLike[str] | PathProtocol, *, recursive: bool 
 
 
 def _remove_container_path(path: ContainerPath, recursive: bool) -> None:
-    path._container.remove_path(path._path, recursive=recursive)
+    try:
+        path._container.remove_path(path._path, recursive=recursive)
+    except pebble.PathError as e:
+        msg = repr(path)
+        _errors.raise_if_matches_file_not_found(e, msg=msg)
+        _errors.raise_if_matches_permission(e, msg=msg)
+        raise
 
 
 def _remove_pathlib_path(path: pathlib.Path, recursive: bool) -> None:
