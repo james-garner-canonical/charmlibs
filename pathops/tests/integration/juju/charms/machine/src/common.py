@@ -113,7 +113,6 @@ class Charm(ops.CharmBase):
             tb = traceback.format_exc()
             msg = f'Exception: {e!r}\n{tb}'
             event.fail(msg)
-            logger.error('chown action failed: %s', msg)
         finally:
             self.remove_path(path)
             self.remove_user(temp_user)
