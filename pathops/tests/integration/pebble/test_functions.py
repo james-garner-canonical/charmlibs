@@ -117,6 +117,18 @@ class TestRemovePath:
         assert contents.exists()
         assert path.exists()
 
+    def test_missing_file_not_ok(self, tmp_path: pathlib.Path, container: ops.Container):
+        path = tmp_path / 'file'
+        assert not path.exists()
+        # local
+        local_path = LocalPath(path)
+        with pytest.raises(FileNotFoundError):
+            remove_path(local_path)
+        # container
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(FileNotFoundError):
+            remove_path(container_path)
+
 
 @pytest.mark.parametrize('exists', [True, False])
 @pytest.mark.parametrize('mode', [_constants.DEFAULT_WRITE_MODE, 0o600])
