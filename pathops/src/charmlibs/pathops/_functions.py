@@ -116,6 +116,7 @@ def _remove_container_path(path: ContainerPath, recursive: bool) -> None:
         path._container.remove_path(path._path, recursive=recursive)
     except pebble.PathError as e:
         msg = repr(path)
+        _errors.raise_if_matches_directory_not_empty(e, msg=msg)
         _errors.raise_if_matches_file_not_found(e, msg=msg)
         _errors.raise_if_matches_permission(e, msg=msg)
         raise
