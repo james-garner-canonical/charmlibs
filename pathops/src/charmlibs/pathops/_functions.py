@@ -123,6 +123,8 @@ def _remove_container_path(path: ContainerPath, recursive: bool) -> None:
 
 
 def _remove_pathlib_path(path: pathlib.Path, recursive: bool) -> None:
+    if recursive and not path.exists():
+        return
     if not path.is_dir():
         return path.unlink()
     if not recursive:
