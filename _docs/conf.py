@@ -266,7 +266,7 @@ extensions = [
 intersphinx_mapping = {
     'ops': ('https://ops.readthedocs.io/en/latest', None),
     'python': ('https://docs.python.org/3', None),
-    'juju': ('https://documentation.ubuntu.com/juju/latest', None),
+    'juju': ('https://documentation.ubuntu.com/juju/3.6', None),
     'charmcraft': ('https://canonical-charmcraft.readthedocs-hosted.com/en/latest', None),
 }
 
