@@ -349,15 +349,33 @@ class PathProtocol(typing.Protocol):
         ...
 
     def is_symlink(self) -> bool:
-        # TODO: docstring
+        """Whether this path is a symbolic link.
+
+        Raises:
+            PebbleConnectionError: If the remote container cannot be reached.
+        """
         ...
 
     def rmdir(self) -> None:
-        # TODO: docstring
+        """Remove this path if it is an empty directory.
+
+        Raises:
+            FileNotFoundError: if the path does not exist.
+            NotADirectoryError: if the path exists but is not a directory.
+            PermissionError: if the local or remote user does not have the appropriate permissions.
+            PebbleConnectionError: if the remote Pebble client cannot be reached.
+        """
         ...
 
     def unlink(self) -> None:
-        # TODO: docstring
+        """Remove this path if it is an empty directory.
+
+        Raises:
+            FileNotFoundError: if the path does not exist.
+            IsADirectoryError: if the path exists but is a directory.
+            PermissionError: if the local or remote user does not have the appropriate permissions.
+            PebbleConnectionError: if the remote Pebble client cannot be reached.
+        """
         ...
 
     ##################################################
