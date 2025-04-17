@@ -69,7 +69,6 @@ def _get_fileinfo_from_parent(path: ContainerPath) -> pebble.FileInfo:
         msg = repr(path)
         _errors.raise_if_matches_file_not_found(e, msg=msg)
         _errors.raise_if_matches_permission(e, msg=msg)
-        _errors.raise_if_matches_too_many_levels_of_symlinks(e, msg=msg)
         raise
     if not info_list:
         _errors.raise_file_not_found(repr(path))
