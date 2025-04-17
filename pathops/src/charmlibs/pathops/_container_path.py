@@ -470,7 +470,11 @@ class ContainerPath:
         return self._exists_and_matches(pebble.FileType.SOCKET)
 
     def is_symlink(self) -> bool:
-        # TODO: docstring
+        """Whether this path is a symbolic link.
+
+        Raises:
+            PebbleConnectionError: If the remote container cannot be reached.
+        """
         try:
             info = _fileinfo.from_container_path(self, follow_symlinks=False)
         except FileNotFoundError:
@@ -497,14 +501,28 @@ class ContainerPath:
         return None
 
     def rmdir(self) -> None:
-        # TODO: docstring
+        """Remove this path if it is an empty directory.
+
+        Raises:
+            FileNotFoundError: if the path does not exist.
+            NotADirectoryError: if the path exists but is not a directory.
+            PermissionError: if the Pebble user does not have permissions for the operation.
+            PebbleConnectionError: if the remote Pebble client cannot be reached.
+        """
         info = _fileinfo.from_container_path(self, follow_symlinks=False)
         if info.type != pebble.FileType.DIRECTORY:
             _errors.raise_not_a_directory(repr(self))
         self._remove_path()
 
     def unlink(self) -> None:
-        # TODO: docstring
+        """Remove this path if it is not a directory.
+
+        Raises:
+            FileNotFoundError: if the path does not exist.
+            IsADirectoryError: if the path exists but is a directory.
+            PermissionError: if the Pebble user does not have permissions for the operation.
+            PebbleConnectionError: if the remote Pebble client cannot be reached.
+        """
         info = _fileinfo.from_container_path(self, follow_symlinks=False)
         if info.type == pebble.FileType.DIRECTORY:
             _errors.raise_is_a_directory(repr(self))
