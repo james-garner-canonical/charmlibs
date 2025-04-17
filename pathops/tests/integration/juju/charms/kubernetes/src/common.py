@@ -114,7 +114,7 @@ class Charm(ops.CharmBase):
         finally:
             if path.is_dir() and not path.is_symlink():
                 path.rmdir()
-            else:
+            elif path.exists():
                 path.unlink()
             self.remove_user(temp_user)
 
