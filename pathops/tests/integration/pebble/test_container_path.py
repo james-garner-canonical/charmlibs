@@ -319,6 +319,15 @@ def test_is_socket(container: ops.Container, session_dir: pathlib.Path, filename
     assert container_result == pathlib_result
 
 
+@pytest.mark.parametrize('filename', utils.FILENAMES_PLUS)
+def test_is_symlink(container: ops.Container, session_dir: pathlib.Path, filename: str):
+    pathlib_path = session_dir / filename
+    container_path = ContainerPath(session_dir, filename, container=container)
+    pathlib_result = pathlib_path.is_symlink()
+    container_result = container_path.is_symlink()
+    assert container_result == pathlib_result
+
+
 class TestRmDir:
     def test_ok(self, container: ops.Container, tmp_path: pathlib.Path):
         path = tmp_path / 'directory'

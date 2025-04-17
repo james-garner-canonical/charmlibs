@@ -469,6 +469,13 @@ class ContainerPath:
         """
         return self._exists_and_matches(pebble.FileType.SOCKET)
 
+    def is_symlink(self) -> bool:
+        try:
+            info = _fileinfo.from_container_path(self, follow_symlinks=False)
+        except FileNotFoundError:
+            return False
+        return info.type == pebble.FileType.SYMLINK
+
     def _exists_and_matches(self, filetype: pebble.FileType | None) -> bool:
         info = self._try_get_fileinfo()
         if info is None:

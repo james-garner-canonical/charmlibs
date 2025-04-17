@@ -328,6 +328,7 @@ def test_exists_reraises_unhandled_os_error(
     (
         ('read_bytes', 'pull', (), {}),
         ('read_text', 'pull', (), {}),
+        ('is_symlink', 'list_files', (), {}),
         ('rmdir', 'list_files', (), {}),
         ('unlink', 'list_files', (), {}),
         ('_remove_path', 'remove_path', (), {}),
@@ -374,7 +375,6 @@ def test_methods_handle_or_reraise_pebble_errors(
         'stat',
         'lstat',
         'is_mount',
-        'is_symlink',
         'is_block_device',
         'is_char_device',
         'chmod',
