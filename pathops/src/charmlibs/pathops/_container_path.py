@@ -470,7 +470,7 @@ class ContainerPath:
         return self._exists_and_matches(pebble.FileType.SOCKET)
 
     def is_symlink(self) -> bool:
-        #TODO: docstring
+        # TODO: docstring
         try:
             info = _fileinfo.from_container_path(self, follow_symlinks=False)
         except FileNotFoundError:
@@ -497,14 +497,14 @@ class ContainerPath:
         return None
 
     def rmdir(self) -> None:
-        #TODO: docstring
+        # TODO: docstring
         info = _fileinfo.from_container_path(self, follow_symlinks=False)
         if info.type != pebble.FileType.DIRECTORY:
             _errors.raise_not_a_directory(repr(self))
         self._remove_path()
 
     def unlink(self) -> None:
-        #TODO: docstring
+        # TODO: docstring
         info = _fileinfo.from_container_path(self, follow_symlinks=False)
         if info.type == pebble.FileType.DIRECTORY:
             _errors.raise_is_a_directory(repr(self))
