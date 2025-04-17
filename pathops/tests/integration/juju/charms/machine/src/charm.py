@@ -48,16 +48,6 @@ class Charm(common.Charm):
         """Handle start event."""
         self.unit.status = ops.ActiveStatus()
 
-    def remove_path(self, path: pathops.PathProtocol, recursive: bool = False) -> None:
-        assert isinstance(path, pathops.LocalPath)
-        if not path.exists():
-            return
-        if not path.is_dir():
-            return path.unlink()
-        if not recursive:
-            return path.rmdir()
-        shutil.rmtree(path)
-
     def exec(self, cmd: Sequence[str]) -> int:
         process = subprocess.run(cmd)
         return process.returncode
