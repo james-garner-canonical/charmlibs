@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import errno
 import pathlib
 import sys
 import typing
@@ -316,6 +317,56 @@ def test_is_socket(container: ops.Container, session_dir: pathlib.Path, filename
     pathlib_result = pathlib_path.is_socket()
     container_result = container_path.is_socket()
     assert container_result == pathlib_result
+
+
+class TestRmDir:
+    def test_ok(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'directory'
+        path.mkdir()
+        container_path = ContainerPath(path, container=container)
+        container_path.rmdir()
+        assert not path.exists()
+
+    def test_doesnt_exist(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'directory'
+        assert not path.exists()
+        with pytest.raises(FileNotFoundError):
+            path.rmdir()
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(FileNotFoundError):
+            container_path.rmdir()
+
+    def test_file(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'file'
+        path.touch()
+        with pytest.raises(NotADirectoryError):
+            path.rmdir()
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(NotADirectoryError):
+            container_path.rmdir()
+
+    def test_symlink_to_directory(self, container: ops.Container, tmp_path: pathlib.Path):
+        directory = tmp_path / 'directory'
+        directory.mkdir()
+        symlink = tmp_path / 'symlink'
+        symlink.symlink_to(directory)
+        with pytest.raises(NotADirectoryError):
+            symlink.rmdir()
+        container_path = ContainerPath(symlink, container=container)
+        with pytest.raises(NotADirectoryError):
+            container_path.rmdir()
+
+    def test_not_empty(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'directory'
+        path.mkdir()
+        (path / 'file').touch()
+        with pytest.raises(OSError) as ctx:
+            path.rmdir()
+        assert ctx.value.errno == errno.ENOTEMPTY
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(OSError) as ctx:
+            container_path.rmdir()
+        assert ctx.value.errno == errno.ENOTEMPTY
 
 
 class TestWriteBytes:

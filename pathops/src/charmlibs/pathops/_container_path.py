@@ -488,6 +488,22 @@ class ContainerPath:
             # else: too many levels of symbolic links
         return None
 
+    def rmdir(self) -> None:
+        info = _fileinfo.from_container_path(self, follow_symlinks=False)
+        if info.type != pebble.FileType.DIRECTORY:
+            _errors.raise_not_a_directory(repr(self))
+        self._remove_path()
+
+    def _remove_path(self) -> None:
+        try:
+            self._container.remove_path(self._path)
+        except pebble.PathError as e:
+            msg = repr(self)
+            _errors.raise_if_matches_directory_not_empty(e, msg=msg)
+            _errors.raise_if_matches_file_not_found(e, msg=msg)
+            _errors.raise_if_matches_permission(e, msg=msg)
+            raise
+
     ##################################################
     # protocol Path methods with extended signatures #
     ##################################################

@@ -328,6 +328,8 @@ def test_exists_reraises_unhandled_os_error(
     (
         ('read_bytes', 'pull', (), {}),
         ('read_text', 'pull', (), {}),
+        ('rmdir', 'list_files', (), {}),
+        ('_remove_path', 'remove_path', (), {}),
         ('write_bytes', 'list_files', (b'',), {}),
         ('write_bytes', 'push', (b'',), {'mode': _constants.DEFAULT_WRITE_MODE, 'user': ''}),
         ('write_text', 'list_files', ('',), {}),
@@ -367,7 +369,6 @@ def test_methods_handle_or_reraise_pebble_errors(
         '__bytes__',
         'as_uri',
         'relative_to',
-        'rmdir',
         'unlink',
         'rglob',
         'stat',
