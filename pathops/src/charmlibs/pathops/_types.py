@@ -348,6 +348,18 @@ class PathProtocol(typing.Protocol):
         """
         ...
 
+    def is_symlink(self) -> bool:
+        # TODO: docstring
+        ...
+
+    def rmdir(self) -> None:
+        # TODO: docstring
+        ...
+
+    def unlink(self) -> None:
+        # TODO: docstring
+        ...
+
     ##################################################
     # protocol Path methods with extended signatures #
     ##################################################
