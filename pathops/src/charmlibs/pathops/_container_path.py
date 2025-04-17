@@ -494,6 +494,12 @@ class ContainerPath:
             _errors.raise_not_a_directory(repr(self))
         self._remove_path()
 
+    def unlink(self) -> None:
+        info = _fileinfo.from_container_path(self, follow_symlinks=False)
+        if info.type == pebble.FileType.DIRECTORY:
+            _errors.raise_is_a_directory(repr(self))
+        self._remove_path()
+
     def _remove_path(self) -> None:
         try:
             self._container.remove_path(self._path)

@@ -369,6 +369,49 @@ class TestRmDir:
         assert ctx.value.errno == errno.ENOTEMPTY
 
 
+class TestUnlink:
+    def test_ok(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'file'
+        path.touch()
+        container_path = ContainerPath(path, container=container)
+        container_path.unlink()
+        assert not path.exists()
+
+    def test_symlink_to_directory(self, container: ops.Container, tmp_path: pathlib.Path):
+        directory = tmp_path / 'directory'
+        directory.mkdir()
+        symlink = tmp_path / 'symlink'
+        # local
+        symlink.symlink_to(directory)
+        symlink.unlink()
+        assert not symlink.exists()
+        assert directory.exists()
+        # container
+        symlink.symlink_to(directory)
+        container_path = ContainerPath(symlink, container=container)
+        container_path.unlink()
+        assert not symlink.exists()
+        assert directory.exists()
+
+    def test_doesnt_exist(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'file'
+        assert not path.exists()
+        with pytest.raises(FileNotFoundError):
+            path.unlink()
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(FileNotFoundError):
+            container_path.unlink()
+
+    def test_directory(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'directory'
+        path.mkdir()
+        with pytest.raises(IsADirectoryError):
+            path.unlink()
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(IsADirectoryError):
+            container_path.unlink()
+
+
 class TestWriteBytes:
     @pytest.mark.parametrize(('filename', 'contents'), tuple(utils.BINARY_FILES.items()))
     def test_ok(
