@@ -43,9 +43,15 @@ _FT_MAP: dict[int, pebble.FileType] = {
 }
 
 
-def from_container_path(path: ContainerPath) -> pebble.FileInfo:
+def from_container_path(path: ContainerPath, follow_symlinks: bool = True) -> pebble.FileInfo:
+    if follow_symlinks:
+        return _get_fileinfo_directly(path)
+    return _get_fileinfo_from_parent(path)
+
+
+def _get_fileinfo_directly(path: ContainerPath) -> pebble.FileInfo:
     try:
-        (info,) = path._container.list_files(path._path, itself=True)
+        info_list = path._container.list_files(path._path, itself=True)
     except (pebble.APIError, pebble.PathError) as e:
         msg = repr(path)
         _errors.raise_if_matches_file_not_found(e, msg=msg)
@@ -53,11 +59,26 @@ def from_container_path(path: ContainerPath) -> pebble.FileInfo:
         _errors.raise_if_matches_permission(e, msg=msg)
         _errors.raise_if_matches_too_many_levels_of_symlinks(e, msg=msg)
         raise
-    return info
+    assert len(info_list) == 1, 'ops.Container.list_files with itself=True returns 1 item'
+    return info_list[0]
 
 
-def from_pathlib_path(path: pathlib.Path) -> pebble.FileInfo:
-    stat_result = path.stat()  # stat because pebble always follows symlinks
+def _get_fileinfo_from_parent(path: ContainerPath) -> pebble.FileInfo:
+    try:
+        info_list = path._container.list_files(path._path.parent, pattern=path.name)
+    except (pebble.APIError, pebble.PathError) as e:
+        msg = repr(path)
+        _errors.raise_if_matches_file_not_found(e, msg=msg)
+        _errors.raise_if_matches_permission(e, msg=msg)
+        raise
+    if not info_list:
+        _errors.raise_file_not_found(repr(path))
+    assert len(info_list) == 1, 'ops.Container.list_files with non-* pattern should return 1 item'
+    return info_list[0]
+
+
+def from_pathlib_path(path: pathlib.Path, follow_symlinks: bool = True) -> pebble.FileInfo:
+    stat_result = path.stat() if follow_symlinks else path.lstat()
     utcoffset = datetime.datetime.now().astimezone().utcoffset()
     timezone = datetime.timezone(utcoffset) if utcoffset is not None else datetime.timezone.utc
     filetype = _FT_MAP.get(stat.S_IFMT(stat_result.st_mode), pebble.FileType.UNKNOWN)
