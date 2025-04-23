@@ -11,7 +11,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Intended Audience :: Developers",
     "Operating System :: POSIX :: Linux",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
 ]
 dynamic = ["version"]
 dependencies = [
