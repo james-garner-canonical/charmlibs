@@ -59,7 +59,7 @@ def _get_fileinfo_directly(path: ContainerPath) -> pebble.FileInfo:
         _errors.raise_if_matches_permission(e, msg=msg)
         _errors.raise_if_matches_too_many_levels_of_symlinks(e, msg=msg)
         raise
-    assert len(info_list) == 1, "ops.Container.list_files with itself=True returns 1 item"
+    assert len(info_list) == 1, 'ops.Container.list_files with itself=True returns 1 item'
     return info_list[0]
 
 
@@ -73,7 +73,7 @@ def _get_fileinfo_from_parent(path: ContainerPath) -> pebble.FileInfo:
         raise
     if not info_list:
         _errors.raise_file_not_found(repr(path))
-    assert len(info_list) == 1, "ops.Container.list_files with non-* pattern should return 1 item"
+    assert len(info_list) == 1, 'ops.Container.list_files with non-* pattern should return 1 item'
     return info_list[0]
 
 
