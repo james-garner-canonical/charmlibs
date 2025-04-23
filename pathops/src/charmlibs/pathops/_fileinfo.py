@@ -51,7 +51,7 @@ def from_container_path(path: ContainerPath, follow_symlinks: bool = True) -> pe
 
 def _get_fileinfo_directly(path: ContainerPath) -> pebble.FileInfo:
     try:
-        (info,) = path._container.list_files(path._path, itself=True)
+        info_list = path._container.list_files(path._path, itself=True)
     except (pebble.APIError, pebble.PathError) as e:
         msg = repr(path)
         _errors.raise_if_matches_file_not_found(e, msg=msg)
@@ -59,7 +59,8 @@ def _get_fileinfo_directly(path: ContainerPath) -> pebble.FileInfo:
         _errors.raise_if_matches_permission(e, msg=msg)
         _errors.raise_if_matches_too_many_levels_of_symlinks(e, msg=msg)
         raise
-    return info
+    assert len(info_list) == 1
+    return info_list[0]
 
 
 def _get_fileinfo_from_parent(path: ContainerPath) -> pebble.FileInfo:
@@ -72,8 +73,8 @@ def _get_fileinfo_from_parent(path: ContainerPath) -> pebble.FileInfo:
         raise
     if not info_list:
         _errors.raise_file_not_found(repr(path))
-    (info,) = info_list
-    return info
+    assert len(info_list) == 1
+    return info_list[0]
 
 
 def from_pathlib_path(path: pathlib.Path, follow_symlinks: bool = True) -> pebble.FileInfo:
