@@ -129,7 +129,7 @@ jobs:
       fail-fast: false
       matrix:
         package: ${{ fromJson(needs.packages.outputs.juju) }}
-        base: ['24.04']
+        base: ['20.04', '24.04']
         substrate: ['k8s', 'vm']
     steps:
       - uses: actions/checkout@v4
