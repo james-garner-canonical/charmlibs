@@ -4,12 +4,13 @@
 set -xueo pipefail
 
 CHARMDIR="$1"  # machine or kubernetes
-shift 1  # we'll pass the remaining args to charmcraft pack
+BASE="$2"  # 20.04, 24.04, etc
 
 
 TMPDIR=".$CHARMDIR"
 rm -rf "$TMPDIR"
 cp --recursive "$CHARMDIR" "$TMPDIR"
+mv "$TMPDIR"/"$BASE"-charmcraft.yaml "$TMPDIR"/charmcraft.yaml
 
 mkdir "$TMPDIR/pathops"
 cp -r ../../../../pyproject.toml "$TMPDIR/pathops/"
@@ -17,7 +18,7 @@ cp -r ../../../../src "$TMPDIR/pathops/"
 
 cd "$TMPDIR"
 uv lock  # required by uv charm plugin
-charmcraft pack "$@"
+charmcraft pack
 cd -
 
 mkdir -p .packed

@@ -87,17 +87,17 @@ combine-coverage package:
     uv run coverage report --data-file="$DATA_FILE"
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
-pack-k8s package *charmcraft_args: (_pack package 'kubernetes' charmcraft_args)
+pack-k8s package base='24.04': (_pack package 'kubernetes' base)
 
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
-pack-vm package *charmcraft_args: (_pack package 'machine' charmcraft_args)
+pack-vm package base='24.04': (_pack package 'machine' base)
 
 [doc("Execute the pack script for the given package and substrate.")]
-_pack package substrate *charmcraft_args:
+_pack package substrate base='24.04':
     #!/usr/bin/env bash
     set -xueo pipefail
     cd '{{package}}/tests/integration/juju/charms'
-    ./pack.sh {{substrate}} {{charmcraft_args}}
+    ./pack.sh {{substrate}} {{base}}
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
 juju-k8s package +flags='-rA': (_juju package 'kubernetes' flags)
