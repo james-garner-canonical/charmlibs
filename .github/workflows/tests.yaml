@@ -112,7 +112,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        juju: ['3/stable', '4/edge']
+        juju: ['3.6/stable', '4.0/edge']
         substrate: ['k8s', 'vm']
     steps:
       - uses: actions/checkout@v4
