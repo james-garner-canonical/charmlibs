@@ -51,7 +51,7 @@ pebble package +flags='-rA':
     exit $EXITCODE
 
 [doc("Use uv to install and run coverage for the specified package's tests.")]
-_coverage package test_subdir +flags='-rA':
+_coverage package test_subdir +flags:
     #!/usr/bin/env bash
     set -xueo pipefail
     uv sync --python='{{python}}'
@@ -93,7 +93,7 @@ pack-k8s package base='24.04': (_pack package 'kubernetes' base)
 pack-vm package base='24.04': (_pack package 'machine' base)
 
 [doc("Execute the pack script for the given package and substrate.")]
-_pack package substrate base='24.04':
+_pack package substrate base:
     #!/usr/bin/env bash
     set -xueo pipefail
     cd '{{package}}/tests/integration/juju/charms'
@@ -106,7 +106,7 @@ juju-k8s package +flags='-rA': (_juju package 'kubernetes' flags)
 juju-vm package +flags='-rA': (_juju package 'machine' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-_juju package substrate +flags='-rA':
+_juju package substrate +flags:
     #!/usr/bin/env bash
     set -xueo pipefail
     uv sync --python='{{python}}'
