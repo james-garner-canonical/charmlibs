@@ -10,6 +10,8 @@ from charmlibs import pathops
 
 Check out the reference docs [here](https://canonical-charmlibs.readthedocs-hosted.com/reference/pathops/).
 
+# Getting started
+
 To get started, consider creating an attribute with the root directory for the local or remote paths you'll be working with.
 
 ```py
@@ -77,10 +79,10 @@ class KubernetesCharm(ops.CharmBase):
             source=(self.charm_root / 'foo/bar').read_bytes(),
         )
         if changed:
-            # e.g. make workload reload config
+            # e.g. make the workload reload its configuration
             ...
 ```
 
 `pathops.PathProtocol` provides a subset of the `pathlib.Path` API -- relative paths, hardlink and symlink manipulation, and `open` are unsupported.
 
-A separate `chmod` method is also unsupported, as Pebble does not currently support this. `mkdir`, `write_bytes` and `write_text` instead provide the arguments `mode`, `user`, and `group` to set directory or file permissions and ownership.
+A separate `chmod` method is also unsupported, as Pebble does not currently support this. `mkdir`, `write_bytes` and `write_text` instead provide the arguments `mode`, `user`, and `group` to set directory or file permissions and ownership. `ensure_contents` also supports these arguments.
