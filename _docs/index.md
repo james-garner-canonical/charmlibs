@@ -14,7 +14,7 @@ as well as general documentation about charm libraries.
 
 You can also read our {ref}`guidance on distributing charm libraries as Python packages <how-to-python-package>`.
 
-If you're new charms, see {ref}`Juju | Charm <juju:charm>`.
+If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
 ## Pathops
 
