@@ -28,8 +28,8 @@ def test_common_py():
 
 
 def test_charmcraft_yaml():
-    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes' / 'charmcraft.yaml'
-    m = pathlib.Path(__file__).parent / 'charms' / 'machine' / 'charmcraft.yaml'
+    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes' / '24.04-charmcraft.yaml'
+    m = pathlib.Path(__file__).parent / 'charms' / 'machine' / '24.04-charmcraft.yaml'
     with k.open() as f:
         ky = yaml.safe_load(f)
     with m.open() as f:
