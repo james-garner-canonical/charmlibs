@@ -7,7 +7,7 @@ bases:
   - name: ubuntu
     channel: '20.04'
     architectures:
-      amd64
+      - amd64
 
 parts:
   test-charm:
