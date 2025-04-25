@@ -16,6 +16,6 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
 ## Pathops
 
-Pathops is a Python package providing a {doc}`pathlib <python:library/pathlib>`-like interface for both local filesystem and Kubernetes workload container paths. Charms can use [ContainerPath](pathops.ContainerPath) to interact with files in the workload container, or [LocalPath](pathops.LocalPath) to interact with local files using the same API. Code designed to work for both cases can use [PathProtocol](pathops.PathProtocol) in type annotations.
+Pathops is a Python package that provides a {doc}`pathlib <python:library/pathlib>`-like interface for both local filesystem and Kubernetes workload container paths. Charms can use [ContainerPath](pathops.ContainerPath) to interact with files in the workload container, or [LocalPath](pathops.LocalPath) to interact with local files using the same API. Code designed to work for both cases can use [PathProtocol](pathops.PathProtocol) in type annotations.
 
 Pathops is [available on PyPI](https://pypi.org/project/charmlibs-pathops). Read the [Pathops reference documentation](pathops).

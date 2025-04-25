@@ -12,7 +12,7 @@ Check out the reference docs [here](https://canonical-charmlibs.readthedocs-host
 
 # Getting started
 
-To get started, consider creating an attribute with the root directory for the local or remote paths you'll be working with.
+To get started, you can create an attribute `self.root` with the root directory for the local or remote paths you'll be working with.
 
 ```py
 import ops
@@ -64,7 +64,7 @@ class KubernetesCharm(ops.CharmBase):
         dest.write_bytes(source.read_bytes())
 ```
 
-`pathops` also provides a helper function for ensuring that a file is present with some specified content, which returns whether changes were made.
+`pathops` also provides a helper function for ensuring that a file is present with specified content, which returns whether changes were made.
 
 ```py
 import ops
@@ -79,10 +79,10 @@ class KubernetesCharm(ops.CharmBase):
             source=(self.charm_root / 'foo/bar').read_bytes(),
         )
         if changed:
-            # e.g. make the workload reload its configuration
+            # make the workload reload its configuration
             ...
 ```
 
-`pathops.PathProtocol` provides a subset of the `pathlib.Path` API -- relative paths, hardlink and symlink manipulation, and `open` are unsupported.
+`pathops.PathProtocol` provides a subset of the `pathlib.Path` API. `PathProtocol` doesn't support relative paths, `open`, or manipulating hardlinks and symlinks.
 
-A separate `chmod` method is also unsupported, as Pebble does not currently support this. `mkdir`, `write_bytes` and `write_text` instead provide the arguments `mode`, `user`, and `group` to set directory or file permissions and ownership. `ensure_contents` also supports these arguments.
+`pathops` doesn't provide a separate `chmod` method, as Pebble doesn't currently support this. Instead, `mkdir`, `write_bytes`, and `write_text` have arguments `mode`, `user`, and `group` to set directory or file permissions and ownership. `ensure_contents` also has these arguments.
