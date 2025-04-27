@@ -1,4 +1,7 @@
 name: Tests
+# runs tests for specified package
+# always runs static tests
+# runs unit and integration tests if the package implements them
 
 on:
   workflow_call:

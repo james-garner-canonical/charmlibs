@@ -1,4 +1,7 @@
 name: CI
+# runs linting for whole repository, and:
+# on PR: runs tests for packages with changes (or all if global files are changed)
+# on push to main or on dipatch: runs tests for all packages
 
 on:
   push:
