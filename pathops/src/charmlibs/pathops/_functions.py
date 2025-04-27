@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import typing
 
@@ -24,7 +25,6 @@ from ._container_path import ContainerPath
 from ._local_path import LocalPath
 
 if typing.TYPE_CHECKING:
-    import os
     from typing import BinaryIO, TextIO
 
     from ops import pebble
@@ -84,7 +84,12 @@ def ensure_contents(
 
 
 def _is_str_pathlike(obj: object) -> TypeIs[str | os.PathLike[str]]:
-    return isinstance(obj, str) or hasattr(obj, '__fspath__')
+    try:
+        # os.fspath returns str | bytes unmodified, or calls obj.__fspath__()
+        fspath = os.fspath(obj)  # type: ignore
+    except TypeError:
+        return False
+    return isinstance(fspath, str)
 
 
 def _get_fileinfo(
