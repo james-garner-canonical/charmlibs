@@ -18,7 +18,10 @@ from __future__ import annotations
 
 import pathlib
 
+import pytest
 import yaml
+
+BASES = ['20.04', '24.04']
 
 
 def test_common_py():
@@ -27,9 +30,20 @@ def test_common_py():
     assert k.read_text() == m.read_text()
 
 
-def test_charmcraft_yaml():
-    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes' / 'charmcraft.yaml'
-    m = pathlib.Path(__file__).parent / 'charms' / 'machine' / 'charmcraft.yaml'
+def test_bases():
+    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes'
+    m = pathlib.Path(__file__).parent / 'charms' / 'machine'
+    kb = sorted(p.name for p in k.glob('*-charmcraft.yaml'))
+    mb = sorted(p.name for p in m.glob('*-charmcraft.yaml'))
+    assert kb == mb
+    bases = [b.split('-')[0] for b in kb]
+    assert bases == BASES
+
+
+@pytest.mark.parametrize('base', BASES)
+def test_charmcraft_yaml(base: str):
+    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes' / f'{base}-charmcraft.yaml'
+    m = pathlib.Path(__file__).parent / 'charms' / 'machine' / f'{base}-charmcraft.yaml'
     with k.open() as f:
         ky = yaml.safe_load(f)
     with m.open() as f:

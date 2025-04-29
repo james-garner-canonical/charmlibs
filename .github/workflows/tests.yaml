@@ -129,6 +129,7 @@ jobs:
       fail-fast: false
       matrix:
         package: ${{ fromJson(needs.packages.outputs.juju) }}
+        base: ['20.04', '24.04']
         substrate: ['k8s', 'vm']
     steps:
       - uses: actions/checkout@v4
@@ -148,7 +149,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Pack charms
-        run: uvx --from rust-just just pack-${{ matrix.substrate }} ${{ matrix.package }}
+        run: uvx --from rust-just just pack-${{ matrix.substrate }} ${{ matrix.package }} ${{ matrix.base }}
 
       - name: Run Juju integration tests
         run: uvx --from rust-just just juju-${{ matrix.substrate }} ${{ matrix.package }}
