@@ -52,7 +52,7 @@ def _get_changed_packages(project_root: pathlib.Path, git_base_ref: str | None) 
             if path.is_dir() and path.name.startswith(_ALPHABET)
         ),
     ])
-    if git_base_ref is None:
+    if not git_base_ref:
         print('Using all packages because no git base ref was provided.')
         return all_packages
     git_diff_cmd = ['git', 'diff', '--name-only', f'origin/{git_base_ref}']
