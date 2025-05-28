@@ -31,11 +31,15 @@ _ALPHABET = tuple(string.ascii_lowercase)
 _GLOBAL_FILES = ('.github', 'justfile', 'pyproject.toml')
 
 
-def _main() -> None:
+def _parse_args() -> str | None:
     parser = argparse.ArgumentParser()
     parser.add_argument('git_base_ref', default=None)
     args = parser.parse_args()
-    packages = _get_changed_packages(project_root=pathlib.Path(), git_base_ref=args.git_base_ref)
+    return args.git_base_ref
+
+
+def _main(project_root: pathlib.Path, git_base_ref: str | None) -> None:
+    packages = _get_changed_packages(project_root=project_root, git_base_ref=git_base_ref)
     line = f'packages={json.dumps(packages)}'
     print(line)
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
@@ -65,4 +69,4 @@ def _get_changed_packages(project_root: pathlib.Path, git_base_ref: str | None) 
 
 
 if __name__ == '__main__':
-    _main()
+    _main(project_root=pathlib.Path(), git_base_ref=_parse_args())
