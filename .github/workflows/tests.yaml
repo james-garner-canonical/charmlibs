@@ -25,7 +25,19 @@ jobs:
 
       - name: Check which test suites this package has
         id: packages
-        run: uv run --no-project --script .github/get-tests.py ${{ inputs.package }}
+        run: |
+          tests=()
+          if [ -d ${{ inputs.package }}/tests/unit ]; then
+            tests+=('unit')
+          fi
+          if [ -d ${{ inputs.package }}/tests/integration/pebble ]; then
+            tests+=('pebble')
+          fi
+          if [ -d ${{ inputs.package }}/tests/integration/juju ]; then
+            tests+=('juju')
+          fi
+          js=$(jq '$ARGS.positional' --null-input --compact-output --args "${tests[@]}")
+          echo "tests=$js" >> "$GITHUB_OUTPUT"
 
   static:
     runs-on: ubuntu-latest
