@@ -28,7 +28,7 @@ jobs:
 
       - name: Collect changed packages
         id: packages
-        run: uv run --no-project --script .github/get-packages.py ${{ github.base_ref }}
+        run: uv run --no-project --script .github/packages.py ${{ github.base_ref }}
 
   tests:
     needs: get-packages
