@@ -58,7 +58,7 @@ def _get_changed_packages(git_base_ref: str | None) -> list[str]:
     cmd = ['git', 'diff', '--name-only', f'origin/{git_base_ref}']
     diff = subprocess.check_output(cmd, text=True)
     changes = {path.split('/')[0] for path in diff.split('\n')}
-    if (global_changes := sorted(changes.intersection(_GLOBAL_FILES))):
+    if global_changes := sorted(changes.intersection(_GLOBAL_FILES)):
         print(f'Using all packages because global files were changed: {global_changes}')
         return all_packages
     print(f'Using packages that are changed compared to {git_base_ref}:')
