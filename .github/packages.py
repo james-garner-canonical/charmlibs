@@ -53,19 +53,16 @@ def _get_changed_packages(project_root: pathlib.Path, git_base_ref: str | None) 
         if path.is_dir() and (path.name.startswith(_ALPHABET) or path.name == '_charmlibs')
     )
     if not git_base_ref:
-        print('Using all packages because no git base ref was provided.')
+        print('Using all packages because no git base ref was provided:')
         return all_packages
     cmd = ['git', 'diff', '--name-only', f'origin/{git_base_ref}']
     diff = subprocess.check_output(cmd, text=True, cwd=project_root)
     changes = {path.split('/')[0] for path in diff.split('\n')}
-    # record which packages have changed, or all if global config files have changed
-    global_changes = [f for f in _GLOBAL_FILES if f in changes]
-    if global_changes:
+    if (global_changes := sorted(changes.intersection(_GLOBAL_FILES))):
         print(f'Using all packages because global files were changed: {global_changes}')
         return all_packages
-    changed_packages = [p for p in all_packages if p in changes]
-    print(f'Using packages that are changed compared to {git_base_ref}: {changed_packages}')
-    return changed_packages
+    print(f'Using packages that are changed compared to {git_base_ref}:')
+    return sorted(changes.intersection(all_packages))
 
 
 if __name__ == '__main__':
