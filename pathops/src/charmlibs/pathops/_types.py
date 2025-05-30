@@ -368,7 +368,7 @@ class PathProtocol(typing.Protocol):
         ...
 
     def unlink(self) -> None:
-        """Remove this path if it is an empty directory.
+        """Remove this path if it is not a directory.
 
         Raises:
             FileNotFoundError: if the path does not exist.
