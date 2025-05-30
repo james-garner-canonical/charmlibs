@@ -23,7 +23,7 @@ For a relation library, the current recommendation is still to use a Charmcraft 
 (python-package-name)=
 ## Naming and namespacing your Python package
 
-For charm libraries intended for public use and distributed as Python packages, the library should be a [namespace package](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) using the `charmlibs` namespace. The distribution package name should be `charmlibs-$libname`, imported as `from charmlibs import $libname`.
+For libraries addressing charming specific concerns, intended for public use, and distributed as Python packages, the library should be a [namespace package](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) using the `charmlibs` namespace. The distribution package name should be `charmlibs-$libname`, imported as `from charmlibs import $libname`.
 
 If you have a dedicated repository for the charmlib, we recommend naming it `charmlibs-$libname`. For a repository containing several libraries, consider naming the repository `$teamname-charmlibs`.
 
@@ -58,7 +58,9 @@ The `charmlibs` folder must not contain an `__init__.py` file. Likewise, there i
 
 Distributing your package on PyPI allows your users to use dependency ranges, improves discoverability, and makes it easier for users to install your library. However, it requires some additional work to publish, and is most appropriate if your library is intended for public use.
 
-During development and team internal use, you may find it useful to begin by distributing your package by sharing a git URL. If your library is purely for your own charms and not intended for external users, it may be appropriate to use a git dependency or pack the local files with your charm.
+During development and team internal use, you may find it useful to begin by distributing your package by sharing a git URL. If your library is purely for your own charms and not intended for external users, a git dependency avoids some publishing overhead.
+
+If your package is developed in the same repo as one or more charms, consider working with the local files during development and testing, so you can test against the latest changes before releasing the next version of your package.
 
 
 (python-package-distribution-pypi)=
@@ -119,9 +121,11 @@ In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+.
 
 
 (python-package-distribution-local)=
-### Local files
+### Local files for testing
 
-If you're developing a Python package in the same repository as your charm(s), it may be simplest to skip distribution and use the local files when packing the charm. This way, assuming a freshly checked out copy of the repository, the git commit fully specifies the contents of both your charm code and the package. For example, if you had the following structure:
+If you're developing a Python package in the same repository as your charm(s), it may be desirable to skip distribution and use the local files when packing the charm for testing. Due to the nature of `charmcraft pack`, using the local files will not be suitable when actually packing your charm, unless the library directory is inside the charm directory, as it should be possible to `git clone` your repo, and run `charmcraft pack` in the charm directory. However, it is still useful to work with local files during development, as this allows your tests and IDE to cover the latest changes without needing to release the package first.
+
+For example, if you had the following structure:
 
 ```
 $repo/
@@ -133,7 +137,7 @@ $repo/
         pyproject.toml
 ```
 
-Then you could leave `$package` out of your `$charm/pyproject.toml` during development. When it comes time to pack `$charm` for release or integration testing, you could do something like this:
+Add `$package` to your charm's requirements as normal, depending whether you'll distribute it via `git` or on PyPI. This will be committed into version control. When it comes time to pack `$charm` for testing, you could do something like this:
 
 ```bash
 cd $repo
