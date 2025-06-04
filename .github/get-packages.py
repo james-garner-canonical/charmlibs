@@ -29,14 +29,14 @@ import subprocess
 _GLOBAL_FILES = ('.github', 'justfile', 'pyproject.toml')
 
 
-def _parse_args() -> str | None:
+def _parse_args() -> str:
     parser = argparse.ArgumentParser()
-    parser.add_argument('git_base_ref', default=None)
+    parser.add_argument('git_base_ref', nargs='?', default='')
     args = parser.parse_args()
     return args.git_base_ref
 
 
-def _main(git_base_ref: str | None) -> None:
+def _main(git_base_ref: str) -> None:
     packages = _get_changed_packages(git_base_ref=git_base_ref)
     line = f'packages={json.dumps(packages)}'
     print(line)
@@ -44,7 +44,7 @@ def _main(git_base_ref: str | None) -> None:
         print(line, file=f)
 
 
-def _get_changed_packages(git_base_ref: str | None) -> list[str]:
+def _get_changed_packages(git_base_ref: str) -> list[str]:
     paths = [pathlib.Path('_charmlibs'), *pathlib.Path().glob(r'[a-z]*')]
     all_packages = sorted(path.name for path in paths if path.is_dir())
     if not git_base_ref:
