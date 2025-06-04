@@ -17,13 +17,13 @@ You should use a Python package for your charm library if:
 
 - You need to share modules between the machine and Kubernetes versions of a charm.
 
-For a relation library, it may still be worthwhile to use a Charmcraft lib, since the library may be associated with a single charm. There's also infrastructure and documentation that supports this pattern. However, even in this case, the reasons listed above should take priority.
+For a relation library, the current recommendation is still to use a Charmcraft lib where possible. This is an especially good fit if the library is associated with a single charm. There's also infrastructure and documentation that supports this pattern. However, even in this case, if your relation library needs additional dependencies it would be better to distribute it as a Python package.
 
 
 (python-package-name)=
 ## Naming and namespacing your Python package
 
-For charm libraries intended for public use and distributed as Python packages, the library should be a [namespace package](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) using the `charmlibs` namespace. The distribution package name should be `charmlibs-$libname`, imported as `from charmlibs import $libname`.
+If your library is a Python package, for public use, and addresses charming-specific concerns, make the library a [namespace package](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) using the `charmlibs` namespace. The distribution package name should be `charmlibs-$libname`, imported as `from charmlibs import $libname`.
 
 If you have a dedicated repository for the charmlib, we recommend naming it `charmlibs-$libname`. For a repository containing several libraries, consider naming the repository `$teamname-charmlibs`.
 
@@ -31,7 +31,7 @@ If you have a dedicated repository for the charmlib, we recommend naming it `cha
 Don't use the `ops` or `charm` namespaces for your libraries. It will be easier for charmers to follow your code if the `ops` namespace is reserved for the `ops` package. Likewise, the `charms` namespace is best left for charmcraft managed libs.
 ```
 
-If your library should only be used by your own charms, you don't need to publish it to PyPI. In this case, you don't need to use the `charmlibs` namespace either, but feel free to do so if it's helpful. The next section suggests alternative distribution methods for this case.
+If your library should only be used by your own charms, you don't need to publish it to PyPI. In this case, you don't need to use the `charmlibs` namespace either, but feel free to do so if it's helpful. [](#python-package-distribution) suggests alternative distribution methods for this case.
 
 
 (namespace-package)=
@@ -58,7 +58,9 @@ The `charmlibs` folder must not contain an `__init__.py` file. Likewise, there i
 
 Distributing your package on PyPI allows your users to use dependency ranges, improves discoverability, and makes it easier for users to install your library. However, it requires some additional work to publish, and is most appropriate if your library is intended for public use.
 
-During development and team internal use, you may find it useful to begin by distributing your package by sharing a git URL. If your library is purely for your own charms and not intended for external users, it may be appropriate to use a git dependency or pack the local files with your charm.
+During development and team internal use, you may find it useful to begin by distributing your package by sharing a git URL. If your library is purely for your own charms and not intended for external users, a git dependency avoids some publishing overhead.
+
+If your package is developed in the same repo as one or more charms, consider working with the local files during development and testing. This way, you can test against the latest changes before releasing the next version of your package.
 
 
 (python-package-distribution-pypi)=
@@ -66,7 +68,6 @@ During development and team internal use, you may find it useful to begin by dis
 
 To publish your library on PyPI, set up [trusted publishing](https://docs.pypi.org/trusted-publishers/) on PyPI, and create a Github workflow triggered by a version tag. For example:
 
-<!-- TODO: use exact commits hashes in this workflow example -->
 ```yaml
 # .github/workflows/publish.yaml
 on:
@@ -120,9 +121,13 @@ In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+.
 
 
 (python-package-distribution-local)=
-### Local files
+### Local files for testing
 
-If you're developing a Python package in the same repository as your charm(s), it may be simplest to skip distribution and use the local files when packing the charm. This way, assuming a freshly checked out copy of the repository, the git commit fully specifies the contents of both your charm code and the package. For example, if you had the following structure:
+If you're developing a Python package in the same repository as a charm, it may be desirable to skip distribution and use the local files when packing the charm for testing. This allows your tests and IDE to cover the latest changes without needing to release the package first.
+
+`charmcraft pack` won't be able to include the local files unless the library directory is inside the charm directory. During development, you could copy everything into a temporary packing directory. However, for distribution, you should make sure that it's possible to `git clone` your repo and immediately run `charmcraft pack` in the charm directory.
+
+For example, if you had the following structure:
 
 ```
 $repo/
@@ -134,7 +139,7 @@ $repo/
         pyproject.toml
 ```
 
-Then you could leave `$package` out of your `$charm/pyproject.toml` during development. When it comes time to pack `$charm` for release or integration testing, you could do something like this:
+Add `$package` to your charm's requirements as normal, depending on whether you'll distribute it via `git` or on PyPI. This will be committed into version control. When it comes time to pack `$charm` for testing, you could do something like this:
 
 ```bash
 cd $repo
