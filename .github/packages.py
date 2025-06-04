@@ -24,10 +24,8 @@ import argparse
 import json
 import os
 import pathlib
-import string
 import subprocess
 
-_ALPHABET = tuple(string.ascii_lowercase)
 _GLOBAL_FILES = ('.github', 'justfile', 'pyproject.toml')
 
 
@@ -47,11 +45,8 @@ def _main(git_base_ref: str | None) -> None:
 
 
 def _get_changed_packages(git_base_ref: str | None) -> list[str]:
-    all_packages = sorted(
-        path.name
-        for path in pathlib.Path().iterdir()
-        if path.is_dir() and (path.name.startswith(_ALPHABET) or path.name == '_charmlibs')
-    )
+    paths = [pathlib.Path('_charmlibs'), *pathlib.Path().glob(r'[a-z]*')]
+    all_packages = sorted(path.name for path in paths if path.is_dir())
     if not git_base_ref:
         print('Using all packages because no git base ref was provided:')
         return all_packages
