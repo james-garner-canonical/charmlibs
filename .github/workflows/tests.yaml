@@ -37,6 +37,7 @@ jobs:
             tests+=('juju')
           fi
           js=$(jq '$ARGS.positional' --null-input --compact-output --args "${tests[@]}")
+          echo "tests=$js"
           echo "tests=$js" >> "$GITHUB_OUTPUT"
 
   static:
