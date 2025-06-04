@@ -1,0 +1,19 @@
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuring-dependabot-version-updates
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"  # This is hard-coded to the 1st of the month
+    labels:
+      - "dependencies"
+  - package-ecosystem: "pip"
+    directories:
+      - "/"
+      - "/[a-z]*"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 0  # Security updates only
+    labels:
+      - "dependencies"
