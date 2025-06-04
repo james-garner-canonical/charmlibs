@@ -32,7 +32,7 @@ jobs:
 
   tests:
     needs: get-packages
-    if: ${{ fromJson(needs.get-packages.outputs.packages) }}
+    if: ${{ needs.get-packages.outputs.packages != '[]' }}
     strategy:
       matrix:
         package: ${{ fromJson(needs.get-packages.outputs.packages) }}
