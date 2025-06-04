@@ -23,7 +23,7 @@ For a relation library, the current recommendation is still to use a Charmcraft 
 (python-package-name)=
 ## Naming and namespacing your Python package
 
-For libraries addressing charming specific concerns, intended for public use, and distributed as Python packages, the library should be a [namespace package](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) using the `charmlibs` namespace. The distribution package name should be `charmlibs-$libname`, imported as `from charmlibs import $libname`.
+For libraries addressing charming-specific concerns, intended for public use, and distributed as Python packages, the library should be a [namespace package](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) using the `charmlibs` namespace. The distribution package name should be `charmlibs-$libname`, imported as `from charmlibs import $libname`.
 
 If you have a dedicated repository for the charmlib, we recommend naming it `charmlibs-$libname`. For a repository containing several libraries, consider naming the repository `$teamname-charmlibs`.
 
