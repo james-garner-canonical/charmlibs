@@ -99,15 +99,17 @@ def test_file_creation_methods_call_chown(
     path_method = getattr(path, method)
     path_method(*args, user=user, group=group)
     assert path.exists()
-    if method == 'read_bytes':
+    if method == 'write_bytes':
         assert isinstance(content, bytes)
         assert path.read_bytes() == content
-    elif method == 'read_text':
+    elif method == 'write_text':
         assert isinstance(content, str)
         expected_result = re.sub(r'\r\n|\r', '\n', content)
-        assert path.read_text == expected_result
+        assert path.read_text() == expected_result
     elif method == 'mkdir':
         assert path.is_dir()
+    else:
+        raise ValueError(f'Unexpected method: {method}')
     if (user, group) == (None, None):
         assert not mock_chown.calls
     else:
