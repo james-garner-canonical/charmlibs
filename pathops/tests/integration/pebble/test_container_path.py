@@ -17,8 +17,8 @@
 from __future__ import annotations
 
 import errno
+import getpass
 import grp
-import os
 import pathlib
 import pwd
 import sys
@@ -471,7 +471,7 @@ class TestWrite:
     def test_user_only_ok(
         self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
     ):
-        user = os.getlogin()
+        user = getpass.getuser()
         group = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
         path = tmp_path / 'filename'
         method(LocalPath(path), user=user)
@@ -487,7 +487,7 @@ class TestWrite:
     def test_user_and_group_ok(
         self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
     ):
-        user = os.getlogin()
+        user = getpass.getuser()
         group = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
         path = tmp_path / 'filename'
         method(LocalPath(path), user=user, group=group)
@@ -503,7 +503,7 @@ class TestWrite:
     def test_group_only_raises_for_container_path(
         self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
     ):
-        user = os.getlogin()
+        user = getpass.getuser()
         group = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
         path = tmp_path / 'filename'
         method(LocalPath(path), group=group)
