@@ -17,17 +17,20 @@
 from __future__ import annotations
 
 import errno
+import grp
+import os
 import pathlib
+import pwd
 import sys
 import typing
 
 import pytest
 
 import utils
-from charmlibs.pathops import ContainerPath
+from charmlibs.pathops import ContainerPath, LocalPath
 
 if typing.TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     import ops
 
@@ -421,37 +424,109 @@ class TestUnlink:
             container_path.unlink()
 
 
-class TestWriteBytes:
-    @pytest.mark.parametrize(('filename', 'contents'), tuple(utils.BINARY_FILES.items()))
-    def test_ok(
-        self, container: ops.Container, tmp_path: pathlib.Path, filename: str, contents: bytes
-    ):
-        path = tmp_path / filename
-        path.write_bytes(contents)
-        assert path.read_bytes() == contents
-        ContainerPath(path, container=container).write_bytes(contents)
-        assert path.read_bytes() == contents
+def write_text(path: pathlib.Path | ContainerPath, **kwargs: Any) -> None:
+    path.write_text('', **kwargs)
+    assert path.read_text() == ''
 
-    def test_parent_dir_doesnt_exist(self, container: ops.Container, tmp_path: pathlib.Path):
+
+def write_bytes(path: pathlib.Path | ContainerPath, **kwargs: Any) -> None:
+    path.write_bytes(b'', **kwargs)
+    assert path.read_bytes() == b''
+
+
+def mkdir(path: pathlib.Path | ContainerPath, **kwargs: Any) -> None:
+    path.mkdir(**kwargs)
+    assert path.is_dir()
+
+
+@pytest.mark.parametrize('method', [pytest.param(fn) for fn in (write_bytes, write_text, mkdir)])
+class TestWrite:
+    def test_parent_dir_doesnt_exist(
+        self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
+    ):
         parent = tmp_path / 'dirname'
         assert not parent.exists()
         path = parent / 'filename'
         assert not path.exists()
         with pytest.raises(FileNotFoundError):
-            path.write_bytes(b'')
+            method(path)
+        container_path = ContainerPath(path, container=container)
         with pytest.raises(FileNotFoundError):
-            ContainerPath(path, container=container).write_bytes(b'')
+            method(container_path)
 
-    def test_parent_isnt_a_dir(self, container: ops.Container, tmp_path: pathlib.Path):
+    def test_parent_isnt_a_dir(
+        self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
+    ):
         parent = tmp_path / 'parent'
         assert not parent.exists()
         parent.touch()
         assert not parent.is_dir()
         path = parent / 'filename'
         with pytest.raises(NotADirectoryError):
-            path.write_bytes(b'')
+            method(path)
+        container_path = ContainerPath(path, container=container)
         with pytest.raises(NotADirectoryError):
-            ContainerPath(path, container=container).write_bytes(b'')
+            method(container_path)
+
+    def test_user_only_ok(
+        self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
+    ):
+        user = os.getlogin()
+        group = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
+        path = tmp_path / 'filename'
+        method(LocalPath(path), user=user)
+        assert (path.owner(), path.group()) == (user, group)
+        if path.is_dir():
+            path.rmdir()
+        else:
+            path.unlink()
+        container_path = ContainerPath(path, container=container)
+        method(container_path, user=user)
+        assert (path.owner(), path.group()) == (user, group)
+
+    def test_user_and_group_ok(
+        self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
+    ):
+        user = os.getlogin()
+        group = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
+        path = tmp_path / 'filename'
+        method(LocalPath(path), user=user, group=group)
+        assert (path.owner(), path.group()) == (user, group)
+        if path.is_dir():
+            path.rmdir()
+        else:
+            path.unlink()
+        container_path = ContainerPath(path, container=container)
+        method(container_path, user=user, group=group)
+        assert (path.owner(), path.group()) == (user, group)
+
+    def test_group_only_raises_for_container_path(
+        self, container: ops.Container, tmp_path: pathlib.Path, method: Callable[..., None]
+    ):
+        user = os.getlogin()
+        group = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
+        path = tmp_path / 'filename'
+        method(LocalPath(path), group=group)
+        assert (path.owner(), path.group()) == (user, group)
+        if path.is_dir():
+            path.rmdir()
+        else:
+            path.unlink()
+        container_path = ContainerPath(path, container=container)
+        with pytest.raises(LookupError):
+            method(container_path, group=group)
+        assert not path.exists()
+
+
+@pytest.mark.parametrize(('filename', 'contents'), tuple(utils.BINARY_FILES.items()))
+def test_write_bytes(
+    container: ops.Container, tmp_path: pathlib.Path, filename: str, contents: bytes
+):
+    path = tmp_path / filename
+    ContainerPath(path, container=container).write_bytes(contents)
+    assert path.read_bytes() == contents
+    path.write_bytes(contents)
+    assert path.read_bytes() == contents
 
 
 @pytest.mark.parametrize(('filename', 'contents'), tuple(utils.TEXT_FILES.items()))
@@ -459,9 +534,11 @@ def test_write_text(
     container: ops.Container, tmp_path: pathlib.Path, filename: str, contents: str
 ):
     path = tmp_path / filename
-    container_path = ContainerPath(path, container=container)
-    container_path.write_text(contents)
-    with path.open(newline='') as f:
+    ContainerPath(path, container=container).write_text(contents)
+    with path.open(newline='') as f:  # don't translate newlines
+        assert f.read() == contents
+    path.write_text(contents)
+    with path.open(newline='') as f:  # don't translate newlines
         assert f.read() == contents
 
 
