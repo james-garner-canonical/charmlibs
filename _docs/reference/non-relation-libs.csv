@@ -1,3 +1,3 @@
 name, type, substrate, description
-"✅ `charmlibs.pathops <https://pypi.org/project/charmlibs-pathops>`_ `📚 <https://canonical-charmlibs.readthedocs-hosted.com>`_ `⌨️ <https://github.com/canonical/charmtech-charmlibs>`_", 🐍PyPI, "🖥️machine ☸️K8s", Substrate agnostic file operations.
-"󠀠󠀠⬜ `operator_libs_linux.v2.snap <https://charmhub.io/operator-libs-linux/libraries/snap>`_ `⌨️ <https://github.com/canonical/operator-libs-linux>`_", ✨Charmhub, "🖥️machine", Install and manage packages via snapd.
+"✅ `charmlibs.pathops <https://pypi.org/project/charmlibs-pathops>`__ `📚 <https://canonical-charmlibs.readthedocs-hosted.com>`__ `⌨️ <https://github.com/canonical/charmtech-charmlibs>`__", 🐍PyPI, "🖥️machine ☸️K8s", Substrate agnostic file operations.
+"󠀠󠀠⬜ `operator_libs_linux.v2.snap <https://charmhub.io/operator-libs-linux/libraries/snap>`__ `⌨️ <https://github.com/canonical/operator-libs-linux>`__", ✨Charmhub, "🖥️machine", Install and manage packages via snapd.
