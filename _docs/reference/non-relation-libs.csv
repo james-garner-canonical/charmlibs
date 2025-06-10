@@ -1,2 +1,2 @@
-"", name, description
-✅, "`charmlibs.pathops <https://pypi.org/project/charmlibs-pathops>`_ `📚 <https://canonical-charmlibs.readthedocs-hosted.com>`_ `💻 <https://github.com/canonical/charmtech-charmlibs>`_", Substrate agnostic file operations
+"", name, type, substrate, description
+✅, "`charmlibs.pathops <https://pypi.org/project/charmlibs-pathops>`_ `📚 <https://canonical-charmlibs.readthedocs-hosted.com>`_ `💻 <https://github.com/canonical/charmtech-charmlibs>`_", package, "K8s, machine", Substrate agnostic file operations
