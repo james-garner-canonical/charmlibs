@@ -408,7 +408,7 @@ datatables_class = "sphinx-datatable"
 # options you set are used for all DataTables.
 datatables_options = {
     'info': 0,  # remove 'showing x of y' footer
-    'ordering': 0,  # remvoe sorting buttons in columns
+    'ordering': 0,  # remove sorting buttons in columns
     'paging': 0,  # remove all paging options
     'search': {'regex': 1},  # enabel regex in search box
 }
