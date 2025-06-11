@@ -52,12 +52,16 @@ def _generate_non_relation_libs_table():
      - description
 """]
     for entry in entries:
-        chunks.append(f"""   * - {_EMOJIS.get(entry['status'], '')}
-     - {_rst_link(entry['name'], entry['url'])}{_links_str(entry)}
-     - {_EMOJIS.get(entry['type'], '')}{entry['type']}
-     - {' '.join(f'{_EMOJIS.get(k, "")}{k}' for k in ('machine', 'K8s') if entry[k])}
-     - {entry['description']}
-""")
+        items = [
+            _EMOJIS.get(entry['status'], ''),
+            _rst_link(entry['name'], entry['url']) + _links_str(entry),
+            _EMOJIS.get(entry['type'], '') + entry['type'],
+            ' '.join(_EMOJIS.get(k, '') + k for k in ('machine', 'K8s') if entry[k]),
+            entry['description'],
+        ]
+        first, *rest = (f' {item}\n' if item else '\n' for item in items)
+        chunks.append(f'   * -{first}')
+        chunks.extend(f'     -{line}' for line in rest)
     pathlib.Path('reference/non-relation-libs-table.rst').write_text(''.join(chunks))
 
 
