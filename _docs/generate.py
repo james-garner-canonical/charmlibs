@@ -42,13 +42,12 @@ def _generate_non_relation_libs_table():
 
 .. list-table::
    :class: sphinx-datatable
-   :widths: 1, 40, 10, 15, 35
+   :widths: 1, 40, 10, 49
    :header-rows: 1
 
    * -
      - name
      - type
-     - substrate
      - description
 """]
     for entry in entries:
@@ -56,8 +55,7 @@ def _generate_non_relation_libs_table():
             _EMOJIS.get(entry['status'], ''),
             _rst_link(entry['name'], entry['url']) + _links_str(entry),
             _EMOJIS.get(entry['type'], '') + entry['type'],
-            ' '.join(_EMOJIS.get(k, '') + k for k in ('machine', 'K8s') if entry[k]),
-            entry['description'],
+            _description(entry),
         ]
         first, *rest = (f' {item}\n' if item else '\n' for item in items)
         chunks.append(f'   * -{first}')
@@ -73,6 +71,13 @@ def _links_str(entry: _CSVRow) -> str:
     urls = {f'{_EMOJIS.get(k, "")}{k}': entry[k] for k in ('docs', 'src')}
     links = [_rst_link(k, v) for k, v in urls.items() if v]
     return f' ({", ".join(links)})' if links else ''
+
+
+def _description(entry: _CSVRow) -> str:
+    substrate = ' '.join(_EMOJIS.get(k, '') + k for k in ('machine', 'K8s') if entry[k])
+    description = '\n'.join(x for x in (substrate, entry['description']) if x)
+    prefix = ('| ' if '\n' in description else '')
+    return prefix + description.replace('\n', '\n       | ')
 
 
 if __name__ == '__main__':
