@@ -1,13 +1,13 @@
 name,status,url,docs,src,type,machine,K8s,description
 charmlibs.pathops,recommended,https://pypi.org/project/charmlibs-pathops,https://canonical-charmlibs.readthedocs-hosted.com,https://github.com/canonical/charmtech-charmlibs,PyPI,y,y,Substrate agnostic file operations.
-operator_libs_linux.v2.snap,,https://charmhub.io/operator-libs-linux/libraries/snap,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Install and manage packages via snapd.
-operator_libs_linux.v1.systemd,,https://charmhub.io/operator-libs-linux/libraries/systemd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-operator_libs_linux.v0.apt,,https://charmhub.io/operator-libs-linux/libraries/apt,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-operator_libs_linux.v0.dnf,,https://charmhub.io/operator-libs-linux/libraries/dnf,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-operator_libs_linux.v0.grub,,https://charmhub.io/operator-libs-linux/libraries/grub,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-operator_libs_linux.v0.juju_systemd_notices,,https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-operator_libs_linux.v0.passwd,,https://charmhub.io/operator-libs-linux/libraries/passwd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-operator_libs_linux.v0.sysctl,,https://charmhub.io/operator-libs-linux/libraries/sysctl,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v2.snap,recommended,https://charmhub.io/operator-libs-linux/libraries/snap,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Install and manage packages via snapd.
+operator_libs_linux.v1.systemd,recommended,https://charmhub.io/operator-libs-linux/libraries/systemd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v0.apt,recommended,https://charmhub.io/operator-libs-linux/libraries/apt,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v0.dnf,recommended,https://charmhub.io/operator-libs-linux/libraries/dnf,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v0.grub,recommended,https://charmhub.io/operator-libs-linux/libraries/grub,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v0.juju_systemd_notices,recommended,https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v0.passwd,recommended,https://charmhub.io/operator-libs-linux/libraries/passwd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
+operator_libs_linux.v0.sysctl,recommended,https://charmhub.io/operator-libs-linux/libraries/sysctl,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
 charmed-kubeflow-chisme,team,https://github.com/canonical/charmed-kubeflow-chisme,,,PyPI,,,
 hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,PyPI,,,
 charm-helpers,legacy,https://github.com/juju/charm-helpers,,,PyPI,,,

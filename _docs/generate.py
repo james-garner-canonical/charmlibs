@@ -9,7 +9,10 @@ import typing
 
 _EMOJIS = {
     'recommended': '✅',
+    'dep': '↪️',
+    '': '',
     'legacy': '🪦',
+    'team': '🚫',
     # 'PyPI': '🐍',
     # 'Charmhub': '✨',
     'machine': '🖥️',
@@ -17,6 +20,8 @@ _EMOJIS = {
     # 'docs': '📚',
     # 'src': '⌨️',
 }
+
+_PRIORITIES = {s: i for i, s in enumerate(_EMOJIS)}
 
 
 class _CSVRow(typing.TypedDict, total=True):
@@ -52,15 +57,21 @@ def _generate_non_relation_libs_table():
 """]
     for entry in entries:
         items = [
-            _EMOJIS.get(entry['status'], ''),
+            _hidden_text_prefix(_PRIORITIES[entry["status"]]) + _EMOJIS[entry["status"]],
             _rst_link(entry['name'], entry['url']) + _links_str(entry),
             _EMOJIS.get(entry['type'], '') + entry['type'],
             _description(entry),
         ]
-        first, *rest = (f' {item}\n' if item else '\n' for item in items)
-        chunks.append(f'   * -{first}')
-        chunks.extend(f'     -{line}' for line in rest)
+        first, *rest = (
+            f' {item}' if item and not item.startswith('\n') else item for item in items
+        )
+        chunks.append(f'   * -{first}\n')
+        chunks.extend(f'     -{line}\n' for line in rest)
     pathlib.Path('reference/non-relation-libs-table.rst').write_text(''.join(chunks))
+
+
+def _hidden_text_prefix(msg: object) -> str:
+    return f'\n       .. raw:: html\n\n          <span style="display:none;">{msg}</span>\n\n       | '
 
 
 def _rst_link(name: str, url: str) -> str:
