@@ -66,7 +66,7 @@ def _generate_non_relation_libs_table():
 
 
 def _rst_link(name: str, url: str) -> str:
-    return f'{name} <{url}>`__'
+    return f'`{name} <{url}>`__'
 
 
 def _links_str(entry: _CSVRow) -> str:
