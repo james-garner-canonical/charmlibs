@@ -10,12 +10,12 @@ import typing
 _EMOJIS = {
     'recommended': '✅',
     'legacy': '🪦',
-    'PyPI': '🐍',
-    'Charmhub': '✨',
+    # 'PyPI': '🐍',
+    # 'Charmhub': '✨',
     'machine': '🖥️',
     'K8s': '☸️',
-    'docs': '📚',
-    'src': '⌨️',
+    # 'docs': '📚',
+    # 'src': '⌨️',
 }
 
 
@@ -42,7 +42,7 @@ def _generate_non_relation_libs_table():
 
 .. list-table::
    :class: sphinx-datatable
-   :widths: 1, 40, 10, 49
+   :widths: 2, 40, 8, 50
    :header-rows: 1
 
    * -
