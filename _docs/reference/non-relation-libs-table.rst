@@ -16,8 +16,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `charmlibs.pathops <https://pypi.org/project/charmlibs-pathops>`__ (`docs <https://canonical-charmlibs.readthedocs-hosted.com>`__, `src <https://github.com/canonical/charmtech-charmlibs>`__)
      -
        .. raw:: html
@@ -36,8 +37,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `apt <https://charmhub.io/operator-libs-linux/libraries/apt>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -55,8 +57,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `dnf <https://charmhub.io/operator-libs-linux/libraries/dnf>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -74,8 +77,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `grub <https://charmhub.io/operator-libs-linux/libraries/grub>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -93,8 +97,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `juju_systemd_notices <https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -112,8 +117,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -131,8 +137,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `sysctl <https://charmhub.io/operator-libs-linux/libraries/sysctl>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -150,8 +157,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -169,8 +177,9 @@
        .. raw:: html
 
           <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
-       | ✅
+
      - `snap <https://charmhub.io/operator-libs-linux/libraries/snap>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -189,8 +198,9 @@
        .. raw:: html
 
           <span style="display:none;">1</span>
+          <div class="emoji-div">↪️<div class="emoji-tooltip">Dependency of other libs, unlikely to be needed directly.</div></div>
 
-       | ↪️
+
      - `cos-lib <https://github.com/canonical/cos-lib>`__
      -
        .. raw:: html
@@ -208,8 +218,9 @@
        .. raw:: html
 
           <span style="display:none;">3</span>
+          <div class="emoji-div">🪦<div class="emoji-tooltip">There are better alternatives available.</div></div>
 
-       | 🪦
+
      - `charm-helpers <https://github.com/juju/charm-helpers>`__
      -
        .. raw:: html
@@ -227,8 +238,9 @@
        .. raw:: html
 
           <span style="display:none;">4</span>
+          <div class="emoji-div">🚫<div class="emoji-tooltip">Team internal lib, may not be stable for external use.</div></div>
 
-       | 🚫
+
      - `charmed-kubeflow-chisme <https://github.com/canonical/charmed-kubeflow-chisme>`__
      -
        .. raw:: html
@@ -246,8 +258,9 @@
        .. raw:: html
 
           <span style="display:none;">4</span>
+          <div class="emoji-div">🚫<div class="emoji-tooltip">Team internal lib, may not be stable for external use.</div></div>
 
-       | 🚫
+
      - `hpc-libs <https://github.com/charmed-hpc/hpc-libs>`__
      -
        .. raw:: html

@@ -24,6 +24,12 @@ _EMOJIS = {
     # 'docs': '📚',
     # 'src': '⌨️',
 }
+_STATUS_DESCRIPTIONS = {
+    'recommended': 'Recommended for use in new charms today!',
+    'dep': 'Dependency of other libs, unlikely to be needed directly.',
+    'legacy': 'There are better alternatives available.',
+    'team': 'Team internal lib, may not be stable for external use.',
+}
 _KIND_PRIORITIES = {'PyPI': 0, 'git': 1, 'Charmhub': 2}
 _STATUS_PRIORITIES = {s: i for i, s in enumerate(('recommended', 'dep', '', 'legacy', 'team'))}
 _SUBSTRATE_PRIORITIES = {'K8s': 0, 'machine': 1, '': 2}
@@ -73,17 +79,29 @@ def _status(entry: _CSVRow) -> str:
     prefix = _hidden_text(_STATUS_PRIORITIES[status])
     if status not in _EMOJIS:
         return prefix
-    return f'{prefix}       | {_EMOJIS[status]}'
+    if status not in _STATUS_DESCRIPTIONS:
+        return f'{prefix}       | {_EMOJIS[status]}'
+    return (
+        prefix.rstrip()
+        + '\n          '
+        + f'<div class="emoji-div">{_EMOJIS[status]}'
+        + f'<div class="emoji-tooltip">{_STATUS_DESCRIPTIONS[status]}</div>'
+        + '</div>'
+        + '\n\n'
+    )
 
 
-def _name(entry: _CSVRow) -> str:
+def _name(entry: _CSVRow, one_line: bool = True) -> str:
     name = _rst_link(entry['name'], entry['url'])
+    assert name
     urls = {f'{_EMOJIS.get(k, "")}{k}': entry[k] for k in ('docs', 'src')}
     links = [_rst_link(k, v) for k, v in urls.items() if v]
     if not links:
         return name
     links_str = ', '.join(links)
-    return f'{name} ({links_str})'
+    if one_line:
+        return f'{name} ({links_str})'
+    return f'| {name}\n       | ({links_str})'
 
 
 def _kind(entry: _CSVRow) -> str:
