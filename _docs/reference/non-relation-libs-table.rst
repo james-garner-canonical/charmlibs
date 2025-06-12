@@ -38,7 +38,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v0.apt <https://charmhub.io/operator-libs-linux/libraries/apt>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `apt <https://charmhub.io/operator-libs-linux/libraries/apt>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -57,7 +57,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v0.dnf <https://charmhub.io/operator-libs-linux/libraries/dnf>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `dnf <https://charmhub.io/operator-libs-linux/libraries/dnf>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -76,7 +76,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v0.grub <https://charmhub.io/operator-libs-linux/libraries/grub>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `grub <https://charmhub.io/operator-libs-linux/libraries/grub>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -95,7 +95,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v0.juju_systemd_notices <https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `juju_systemd_notices <https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -114,7 +114,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v0.passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -133,7 +133,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v0.sysctl <https://charmhub.io/operator-libs-linux/libraries/sysctl>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `sysctl <https://charmhub.io/operator-libs-linux/libraries/sysctl>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -152,7 +152,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v1.systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -171,7 +171,7 @@
           <span style="display:none;">0</span>
 
        | ✅
-     - `operator_libs_linux.v2.snap <https://charmhub.io/operator-libs-linux/libraries/snap>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `snap <https://charmhub.io/operator-libs-linux/libraries/snap>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 

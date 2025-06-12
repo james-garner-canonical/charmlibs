@@ -15,6 +15,7 @@ _EMOJIS = {
     'team': '🚫',
     # kinds
     # 'PyPI': '🐍',
+    # 'git': '🔧',
     # 'Charmhub': '✨',
     # substrates
     'machine': '🖥️',
