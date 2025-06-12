@@ -58,16 +58,9 @@ def _generate_non_relation_libs_table():
      - kind
      - description
 """]
-    for entry in entries:
-        items = [
-            _status(entry),
-            _name(entry),
-            _kind(entry),
-            _description(entry),
-        ]
-        first, *rest = (
-            (f' {item}' if item and not item.startswith('\n') else item) for item in items
-        )
+    rows = [(_status(entry), _name(entry), _kind(entry), _description(entry)) for entry in entries]
+    for row in sorted(rows, key=lambda r: (r[0], r[2], r[3], r[1])):  # sort: status, kind, desc
+        first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         chunks.append(f'   * -{first}\n')
         chunks.extend(f'     -{line}\n' for line in rest)
     pathlib.Path('reference/non-relation-libs-table.rst').write_text(''.join(chunks))
