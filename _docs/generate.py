@@ -23,6 +23,7 @@ _EMOJIS = {
     # 'docs': '📚',
     # 'src': '⌨️',
 }
+_KIND_PRIORITIES = {'PyPI': 0, 'git': 1, 'Charmhub': 2}
 _STATUS_PRIORITIES = {s: i for i, s in enumerate(('recommended', 'dep', '', 'legacy', 'team'))}
 _SUBSTRATE_PRIORITIES = {'K8s': 0, 'machine': 1, '': 2}
 
@@ -86,7 +87,11 @@ def _name(entry: _CSVRow) -> str:
 
 def _kind(entry: _CSVRow) -> str:
     kind = entry['kind']
-    return _EMOJIS.get(kind, '') + kind
+    prefix = _hidden_text(_KIND_PRIORITIES[kind])
+    kind_str = _EMOJIS.get(kind, '') + kind
+    if not kind_str:
+        return prefix
+    return f'{prefix}       | {kind_str}'
 
 
 def _description(entry: _CSVRow) -> str:

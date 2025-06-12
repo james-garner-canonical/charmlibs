@@ -9,6 +9,6 @@ operator_libs_linux.v0.juju_systemd_notices,recommended,https://charmhub.io/oper
 operator_libs_linux.v0.passwd,recommended,https://charmhub.io/operator-libs-linux/libraries/passwd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
 operator_libs_linux.v0.sysctl,recommended,https://charmhub.io/operator-libs-linux/libraries/sysctl,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
 charmed-kubeflow-chisme,team,https://github.com/canonical/charmed-kubeflow-chisme,,,PyPI,,,
-hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,PyPI,,,
+hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,git,,,
 charm-helpers,legacy,https://github.com/juju/charm-helpers,,,PyPI,,,
 cos-lib,dep,https://github.com/canonical/cos-lib,,,PyPI,,,Dependency (via PYDEPS) of charm libs (e.g. loki push api).
