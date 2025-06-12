@@ -1,11 +1,24 @@
-"""Generate reference/non-relation-libs-table.rst from reference/non-relation-libs-raw.csv"""
+# Copyright 2025 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Generate reference/non-relation-libs-table.rst from reference/non-relation-libs-raw.csv."""
 
 from __future__ import annotations
 
 import csv
 import pathlib
 import typing
-
 
 _EMOJIS = {
     # statuses
@@ -51,7 +64,8 @@ def _generate_non_relation_libs_table():
     raw = pathlib.Path('reference/non-relation-libs-raw.csv')
     with raw.open() as f:
         entries: list[_CSVRow] = list(csv.DictReader(f))  # type: ignore
-    chunks = [f"""..
+    chunks = [
+        f"""..
     This file was automatically generated.
     It should not be manually edited!
     Instead, edit {raw} and then run {pathlib.Path(__file__).name}
@@ -65,7 +79,8 @@ def _generate_non_relation_libs_table():
      - name
      - kind
      - description
-"""]
+""",
+    ]
     rows = [(_status(entry), _name(entry), _kind(entry), _description(entry)) for entry in entries]
     for row in sorted(rows, key=lambda r: (r[0], r[2], r[3], r[1])):  # sort: status, kind, desc
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
@@ -139,4 +154,4 @@ def _hidden_text(msg: object) -> str:
 
 
 if __name__ == '__main__':
-   _generate_non_relation_libs_table()
+    _generate_non_relation_libs_table()
