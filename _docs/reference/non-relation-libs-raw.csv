@@ -8,7 +8,7 @@ grub,recommended,https://charmhub.io/operator-libs-linux/libraries/grub,,https:/
 juju_systemd_notices,recommended,https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
 passwd,recommended,https://charmhub.io/operator-libs-linux/libraries/passwd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
 sysctl,recommended,https://charmhub.io/operator-libs-linux/libraries/sysctl,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,
-charmed-kubeflow-chisme,team,https://github.com/canonical/charmed-kubeflow-chisme,,,PyPI,,,
-hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,git,,,
-charm-helpers,legacy,https://github.com/juju/charm-helpers,,,PyPI,,,
+charmed-kubeflow-chisme,team,https://github.com/canonical/charmed-kubeflow-chisme,,,PyPI,,,Used internally by Charmed Kubeflow team.
+hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,git,,,Used internally by HPC charms.
+charm-helpers,legacy,https://github.com/juju/charm-helpers,,,PyPI,,,Pre-ops library used by reactive charms.
 cos-lib,dep,https://github.com/canonical/cos-lib,,,PyPI,,,Dependency (via PYDEPS) of charm libs (e.g. loki push api).

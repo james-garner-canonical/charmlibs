@@ -222,7 +222,7 @@
 
           <span style="display:none;">22</span>
 
-
+       | Pre-ops library used by reactive charms.
    * -
        .. raw:: html
 
@@ -241,7 +241,7 @@
 
           <span style="display:none;">22</span>
 
-
+       | Used internally by Charmed Kubeflow team.
    * -
        .. raw:: html
 
@@ -260,4 +260,4 @@
 
           <span style="display:none;">22</span>
 
-
+       | Used internally by HPC charms.
