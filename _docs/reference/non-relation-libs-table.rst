@@ -5,7 +5,7 @@
 
 .. list-table::
    :class: sphinx-datatable
-   :widths: 1, 1, 1, 100
+   :widths: 1, 40, 1, 60
    :header-rows: 1
 
    * -
@@ -40,106 +40,6 @@
           <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
 
-     - `apt <https://charmhub.io/operator-libs-linux/libraries/apt>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `dnf <https://charmhub.io/operator-libs-linux/libraries/dnf>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `grub <https://charmhub.io/operator-libs-linux/libraries/grub>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `juju_systemd_notices <https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
      - `sysctl <https://charmhub.io/operator-libs-linux/libraries/sysctl>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
@@ -153,6 +53,7 @@
           <span style="display:none;">12</span>
 
        | 🖥️machine
+       | Create and configure sysctl options.
    * -
        .. raw:: html
 
@@ -160,7 +61,7 @@
           <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
 
 
-     - `systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     - `apt <https://charmhub.io/operator-libs-linux/libraries/apt>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
      -
        .. raw:: html
 
@@ -173,6 +74,7 @@
           <span style="display:none;">12</span>
 
        | 🖥️machine
+       | Install and manage packages via apt.
    * -
        .. raw:: html
 
@@ -197,6 +99,90 @@
    * -
        .. raw:: html
 
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">12</span>
+
+       | 🖥️machine
+       | Manage Linux users and groups.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `grub <https://charmhub.io/operator-libs-linux/libraries/grub>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">12</span>
+
+       | 🖥️machine
+       | Manage kernel configuration via GRUB.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">12</span>
+
+       | 🖥️machine
+       | Start, stop, and manage system services via systemd.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `juju_systemd_notices <https://charmhub.io/operator-libs-linux/libraries/juju_systemd_notices>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">12</span>
+
+       | 🖥️machine
+       | Use systemd to observe and emit notices when services change state.
+   * -
+       .. raw:: html
+
           <span style="display:none;">1</span>
           <div class="emoji-div">↪️<div class="emoji-tooltip">Dependency of other libs, unlikely to be needed directly.</div></div>
 
@@ -211,9 +197,10 @@
      -
        .. raw:: html
 
-          <span style="display:none;">22</span>
+          <span style="display:none;">10</span>
 
-       | Dependency (via PYDEPS) of charm libs (e.g. loki push api).
+       | 🖥️machine ☸️K8s
+       | A dependency (via PYDEPS) of popular charm libs (e.g. loki push api).
    * -
        .. raw:: html
 
@@ -231,9 +218,31 @@
      -
        .. raw:: html
 
-          <span style="display:none;">22</span>
+          <span style="display:none;">10</span>
 
+       | 🖥️machine ☸️K8s
        | Pre-ops library used by reactive charms.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">3</span>
+          <div class="emoji-div">🪦<div class="emoji-tooltip">There are better alternatives available.</div></div>
+
+
+     - `dnf <https://charmhub.io/operator-libs-linux/libraries/dnf>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">12</span>
+
+       | 🖥️machine
+       | Install and manage packages via dnf – modern charms all run on Ubuntu, so this shouldn’t be needed.
    * -
        .. raw:: html
 
@@ -251,8 +260,9 @@
      -
        .. raw:: html
 
-          <span style="display:none;">22</span>
+          <span style="display:none;">10</span>
 
+       | 🖥️machine ☸️K8s
        | Used internally by Charmed Kubeflow team.
    * -
        .. raw:: html
@@ -271,6 +281,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">22</span>
+          <span style="display:none;">10</span>
 
+       | 🖥️machine ☸️K8s
        | Used internally by HPC charms.

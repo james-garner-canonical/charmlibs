@@ -72,7 +72,7 @@ def _generate_non_relation_libs_table():
 
 .. list-table::
    :class: sphinx-datatable
-   :widths: 1, 1, 1, 100
+   :widths: 1, 40, 1, 60
    :header-rows: 1
 
    * -
