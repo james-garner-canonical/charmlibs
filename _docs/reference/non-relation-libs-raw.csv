@@ -1,4 +1,4 @@
-name,status,url,docs,src,type,machine,K8s,description
+name,status,url,docs,src,kind,machine,K8s,description
 charmlibs.pathops,recommended,https://pypi.org/project/charmlibs-pathops,https://canonical-charmlibs.readthedocs-hosted.com,https://github.com/canonical/charmtech-charmlibs,PyPI,y,y,Substrate agnostic file operations.
 operator_libs_linux.v2.snap,recommended,https://charmhub.io/operator-libs-linux/libraries/snap,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Install and manage packages via snapd.
 operator_libs_linux.v1.systemd,recommended,https://charmhub.io/operator-libs-linux/libraries/systemd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,

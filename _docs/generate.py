@@ -8,20 +8,23 @@ import typing
 
 
 _EMOJIS = {
+    # statuses
     'recommended': '✅',
     'dep': '↪️',
-    '': '',
     'legacy': '🪦',
     'team': '🚫',
+    # kinds
     # 'PyPI': '🐍',
     # 'Charmhub': '✨',
+    # substrates
     'machine': '🖥️',
     'K8s': '☸️',
+    # other
     # 'docs': '📚',
     # 'src': '⌨️',
 }
-
-_PRIORITIES = {s: i for i, s in enumerate(_EMOJIS)}
+_STATUS_PRIORITIES = {s: i for i, s in enumerate(('recommended', 'dep', '', 'legacy', 'team'))}
+_SUBSTRATE_PRIORITIES = {'K8s': 0, 'machine': 1, '': 2}
 
 
 class _CSVRow(typing.TypedDict, total=True):
@@ -30,7 +33,7 @@ class _CSVRow(typing.TypedDict, total=True):
     url: str
     docs: str
     src: str
-    type: str
+    kind: str
     machine: str
     K8s: str
     description: str
@@ -52,43 +55,70 @@ def _generate_non_relation_libs_table():
 
    * -
      - name
-     - type
+     - kind
      - description
 """]
     for entry in entries:
         items = [
-            _hidden_text_prefix(_PRIORITIES[entry["status"]]) + _EMOJIS[entry["status"]],
-            _rst_link(entry['name'], entry['url']) + _links_str(entry),
-            _EMOJIS.get(entry['type'], '') + entry['type'],
+            _status(entry),
+            _name(entry),
+            _kind(entry),
             _description(entry),
         ]
         first, *rest = (
-            f' {item}' if item and not item.startswith('\n') else item for item in items
+            (f' {item}' if item and not item.startswith('\n') else item) for item in items
         )
         chunks.append(f'   * -{first}\n')
         chunks.extend(f'     -{line}\n' for line in rest)
     pathlib.Path('reference/non-relation-libs-table.rst').write_text(''.join(chunks))
 
 
-def _hidden_text_prefix(msg: object) -> str:
-    return f'\n       .. raw:: html\n\n          <span style="display:none;">{msg}</span>\n\n       | '
+def _status(entry: _CSVRow) -> str:
+    status = entry['status']
+    prefix = _hidden_text(_STATUS_PRIORITIES[status])
+    if status not in _EMOJIS:
+        return prefix
+    return f'{prefix}       | {_EMOJIS[status]}'
+
+
+def _name(entry: _CSVRow) -> str:
+    name = _rst_link(entry['name'], entry['url'])
+    urls = {f'{_EMOJIS.get(k, "")}{k}': entry[k] for k in ('docs', 'src')}
+    links = [_rst_link(k, v) for k, v in urls.items() if v]
+    if not links:
+        return name
+    links_str = ', '.join(links)
+    return f'{name} ({links_str})'
+
+
+def _kind(entry: _CSVRow) -> str:
+    kind = entry['kind']
+    return _EMOJIS.get(kind, '') + kind
+
+
+def _description(entry: _CSVRow) -> str:
+    substrates = ('machine', 'K8s')
+    priorities = ''.join(str(_SUBSTRATE_PRIORITIES[s if entry[s] else '']) for s in substrates)
+    prefix = _hidden_text(priorities)
+    substrate_line = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
+    description = '\n'.join(x for x in (substrate_line, entry['description']) if x)
+    if not description:
+        return prefix
+    description_str = description.replace('\n', '\n       | ')
+    return f'{prefix}       | {description_str}'
 
 
 def _rst_link(name: str, url: str) -> str:
     return f'`{name} <{url}>`__'
 
 
-def _links_str(entry: _CSVRow) -> str:
-    urls = {f'{_EMOJIS.get(k, "")}{k}': entry[k] for k in ('docs', 'src')}
-    links = [_rst_link(k, v) for k, v in urls.items() if v]
-    return f' ({", ".join(links)})' if links else ''
+def _hidden_text(msg: object) -> str:
+    return f"""
+       .. raw:: html
 
+          <span style="display:none;">{msg}</span>
 
-def _description(entry: _CSVRow) -> str:
-    substrate = ' '.join(_EMOJIS.get(k, '') + k for k in ('machine', 'K8s') if entry[k])
-    description = '\n'.join(x for x in (substrate, entry['description']) if x)
-    prefix = ('| ' if '\n' in description else '')
-    return prefix + description.replace('\n', '\n       | ')
+"""
 
 
 if __name__ == '__main__':
