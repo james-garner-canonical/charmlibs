@@ -187,7 +187,7 @@
           <div class="emoji-div">↪️<div class="emoji-tooltip">Dependency of other libs, unlikely to be needed directly.</div></div>
 
 
-     - `cos-lib <https://github.com/canonical/cos-lib>`__
+     - `cos-lib <https://pypi.org/project/cosl/>`__ (`src <https://github.com/canonical/cos-lib>`__)
      -
        .. raw:: html
 
@@ -208,7 +208,7 @@
           <div class="emoji-div">🪦<div class="emoji-tooltip">There are better alternatives available.</div></div>
 
 
-     - `charm-helpers <https://github.com/juju/charm-helpers>`__
+     - `charm-helpers <https://pypi.org/project/charmhelpers/>`__ (`docs <https://charm-helpers.readthedocs.io/>`__, `src <https://github.com/juju/charm-helpers>`__)
      -
        .. raw:: html
 
@@ -222,6 +222,48 @@
 
        | 🖥️machine ☸️K8s
        | Pre-ops library used by reactive charms.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">3</span>
+          <div class="emoji-div">🪦<div class="emoji-tooltip">There are better alternatives available.</div></div>
+
+
+     - `serialized-data-interface <https://pypi.org/project/serialized-data-interface/>`__ (`src <https://github.com/canonical/serialized-data-interface>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+
+       | PyPI
+     -
+       .. raw:: html
+
+          <span style="display:none;">10</span>
+
+       | 🖥️machine ☸️K8s
+       | Relation data validation – use the features available in ops instead.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">3</span>
+          <div class="emoji-div">🪦<div class="emoji-tooltip">There are better alternatives available.</div></div>
+
+
+     - `oci-image <https://pypi.org/project/oci-image/>`__ (`src <https://github.com/juju-solutions/resource-oci-image>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+
+       | PyPI
+     -
+       .. raw:: html
+
+          <span style="display:none;">20</span>
+
+       | ☸️K8s
+       | Work with OCI image resources – repo archived in March 2024.
    * -
        .. raw:: html
 
@@ -250,7 +292,7 @@
           <div class="emoji-div">🚫<div class="emoji-tooltip">Team internal lib, may not be stable for external use.</div></div>
 
 
-     - `charmed-kubeflow-chisme <https://github.com/canonical/charmed-kubeflow-chisme>`__
+     - `charmed-kubeflow-chisme <https://pypi.org/project/charmed-kubeflow-chisme/>`__ (`src <https://github.com/canonical/charmed-kubeflow-chisme>`__)
      -
        .. raw:: html
 
@@ -264,6 +306,48 @@
 
        | 🖥️machine ☸️K8s
        | Used internally by Charmed Kubeflow team.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">4</span>
+          <div class="emoji-div">🚫<div class="emoji-tooltip">Team internal lib, may not be stable for external use.</div></div>
+
+
+     - `data-platform-helpers <https://pypi.org/project/data-platform-helpers/>`__ (`src <https://github.com/canonical/data-platform-helpers>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+
+       | PyPI
+     -
+       .. raw:: html
+
+          <span style="display:none;">10</span>
+
+       | 🖥️machine ☸️K8s
+       | Used internally by the Data Charm Engineering team.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">4</span>
+          <div class="emoji-div">🚫<div class="emoji-tooltip">Team internal lib, may not be stable for external use.</div></div>
+
+
+     - `mongo-charms-single-kernel <https://pypi.org/project/mongo-charms-single-kernel/>`__ (`src <https://github.com/canonical/mongo-single-kernel-library>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+
+       | PyPI
+     -
+       .. raw:: html
+
+          <span style="display:none;">10</span>
+
+       | 🖥️machine ☸️K8s
+       | Used internally by the Data Charm Engineering team.
    * -
        .. raw:: html
 
@@ -285,3 +369,24 @@
 
        | 🖥️machine ☸️K8s
        | Used internally by HPC charms.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">4</span>
+          <div class="emoji-div">🚫<div class="emoji-tooltip">Team internal lib, may not be stable for external use.</div></div>
+
+
+     - `data-platform-libs <https://charmhub.io/data-platform-libs/libraries>`__ (`src <https://github.com/canonical/data-platform-libs>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">10</span>
+
+       | 🖥️machine ☸️K8s
+       | Used internally by the Data Charm Engineering team.
