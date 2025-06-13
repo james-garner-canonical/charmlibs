@@ -29,31 +29,10 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0000charmlibs.pathops</span>
 
        | 🖥️machine ☸️K8s
        | Substrate agnostic file operations.
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `sysctl <https://charmhub.io/operator-libs-linux/libraries/sysctl>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-       | Create and configure sysctl options.
    * -
        .. raw:: html
 
@@ -71,52 +50,10 @@
      -
        .. raw:: html
 
-          <span style="display:none;">12</span>
+          <span style="display:none;">0102apt</span>
 
        | 🖥️machine
        | Install and manage packages via apt.
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `snap <https://charmhub.io/operator-libs-linux/libraries/snap>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-       | Install and manage packages via snapd.
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-       | Manage Linux users and groups.
    * -
        .. raw:: html
 
@@ -134,31 +71,10 @@
      -
        .. raw:: html
 
-          <span style="display:none;">12</span>
+          <span style="display:none;">0102grub</span>
 
        | 🖥️machine
        | Manage kernel configuration via GRUB.
-   * -
-       .. raw:: html
-
-          <span style="display:none;">0</span>
-          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
-
-
-     - `systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
-     -
-       .. raw:: html
-
-          <span style="display:none;">2</span>
-
-       | Charmhub
-     -
-       .. raw:: html
-
-          <span style="display:none;">12</span>
-
-       | 🖥️machine
-       | Start, stop, and manage system services via systemd.
    * -
        .. raw:: html
 
@@ -176,10 +92,94 @@
      -
        .. raw:: html
 
-          <span style="display:none;">12</span>
+          <span style="display:none;">0102juju_systemd_notices</span>
 
        | 🖥️machine
        | Use systemd to observe and emit notices when services change state.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `passwd <https://charmhub.io/operator-libs-linux/libraries/passwd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">0102passwd</span>
+
+       | 🖥️machine
+       | Manage Linux users and groups.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `snap <https://charmhub.io/operator-libs-linux/libraries/snap>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">0102snap</span>
+
+       | 🖥️machine
+       | Install and manage packages via snapd.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `sysctl <https://charmhub.io/operator-libs-linux/libraries/sysctl>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">0102sysctl</span>
+
+       | 🖥️machine
+       | Create and configure sysctl options.
+   * -
+       .. raw:: html
+
+          <span style="display:none;">0</span>
+          <div class="emoji-div">✅<div class="emoji-tooltip">Recommended for use in new charms today!</div></div>
+
+
+     - `systemd <https://charmhub.io/operator-libs-linux/libraries/systemd>`__ (`src <https://github.com/canonical/operator-libs-linux>`__)
+     -
+       .. raw:: html
+
+          <span style="display:none;">2</span>
+
+       | Charmhub
+     -
+       .. raw:: html
+
+          <span style="display:none;">0102systemd</span>
+
+       | 🖥️machine
+       | Start, stop, and manage system services via systemd.
    * -
        .. raw:: html
 
@@ -197,7 +197,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0010cos-lib</span>
 
        | 🖥️machine ☸️K8s
        | A dependency (via PYDEPS) of popular charm libs (e.g. loki push api).
@@ -218,7 +218,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0030charm-helpers</span>
 
        | 🖥️machine ☸️K8s
        | Pre-ops library used by reactive charms.
@@ -239,7 +239,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0030serialized-data-interface</span>
 
        | 🖥️machine ☸️K8s
        | Relation data validation – use the features available in ops instead.
@@ -260,7 +260,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">20</span>
+          <span style="display:none;">1030oci-image</span>
 
        | ☸️K8s
        | Work with OCI image resources – repo archived in March 2024.
@@ -281,7 +281,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">12</span>
+          <span style="display:none;">0132dnf</span>
 
        | 🖥️machine
        | Install and manage packages via dnf – modern charms all run on Ubuntu, so this shouldn’t be needed.
@@ -302,7 +302,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0040charmed-kubeflow-chisme</span>
 
        | 🖥️machine ☸️K8s
        | Used internally by Charmed Kubeflow team.
@@ -323,7 +323,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0040data-platform-helpers</span>
 
        | 🖥️machine ☸️K8s
        | Used internally by the Data Charm Engineering team.
@@ -344,7 +344,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0040mongo-charms-single-kernel</span>
 
        | 🖥️machine ☸️K8s
        | Used internally by the Data Charm Engineering team.
@@ -365,7 +365,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0041hpc-libs</span>
 
        | 🖥️machine ☸️K8s
        | Used internally by HPC charms.
@@ -386,7 +386,7 @@
      -
        .. raw:: html
 
-          <span style="display:none;">10</span>
+          <span style="display:none;">0042data-platform-libs</span>
 
        | 🖥️machine ☸️K8s
        | Used internally by the Data Charm Engineering team.

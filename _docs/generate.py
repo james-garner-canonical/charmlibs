@@ -127,15 +127,29 @@ def _kind(entry: _CSVRow) -> str:
 
 
 def _description(entry: _CSVRow) -> str:
-    substrates = ('machine', 'K8s')
-    priorities = ''.join(str(_SUBSTRATE_SORTKEYS[s if entry[s] else '']) for s in substrates)
-    prefix = _hidden_text(priorities)
-    substrate_line = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
-    description = '\n'.join(s for s in (substrate_line, entry['description']) if s)
-    if not description:
+    sortkeys: list[object] = []
+    substrates: list[str] = []
+    for substrate in ('machine', 'K8s'):
+        if entry[substrate]:
+            sortkeys.append(0)
+            substrates.append(_EMOJIS.get(substrate, '') + substrate)
+        else:
+            sortkeys.append(1)
+    sortkeys.extend([
+        _STATUS_SORTKEYS[entry['status']],
+        _KIND_SORTKEYS[entry['kind']],
+        entry['name'],
+    ])
+    prefix = _hidden_text(''.join(str(k) for k in sortkeys))
+    descriptions: list[str] = []
+    if substrates:
+        descriptions.append(' '.join(substrates))
+    if desc := entry['description']:
+        descriptions.append(desc)
+    if not descriptions:
         return prefix
-    description_str = description.replace('\n', '\n       | ')
-    return f'{prefix}       | {description_str}'
+    description = '\n'.join(descriptions).replace('\n', '\n       | ')
+    return f'{prefix}       | {description}'
 
 
 def _rst_link(name: str, url: str) -> str:
