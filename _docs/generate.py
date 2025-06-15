@@ -45,7 +45,6 @@ _STATUS_TOOLTIPS = {
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
 _STATUS_SORTKEYS = {s: i for i, s in enumerate(('recommended', 'dep', '', 'legacy', 'team'))}
-_SUBSTRATE_SORTKEYS = {'K8s': 0, 'machine': 1, '': 2}
 _TABLE_HEADER_TEMPLATE = """..
     This file was automatically generated.
     It should not be manually edited!
