@@ -25,4 +25,4 @@ __pycache__
 .vscode/
 
 # generated docs
-_docs/reference/non-relation-libs-table.rst
+reference/non-relation-libs-table.rst
