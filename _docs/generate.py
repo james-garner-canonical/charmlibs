@@ -44,7 +44,7 @@ _STATUS_TOOLTIPS = {
     'team': 'Team internal lib, may not be stable for external use.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
-_STATUS_SORTKEYS = {s: i for i, s in enumerate(('recommended', 'dep', '', 'legacy', 'team'))}
+_STATUS_SORTKEYS = {'recommended': 0, 'dep': 1, '': 2, 'legacy': 3, 'team': 4}
 _TABLE_HEADER_TEMPLATE = """..
     This file was automatically generated.
     It should not be manually edited!
