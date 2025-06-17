@@ -19,4 +19,4 @@ build:
       - git fetch --unshallow || true
     build:
       html:
-        - uvx --from=rust-just just docs
+        - uvx --from=rust-just just docs html
