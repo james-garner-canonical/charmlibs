@@ -1,20 +1,21 @@
 set working-directory := '_docs'
-_docs_build_location := env('READTHEDOCS_OUTPUT', '_build')
+
+build_dir := env('READTHEDOCS_OUTPUT', '_build')
 
 [doc('Build the docs.')]
 html:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-build -T -W --keep-going -b dirhtml -d _build/doctrees -D language=en . '{{_docs_build_location}}/html'
+        sphinx-build -T -W --keep-going -b dirhtml -d _build/doctrees -D language=en . '{{build_dir}}/html'
 
 [doc('Watch, build, and serve the docs.')]
 run:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{_docs_build_location}}/html'
+        sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{build_dir}}/html'
 
 [doc('Check links.')]
 linkcheck:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-build -b linkcheck . '{{_docs_build_location}}'
+        sphinx-build -b linkcheck . '{{build_dir}}'
 
 [doc('Check spelling.')]
 spellcheck:
@@ -22,7 +23,7 @@ spellcheck:
 
 [doc('Remove files created by building the docs.')]
 clean:
-    git clean -fx '{{_docs_build_location}}'
+    git clean -fx '{{build_dir}}'
     rm -rf .sphinx/.doctrees
     rm -rf .sphinx/node_modules/
     rm -rf .sphinx/styles
