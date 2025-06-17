@@ -74,7 +74,7 @@ class _CSVRow(typing.TypedDict, total=True):
     description: str
 
 
-def _generate_non_relation_libs_table():
+def generate_non_relation_libs_table():
     raw = pathlib.Path('reference/non-relation-libs-raw.csv')
     with raw.open() as f:
         entries: list[_CSVRow] = list(csv.DictReader(f))  # type: ignore
@@ -159,4 +159,4 @@ def _hidden_text(msg: object) -> str:
 
 
 if __name__ == '__main__':
-    _generate_non_relation_libs_table()
+    generate_non_relation_libs_table()
