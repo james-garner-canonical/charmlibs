@@ -75,6 +75,7 @@ class _CSVRow(typing.TypedDict, total=True):
 
 
 def generate_non_relation_libs_table():
+    """Generate reference/non-relation-libs-table.rst from reference/non-relation-libs-raw.csv."""
     raw = pathlib.Path('reference/non-relation-libs-raw.csv')
     with raw.open() as f:
         entries: list[_CSVRow] = list(csv.DictReader(f))  # type: ignore
