@@ -12,7 +12,6 @@ _help:
 _docs_build_location := env('READTHEDOCS_OUTPUT', '_build')
 [working-directory: '_docs']
 docs:
-    uv run --script --no-project generate.py
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx sphinx-build -T -W --keep-going -b dirhtml -d _build/doctrees -D language=en . '{{_docs_build_location}}/html'
 
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]

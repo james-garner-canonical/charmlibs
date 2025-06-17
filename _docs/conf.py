@@ -1,12 +1,18 @@
 import datetime
-import ast
 import pathlib
 import sys
+
+import generate
+
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'pathops/src/charmlibs'))  # So that sphinx.ext.autodoc can find code.
 
 def setup(app):
     app.add_css_file('project_specific.css')
+    app.connect('builder-inited', _generate)
+
+def _generate(_):
+    generate.generate_non_relation_libs_table()
 
 # don't automatically add parentheses after function and method references
 add_function_parentheses = False
