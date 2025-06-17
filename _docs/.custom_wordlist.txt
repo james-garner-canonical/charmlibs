@@ -57,30 +57,12 @@ pathops
 ContainerPath
 LocalPath
 PathProtocol
-PebbleConnectionError
-RelativePathError
-iterdir
-joinpath
-mkdir
-rmdir
-truediv
-unlink
 
 PyPI
 Pythonic
-FileExistsError
-FileNotFoundError
-IsADirectoryError
-LookupError
-NotADirectoryError
-NotImplementedError
-PermissionError
-UnicodeError
-ValueError
 
 drwxr
 rw
 xr
 
-firstlineno
 vlatest
