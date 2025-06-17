@@ -2,7 +2,6 @@ import datetime
 import pathlib
 import sys
 
-
 # local extensions
 sys.path.insert(0, str(pathlib.Path(__file__).parent / 'extensions'))
 local_extensions = ['generate']
@@ -11,7 +10,6 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'pathops/src/charm
 
 def setup(app):
     app.add_css_file('project_specific.css')
-
 
 # don't automatically add parentheses after function and method references
 add_function_parentheses = False
