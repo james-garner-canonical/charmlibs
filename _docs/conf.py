@@ -5,7 +5,7 @@ import sys
 
 # local extensions
 sys.path.insert(0, str(pathlib.Path(__file__).parent / 'extensions'))
-extensions = ['generate']
+local_extensions = ['generate']
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'pathops/src/charmlibs'))  # So that sphinx.ext.autodoc can find code.
 
@@ -267,6 +267,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     "sphinx.ext.napoleon",
     "sphinx_datatables",
+    *local_extensions,
 ]
 
 intersphinx_mapping = {
