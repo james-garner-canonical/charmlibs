@@ -84,7 +84,9 @@ def generate_non_relation_libs_table():
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         chunks.append(f'   * -{first}\n')
         chunks.extend(f'     -{line}\n' for line in rest)
-    pathlib.Path('reference/non-relation-libs-table.rst').write_text(''.join(chunks))
+    directory = pathlib.Path('reference/generated')
+    directory.mkdir(exist_ok=True, parents=True)
+    (directory / 'non-relation-libs-table.rst').write_text(''.join(chunks))
 
 
 def _status(entry: _CSVRow) -> str:
