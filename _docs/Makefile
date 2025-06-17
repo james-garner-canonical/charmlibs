@@ -90,7 +90,7 @@ run: install
 	. $(VENV); $(VENVDIR)/bin/sphinx-autobuild -b dirhtml "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS)
 
 html:
-	just docs
+	uvx --from=rust-just just docs
 
 epub: install
 	. $(VENV); $(SPHINXBUILD) -b epub "$(SOURCEDIR)" "$(BUILDDIR)" -w $(SPHINXDIR)/warnings.txt $(SPHINXOPTS)
