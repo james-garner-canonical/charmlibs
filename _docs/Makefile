@@ -19,6 +19,10 @@ clean:
 	uvx --from=rust-just just docs clean
 
 SPHINXDIR = .sphinx
+SPHINXOPTS ?= -c . -d $(SPHINXDIR)/.doctrees -j auto
+SPHINXBUILD ?= $(VENVDIR)/bin/sphinx-build
+SOURCEDIR = .
+BUILDDIR = _build
 VENVDIR = $(SPHINXDIR)/venv
 VENV = $(VENVDIR)/bin/activate
 
