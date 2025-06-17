@@ -20,6 +20,28 @@ import csv
 import pathlib
 import typing
 
+####################
+# Sphinx extension #
+####################
+
+if typing.TYPE_CHECKING:
+    import sphinx.application
+
+
+def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
+    """Entrypoint for Sphinx extensions, connects generation code to Sphinx event."""
+    app.connect('builder-inited', _generate)
+    return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
+
+
+def _generate(app: sphinx.application.Sphinx):
+    _generate_non_relation_libs_table(app.confdir)
+
+
+####################################
+# Generate non-relation libs table #
+####################################
+
 _EMOJIS = {
     # statuses
     'recommended': '✅',
@@ -74,9 +96,9 @@ class _CSVRow(typing.TypedDict, total=True):
     description: str
 
 
-def generate_non_relation_libs_table():
-    """Generate reference/non-relation-libs-table.rst from reference/non-relation-libs-raw.csv."""
-    raw = pathlib.Path('reference/non-relation-libs-raw.csv')
+def _generate_non_relation_libs_table(docs_dir: str | pathlib.Path) -> None:
+    docs_dir = pathlib.Path(docs_dir)
+    raw = docs_dir / 'reference' / 'non-relation-libs-raw.csv'
     with raw.open() as f:
         entries: list[_CSVRow] = list(csv.DictReader(f))  # type: ignore
     chunks = [_TABLE_HEADER_TEMPLATE.format(csv_file=raw, script_file=pathlib.Path(__file__).name)]
@@ -85,7 +107,7 @@ def generate_non_relation_libs_table():
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         chunks.append(f'   * -{first}\n')
         chunks.extend(f'     -{line}\n' for line in rest)
-    directory = pathlib.Path('reference/generated')
+    directory = docs_dir / 'reference' / 'generated'
     directory.mkdir(exist_ok=True, parents=True)
     (directory / 'non-relation-libs-table.rst').write_text(''.join(chunks))
 
@@ -159,7 +181,3 @@ def _hidden_text(msg: object) -> str:
           <span style="display:none;">{msg}</span>
 
 """
-
-
-if __name__ == '__main__':
-    generate_non_relation_libs_table()
