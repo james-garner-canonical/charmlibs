@@ -19,5 +19,8 @@ html:
 linkcheck:
 	uvx --from=rust-just just docs linkcheck
 
+spellcheck:
+	uvx --from=rust-just just docs spellcheck
+
 clean:
 	uvx --from=rust-just just docs clean
