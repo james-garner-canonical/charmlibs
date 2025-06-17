@@ -12,6 +12,12 @@ run:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
         sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{_docs_build_location}}/html'
 
+[doc('Check links.')]
+[working-directory: '_docs']
+linkcheck:
+    uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
+        sphinx-build -b linkcheck . '{{_docs_build_location}}'
+
 [doc('Remove files created by building the docs.')]
 [working-directory: '_docs']
 clean:
