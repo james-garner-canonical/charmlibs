@@ -43,21 +43,12 @@ def _generate(app: sphinx.application.Sphinx):
 ####################################
 
 _EMOJIS = {
-    # statuses
     'recommended': '✅',
     'dep': '↪️',
     'legacy': '🪦',
     'team': '🚫',
-    # kinds
-    # 'PyPI': '🐍',
-    # 'git': '🔧',
-    # 'Charmhub': '✨',
-    # substrates
     'machine': '🖥️',
     'K8s': '☸️',
-    # other
-    # 'docs': '📚',
-    # 'src': '⌨️',
 }
 _STATUS_TOOLTIPS = {
     'recommended': 'Recommended for use in new charms today!',
