@@ -18,6 +18,11 @@ linkcheck:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
         sphinx-build -b linkcheck . '{{_docs_build_location}}'
 
+[doc('Check spelling.')]
+[working-directory: '_docs']
+spellcheck:
+    uvx pyspelling -c .sphinx/spellingcheck.yaml -j $(nproc)
+
 [doc('Remove files created by building the docs.')]
 [working-directory: '_docs']
 clean:
