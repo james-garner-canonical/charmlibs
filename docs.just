@@ -20,3 +20,4 @@ clean:
     rm -rf .sphinx/node_modules/
     rm -rf .sphinx/styles
     rm -rf .sphinx/vale.ini
+    rm -rf reference/generated
