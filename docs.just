@@ -18,7 +18,7 @@ linkcheck:
         sphinx-build -b linkcheck . '{{build_dir}}'
 
 [doc('Check spelling.')]
-spellcheck:
+spelling: html
     uvx pyspelling -c .sphinx/spellingcheck.yaml -j $(nproc)
 
 [doc('Remove files created by building the docs.')]

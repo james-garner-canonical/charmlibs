@@ -11,7 +11,7 @@ help:
         "* only build:                                make html \n" \
         "* clean full environment:                    make clean \n" \
         "* check links:                               make linkcheck \n" \
-        "* check spelling (without building again):   make spellcheck \n" \
+        "* check spelling:                            make spelling \n" \
         "------------------------------------------------------------- \n"
 
 .PHONY: html run clean install linkcheck
@@ -28,5 +28,5 @@ clean:
 linkcheck:
 	uvx --from=rust-just just docs linkcheck
 
-spellcheck:
-	uvx --from=rust-just just docs spellcheck
+spelling:
+	uvx --from=rust-just just docs spelling
