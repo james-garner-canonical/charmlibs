@@ -110,14 +110,13 @@ def _status(entry: _CSVRow) -> str:
         return prefix
     if status not in _STATUS_TOOLTIPS:
         return f'{prefix}       | {_EMOJIS[status]}'
-    return (
-        prefix.rstrip()
-        + '\n          '
-        + f'<div class="emoji-div">{_EMOJIS[status]}'
-        + f'<div class="emoji-tooltip">{_STATUS_TOOLTIPS[status]}</div>'
-        + '</div>'
-        + '\n\n'
-    )
+    return f"""{prefix.rstrip()}
+          <div class="emoji-div">
+            {_EMOJIS[status]}
+            <div class="emoji-tooltip">{_STATUS_TOOLTIPS[status]}</div>
+          </div>
+
+"""
 
 
 def _name(entry: _CSVRow) -> str:
