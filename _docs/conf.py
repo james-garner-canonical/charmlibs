@@ -404,13 +404,13 @@ autodoc_default_options = {
 }
 
 # set the version to use for DataTables plugin
-datatables_version = "1.13.4"
+datatables_version = "2.3.0"
 # name of the class to use for tables to enable DataTables
 datatables_class = "sphinx-datatable"
 # any custom options to pass to the DataTables constructor
 # any options set are used for all DataTables
 datatables_options = {
-    'info': 0,  # remove 'showing x of y' footer
-    'paging': 0,  # remove all paging options
-    'search': {'regex': 1},  # enabel regex in search box
+    'info': False,  # remove 'showing x of y' footer
+    'paging': False,  # remove all paging options
+    'search': {'regex': True},  # enabel regex in search box
 }
