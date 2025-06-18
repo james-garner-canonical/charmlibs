@@ -404,7 +404,7 @@ autodoc_default_options = {
 }
 
 # set the version to use for DataTables plugin
-datatables_version = "2.3.0"
+datatables_version = "1.13.4"
 # name of the class to use for tables to enable DataTables
 datatables_class = "sphinx-datatable"
 # any custom options to pass to the DataTables constructor
