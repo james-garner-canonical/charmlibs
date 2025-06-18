@@ -1,4 +1,4 @@
-mod docs  # load mod.just to expose docs subcommands
+mod docs  # load docs module to expose docs subcommands
 
 set ignore-comments  # don't print comment lines in recipes
 

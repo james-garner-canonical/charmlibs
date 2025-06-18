@@ -1,32 +1,29 @@
-_docs_build_location := env('READTHEDOCS_OUTPUT', '_build')
+set working-directory := '_docs'
+
+build_dir := env('READTHEDOCS_OUTPUT', '_build')
 
 [doc('Build the docs.')]
-[working-directory: '_docs']
 html:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-build -T -W --keep-going -b dirhtml -d _build/doctrees -D language=en . '{{_docs_build_location}}/html'
+        sphinx-build -T -W --keep-going -b dirhtml -d _build/doctrees -D language=en . '{{build_dir}}/html'
 
 [doc('Watch, build, and serve the docs.')]
-[working-directory: '_docs']
 run:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{_docs_build_location}}/html'
+        sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{build_dir}}/html'
 
 [doc('Check links.')]
-[working-directory: '_docs']
 linkcheck:
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-build -b linkcheck . '{{_docs_build_location}}'
+        sphinx-build -b linkcheck . '{{build_dir}}'
 
 [doc('Check spelling.')]
-[working-directory: '_docs']
-spellcheck:
+spelling: html
     uvx pyspelling -c .sphinx/spellingcheck.yaml -j $(nproc)
 
 [doc('Remove files created by building the docs.')]
-[working-directory: '_docs']
 clean:
-    git clean -fx '{{_docs_build_location}}'
+    git clean -fx '{{build_dir}}'
     rm -rf .sphinx/.doctrees
     rm -rf .sphinx/node_modules/
     rm -rf .sphinx/styles

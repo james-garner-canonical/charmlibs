@@ -66,7 +66,7 @@ If your package is developed in the same repo as one or more charms, consider wo
 (python-package-distribution-pypi)=
 ### PyPI
 
-To publish your library on PyPI, set up [trusted publishing](https://docs.pypi.org/trusted-publishers/) on PyPI, and create a Github workflow triggered by a version tag. For example:
+To publish your library on PyPI, set up [trusted publishing](https://docs.pypi.org/trusted-publishers/) on PyPI, and create a GitHub workflow triggered by a version tag. For example:
 
 ```yaml
 # .github/workflows/publish.yaml
