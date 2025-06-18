@@ -1,3 +1,5 @@
+mod docs  # load docs module to expose docs subcommands
+
 set ignore-comments  # don't print comment lines in recipes
 
 # set on the commandline as needed, e.g. `just package=pathops python=3.8 unit`
@@ -7,7 +9,7 @@ python := '3.12'
 [doc('Describe usage and list the available recipes.')]
 _help:
     @echo 'All recipes require {{CYAN}}`uv`{{NORMAL}} to be available.'
-    @just --list --unsorted
+    @just --list --unsorted --list-submodules
 
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]
 lint:
