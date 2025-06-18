@@ -30,6 +30,8 @@ matrix:
             - a.contributor
             - span.pre
             - .sig-object
-            - '#module-jubilant em'
-            - '#module-jubilant strong'
-            - '#module-jubilant a.reference'
+            - '#module-pathops em'
+            - '#module-pathops strong'
+            - '#module-pathops a.reference'
+            - a.reference[title^="pathops."]
+            - a[href*="#pathops"]

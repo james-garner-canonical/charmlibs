@@ -31,12 +31,12 @@ jobs:
           python-version: "3.12"
       - name: Install uv
         uses: astral-sh/setup-uv@v5
-      #- name: Spelling
-      #  id: spellcheck-step
-      #  if: success() || failure()
-      #  uses: canonical/documentation-workflows/spellcheck@main
-      #  with:
-      #    working-directory: _docs
+      - name: Spelling
+        id: spellcheck-step
+        if: success() || failure()
+        uses: canonical/documentation-workflows/spellcheck@main
+        with:
+          working-directory: _docs
       - name: Links
         id: linkcheck-step
         if: success() || failure()
