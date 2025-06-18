@@ -143,13 +143,13 @@ def _kind(entry: _CSVRow) -> str:
 
 def _description(entry: _CSVRow) -> str:
     substrates = ('machine', 'K8s')
-    sortkeys = [
-        *(0 if entry[s] else 1 for s in substrates),
-        _STATUS_SORTKEYS[entry['status']],
-        _KIND_SORTKEYS[entry['kind']],
+    sortkeys = ''.join([
+        *('0' if entry[s] else '1' for s in substrates),
+        str(_STATUS_SORTKEYS[entry['status']]),
+        str(_KIND_SORTKEYS[entry['kind']]),
         entry['name'],
-    ]
-    prefix = _hidden_text(''.join(str(k) for k in sortkeys))
+    ])
+    prefix = _hidden_text(sortkeys)
     descriptions: list[str] = []
     if subs := [_EMOJIS.get(s, '') + s for s in substrates if entry[s]]:
         descriptions.append(' '.join(subs))
