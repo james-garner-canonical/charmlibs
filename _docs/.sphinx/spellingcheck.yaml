@@ -33,7 +33,5 @@ matrix:
             - '#module-pathops em'
             - '#module-pathops strong'
             - '#module-pathops a.reference'
-            - '#module-pathops.statustypes em'
-            - '#module-pathops.statustypes strong'
             - a.reference[title^="pathops."]
             - a[href*="#pathops"]
