@@ -1,4 +1,9 @@
-# Put it first so that "make" without argument is like "make help".
+# This Makefile was adapted from the documentation starter pack. We've kept it for
+# consistency with other Canonical projects, so that contributors can use familiar
+# `make` commands to build the docs.
+
+# To modify the doc build process, edit `docs.just` in the repo root.
+
 help:
 	@echo "\n" \
         "------------------------------------------------------------- \n" \
