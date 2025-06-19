@@ -43,21 +43,25 @@ def _generate(app: sphinx.application.Sphinx):
 ####################################
 
 _EMOJIS = {
+    # status
     'recommended': '✅',
     'dep': '↪️',
+    'experimental': '⚗️',
     'legacy': '🪦',
     'team': '🚫',
+    # substrate
     'machine': '🖥️',
     'K8s': '☸️',
 }
 _STATUS_TOOLTIPS = {
     'recommended': 'Recommended for use in new charms today!',
-    'dep': 'Dependency of other libs, unlikely to be needed directly.',
-    'legacy': 'There are better alternatives available.',
+    'dep': 'Dependency of other libs, unlikely to be required directly.',
+    'experimental': 'Use at your own risk!',
+    'legacy': 'Not recommended, there are better alternatives available.',
     'team': 'Team internal lib, may not be stable for external use.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
-_STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'legacy': 3, 'team': 4}
+_STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'experimental': 3, 'legacy': 4, 'team': 5}
 _TABLE_HEADER_TEMPLATE = """..
     This file was automatically generated.
     It should not be manually edited!
