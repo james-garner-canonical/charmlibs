@@ -1,8 +1,8 @@
 non-relation libs
 =================
 
-This page lists public, non-relation libraries for use in charming. Relation libraries are listed separately.
+This page lists public, non-relation libraries for use in charming. Relation libraries are listed separately. The status of a library is indicated in the left column -- hover over the icon for an explanation -- for example a ✅ indicates a library recommended for use in new charms today.
 
-✅ indicates a library recommended by Charm Tech for use in modern charms, while 🪦 indicates a legacy library with a better alternative that should be used by new charms.
+
 
 .. include:: generated/non-relation-libs-table.rst
