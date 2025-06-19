@@ -34,7 +34,6 @@ symlink
 symlinks
 templating
 URI
-url
 UTF
 
 charmcraft

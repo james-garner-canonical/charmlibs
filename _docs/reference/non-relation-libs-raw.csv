@@ -22,7 +22,7 @@ charm-api,experimental,https://pypi.org/project/charm-api/,,https://github.com/c
 charm-json,legacy,https://pypi.org/project/charm-json/,,https://github.com/canonical/charm-json,PyPI,y,y,JSON typed relation data – unnecessary with ops 2.23+ due to the addition of typed relation data.
 charm-refresh-build-version,team,https://pypi.org/project/charm-refresh-build-version/,,https://github.com/canonical/charm-refresh-build-version,PyPI,y,y,Workaround for a charmcraft issue.
 charm-refresh,team,https://pypi.org/project/charm-refresh/,https://canonical-charm-refresh.readthedocs-hosted.com/latest/,https://github.com/canonical/charm-refresh,PyPI,y,y,In-place rolling refreshes of stateful charmed applications.
-charm-upgrade,legacy,https://pypi.org/project/charm-upgrade/,,https://github.com/canonical/charm-upgrade,PyPI,y,y,Alias for charm-refresh? (Repo url redirects.)
+charm-upgrade,legacy,https://pypi.org/project/charm-upgrade/,,https://github.com/canonical/charm-upgrade,PyPI,y,y,Alias for charm-refresh? (Repo URL redirects.)
 charmed-service-mesh-helpers,team,https://pypi.org/project/charmed-service-mesh-helpers/,,https://github.com/canonical/charmed-service-mesh-helpers/,PyPI,,y,Used internally by the Service Mesh team.
 charms.contextual_status,,https://pypi.org/project/charms.contextual-status/,,https://github.com/charmed-kubernetes/charm-lib-contextual-status,PyPI,y,y,Context manager based library for setting charm statuses.
 charms.docker,legacy,https://pypi.org/project/charms.docker/,,https://github.com/juju-solutions/charms.docker,PyPI,,,Legacy library used by the docker-layer reactive charm.
