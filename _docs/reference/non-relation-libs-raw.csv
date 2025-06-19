@@ -35,3 +35,14 @@ jujuresources,legacy,https://pypi.org/project/jujuresources/,http://pythonhosted
 ops_reactive_interface,,https://pypi.org/project/ops-reactive-interface/,https://github.com/canonical/ops-reactive-interface/tree/main/docs,https://github.com/juju-solutions/ops-reactive-interface,PyPI,y,y,"Helper for relation library developers, to allow an ops based relation library to interact with legacy, reactive charms."
 ops.manifest,,https://pypi.org/project/ops.manifest/,,https://github.com/canonical/ops-lib-manifest,PyPI,,y,Work with Kubernetes manifests.
 sborl,legacy,https://pypi.org/project/sborl/,,https://github.com/canonical/sborl,PyPI,y,y,Legacy library for implementing relation libraries.
+ juju_topology,legacy, https://charmhub.io/observability-libs/libraries/juju_topology,,,Charmhub,y,y,Deprecated in favour of cosl.juju_topology.JujuTopology.
+ kubernetes_service_patch,legacy, https://charmhub.io/observability-libs/libraries/kubernetes_service_patch,,,Charmhub,,y,Deprecated in favour of ops.Unit.set_ports.
+ charm_tracing,legacy, https://charmhub.io/tempo-coordinator-k8s/libraries/charm_tracing,,,Charmhub,y,y,Consider using ops[tracing] instead.
+ data_models,, https://charmhub.io/data-platform-libs/libraries/data_models,,,Charmhub,,,
+ upgrade,, https://charmhub.io/data-platform-libs/libraries/upgrade,,,Charmhub,,,
+ kubernetes_compute_resources_patch,, https://charmhub.io/observability-libs/libraries/kubernetes_compute_resources_patch,,,Charmhub,,,
+ rollingops,, https://charmhub.io/rolling-ops/libraries/rollingops,,,Charmhub,,,
+ client,, https://charmhub.io/zookeeper/libraries/client,,,Charmhub,,,
+ capture_events,, https://charmhub.io/harness-extensions/libraries/capture_events,,,Charmhub,,,
+ postgresql,, https://charmhub.io/postgresql-k8s/libraries/postgresql,,,Charmhub,,,
+ multus,, https://charmhub.io/kubernetes-charm-libraries/libraries/multus,,,Charmhub,,,
