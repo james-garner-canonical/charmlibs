@@ -163,7 +163,7 @@ def _description(entry: _CSVRow) -> str:
 
 
 def _rst_link(name: str, url: str) -> str:
-    return f'`{name} <{url}>`__'
+    return f'`{name.strip()} <{url.strip()}>`__'
 
 
 def _hidden_text(msg: object) -> str:
