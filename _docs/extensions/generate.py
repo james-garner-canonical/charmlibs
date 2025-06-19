@@ -56,7 +56,7 @@ _EMOJIS = {
 _STATUS_TOOLTIPS = {
     'recommended': 'Recommended for use in new charms today!',
     'dep': 'Dependency of other libs, unlikely to be required directly.',
-    'experimental': 'Use at your own risk!',
+    'experimental': 'Experimental, use at your own risk!',
     'legacy': 'Not recommended, there are better alternatives available.',
     'team': 'Team internal lib, may not be stable for external use.',
 }
