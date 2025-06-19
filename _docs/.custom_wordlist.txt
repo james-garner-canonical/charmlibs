@@ -25,12 +25,14 @@ posix
 repo
 serialized
 src
+stateful
 stdout
 stderr
 subclasses
 subdirectory
 symlink
 symlinks
+templating
 URI
 UTF
 
@@ -47,9 +49,16 @@ snapd
 sysctl
 systemd
 
+awsjuju
+jinja
+json
+jujubigdata
+jujuresources
 kubeflow
 loki
 mongo
+reconciler
+sborl
 
 pathlib
 pathops
