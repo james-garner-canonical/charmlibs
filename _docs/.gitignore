@@ -25,4 +25,4 @@ __pycache__
 .vscode/
 
 # generated docs
-**/generated/*
+generated/
