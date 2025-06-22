@@ -1,5 +1,6 @@
 # Ensure the last line in this file has a newline at the end, to support concatenation
 api
+async
 autocomplete
 autocompletions
 args
@@ -52,6 +53,7 @@ systemd
 awsjuju
 charmhub
 cosl
+evt
 https
 io
 jinja
@@ -64,6 +66,9 @@ kubernetes
 loki
 mongo
 multus
+mysql
+pgb
+pgbouncer
 postgresql
 reconciler
 rollingops
