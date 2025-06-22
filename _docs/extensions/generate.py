@@ -156,10 +156,11 @@ def _description(entry: _CSVRow) -> str:
     prefix = _hidden_text(sortkeys)
     # description
     subs = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
-    description = '\n'.join(s for s in (subs, entry['description']) if s)
+    desc = entry['description']
+    description = '\n'.join(s for s in (subs, desc) if s).replace('\n', '\n       | ')
     if not description:
         return prefix
-    return f'{prefix}       | {description.replace("\n", "\n       | ")}'
+    return f'{prefix}       | {description}'
 
 
 def _rst_link(name: str, url: str) -> str:
