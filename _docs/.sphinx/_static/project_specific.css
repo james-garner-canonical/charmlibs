@@ -29,4 +29,5 @@
 }
 .emoji-div:hover .emoji-tooltip {
   display: block;
+  z-index: 9999;
 }
