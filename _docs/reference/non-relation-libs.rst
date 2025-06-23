@@ -6,3 +6,5 @@ This page lists public, non-relation libraries for use in charming. Relation lib
 
 
 .. include:: generated/non-relation-libs-table.rst
+
+.. include:: generated/relation-libs-table.rst

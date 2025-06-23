@@ -25,7 +25,10 @@ import typing
 ####################
 
 if typing.TYPE_CHECKING:
+    from typing import Callable, Iterable
+
     import sphinx.application
+    from typing_extensions import TypeAlias
 
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
@@ -35,7 +38,7 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _generate(app: sphinx.application.Sphinx):
-    _generate_non_relation_libs_table(app.confdir)
+    _generate_libs_table(app.confdir)
 
 
 ####################################
@@ -62,12 +65,24 @@ _STATUS_TOOLTIPS = {
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
 _STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'experimental': 3, 'legacy': 4, 'team': 5}
-_TABLE_HEADER_TEMPLATE = """..
+_FILE_HEADER = """..
     This file was automatically generated.
     It should not be manually edited!
-    Instead, edit {csv_file} and then run {script_file}
+    Instead, edit the corresponding -raw.csv file and then rebuild the docs.
 
-.. list-table::
+"""
+_REL_TABLE_HEADER = """.. list-table::
+   :class: sphinx-datatable
+   :widths: 1, 20, 20, 1, 40
+   :header-rows: 1
+
+   * -
+     - relation
+     - name
+     - kind
+     - description
+"""
+_NON_REL_TABLE_HEADER = """.. list-table::
    :class: sphinx-datatable
    :widths: 1, 40, 1, 60
    :header-rows: 1
@@ -79,7 +94,19 @@ _TABLE_HEADER_TEMPLATE = """..
 """
 
 
-class _CSVRow(typing.TypedDict, total=True):
+class _RelCSVRow(typing.TypedDict, total=True):
+    rel_name: str
+    rel_url: str
+    name: str
+    status: str
+    url: str
+    docs: str
+    src: str
+    kind: str
+    description: str
+
+
+class _NonRelCSVRow(typing.TypedDict, total=True):
     name: str
     status: str
     url: str
@@ -91,20 +118,53 @@ class _CSVRow(typing.TypedDict, total=True):
     description: str
 
 
-def _generate_non_relation_libs_table(docs_dir: str | pathlib.Path) -> None:
-    docs_dir = pathlib.Path(docs_dir)
-    raw = docs_dir / 'reference' / 'non-relation-libs-raw.csv'
-    with raw.open() as f:
-        entries: list[_CSVRow] = list(csv.DictReader(f))  # type: ignore
-    chunks = [_TABLE_HEADER_TEMPLATE.format(csv_file=raw, script_file=pathlib.Path(__file__).name)]
-    rows = [(_status(entry), _name(entry), _kind(entry), _description(entry)) for entry in entries]
-    for row in sorted(rows, key=lambda r: (r[0], r[2], r[3], r[1])):  # sort: status, kind, desc
+_CSVRow: TypeAlias = '_RelCSVRow | _NonRelCSVRow'
+_TableRow: TypeAlias = 'tuple[str, ...]'
+
+
+def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
+    ref_dir = pathlib.Path(docs_dir) / 'reference'
+    gen_dir = ref_dir / 'generated'
+    gen_dir.mkdir(exist_ok=True)
+    # relation libs
+    with (ref_dir / 'relation-libs-raw.csv').open() as f:
+        rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
+    rel_table = _get_relation_libs_table(rel_entries)
+    (gen_dir / 'relation-libs-table.rst').write_text(rel_table)
+    # non-relation libs
+    with (ref_dir / 'non-relation-libs-raw.csv').open() as f:
+        non_rel_entries: list[_NonRelCSVRow] = list(csv.DictReader(f))  # type: ignore
+    non_rel_table = _get_non_relation_libs_table(non_rel_entries)
+    (gen_dir / 'non-relation-libs-table.rst').write_text(non_rel_table)
+
+
+def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
+    def key(row: _TableRow) -> _TableRow:
+        status, rel, name, kind, desc = row
+        return status, kind, rel, name, desc
+
+    rows = [(_status(e), _relation(e), _name(e), _kind(e), _description(e)) for e in entries]
+    rst = _rows_to_rst(rows, key=key)
+    return ''.join([_FILE_HEADER, _REL_TABLE_HEADER, rst])
+
+
+def _get_non_relation_libs_table(entries: list[_NonRelCSVRow]) -> str:
+    def key(row: _TableRow) -> _TableRow:
+        status, name, kind, desc = row
+        return status, kind, desc, name
+
+    rows = [(_status(e), _name(e), _kind(e), _description(e)) for e in entries]
+    rst = _rows_to_rst(rows, key=key)
+    return ''.join([_FILE_HEADER, _NON_REL_TABLE_HEADER, rst])
+
+
+def _rows_to_rst(rows: Iterable[_TableRow], key: Callable[[_TableRow], _TableRow]) -> str:
+    lines: list[str] = []
+    for row in sorted(rows, key=key):
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
-        chunks.append(f'   * -{first}\n')
-        chunks.extend(f'     -{line}\n' for line in rest)
-    directory = docs_dir / 'reference' / 'generated'
-    directory.mkdir(exist_ok=True, parents=True)
-    (directory / 'non-relation-libs-table.rst').write_text(''.join(chunks))
+        lines.append(f'   * -{first}\n')
+        lines.extend(f'     -{line}\n' for line in rest)
+    return ''.join(lines)
 
 
 def _status(entry: _CSVRow) -> str:
@@ -121,6 +181,14 @@ def _status(entry: _CSVRow) -> str:
           </div>
 
 """
+
+
+def _relation(entry: _RelCSVRow) -> str:
+    if not (name := entry['rel_name']):
+        return '?'
+    if not (url := entry['rel_url']):
+        return name
+    return _rst_link(name, url)
 
 
 def _name(entry: _CSVRow) -> str:
@@ -148,14 +216,14 @@ def _description(entry: _CSVRow) -> str:
     substrates = ('machine', 'K8s')
     # prefix
     sortkeys = ''.join([
-        *('0' if entry[s] else '1' for s in substrates),
+        *('0' if entry.get(s, '') else '1' for s in substrates),
         str(_STATUS_SORTKEYS[entry['status']]),
         str(_KIND_SORTKEYS[entry['kind']]),
         entry['name'],
     ])
     prefix = _hidden_text(sortkeys)
     # description
-    subs = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
+    subs = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry.get(s, ''))
     desc = entry['description']
     description = '\n'.join(s for s in (subs, desc) if s).replace('\n', '\n       | ')
     if not description:
