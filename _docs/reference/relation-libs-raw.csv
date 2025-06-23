@@ -8,7 +8,7 @@ status,rel_name,rel_url,name,url,docs,src,kind,description
 ,,,tracing,https://charmhub.io/tempo-coordinator-k8s/libraries/tracing,,,Charmhub,
 ,,,certificate_transfer,https://charmhub.io/certificate-transfer-interface/libraries/certificate_transfer,,,Charmhub,
 ,,,s3,https://charmhub.io/data-platform-libs/libraries/s3,,,Charmhub,
-,,,cert_handler,https://charmhub.io/observability-libs/libraries/cert_handler,,,Charmhub,Wraps the requirer side of the tls-certificates-interface charm’s tls_certificates lib.
+,,,cert_handler,https://charmhub.io/observability-libs/libraries/cert_handler,,,Charmhub,Wraps the requirer side of the tls-certificates-interface charm's tls_certificates lib.
 ,,,cos_agent,https://charmhub.io/grafana-agent/libraries/cos_agent,,,Charmhub,
 ,,,nginx_route,https://charmhub.io/nginx-ingress-integrator/libraries/nginx_route,,,Charmhub,
 ,,,sdcore_config,https://charmhub.io/sdcore-nms-k8s/libraries/sdcore_config,,,Charmhub,
@@ -39,8 +39,8 @@ legacy,,,tracing,https://charmhub.io/tempo-k8s/libraries/tracing,,,Charmhub,Depr
 ,,,k8s_service_info,https://charmhub.io/mlops-libs/libraries/k8s_service_info,,,Charmhub,
 ,,,oathkeeper_info,https://charmhub.io/oathkeeper/libraries/oathkeeper_info,,,Charmhub,
 ,,,blackbox_probes,https://charmhub.io/blackbox-exporter-k8s/libraries/blackbox_probes,,,Charmhub,
-legacy,,,parca_scrape,https://charmhub.io/parca/libraries/parca_scrape,,,Charmhub,Deprecated in favour of parca-k8s’s parka_scrape lib.
-legacy,,,traefik_route,https://charmhub.io/traefik-route-k8s/libraries/traefik_route,,,Charmhub,Deprecated in favour of traefik-k8s-operator’s traefik_route lib.
+legacy,,,parca_scrape,https://charmhub.io/parca/libraries/parca_scrape,,,Charmhub,Deprecated in favour of the parca-k8s charm's parka_scrape lib.
+legacy,,,traefik_route,https://charmhub.io/traefik-route-k8s/libraries/traefik_route,,,Charmhub,Deprecated in favour of traefik-k8s-operator's traefik_route lib.
 ,,,kratos_external_provider,https://charmhub.io/kratos-external-idp-integrator/libraries/kratos_external_provider,,,Charmhub,
 team,,,tls,https://charmhub.io/mysql/libraries/tls,,,Charmhub,Shared code between the mysql and mysql-k8s charms.
 ,,,forward_auth,https://charmhub.io/oathkeeper/libraries/forward_auth,,,Charmhub,
