@@ -25,7 +25,7 @@ import typing
 ####################
 
 if typing.TYPE_CHECKING:
-    from typing import Callable, Iterable
+    from typing import Any, Callable, Iterable
 
     import sphinx.application
     from typing_extensions import TypeAlias
@@ -92,6 +92,13 @@ _NON_REL_TABLE_HEADER = """.. list-table::
      - kind
      - description
 """
+_KEY_TABLE_HEADER = """.. list-table::
+   :widths: 1, 100
+   :header-rows: 1
+
+   * -
+     - description
+"""
 
 
 class _RelCSVRow(typing.TypedDict, total=True):
@@ -136,6 +143,8 @@ def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
         non_rel_entries: list[_NonRelCSVRow] = list(csv.DictReader(f))  # type: ignore
     non_rel_table = _get_non_relation_libs_table(non_rel_entries)
     (gen_dir / 'non-relation-libs-table.rst').write_text(non_rel_table)
+    # status key
+    (gen_dir / 'status-key.rst').write_text(_get_status_key_table())
 
 
 def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
@@ -158,9 +167,20 @@ def _get_non_relation_libs_table(entries: list[_NonRelCSVRow]) -> str:
     return ''.join([_FILE_HEADER, _NON_REL_TABLE_HEADER, rst])
 
 
-def _rows_to_rst(rows: Iterable[_TableRow], key: Callable[[_TableRow], _TableRow]) -> str:
+def _get_status_key_table() -> str:
+    rows = [
+        (_status({'status': s}), _STATUS_TOOLTIPS[s])  # type: ignore
+        for s in _STATUS_SORTKEYS
+        if s in _EMOJIS
+    ]
+    rows.append(('', 'None of the above.'))
+    rst = _rows_to_rst(rows)
+    return ''.join([_FILE_HEADER, _KEY_TABLE_HEADER, rst])
+
+
+def _rows_to_rst(rows: Iterable[_TableRow], key: Callable[[_TableRow], Any] | None = None) -> str:
     lines: list[str] = []
-    for row in sorted(rows, key=key):
+    for row in (sorted(rows, key=key) if key is not None else rows):
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         lines.append(f'   * -{first}\n')
         lines.extend(f'     -{line}\n' for line in rest)

@@ -21,6 +21,8 @@ This page includes a table listing relation libraries, and a table listing non-r
 
 The status of a library is indicated by the leftmost column. There's a key below, also available on hover.
 
+.. include:: generated/status-key.rst
+
 Non-relation libraries
 ----------------------
 
