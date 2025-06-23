@@ -6,6 +6,7 @@ autocompletions
 args
 CIDR
 chisme
+codebase
 config
 dev
 dir
@@ -34,6 +35,7 @@ subdirectory
 symlink
 symlinks
 templating
+vendored
 URI
 UTF
 
@@ -43,6 +45,7 @@ charmlibs
 Juju
 juju
 PYDEPS
+requirer
 
 dnf
 passwd
@@ -50,29 +53,63 @@ snapd
 sysctl
 systemd
 
+alertmanager
+auth
 awsjuju
+blackbox
 charmhub
+cloudflared
 cosl
+dex
+glauth
+grafana
 evt
+fiveg
+gnb
 https
 io
+istio
 jinja
 json
 jujubigdata
 jujuresources
 JujuTopology
+kratos
+kube
 kubeflow
 kubernetes
+kv
+ldap
+lego
+loadbalancer
 loki
 mongo
 multus
 mysql
+nginx
+nrf
+oathkeeper
+oauth
+oidc
+openfga
+opslib
+parca
 pgb
 pgbouncer
+pgsql
 postgresql
+prometheus
+pushgateway
 reconciler
+redis
 rollingops
+saml
 sborl
+sdcore
+smtp
+tls
+traefik
+ui
 
 pathlib
 pathops
