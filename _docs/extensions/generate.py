@@ -101,9 +101,7 @@ _KEY_TABLE_HEADER = """.. list-table::
 """
 
 
-class _RelCSVRow(typing.TypedDict, total=True):
-    rel_name: str
-    rel_url: str
+class _CSVRow(typing.TypedDict, total=True):
     name: str
     status: str
     url: str
@@ -113,19 +111,17 @@ class _RelCSVRow(typing.TypedDict, total=True):
     description: str
 
 
-class _NonRelCSVRow(typing.TypedDict, total=True):
-    name: str
-    status: str
-    url: str
-    docs: str
-    src: str
-    kind: str
+class _RelCSVRow(_CSVRow, total=True):
+    rel_name: str
+    rel_url_charmhub: str
+    rel_url_schema: str
+
+
+class _NonRelCSVRow(_CSVRow, total=True):
     machine: str
     K8s: str
-    description: str
 
 
-_CSVRow: TypeAlias = '_RelCSVRow | _NonRelCSVRow'
 _TableRow: TypeAlias = 'tuple[str, ...]'
 
 
@@ -180,7 +176,7 @@ def _get_status_key_table() -> str:
 
 def _rows_to_rst(rows: Iterable[_TableRow], key: Callable[[_TableRow], Any] | None = None) -> str:
     lines: list[str] = []
-    for row in (sorted(rows, key=key) if key is not None else rows):
+    for row in rows if key is None else sorted(rows, key=key):
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         lines.append(f'   * -{first}\n')
         lines.extend(f'     -{line}\n' for line in rest)
@@ -205,10 +201,14 @@ def _status(entry: _CSVRow) -> str:
 
 def _relation(entry: _RelCSVRow) -> str:
     if not (name := entry['rel_name']):
-        return '?'
-    if not (url := entry['rel_url']):
+        return ''
+    if not (main_url := entry['rel_url_charmhub']):
         return name
-    return _rst_link(name, url)
+    main_link = _rst_link(name, main_url)
+    if not (schema_url := entry['rel_url_schema']):
+        return main_link
+    schema_link = _rst_link('schema', schema_url)
+    return f'{main_link} ({schema_link})'
 
 
 def _name(entry: _CSVRow) -> str:
