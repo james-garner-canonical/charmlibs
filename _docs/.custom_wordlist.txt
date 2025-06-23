@@ -55,6 +55,7 @@ systemd
 
 alertmanager
 auth
+auxilary
 awsjuju
 blackbox
 charmhub
@@ -68,6 +69,7 @@ fiveg
 gnb
 https
 io
+integrations
 istio
 jinja
 json
@@ -83,6 +85,7 @@ ldap
 lego
 loadbalancer
 loki
+maubot
 mongo
 multus
 mysql
