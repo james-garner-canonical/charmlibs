@@ -25,10 +25,9 @@ import typing
 ####################
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Callable, Iterable
+    from typing import Iterable
 
     import sphinx.application
-    from typing_extensions import TypeAlias
 
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
@@ -71,18 +70,7 @@ _FILE_HEADER = """..
     Instead, edit the corresponding -raw.csv file and then rebuild the docs.
 
 """
-_REL_TABLE_HEADER = """.. list-table::
-   :class: sphinx-datatable
-   :widths: 1, 20, 20, 1, 40
-   :header-rows: 1
-
-   * -
-     - relation
-     - name
-     - kind
-     - description
-"""
-_NON_REL_TABLE_HEADER = """.. list-table::
+_LIBS_TABLE_HEADER = """.. list-table::
    :class: sphinx-datatable
    :widths: 1, 40, 1, 60
    :header-rows: 1
@@ -122,9 +110,6 @@ class _NonRelCSVRow(_CSVRow, total=True):
     K8s: str
 
 
-_TableRow: TypeAlias = 'tuple[str, ...]'
-
-
 def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
     ref_dir = pathlib.Path(docs_dir) / 'reference'
     gen_dir = ref_dir / 'generated'
@@ -133,34 +118,32 @@ def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
     with (ref_dir / 'relation-libs-raw.csv').open() as f:
         rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
     rel_table = _get_relation_libs_table(rel_entries)
-    (gen_dir / 'relation-libs-table.rst').write_text(rel_table)
+    (gen_dir / 'relation-libs-table.rst').write_text(_FILE_HEADER + rel_table)
     # non-relation libs
     with (ref_dir / 'non-relation-libs-raw.csv').open() as f:
         non_rel_entries: list[_NonRelCSVRow] = list(csv.DictReader(f))  # type: ignore
     non_rel_table = _get_non_relation_libs_table(non_rel_entries)
-    (gen_dir / 'non-relation-libs-table.rst').write_text(non_rel_table)
+    (gen_dir / 'non-relation-libs-table.rst').write_text(_FILE_HEADER + non_rel_table)
     # status key
-    (gen_dir / 'status-key.rst').write_text(_get_status_key_table())
+    (gen_dir / 'status-key.rst').write_text(_FILE_HEADER + _get_status_key_table())
 
 
 def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
-    def key(row: _TableRow) -> _TableRow:
-        status, rel, name, kind, desc = row
-        return status, kind, rel, name, desc
+    def key(row: tuple[str, ...]) -> tuple[str, ...]:
+        status, _name, _kind, desc = row
+        return status, desc
 
-    rows = [(_status(e), _relation(e), _name(e), _kind(e), _description(e)) for e in entries]
-    rst = _rows_to_rst(rows, key=key)
-    return ''.join([_FILE_HEADER, _REL_TABLE_HEADER, rst])
+    rows = [(_status(e), _name(e), _kind(e), _rel_description(e)) for e in entries]
+    return _LIBS_TABLE_HEADER + _rows_to_rst(sorted(rows, key=key))
 
 
 def _get_non_relation_libs_table(entries: list[_NonRelCSVRow]) -> str:
-    def key(row: _TableRow) -> _TableRow:
-        status, name, kind, desc = row
-        return status, kind, desc, name
+    def key(row: tuple[str, ...]) -> tuple[str, ...]:
+        status, _name, kind, desc = row
+        return status, kind, desc
 
-    rows = [(_status(e), _name(e), _kind(e), _description(e)) for e in entries]
-    rst = _rows_to_rst(rows, key=key)
-    return ''.join([_FILE_HEADER, _NON_REL_TABLE_HEADER, rst])
+    rows = [(_status(e), _name(e), _kind(e), _non_rel_description(e)) for e in entries]
+    return _LIBS_TABLE_HEADER + _rows_to_rst(sorted(rows, key=key))
 
 
 def _get_status_key_table() -> str:
@@ -170,13 +153,12 @@ def _get_status_key_table() -> str:
         if s in _EMOJIS
     ]
     rows.append(('', 'None of the above.'))
-    rst = _rows_to_rst(rows)
-    return ''.join([_FILE_HEADER, _KEY_TABLE_HEADER, rst])
+    return _KEY_TABLE_HEADER + _rows_to_rst(rows)
 
 
-def _rows_to_rst(rows: Iterable[_TableRow], key: Callable[[_TableRow], Any] | None = None) -> str:
+def _rows_to_rst(rows: Iterable[tuple[str, ...]]) -> str:
     lines: list[str] = []
-    for row in rows if key is None else sorted(rows, key=key):
+    for row in rows:
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         lines.append(f'   * -{first}\n')
         lines.extend(f'     -{line}\n' for line in rest)
@@ -197,18 +179,6 @@ def _status(entry: _CSVRow) -> str:
           </div>
 
 """
-
-
-def _relation(entry: _RelCSVRow) -> str:
-    if not (name := entry['rel_name']):
-        return ''
-    if not (main_url := entry['rel_url_charmhub']):
-        return name
-    main_link = _rst_link(name, main_url)
-    if not (schema_url := entry['rel_url_schema']):
-        return main_link
-    schema_link = _rst_link('schema', schema_url)
-    return f'{main_link} ({schema_link})'
 
 
 def _name(entry: _CSVRow) -> str:
@@ -232,22 +202,46 @@ def _kind(entry: _CSVRow) -> str:
     return f'{prefix}       | {kind_str}'
 
 
-def _description(entry: _CSVRow) -> str:
-    substrates = ('machine', 'K8s')
-    # prefix
-    sortkeys = ''.join([
-        *('0' if entry.get(s, '') else '1' for s in substrates),
+def _relation(entry: _RelCSVRow) -> str:
+    if not (name := entry['rel_name']):
+        return ''
+    if not (main_url := entry['rel_url_charmhub']):
+        return name
+    main_link = _rst_link(name, main_url)
+    if not (schema_url := entry['rel_url_schema']):
+        return main_link
+    schema_link = _rst_link('schema', schema_url)
+    return f'{main_link} ({schema_link})'
+
+
+def _rel_description(entry: _RelCSVRow) -> str:
+    sortkeys = [
+        entry['rel_name'].ljust(64, 'z'),
         str(_STATUS_SORTKEYS[entry['status']]),
-        str(_KIND_SORTKEYS[entry['kind']]),
         entry['name'],
-    ])
-    prefix = _hidden_text(sortkeys)
-    # description
-    subs = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry.get(s, ''))
-    desc = entry['description']
-    description = '\n'.join(s for s in (subs, desc) if s).replace('\n', '\n       | ')
-    if not description:
+        str(_KIND_SORTKEYS[entry['kind']]),
+    ]
+    firstline = _relation(entry)
+    return _description(entry, sortkeys=sortkeys, firstline=firstline)
+
+
+def _non_rel_description(entry: _NonRelCSVRow) -> str:
+    substrates = ('machine', 'K8s')
+    sortkeys = [
+        *('0' if entry[s] else '1' for s in substrates),
+        str(_STATUS_SORTKEYS[entry['status']]),
+        entry['name'],
+        str(_KIND_SORTKEYS[entry['kind']]),
+    ]
+    firstline = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
+    return _description(entry, sortkeys=sortkeys, firstline=firstline)
+
+
+def _description(entry: _CSVRow, sortkeys: Iterable[str], firstline: str) -> str:
+    prefix = _hidden_text(''.join(sortkeys))
+    if not (chunks := [x for x in (firstline, entry['description']) if x]):
         return prefix
+    description = '\n'.join(chunks).replace('\n', '\n       | ')
     return f'{prefix}       | {description}'
 
 
@@ -259,6 +253,6 @@ def _hidden_text(msg: object) -> str:
     return f"""
        .. raw:: html
 
-          <span style="display:none;">{msg}</span>
+          <span style="display:none;" class="hidden-sortkey-text">{msg}</span>
 
 """

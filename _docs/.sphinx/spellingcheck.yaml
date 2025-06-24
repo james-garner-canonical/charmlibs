@@ -35,3 +35,4 @@ matrix:
             - '#module-pathops a.reference'
             - a.reference[title^="pathops."]
             - a[href*="#pathops"]
+            - .hidden-sortkey-text
