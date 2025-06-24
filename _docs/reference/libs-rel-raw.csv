@@ -1,6 +1,6 @@
 name,status,url,docs,src,kind,rel_name,rel_url_charmhub,rel_url_schema,description
 loki_push_api,,https://charmhub.io/loki-k8s/libraries/loki_push_api,,,Charmhub,loki_push_api,https://charmhub.io/integrations/loki_push_api,,
-prometheus_scrape,,https://charmhub.io/prometheus-k8s/libraries/prometheus_scrape,,,Charmhub,prometheus_scrape,https://charmhub.io/integrations/prometheus_scrape,https://github.com/canonical/charm-relation-interfaces/blob/main/interfaces/prometheus_scrape/v0,
+prometheus_scrape,,https://charmhub.io/prometheus-k8s/libraries/prometheus_scrape,,,Charmhub,prometheus_scrape,https://charmhub.io/integrations/prometheus_scrape,https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/prometheus_scrape/v0,
 grafana_dashboard,,https://charmhub.io/grafana-k8s/libraries/grafana_dashboard,,,Charmhub,grafana_dashboard,https://charmhub.io/integrations/grafana_dashboard,,
 tls_certificates,,https://charmhub.io/tls-certificates-interface/libraries/tls_certificates,,,Charmhub,tls_certificates,https://charmhub.io/integrations/tls_certificates,https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1,
 ingress,,https://charmhub.io/traefik-k8s/libraries/ingress,,,Charmhub,ingress,https://charmhub.io/integrations/ingress,,
@@ -63,7 +63,7 @@ pushgateway,,https://charmhub.io/prometheus-pushgateway-k8s/libraries/pushgatewa
 cloudflared_route,,https://charmhub.io/cloudflare-configurator/libraries/cloudflared_route,,,Charmhub,cloudflared_route,https://charmhub.io/integrations/cloudflared_route,https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/cloudflared_route/v0,
 database_requires,legacy,https://charmhub.io/data-platform-libs/libraries/database_requires,,,Charmhub,,,,Documented as deprecated.
 glauth_auxiliary,,https://charmhub.io/glauth-utils/libraries/glauth_auxiliary,,,Charmhub,glauth_auxilary,https://charmhub.io/integrations/glauth_auxiliary,,
-loadbalancer_interface,,https://pypi.org/project/loadbalancer-interface/,https://github.com/juju-solutions/loadbalancer-interface/blob/master/docs/api.md,https://github.com/juju-solutions/loadbalancer-interface,PyPI,loadbalancer,,,
+loadbalancer_interface,,https://pypi.org/project/loadbalancer-interface/,https://github.com/juju-solutions/loadbalancer-interface/blob/main/docs/api.md,https://github.com/juju-solutions/loadbalancer-interface,PyPI,loadbalancer,,,
 ops-lib-mysql,,https://pypi.org/project/ops-lib-mysql/,,https://github.com/canonical/ops-lib-mysql,PyPI,mysql,,,
 ops-lib-pgsql,,https://pypi.org/project/ops-lib-pgsql/,,https://github.com/canonical/ops-lib-pgsql,PyPI,pgsql,,,
 ops.interface_kube_control,,https://pypi.org/project/ops.interface-kube-control/,,https://github.com/charmed-kubernetes/interface-kube-control,PyPI,kube-control,,,
