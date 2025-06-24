@@ -118,14 +118,20 @@ def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
     with (ref_dir / 'relation-libs-raw.csv').open() as f:
         rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
     rel_table = _get_relation_libs_table(rel_entries)
-    (gen_dir / 'relation-libs-table.rst').write_text(_FILE_HEADER + rel_table)
+    _write_if_needed(path=(gen_dir / 'relation-libs-table.rst'), content=rel_table)
     # non-relation libs
     with (ref_dir / 'non-relation-libs-raw.csv').open() as f:
         non_rel_entries: list[_NonRelCSVRow] = list(csv.DictReader(f))  # type: ignore
     non_rel_table = _get_non_relation_libs_table(non_rel_entries)
-    (gen_dir / 'non-relation-libs-table.rst').write_text(_FILE_HEADER + non_rel_table)
+    _write_if_needed(path=(gen_dir / 'non-relation-libs-table.rst'), content=non_rel_table)
     # status key
-    (gen_dir / 'status-key.rst').write_text(_FILE_HEADER + _get_status_key_table())
+    _write_if_needed(path=(gen_dir / 'status-key.rst'), content=_get_status_key_table())
+
+
+def _write_if_needed(path: pathlib.Path, content: str) -> None:
+    to_write = _FILE_HEADER + content
+    if not path.exists() or path.read_text() != to_write:
+        path.write_text(to_write)
 
 
 def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
