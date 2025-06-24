@@ -35,6 +35,7 @@ subdirectory
 symlink
 symlinks
 templating
+tooltips
 vendored
 URI
 UTF

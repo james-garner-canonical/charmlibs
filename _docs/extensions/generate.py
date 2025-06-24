@@ -37,7 +37,7 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _generate(app: sphinx.application.Sphinx):
-    _generate_libs_table(app.confdir)
+    _generate_libs_tables(app.confdir)
 
 
 ####################################
@@ -110,28 +110,29 @@ class _NonRelCSVRow(_CSVRow, total=True):
     K8s: str
 
 
-def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
+def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     ref_dir = pathlib.Path(docs_dir) / 'reference'
     gen_dir = ref_dir / 'generated'
     gen_dir.mkdir(exist_ok=True)
     # relation libs
-    with (ref_dir / 'relation-libs-raw.csv').open() as f:
+    with (ref_dir / 'libs-rel-raw.csv').open() as f:
         rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
     rel_table = _get_relation_libs_table(rel_entries)
-    _write_if_needed(path=(gen_dir / 'relation-libs-table.rst'), content=rel_table)
+    _write_if_needed(path=(gen_dir / 'libs-rel-table.rst'), content=rel_table)
     # non-relation libs
-    with (ref_dir / 'non-relation-libs-raw.csv').open() as f:
+    with (ref_dir / 'libs-non-rel-raw.csv').open() as f:
         non_rel_entries: list[_NonRelCSVRow] = list(csv.DictReader(f))  # type: ignore
     non_rel_table = _get_non_relation_libs_table(non_rel_entries)
-    _write_if_needed(path=(gen_dir / 'non-relation-libs-table.rst'), content=non_rel_table)
+    _write_if_needed(path=(gen_dir / 'libs-non-rel-table.rst'), content=non_rel_table)
     # status key
-    _write_if_needed(path=(gen_dir / 'status-key.rst'), content=_get_status_key_table(), indent=True)
+    key_table = _get_status_key_table()
+    msg = ' Library status is shown in the left column. See tooltips, or click here for a key.'
+    content = f'.. dropdown::{msg}\n\n' + '\n'.join('   ' + line for line in key_table.split('\n'))
+    _write_if_needed(path=(gen_dir / 'status-key-table.rst'), content=content)
 
 
 def _write_if_needed(path: pathlib.Path, content: str, indent: bool = False) -> None:
     to_write = _FILE_HEADER + content
-    if indent:
-        to_write = '\n'.join('   ' + line for line in to_write.split('\n'))
     if not path.exists() or path.read_text() != to_write:
         path.write_text(to_write)
 
