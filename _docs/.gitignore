@@ -26,3 +26,4 @@ __pycache__
 
 # generated docs
 generated/
+.~lock.*.csv#
