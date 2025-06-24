@@ -1,8 +1,6 @@
 Libraries
 =========
 
-This page lists known libraries used in charming. The primary purpose of this listing is to help charm developers find and learn about the libraries in the charming ecosystem.
-
 There are two kinds of two kinds of charm library.
 
 #. A library may either be a relation library or not.
@@ -16,19 +14,3 @@ There are two kinds of two kinds of charm library.
     * A Python package is included in your charm's ``pyproject.toml`` or ``requirements.txt``. ``charmcraft pack`` will build these libraries and install them into a virtual environment which is distributed with your packed charm.
 
     * A Charmhub hosted library should be included in your charm's ``charmcraft.yaml`` and vendored into your codebase after fetching the library with ``charmcraft fetch-libs``. These libraries are included directly in your packed charm.
-
-This page includes a table listing relation libraries, and a table listing non-relation libraries. Use the search box above each table to search in that specific table. Use your browser's search to search across both tables.
-
-The status of a library is indicated by the leftmost column. There's a key below, also available on hover.
-
-.. include:: generated/status-key.rst
-
-Non-relation libraries
-----------------------
-
-.. include:: generated/non-relation-libs-table.rst
-
-Relation libraries
-------------------
-
-.. include:: generated/relation-libs-table.rst

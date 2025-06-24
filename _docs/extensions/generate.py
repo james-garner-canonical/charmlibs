@@ -125,11 +125,13 @@ def _generate_libs_table(docs_dir: str | pathlib.Path) -> None:
     non_rel_table = _get_non_relation_libs_table(non_rel_entries)
     _write_if_needed(path=(gen_dir / 'non-relation-libs-table.rst'), content=non_rel_table)
     # status key
-    _write_if_needed(path=(gen_dir / 'status-key.rst'), content=_get_status_key_table())
+    _write_if_needed(path=(gen_dir / 'status-key.rst'), content=_get_status_key_table(), indent=True)
 
 
-def _write_if_needed(path: pathlib.Path, content: str) -> None:
+def _write_if_needed(path: pathlib.Path, content: str, indent: bool = False) -> None:
     to_write = _FILE_HEADER + content
+    if indent:
+        to_write = '\n'.join('   ' + line for line in to_write.split('\n'))
     if not path.exists() or path.read_text() != to_write:
         path.write_text(to_write)
 
