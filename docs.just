@@ -29,3 +29,14 @@ clean:
     rm -rf .sphinx/styles
     rm -rf .sphinx/vale.ini
     rm -rf reference/generated
+
+[doc('Run `pyright` for local sphinx extensions.')]
+ext-static *pyrightargs:
+    uvx --with-requirements=.sphinx/requirements.txt --with=pytest \
+        pyright {{pyrightargs}} extensions
+
+[doc('Run unit tests with `coverage` for local sphinx extensions.')]
+ext-unit +flags='-rA':
+    uvx --with-requirements=.sphinx/requirements.txt --with=pytest \
+        coverage run --omit='test_*.py' -m pytest --tb=native -vv {{flags}} extensions
+    uvx coverage report
