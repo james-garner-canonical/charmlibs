@@ -40,9 +40,10 @@ def _generate(app: sphinx.application.Sphinx):
     _generate_libs_tables(app.confdir)
 
 
-####################################
-# Generate non-relation libs table #
-####################################
+####################
+# Table generation #
+####################
+
 
 _EMOJIS = {
     # status
@@ -131,10 +132,15 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     _write_if_needed(path=(gen_dir / 'status-key-table.rst'), content=content)
 
 
-def _write_if_needed(path: pathlib.Path, content: str, indent: bool = False) -> None:
+def _write_if_needed(path: pathlib.Path, content: str) -> None:
     to_write = _FILE_HEADER + content
     if not path.exists() or path.read_text() != to_write:
         path.write_text(to_write)
+
+
+##########
+# tables #
+##########
 
 
 def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
@@ -165,13 +171,9 @@ def _get_status_key_table() -> str:
     return _KEY_TABLE_HEADER + _rows_to_rst(rows)
 
 
-def _rows_to_rst(rows: Iterable[tuple[str, ...]]) -> str:
-    lines: list[str] = []
-    for row in rows:
-        first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
-        lines.append(f'   * -{first}\n')
-        lines.extend(f'     -{line}\n' for line in rest)
-    return ''.join(lines)
+##########
+# fields #
+##########
 
 
 def _status(entry: _CSVRow) -> str:
@@ -248,10 +250,25 @@ def _non_rel_description(entry: _NonRelCSVRow) -> str:
 
 def _description(entry: _CSVRow, sortkeys: Iterable[str], firstline: str) -> str:
     prefix = _hidden_text(''.join(sortkeys))
-    if not (chunks := [x for x in (firstline, entry['description']) if x]):
+    chunks = [x for x in (firstline, entry['description']) if x]
+    if not chunks:
         return prefix
     description = '\n'.join(chunks).replace('\n', '\n       | ')
     return f'{prefix}       | {description}'
+
+
+#######
+# rst #
+#######
+
+
+def _rows_to_rst(rows: Iterable[tuple[str, ...]]) -> str:
+    lines: list[str] = []
+    for row in rows:
+        first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
+        lines.append(f'   * -{first}\n')
+        lines.extend(f'     -{line}\n' for line in rest)
+    return ''.join(lines)
 
 
 def _rst_link(name: str, url: str) -> str:
