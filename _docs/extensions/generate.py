@@ -275,7 +275,7 @@ def _rst_link(name: str, url: str) -> str:
     return f'`{name.strip()} <{url.strip()}>`__'
 
 
-def _hidden_text(msg: object) -> str:
+def _hidden_text(msg: str | int) -> str:
     return f"""
        .. raw:: html
 
