@@ -32,7 +32,7 @@ if typing.TYPE_CHECKING:
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Entrypoint for Sphinx extensions, connects generation code to Sphinx event."""
-    app.connect('builder-inited', _generate)
+    app.connect('builder-inited', _generate)  # type: ignore
     return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
 
 
