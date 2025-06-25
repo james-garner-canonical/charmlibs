@@ -49,3 +49,11 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v20
         with:
           config: "_docs/.sphinx/.markdownlint.json"
+      - name: Local Sphinx extensions static analysis
+        id: ext-static-step
+        if: success() || failure()
+        run: uvx --from=rust-just just docs ext-static
+      - name: Local Sphinx extensions unit tests
+        id: ext-unit-step
+        if: success() || failure()
+        run: uvx --from=rust-just just docs ext-unit
