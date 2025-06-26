@@ -210,16 +210,16 @@ def _kind(entry: _CSVRow) -> str:
     return prefix + '\n' + _indent(kind_str, level=7, prepend='| ')
 
 
-def _relation(entry: _RelCSVRow) -> str:
+def _relation_links(entry: _RelCSVRow) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
         return name
-    main_link = _rst_link(name, main_url)
+    main_link = _html_link(name, main_url)
     if not (schema_url := entry['rel_url_schema']):
         return main_link
-    schema_link = _rst_link('schema', schema_url)
-    return f'{main_link} ({schema_link})'
+    schema_link = _html_link('schema', schema_url)
+    return main_link + f' ({schema_link})'
 
 
 def _rel_description(entry: _RelCSVRow) -> str:
@@ -229,8 +229,13 @@ def _rel_description(entry: _RelCSVRow) -> str:
         entry['name'],
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
-    firstline = _relation(entry)
-    return _description(entry, sortkeys=sortkeys, firstline=firstline)
+    html = _html_hidden_span(''.join(sortkeys))
+    if rel_links := _relation_links(entry):
+        html += '\n' + rel_links
+    raw_html = _indent(_rst_raw_html(html), level=7)
+    if not (desc := entry['description']):
+        return raw_html
+    return raw_html + '\n' + _indent(desc, level=7, prepend='| ')
 
 
 def _non_rel_description(entry: _NonRelCSVRow) -> str:
@@ -242,10 +247,6 @@ def _non_rel_description(entry: _NonRelCSVRow) -> str:
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
     firstline = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
-    return _description(entry, sortkeys=sortkeys, firstline=firstline)
-
-
-def _description(entry: _CSVRow, sortkeys: Iterable[str], firstline: str) -> str:
     prefix = _hidden_text(''.join(sortkeys))
     chunks = [x for x in (firstline, entry['description']) if x]
     if not chunks:
@@ -268,10 +269,6 @@ def _rows_to_rst(rows: Iterable[tuple[str, ...]]) -> str:
     return ''.join(lines)
 
 
-def _rst_link(name: str, url: str) -> str:
-    return f'`{name.strip()} <{url.strip()}>`__'
-
-
 def _hidden_text(msg: str | int) -> str:
     return f"""
        .. raw:: html
@@ -291,7 +288,7 @@ def _rst_raw_html(html: str) -> str:
     return f"""
 .. raw:: html
 
-   {html}
+{_indent(html, level=3)}
 """
 
 
