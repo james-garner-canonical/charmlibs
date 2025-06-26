@@ -181,18 +181,13 @@ def _get_status_key_table() -> str:
 
 def _status(entry: _CSVRow) -> str:
     status = entry['status']
-    prefix = _hidden_text(_STATUS_SORTKEYS[status])
+    prefix = _indent(_rst_raw_html(_html_hidden_span(_STATUS_SORTKEYS[status])), level=7)
     if status not in _EMOJIS:
         return prefix
     if status not in _STATUS_TOOLTIPS:
-        return f'{prefix}       | {_EMOJIS[status]}'
-    return f"""{prefix.rstrip()}
-          <div class="emoji-div">
-            {_EMOJIS[status]}
-            <div class="emoji-tooltip">{_STATUS_TOOLTIPS[status]}</div>
-          </div>
-
-"""
+        return prefix + '\n' + _indent(_EMOJIS[status], level=7, prepend='| ')
+    tooltip = _html_emoji_tooltip(_EMOJIS[status], _STATUS_TOOLTIPS[status])
+    return prefix + _indent(tooltip, level=7 + 3) + '\n'
 
 
 def _name(entry: _CSVRow) -> str:
@@ -308,6 +303,15 @@ def _rst_raw_html(html: str) -> str:
 ########
 # html #
 ########
+
+
+def _html_emoji_tooltip(emoji: str, tooltip: str):
+    e = ElementTree.Element('div', attrib={'class': 'emoji-div'})
+    e.text = emoji
+    child = ElementTree.Element('div', attrib={'class': 'emoji-tooltip'})
+    child.text = tooltip
+    e.append(child)
+    return ElementTree.tostring(e, encoding='unicode')
 
 
 def _html_hidden_span(text: object) -> str:
