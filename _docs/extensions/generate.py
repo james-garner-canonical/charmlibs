@@ -198,12 +198,7 @@ def _name(entry: _CSVRow) -> str:
         if (url := entry[text])
     ])
     html = f'{main_link} ({extra_links})' if extra_links else main_link
-    return f"""
-       .. raw:: html
-
-          {html}
-
-"""
+    return _indent(_rst_raw_html(html), level=7)
 
 
 def _kind(entry: _CSVRow) -> str:
