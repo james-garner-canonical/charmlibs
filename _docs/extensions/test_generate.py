@@ -35,7 +35,6 @@ def rst_to_html(rst: str) -> str:
 def test_status_key_table():
     rst = generate._get_status_key_table()
     html_content = rst_to_html(rst)
-    print(html_content)
     table = ElementTree.fromstring(html.unescape(html_content)).find('.//table')
     assert table is not None
 
@@ -55,11 +54,21 @@ def test_rst_rows(rows: list[tuple[str, ...]]):
             assert table_cell.text == cell
 
 
+@pytest.mark.parametrize(('emoji', 'tooltip'), [('foo', 'bar')])
+def test_html_emoji_tooltip(emoji: str, tooltip: str):
+    html_content = generate._html_emoji_tooltip(emoji, tooltip)
+    div = ElementTree.fromstring(html_content)
+    assert 'emoji-div' in div.attrib['class']
+    assert div.text == emoji
+    _, child = div.iter()
+    assert 'emoji-tooltip' in child.attrib['class']
+    assert child.text == tooltip
+
+
 @pytest.mark.parametrize('msg', ['foo', 1])
 def test_html_hidden_div(msg: str):
     html_content = generate._html_hidden_span(msg)
     span = ElementTree.fromstring(html_content)
-    assert span is not None
     assert 'display:none;' in span.attrib['style']
     assert span.text == str(msg)
 
@@ -68,6 +77,5 @@ def test_html_hidden_div(msg: str):
 def test_html_link(text: str, url: str):
     html_content = generate._html_link(text, url)
     a = ElementTree.fromstring(html_content)
-    assert a is not None
     assert a.attrib['href'] == url
     assert a.text == text
