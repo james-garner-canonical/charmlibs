@@ -181,13 +181,10 @@ def _get_status_key_table() -> str:
 
 def _status(entry: _CSVRow) -> str:
     status = entry['status']
-    prefix = _indent(_rst_raw_html(_html_hidden_span(_STATUS_SORTKEYS[status])), level=7)
-    if status not in _EMOJIS:
-        return prefix
-    if status not in _STATUS_TOOLTIPS:
-        return prefix + '\n' + _indent(_EMOJIS[status], level=7, prepend='| ')
-    tooltip = _html_emoji_tooltip(_EMOJIS[status], _STATUS_TOOLTIPS[status])
-    return prefix + _indent(tooltip, level=7 + 3) + '\n'
+    html_lines = [_html_hidden_span(_STATUS_SORTKEYS[status])]
+    if status in _EMOJIS:
+        html_lines.append(_html_emoji_tooltip(_EMOJIS[status], _STATUS_TOOLTIPS.get(status)))
+    return _indent(_rst_raw_html('\n'.join(html_lines)), level=7)
 
 
 def _name(entry: _CSVRow) -> str:
@@ -287,12 +284,13 @@ def _rst_raw_html(html: str) -> str:
 ########
 
 
-def _html_emoji_tooltip(emoji: str, tooltip: str):
+def _html_emoji_tooltip(emoji: str, tooltip: str | None) -> str:
     e = ElementTree.Element('div', attrib={'class': 'emoji-div'})
     e.text = emoji
-    child = ElementTree.Element('div', attrib={'class': 'emoji-tooltip'})
-    child.text = tooltip
-    e.append(child)
+    if tooltip is not None:
+        child = ElementTree.Element('div', attrib={'class': 'emoji-tooltip'})
+        child.text = tooltip
+        e.append(child)
     return ElementTree.tostring(e, encoding='unicode')
 
 
