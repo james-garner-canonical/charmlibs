@@ -3,5 +3,5 @@
 ```{toctree}
 :maxdepth: 1
 
-libraries
+Charm libraries <charm-libraries>
 ```
