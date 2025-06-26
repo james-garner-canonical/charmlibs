@@ -5,7 +5,7 @@ There are two kinds of two kinds of charm library.
 
 * A library may either be a relation library or not.
 
-    * Relation libraries allow charms to interact with other charms over a defined Juju relation. Using a relation library will therefore require adding a specific relation to your ``charmcraft.yaml`` and integrating your charm with another charm after deploying them both.
+    * Relation libraries allow charms to interact with other charms over a defined Juju relation. Using a relation library will therefore require adding a specific relation to ``charmcraft.yaml`` and integrating your charm with another charm after deploying them both.
 
     * Non-relation libraries cover all other use cases for libraries, including general-purpose charming helpers and sharing team-specific code between charms. These libraries may work with your charm in a standalone way. Alternatively, they may provide functionality that relies on a connection to another charm, using a relation library.
 
