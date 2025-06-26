@@ -213,11 +213,11 @@ def _name(entry: _CSVRow) -> str:
 
 def _kind(entry: _CSVRow) -> str:
     kind = entry['kind']
-    prefix = _hidden_text(_KIND_SORTKEYS[kind])
+    prefix = _indent(_rst_raw_html(_html_hidden_span(_KIND_SORTKEYS[kind])), level=7)
     kind_str = _EMOJIS.get(kind, '') + kind
     if not kind_str:
         return prefix
-    return f'{prefix}       | {kind_str}'
+    return prefix + '\n' + _indent(kind_str, level=7, prepend='| ')
 
 
 def _relation(entry: _RelCSVRow) -> str:
@@ -286,14 +286,34 @@ def _hidden_text(msg: str | int) -> str:
     return f"""
        .. raw:: html
 
-          <span style="display:none;" class="no-spellcheck">{msg}</span>
+          {_html_hidden_span(msg)}
 
+"""
+
+
+def _indent(text: str, level: int, prepend: str = '') -> str:
+    return '\n'.join(
+        (' ' * level + prepend + line) if (prepend or line) else '' for line in text.split('\n')
+    )
+
+
+def _rst_raw_html(html: str) -> str:
+    return f"""
+.. raw:: html
+
+   {html}
 """
 
 
 ########
 # html #
 ########
+
+
+def _html_hidden_span(text: object) -> str:
+    e = ElementTree.Element('span', attrib={'style': 'display:none;', 'class': 'no-spellcheck'})
+    e.text = str(text)
+    return ElementTree.tostring(e, encoding='unicode')
 
 
 def _html_link(text: str, url: str) -> str:
