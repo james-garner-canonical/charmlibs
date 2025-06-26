@@ -246,13 +246,12 @@ def _non_rel_description(entry: _NonRelCSVRow) -> str:
         entry['name'],
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
+    prefix = _indent(_rst_raw_html(_html_hidden_span(''.join(sortkeys))), level=7)
     firstline = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
-    prefix = _hidden_text(''.join(sortkeys))
-    chunks = [x for x in (firstline, entry['description']) if x]
-    if not chunks:
+    desc = '\n'.join(x for x in (firstline, entry['description']) if x)
+    if not desc:
         return prefix
-    description = '\n'.join(chunks).replace('\n', '\n       | ')
-    return f'{prefix}       | {description}'
+    return prefix + '\n' + _indent(desc, level=7, prepend='| ')
 
 
 #######
@@ -267,15 +266,6 @@ def _rows_to_rst(rows: Iterable[tuple[str, ...]]) -> str:
         lines.append(f'   * -{first}\n')
         lines.extend(f'     -{line}\n' for line in rest)
     return ''.join(lines)
-
-
-def _hidden_text(msg: str | int) -> str:
-    return f"""
-       .. raw:: html
-
-          {_html_hidden_span(msg)}
-
-"""
 
 
 def _indent(text: str, level: int, prepend: str = '') -> str:
