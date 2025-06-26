@@ -55,15 +55,6 @@ def test_rst_rows(rows: list[tuple[str, ...]]):
             assert table_cell.text == cell
 
 
-@pytest.mark.parametrize(('text', 'url'), [('foo', 'bar')])
-def test_html_link(text: str, url: str):
-    html_content = generate._html_link(text, url)
-    a = ElementTree.fromstring(html_content)
-    assert a is not None
-    assert a.attrib['href'] == url
-    assert a.text == text
-
-
 @pytest.mark.parametrize('msg', ['foo', 1])
 def test_html_hidden_div(msg: str):
     html_content = generate._html_hidden_span(msg)
@@ -71,3 +62,12 @@ def test_html_hidden_div(msg: str):
     assert span is not None
     assert 'display:none;' in span.attrib['style']
     assert span.text == str(msg)
+
+
+@pytest.mark.parametrize(('text', 'url'), [('foo', 'bar')])
+def test_html_link(text: str, url: str):
+    html_content = generate._html_link(text, url)
+    a = ElementTree.fromstring(html_content)
+    assert a is not None
+    assert a.attrib['href'] == url
+    assert a.text == text
