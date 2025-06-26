@@ -200,11 +200,10 @@ def _name(entry: _CSVRow) -> str:
 
 def _kind(entry: _CSVRow) -> str:
     kind = entry['kind']
-    prefix = _indent(_rst_raw_html(_html_hidden_span(_KIND_SORTKEYS[kind])), level=7)
-    kind_str = _EMOJIS.get(kind, '') + kind
-    if not kind_str:
-        return prefix
-    return prefix + '\n' + _indent(kind_str, level=7, prepend='| ')
+    content = [_rst_raw_html(_html_hidden_span(_KIND_SORTKEYS[kind]))]
+    if kind_str := _EMOJIS.get(kind, '') + kind:
+        content.append(f'| {kind_str}')
+    return _indent('\n'.join(content), level=7)
 
 
 def _rel_description(entry: _RelCSVRow) -> str:
