@@ -109,7 +109,7 @@ class _RelCSVRow(_CSVRow, total=True):
     rel_url_schema: str
 
 
-class _NonRelCSVRow(_CSVRow, total=True):
+class _GenCSVRow(_CSVRow, total=True):
     machine: str
     K8s: str
 
@@ -118,15 +118,15 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     ref_dir = pathlib.Path(docs_dir) / 'reference'
     gen_dir = ref_dir / 'generated'
     gen_dir.mkdir(exist_ok=True)
-    # relation libs
+    # interface / relation libs
     with (ref_dir / 'libs-rel-raw.csv').open() as f:
         rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
-    rel_table = _get_relation_libs_table(rel_entries)
+    rel_table = _get_rel_libs_table(rel_entries)
     _write_if_needed(path=(gen_dir / 'libs-rel-table.rst'), content=rel_table)
-    # non-relation libs
+    # general / non-relation libs
     with (ref_dir / 'libs-non-rel-raw.csv').open() as f:
-        non_rel_entries: list[_NonRelCSVRow] = list(csv.DictReader(f))  # type: ignore
-    non_rel_table = _get_non_relation_libs_table(non_rel_entries)
+        non_rel_entries: list[_GenCSVRow] = list(csv.DictReader(f))  # type: ignore
+    non_rel_table = _get_gen_libs_table(non_rel_entries)
     _write_if_needed(path=(gen_dir / 'libs-non-rel-table.rst'), content=non_rel_table)
     # status key
     key_table = _get_status_key_table()
@@ -146,7 +146,7 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
 ##########
 
 
-def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
+def _get_rel_libs_table(entries: list[_RelCSVRow]) -> str:
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, _kind, desc = row
         return status, desc
@@ -155,12 +155,12 @@ def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
     return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_non_relation_libs_table(entries: list[_NonRelCSVRow]) -> str:
+def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, kind, desc = row
         return status, kind, desc
 
-    rows = [(_status(e), _name(e), _kind(e), _non_rel_description(e)) for e in entries]
+    rows = [(_status(e), _name(e), _kind(e), _gen_description(e)) for e in entries]
     return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
@@ -238,7 +238,7 @@ def _rel_links(entry: _RelCSVRow) -> str:
     return main_link + f' ({schema_link})'
 
 
-def _non_rel_description(entry: _NonRelCSVRow) -> str:
+def _gen_description(entry: _GenCSVRow) -> str:
     substrates = ('machine', 'K8s')
     sortkeys = [
         *('0' if entry[s] else '1' for s in substrates),
