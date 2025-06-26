@@ -9,7 +9,7 @@ There are two kinds of two kinds of charm library.
 
     * Non-relation libraries cover all the other use cases for libraries, from general purpose charming helpers to sharing team specific code between charms. These libraries may work with your charm alone, or they may provide functionality that relies on being connected to another charm via a relation library.
 
-#. A library may either be distributed as a Python package, or as a single file module via Charmhub.
+#. A library may be distributed either as a Python package or as a single-file module on Charmhub.
 
     * A Python package is included in your charm's ``pyproject.toml`` or ``requirements.txt``. ``charmcraft pack`` will build these libraries and install them into a virtual environment which is distributed with your packed charm.
 
