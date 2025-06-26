@@ -184,7 +184,7 @@ def _status(entry: _CSVRow) -> str:
     html_lines = [_html_hidden_span(_STATUS_SORTKEYS[status])]
     if status in _EMOJIS:
         html_lines.append(_html_emoji_tooltip(_EMOJIS[status], _STATUS_TOOLTIPS.get(status)))
-    return _indent(_rst_raw_html('\n'.join(html_lines)), level=7)
+    return _rst_table_indent(_rst_raw_html('\n'.join(html_lines)))
 
 
 def _name(entry: _CSVRow) -> str:
@@ -195,7 +195,7 @@ def _name(entry: _CSVRow) -> str:
         if (url := entry[text])
     ])
     html = f'{main_link} ({extra_links})' if extra_links else main_link
-    return _indent(_rst_raw_html(html), level=7)
+    return _rst_table_indent(_rst_raw_html(html))
 
 
 def _kind(entry: _CSVRow) -> str:
@@ -203,7 +203,7 @@ def _kind(entry: _CSVRow) -> str:
     content = [_rst_raw_html(_html_hidden_span(_KIND_SORTKEYS[kind]))]
     if kind_str := _EMOJIS.get(kind, '') + kind:
         content.append(_rst_lines(kind_str))
-    return _indent('\n'.join(content), level=7)
+    return _rst_table_indent('\n'.join(content))
 
 
 def _rel_description(entry: _RelCSVRow) -> str:
@@ -219,7 +219,7 @@ def _rel_description(entry: _RelCSVRow) -> str:
     content = [_rst_raw_html('\n'.join(html_lines))]
     if desc := entry['description']:
         content.append(_rst_lines(desc))
-    return _indent('\n'.join(content), level=7)
+    return _rst_table_indent('\n'.join(content))
 
 
 def _rel_links(entry: _RelCSVRow) -> str:
@@ -247,11 +247,16 @@ def _gen_description(entry: _GenCSVRow) -> str:
         content.append(_rst_lines(firstline))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
-    return _indent('\n'.join(content), level=7)
+    return _rst_table_indent('\n'.join(content))
 
 
-def _indent(text: str, level: int) -> str:
-    return '\n'.join((' ' * level + line) if line else '' for line in text.split('\n'))
+def _rst_table_indent(text: str) -> str:
+    return _indent_lines(text, level=7)
+
+
+def _indent_lines(text: str, *, level: int) -> str:
+    indent = ' ' * level
+    return '\n'.join(f'{indent}{line}' if line else '' for line in text.split('\n'))
 
 
 #######
@@ -272,7 +277,7 @@ def _rst_raw_html(html: str) -> str:
     return f"""
 .. raw:: html
 
-{_indent(html, level=3)}
+{_indent_lines(html, level=3)}
 """
 
 
