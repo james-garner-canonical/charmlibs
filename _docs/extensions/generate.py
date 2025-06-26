@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# ruff: noqa: S405 (suspicious-xml-etree-import )
+
 """Generate source .rst files for lib tables, from CSV files in the reference directory."""
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from __future__ import annotations
 import csv
 import pathlib
 import typing
+from xml.etree import ElementTree
 
 ####################
 # Sphinx extension #
@@ -193,15 +196,19 @@ def _status(entry: _CSVRow) -> str:
 
 
 def _name(entry: _CSVRow) -> str:
-    main_link = _rst_link(entry['name'], entry['url'])
+    main_link = _html_link(entry['name'], entry['url'])
     extra_links = ', '.join([
-        _rst_link(_EMOJIS.get(text, '') + text, url)
+        _html_link(_EMOJIS.get(text, '') + text, url)
         for text in ('docs', 'src')
         if (url := entry[text])
     ])
-    if not extra_links:
-        return main_link
-    return f'{main_link} ({extra_links})'
+    html = f'{main_link} ({extra_links})' if extra_links else main_link
+    return f"""
+       .. raw:: html
+
+          {html}
+
+"""
 
 
 def _kind(entry: _CSVRow) -> str:
@@ -282,3 +289,14 @@ def _hidden_text(msg: str | int) -> str:
           <span style="display:none;" class="no-spellcheck">{msg}</span>
 
 """
+
+
+########
+# html #
+########
+
+
+def _html_link(text: str, url: str) -> str:
+    e = ElementTree.Element('a', attrib={'href': url, 'class': 'no-spellcheck'})
+    e.text = text
+    return ElementTree.tostring(e, encoding='unicode')
