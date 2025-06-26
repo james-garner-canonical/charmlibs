@@ -1,4 +1,4 @@
-Relation Libraries
+Relation libraries
 ==================
 
 This page lists non-relation libraries. The search box supports regular expressions.
