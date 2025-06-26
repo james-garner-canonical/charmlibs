@@ -3,7 +3,7 @@
 ```{toctree}
 :maxdepth: 1
 
-libs-rel
-libs-non-rel
+interface-libs
+general-libs
 pathops
 ```
