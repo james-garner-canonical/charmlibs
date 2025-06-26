@@ -202,7 +202,7 @@ def _kind(entry: _CSVRow) -> str:
     kind = entry['kind']
     content = [_rst_raw_html(_html_hidden_span(_KIND_SORTKEYS[kind]))]
     if kind_str := _EMOJIS.get(kind, '') + kind:
-        content.append(f'| {kind_str}')
+        content.append(_rst_lines(kind_str))
     return _indent('\n'.join(content), level=7)
 
 
@@ -218,7 +218,7 @@ def _rel_description(entry: _RelCSVRow) -> str:
         html_lines.append(rel_links)
     content = [_rst_raw_html('\n'.join(html_lines))]
     if desc := entry['description']:
-        content.append(f'| {desc}')
+        content.append(_rst_lines(desc))
     return _indent('\n'.join(content), level=7)
 
 
@@ -242,18 +242,16 @@ def _gen_description(entry: _GenCSVRow) -> str:
         entry['name'],
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
-    prefix = _indent(_rst_raw_html(_html_hidden_span(''.join(sortkeys))), level=7)
-    firstline = ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s])
-    desc = '\n'.join(x for x in (firstline, entry['description']) if x)
-    if not desc:
-        return prefix
-    return prefix + '\n' + _indent(desc, level=7, prepend='| ')
+    content = [_rst_raw_html(_html_hidden_span(''.join(sortkeys)))]
+    if firstline := ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s]):
+        content.append(_rst_lines(firstline))
+    if desc := entry['description']:
+        content.append(_rst_lines(desc))
+    return _indent('\n'.join(content), level=7)
 
 
-def _indent(text: str, level: int, prepend: str = '') -> str:
-    return '\n'.join(
-        (' ' * level + prepend + line) if (prepend or line) else '' for line in text.split('\n')
-    )
+def _indent(text: str, level: int) -> str:
+    return '\n'.join((' ' * level + line) if line else '' for line in text.split('\n'))
 
 
 #######
@@ -276,6 +274,10 @@ def _rst_raw_html(html: str) -> str:
 
 {_indent(html, level=3)}
 """
+
+
+def _rst_lines(text: str) -> str:
+    return '\n'.join(f'| {line}' if line else '|' for line in text.split('\n'))
 
 
 ########
