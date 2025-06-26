@@ -152,7 +152,7 @@ def _get_relation_libs_table(entries: list[_RelCSVRow]) -> str:
         return status, desc
 
     rows = [(_status(e), _name(e), _kind(e), _rel_description(e)) for e in entries]
-    return _LIBS_TABLE_HEADER + _rows_to_rst(sorted(rows, key=key))
+    return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
 def _get_non_relation_libs_table(entries: list[_NonRelCSVRow]) -> str:
@@ -161,7 +161,7 @@ def _get_non_relation_libs_table(entries: list[_NonRelCSVRow]) -> str:
         return status, kind, desc
 
     rows = [(_status(e), _name(e), _kind(e), _non_rel_description(e)) for e in entries]
-    return _LIBS_TABLE_HEADER + _rows_to_rst(sorted(rows, key=key))
+    return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
 def _get_status_key_table() -> str:
@@ -171,7 +171,7 @@ def _get_status_key_table() -> str:
         if s in _EMOJIS
     ]
     rows.append(('', 'None of the above.'))
-    return _KEY_TABLE_HEADER + _rows_to_rst(rows)
+    return _KEY_TABLE_HEADER + _rst_rows(rows)
 
 
 ##########
@@ -210,7 +210,23 @@ def _kind(entry: _CSVRow) -> str:
     return prefix + '\n' + _indent(kind_str, level=7, prepend='| ')
 
 
-def _relation_links(entry: _RelCSVRow) -> str:
+def _rel_description(entry: _RelCSVRow) -> str:
+    sortkeys = [
+        entry['rel_name'].ljust(64, 'z'),
+        str(_STATUS_SORTKEYS[entry['status']]),
+        entry['name'],
+        str(_KIND_SORTKEYS[entry['kind']]),
+    ]
+    html = _html_hidden_span(''.join(sortkeys))
+    if rel_links := _rel_links(entry):
+        html += '\n' + rel_links
+    raw_html = _indent(_rst_raw_html(html), level=7)
+    if not (desc := entry['description']):
+        return raw_html
+    return raw_html + '\n' + _indent(desc, level=7, prepend='| ')
+
+
+def _rel_links(entry: _RelCSVRow) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
@@ -220,22 +236,6 @@ def _relation_links(entry: _RelCSVRow) -> str:
         return main_link
     schema_link = _html_link('schema', schema_url)
     return main_link + f' ({schema_link})'
-
-
-def _rel_description(entry: _RelCSVRow) -> str:
-    sortkeys = [
-        entry['rel_name'].ljust(64, 'z'),
-        str(_STATUS_SORTKEYS[entry['status']]),
-        entry['name'],
-        str(_KIND_SORTKEYS[entry['kind']]),
-    ]
-    html = _html_hidden_span(''.join(sortkeys))
-    if rel_links := _relation_links(entry):
-        html += '\n' + rel_links
-    raw_html = _indent(_rst_raw_html(html), level=7)
-    if not (desc := entry['description']):
-        return raw_html
-    return raw_html + '\n' + _indent(desc, level=7, prepend='| ')
 
 
 def _non_rel_description(entry: _NonRelCSVRow) -> str:
@@ -254,24 +254,24 @@ def _non_rel_description(entry: _NonRelCSVRow) -> str:
     return prefix + '\n' + _indent(desc, level=7, prepend='| ')
 
 
+def _indent(text: str, level: int, prepend: str = '') -> str:
+    return '\n'.join(
+        (' ' * level + prepend + line) if (prepend or line) else '' for line in text.split('\n')
+    )
+
+
 #######
 # rst #
 #######
 
 
-def _rows_to_rst(rows: Iterable[tuple[str, ...]]) -> str:
+def _rst_rows(rows: Iterable[tuple[str, ...]]) -> str:
     lines: list[str] = []
     for row in rows:
         first, *rest = (f' {cell}' if cell and not cell.startswith('\n') else cell for cell in row)
         lines.append(f'   * -{first}\n')
         lines.extend(f'     -{line}\n' for line in rest)
     return ''.join(lines)
-
-
-def _indent(text: str, level: int, prepend: str = '') -> str:
-    return '\n'.join(
-        (' ' * level + prepend + line) if (prepend or line) else '' for line in text.split('\n')
-    )
 
 
 def _rst_raw_html(html: str) -> str:

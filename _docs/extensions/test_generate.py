@@ -52,7 +52,7 @@ def test_status_key_table():
 
 @pytest.mark.parametrize('rows', ([('r1c1', 'r1c2'), ('r2c1', 'r2c2')],))
 def test_rows_to_rst(rows: list[tuple[str, ...]]):
-    rst = generate._rows_to_rst(rows)
+    rst = generate._rst_rows(rows)
     html_content = rst_to_html(f'.. list-table::\n\n{rst}')
     table = ElementTree.fromstring(html_content).find('.//table')
     assert table is not None
