@@ -32,11 +32,6 @@ def rst_to_html(rst: str) -> str:
     return core.publish_parts(rst, writer_name='html')['html_body']  # type: ignore
 
 
-##########
-# tables #
-##########
-
-
 def test_status_key_table():
     rst = generate._get_status_key_table()
     html_content = rst_to_html(rst)
@@ -45,13 +40,8 @@ def test_status_key_table():
     assert table is not None
 
 
-#######
-# rst #
-#######
-
-
 @pytest.mark.parametrize('rows', ([('r1c1', 'r1c2'), ('r2c1', 'r2c2')],))
-def test_rows_to_rst(rows: list[tuple[str, ...]]):
+def test_rst_rows(rows: list[tuple[str, ...]]):
     rst = generate._rst_rows(rows)
     html_content = rst_to_html(f'.. list-table::\n\n{rst}')
     table = ElementTree.fromstring(html_content).find('.//table')
@@ -66,20 +56,18 @@ def test_rows_to_rst(rows: list[tuple[str, ...]]):
 
 
 @pytest.mark.parametrize(('text', 'url'), [('foo', 'bar')])
-def test_rst_link(text: str, url: str):
-    rst = generate._rst_link(text, url)
-    html_content = rst_to_html(rst)
-    a = ElementTree.fromstring(html_content).find('.//a')
+def test_html_link(text: str, url: str):
+    html_content = generate._html_link(text, url)
+    a = ElementTree.fromstring(html_content)
     assert a is not None
     assert a.attrib['href'] == url
     assert a.text == text
 
 
 @pytest.mark.parametrize('msg', ['foo', 1])
-def test_hidden_text(msg: str):
-    rst = generate._hidden_text(msg)
-    html_content = rst_to_html(rst)
-    span = ElementTree.fromstring(html_content).find('.//span')
+def test_html_hidden_div(msg: str):
+    html_content = generate._html_hidden_span(msg)
+    span = ElementTree.fromstring(html_content)
     assert span is not None
     assert 'display:none;' in span.attrib['style']
     assert span.text == str(msg)
