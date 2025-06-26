@@ -250,15 +250,6 @@ def _gen_description(entry: _GenCSVRow) -> str:
     return _rst_table_indent('\n'.join(content))
 
 
-def _rst_table_indent(text: str) -> str:
-    return _indent_lines(text, level=7)
-
-
-def _indent_lines(text: str, *, level: int) -> str:
-    indent = ' ' * level
-    return '\n'.join(f'{indent}{line}' if line else '' for line in text.split('\n'))
-
-
 #######
 # rst #
 #######
@@ -283,6 +274,15 @@ def _rst_raw_html(html: str) -> str:
 
 def _rst_lines(text: str) -> str:
     return '\n'.join(f'| {line}' if line else '|' for line in text.split('\n'))
+
+
+def _rst_table_indent(text: str) -> str:
+    return _indent_lines(text, level=7)
+
+
+def _indent_lines(text: str, *, level: int) -> str:
+    indent = ' ' * level
+    return '\n'.join(f'{indent}{line}' if line else '' for line in text.split('\n'))
 
 
 ########
