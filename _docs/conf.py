@@ -412,5 +412,5 @@ datatables_class = "sphinx-datatable"
 datatables_options = {
     'info': False,  # remove 'showing x of y' footer
     'paging': False,  # remove all paging options
-    'search': {'regex': True},  # enabel regex in search box
+    'search': {'regex': True},  # enable regex in search box
 }
