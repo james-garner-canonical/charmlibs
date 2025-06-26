@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generate reference/non-relation-libs-table.rst from reference/non-relation-libs-raw.csv."""
+"""Generate source .rst files for lib tables, from CSV files in the reference directory."""
 
 from __future__ import annotations
 
