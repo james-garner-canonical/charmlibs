@@ -213,13 +213,13 @@ def _rel_description(entry: _RelCSVRow) -> str:
         entry['name'],
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
-    html = _html_hidden_span(''.join(sortkeys))
+    html_lines = [_html_hidden_span(''.join(sortkeys))]
     if rel_links := _rel_links(entry):
-        html += '\n' + rel_links
-    raw_html = _indent(_rst_raw_html(html), level=7)
-    if not (desc := entry['description']):
-        return raw_html
-    return raw_html + '\n' + _indent(desc, level=7, prepend='| ')
+        html_lines.append(rel_links)
+    content = [_rst_raw_html('\n'.join(html_lines))]
+    if desc := entry['description']:
+        content.append(f'| {desc}')
+    return _indent('\n'.join(content), level=7)
 
 
 def _rel_links(entry: _RelCSVRow) -> str:
@@ -231,7 +231,7 @@ def _rel_links(entry: _RelCSVRow) -> str:
     if not (schema_url := entry['rel_url_schema']):
         return main_link
     schema_link = _html_link('schema', schema_url)
-    return main_link + f' ({schema_link})'
+    return f'{main_link} ({schema_link})'
 
 
 def _gen_description(entry: _GenCSVRow) -> str:
