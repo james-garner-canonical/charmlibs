@@ -13,4 +13,4 @@ There are two kinds of two kinds of charm library.
 
     * A Python package is included in your charm's ``pyproject.toml`` or ``requirements.txt``. ``charmcraft pack`` will build these libraries and install them into a virtual environment which is distributed with your packed charm.
 
-    * A Charmhub hosted library should be included in your charm's ``charmcraft.yaml`` and vendored into your codebase after fetching the library with ``charmcraft fetch-libs``. These libraries are included directly in your packed charm.
+    * You should list Charmhub-hosted libraries in ``charmcraft.yaml``, then run ``charmcraft fetch-libs`` to fetch the libraries. Make sure to commit the fetched libraries into version control, so that your codebase vendors the libraries. These libraries are included directly in your packed charm.
