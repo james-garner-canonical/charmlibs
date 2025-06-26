@@ -136,6 +136,11 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
+    """Write to path only if contents are different.
+
+    This allows sphinx-build to skip rebuilding pages that depend on the output of this extension
+    if the output hasn't actually changed.
+    """
     to_write = _FILE_HEADER + content
     if not path.exists() or path.read_text() != to_write:
         path.write_text(to_write)
