@@ -279,6 +279,6 @@ def _hidden_text(msg: str | int) -> str:
     return f"""
        .. raw:: html
 
-          <span style="display:none;" class="hidden-sortkey-text">{msg}</span>
+          <span style="display:none;" class="no-spellcheck">{msg}</span>
 
 """
