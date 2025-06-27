@@ -23,3 +23,7 @@ package*.json
 __pycache__
 .idea/
 .vscode/
+
+# generated docs
+generated/
+.~lock.*
