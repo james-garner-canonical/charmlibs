@@ -231,7 +231,7 @@ def _rel_links(entry: _RelCSVRow) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
-        return name
+        return _html_no_spellcheck_span(name)
     main_link = _html_link(name, main_url)
     if not (schema_url := entry['rel_url_schema']):
         return main_link
@@ -314,4 +314,9 @@ def _html_hidden_span(text: object) -> str:
 def _html_link(text: str, url: str) -> str:
     e = ElementTree.Element('a', attrib={'href': url, 'class': 'no-spellcheck'})
     e.text = text
+    return ElementTree.tostring(e, encoding='unicode')
+
+def _html_no_spellcheck_span(text: object) -> str:
+    e = ElementTree.Element('span', attrib={'class': 'no-spellcheck'})
+    e.text = str(text)
     return ElementTree.tostring(e, encoding='unicode')
