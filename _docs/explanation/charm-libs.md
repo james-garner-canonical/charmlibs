@@ -26,7 +26,7 @@ Charmhub-hosted libraries are categorised under the namespaces of specific charm
 
 Each library is a single-file Python module. To use Charmhub-hosted libraries, list them in the :ref:`charm-libs section of charmcraft.yaml <charmcraft:reference/files/charmcraft-yaml-file/#charm-libs>` and then run :ref:`charmcraft fetch-libs <charmcraft:reference/commands/fetch-libs>`. This will download the libraries and place them in `lib/$charm/v$api-version/$lib-name.py`. These files should be committed into your charm's version control.
 
-Charm libraries all have an api version and a patch version, broadly equivalent to the major and minor version in semantic versioning. If a library is specified by api version only, then rerunning `charmcraft fetch-libs` will update it if there has been a patch release.
+Charm libraries all have an API version and a patch version, broadly equivalent to the major and minor version in semantic versioning. If a library is specified by API version only, then rerunning `charmcraft fetch-libs` will update it if there has been a patch release.
 
 It is recommended that Charmhub-hosted libraries have no additional dependencies, but some do. If a library depends on a Python package, it should be listed in the `PYDEPS` variable in the module itself. You will need to manually add these dependencies to your charm's Python dependencies. If a library depends on another Charmhub-hosted library, this should be specified in its documentation, and you will need to add this library to your charm via `charmcraft.yaml` and `charmcraft fetch-libs`.
 
