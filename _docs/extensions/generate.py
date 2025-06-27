@@ -316,6 +316,7 @@ def _html_link(text: str, url: str) -> str:
     e.text = text
     return ElementTree.tostring(e, encoding='unicode')
 
+
 def _html_no_spellcheck_span(text: object) -> str:
     e = ElementTree.Element('span', attrib={'class': 'no-spellcheck'})
     e.text = str(text)
