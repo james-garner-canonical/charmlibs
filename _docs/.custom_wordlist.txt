@@ -15,13 +15,16 @@ implementers
 libs
 monorepo
 namespacing
+OCI
 posix
 repo
 requirer
+stateful
 subclasses
 subdirectory
 symlink
 symlinks
+templating
 tooltip
 tooltips
 UTF
@@ -36,6 +39,7 @@ pathlib
 pathops
 ContainerPath
 
+Jinja
 PyPI
 
 drwxr
