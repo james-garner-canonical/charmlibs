@@ -58,7 +58,11 @@ Under the hood, a relation between two charms typically involves exchanging data
 
 To use an interface in your charm, add a requires or provides endpoint to your `charmcraft.yaml` for that interface. Then you'll need to find the interface library for that interface. A good place to start is the {ref}`interface libraries listing <interface-libs-listing>`. You can also visit `charmhub.io/interfaces/<interface name>`, which lists the charms that provide and require the interface. The Charmhub page may present developer documentation for the interface, but you can also look at other charms that implement the interface to see what library they used.
 
+Read the [listing of interface charm libraries](general-libs-listing).
+
 (charm-libs-general)=
 ### General libraries
 
-Non-relation libraries cover all other use cases for libraries, including general-purpose charming helpers and sharing team-specific code between charms. These libraries may work with your charm in a standalone way. Alternatively, they may provide functionality that relies on a connection to another charm, using a relation library.
+This category covers all other use cases for libraries, including general-purpose charming helpers and sharing team-specific code between charms. Non-interface libraries may provide everything you need to use them out of the box, like [](pathops). Alternatively, they may rely or build on functionality provided via integration with another charm.
+
+Read the [listing of general charm libraries](general-libs-listing).
