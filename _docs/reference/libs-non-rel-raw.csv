@@ -35,7 +35,7 @@ jujuresources,legacy,https://pypi.org/project/jujuresources/,http://pythonhosted
 ops_reactive_interface,,https://pypi.org/project/ops-reactive-interface/,https://github.com/canonical/ops-reactive-interface/tree/main/docs,https://github.com/juju-solutions/ops-reactive-interface,PyPI,y,y,"Helper for relation library developers, to allow an ops based relation library to interact with legacy, reactive charms."
 ops.manifest,,https://pypi.org/project/ops.manifest/,,https://github.com/canonical/ops-lib-manifest,PyPI,,y,Work with Kubernetes manifests.
 sborl,legacy,https://pypi.org/project/sborl/,,https://github.com/canonical/sborl,PyPI,y,y,Legacy library for implementing relation libraries.
-juju_topology,legacy,https://charmhub.io/observability-libs/libraries/juju_topology,,,Charmhub,y,y,Deprecated in favour of cosl.juju_topology.JujuTopology.
+juju_topology,legacy,https://charmhub.io/observability-libs/libraries/juju_topology,,,Charmhub,y,y,Deprecated in favour of ``cosl.juju_topology.JujuTopology``.
 kubernetes_service_patch,legacy,https://charmhub.io/observability-libs/libraries/kubernetes_service_patch,,,Charmhub,,y,Deprecated in favour of ops.Unit.set_ports.
 charm_tracing,legacy,https://charmhub.io/tempo-coordinator-k8s/libraries/charm_tracing,,,Charmhub,y,y,Consider using ops[tracing] instead.
 data_models,,https://charmhub.io/data-platform-libs/libraries/data_models,,,Charmhub,,,
@@ -46,19 +46,19 @@ client,,https://charmhub.io/zookeeper/libraries/client,,,Charmhub,,,
 capture_events,,https://charmhub.io/harness-extensions/libraries/capture_events,,,Charmhub,,,
 postgresql,,https://charmhub.io/postgresql-k8s/libraries/postgresql,,,Charmhub,,,
 multus,,https://charmhub.io/kubernetes-charm-libraries/libraries/multus,,,Charmhub,,,
-backups,team,https://charmhub.io/mysql/libraries/backups,,,Charmhub,y,y,Shared code between the mysql and mysql-k8s charms.
-architecture,team,https://charmhub.io/mysql/libraries/architecture,,,Charmhub,y,y,Shared code between the mysql and mysql-k8s charms.
-mysql,team,https://charmhub.io/mysql/libraries/mysql,,,Charmhub,y,y,Shared code between the mysql and mysql-k8s charms.
-async_replication,team,https://charmhub.io/mysql/libraries/async_replication,,,Charmhub,y,y,Shared code between the mysql and mysql-k8s charms.
-s3_helpers,team,https://charmhub.io/mysql/libraries/s3_helpers,,,Charmhub,y,y,Shared code between the mysql and mysql-k8s charms.
-pgb,team,https://charmhub.io/pgbouncer-k8s/libraries/pgb,,,Charmhub,y,y,Shared code between pgbouncer and pgbouncer-k8s charms.
+backups,team,https://charmhub.io/mysql/libraries/backups,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+architecture,team,https://charmhub.io/mysql/libraries/architecture,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+mysql,team,https://charmhub.io/mysql/libraries/mysql,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+async_replication,team,https://charmhub.io/mysql/libraries/async_replication,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+s3_helpers,team,https://charmhub.io/mysql/libraries/s3_helpers,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+pgb,team,https://charmhub.io/pgbouncer-k8s/libraries/pgb,,,Charmhub,y,y,Shared code between ``pgbouncer`` and ``pgbouncer-k8s`` charms.
 metrics_endpoint_discovery,,https://charmhub.io/observability-libs/libraries/metrics_endpoint_discovery,,,Charmhub,,,Discover metric endpoints exposed by applications deployed to a K8s cluster.
 charm_tracing,legacy,https://charmhub.io/tempo-k8s/libraries/charm_tracing,,,Charmhub,y,y,Deprecated in favour of the tempo_coordinator_k8s charmlibs – but consider using ops[tracing] instead.
 data_secrets,team,https://charmhub.io/data-platform-libs/libraries/data_secrets,,,Charmhub,y,y,Secrets related helpers.
 helper_cos,team,https://charmhub.io/opensearch/libraries/helper_cos,,,Charmhub,,,Relies on data_platform_helpers.
 evt_sequences,legacy,https://charmhub.io/harness-extensions/libraries/evt_sequences,,,Charmhub,,,Deprecated in favour of ops[testing].
-charm_logging,,https://charmhub.io/loki-k8s/libraries/charm_logging,,,Charmhub,,,Add charm code logging to logs sent via loki-push-api.
+charm_logging,,https://charmhub.io/loki-k8s/libraries/charm_logging,,,Charmhub,,,Add charm code logging to logs sent via ``loki_push_api``.
 data_interfaces,team,https://charmhub.io/data-platform-libs/libraries/data_interfaces,,,Charmhub,,,
 lego_client,,https://charmhub.io/lego-base-k8s/libraries/lego_client,,,Charmhub,y,y,This library contains all the logic necessary to get certificates from an ACME server.
-cert_handler,,https://charmhub.io/observability-libs/libraries/cert_handler,,,Charmhub,y,y,Wraps the requirer side of the tls-certificates-interface charm's tls_certificates lib.
-tls,team,https://charmhub.io/mysql/libraries/tls,,,Charmhub,y,y,Shared code between the mysql and mysql-k8s charms.
+cert_handler,,https://charmhub.io/observability-libs/libraries/cert_handler,,,Charmhub,y,y,Wraps the requirer side of the ``tls-certificates-interface`` charm's ``tls_certificates`` lib.
+tls,team,https://charmhub.io/mysql/libraries/tls,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
