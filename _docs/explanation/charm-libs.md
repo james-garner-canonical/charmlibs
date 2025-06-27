@@ -52,7 +52,7 @@ There are many different purposes for charm libraries, but *interface libraries*
 (charm-libs-interface)=
 ### Interface libraries
 
-A Juju interface is a name associated with one of the {ref}`endpoints <juju:application-endpoint>` that a charm provides or requires. For two charms to be {ref}`integrated <juju:relation>, they must each have an endpoint with the same interface, with one being a requirer and the other a provider. This information is used on Charmhub to show charm users which charms can be integrated with each other.
+A Juju interface is a name associated with one of the {ref}`endpoints <juju:application-endpoint>` that a charm provides or requires. For two charms to be {ref}`integrated <juju:relation>`, they must each have an endpoint with the same interface, with one being a requirer and the other a provider. This information is used on Charmhub to show charm users which charms can be integrated with each other.
 
 Under the hood, a relation between two charms typically involves exchanging data using the [app and unit databags](https://documentation.ubuntu.com/juju/3.6/reference/relation/#permissions-around-relation-databags) Juju provides for that relation. The recommended way to do this is for the creators of an interface to define an interface schema for the data exchanged, and to provide an interface library that can be used by charms providing or requiring the interface to produce data conforming with the interface schema.
 
