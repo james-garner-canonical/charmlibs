@@ -26,6 +26,7 @@ tooltip
 tooltips
 UTF
 vendored
+yaml
 
 charmcraft
 charmlib
