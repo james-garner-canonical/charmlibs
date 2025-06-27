@@ -6,7 +6,6 @@
 
 how-to/index
 reference/index
-explanation/index
 ```
 
 This is the Charm Tech team at Canonical's documentation website for charm libraries. It hosts the documentation for the team's charm libraries that are distributed as Python packages, as well as general documentation about charm libraries.
