@@ -19,7 +19,7 @@ For example, you might add `charmlibs-pathops>=1` to your dependencies, and then
 
 Read about {ref}`when and how to distribute your library as a Python package <how-to-python-package>`.
 
-(charm-libs-charmhub-hosted)
+(charm-libs-charmhub-hosted)=
 ### Charmhub-hosted libraries
 
 Charmhub-hosted libraries are categorised under the namespaces of specific charms. Some libraries use 'dummy' charms for this.
