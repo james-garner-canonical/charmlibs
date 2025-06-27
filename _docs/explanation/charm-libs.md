@@ -11,7 +11,7 @@ There are two ways of distributing charm libraries: either as a single-file modu
 (charm-libs-python-packages)=
 ### Python package libraries
 
-Python packages use standard formats for metadata like the package version and the package's dependencies. This allows for precise specification of the version of required package, as well as the specification of version ranges. This makes it possible for the tools used when packing a charm to resolve your charm's dependencies and their dependencies (and so on) into a concrete set of packages, a process called dependency resolution. In contrast, :ref:`<charm-libs-charmhub-hosted>` are vendored into your charm's codebase, and their dependencies (if any) are manually added to your charm's dependencies.
+Python packages use standard formats for metadata like the package version and the package's dependencies. This allows for precise specification of the version of required package, as well as the specification of version ranges. This makes it possible for the tools used when packing a charm to resolve your charm's dependencies and their dependencies (and so on) into a concrete set of packages, a process called dependency resolution. In contrast, {ref}`<charm-libs-charmhub-hosted>` are vendored into your charm's codebase, and their dependencies (if any) are manually added to your charm's dependencies.
 
 Include Python packages in your charm by listing their [distribution package name](https://packaging.python.org/en/latest/discussions/distribution-package-vs-import-package/#what-s-a-distribution-package) and any version constraints in your charm's dependencies, typically in `pyproject.toml` or `requirements.txt`. `charmcraft pack` will build these libraries and install them into a virtual environment which is distributed with your packed charm. In your charm code, import the library with its [import package name](https://packaging.python.org/en/latest/discussions/distribution-package-vs-import-package/#what-s-an-import-package).
 
@@ -24,7 +24,7 @@ Read about {ref}`when and how to distribute your library as a Python package <ho
 
 Charmhub-hosted libraries are categorised under the namespaces of specific charms. Some libraries use 'dummy' charms for this.
 
-Each library is a single-file Python module. To use Charmhub-hosted libraries, list them in the :ref:`charm-libs section of charmcraft.yaml <charmcraft:reference/files/charmcraft-yaml-file/#charm-libs>` and then run :ref:`charmcraft fetch-libs <charmcraft:reference/commands/fetch-libs>`. This will download the libraries and place them in `lib/$charm/v$api-version/$lib-name.py`. These files should be committed into your charm's version control.
+Each library is a single-file Python module. To use Charmhub-hosted libraries, list them in the {ref}`charm-libs section of charmcraft.yaml <charmcraft:reference/files/charmcraft-yaml-file/#charm-libs>` and then run {ref}`charmcraft fetch-libs <charmcraft:reference/commands/fetch-libs>`. This will download the libraries and place them in `lib/$charm/v$api-version/$lib-name.py`. These files should be committed into your charm's version control.
 
 Charm libraries all have an API version and a patch version, broadly equivalent to the major and minor version in semantic versioning. If a library is specified by API version only, then rerunning `charmcraft fetch-libs` will update it if there has been a patch release.
 
@@ -56,7 +56,7 @@ A Juju interface is a name associated with one of the endpoints that a charm pro
 
 Under the hood, a relation between two charms typically involves exchanging data using the app and unit databags Juju provides for that relation. The recommended way to do this is for the creators of an interface to define an interface schema for the data exchanged, and to provide an interface library that can be used by charms providing or requiring the interface to produce data conforming with the interface schema.
 
-To use an interface in your charm, add a requires or provides endpoint to your `charmcraft.yaml` for that interface. Then you'll need to find the interface library for that interface. A good place to start is the :ref:`interface libraries listing <interface-libs-listing>`. You can also visit `charmhub.io/interfaces/<interface name>`, which lists the charms that provide and require the interface. The Charmhub page may present developer documentation for the interface, but you can also look at other charms that implement the interface to see what library they used.
+To use an interface in your charm, add a requires or provides endpoint to your `charmcraft.yaml` for that interface. Then you'll need to find the interface library for that interface. A good place to start is the {ref}`interface libraries listing <interface-libs-listing>`. You can also visit `charmhub.io/interfaces/<interface name>`, which lists the charms that provide and require the interface. The Charmhub page may present developer documentation for the interface, but you can also look at other charms that implement the interface to see what library they used.
 
 (charm-libs-general)=
 ### General libraries
