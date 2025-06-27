@@ -1,3 +1,4 @@
+(general-libs-listing)=
 # General libraries
 
 This page lists non-interface libraries. The search box supports regular expressions.
