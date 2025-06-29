@@ -9,7 +9,7 @@ juju_systemd_notices,recommended,https://charmhub.io/operator-libs-linux/librari
 passwd,recommended,https://charmhub.io/operator-libs-linux/libraries/passwd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Manage Linux users and groups.
 sysctl,recommended,https://charmhub.io/operator-libs-linux/libraries/sysctl,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Create and configure ``sysctl`` options.
 charmed-kubeflow-chisme,team,https://pypi.org/project/charmed-kubeflow-chisme/,,https://github.com/canonical/charmed-kubeflow-chisme,PyPI,y,y,Used internally by Charmed Kubeflow team.
-hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,git,y,y,Used internally by HPC charms.
+hpc-libs,team,https://pypi.org/project/charmed-kubeflow-chisme/,,,git,y,y,Used internally by HPC charms.
 charm-helpers,legacy,https://pypi.org/project/charmhelpers/,https://charm-helpers.readthedocs.io/,https://github.com/juju/charm-helpers,PyPI,y,y,Pre-``ops`` library used by reactive charms.
 cos-lib,dep,https://pypi.org/project/cosl/,,https://github.com/canonical/cos-lib,PyPI,y,y,A dependency (via PYDEPS) of popular charm libs such as ``loki_push_api``.
 serialized-data-interface,legacy,https://pypi.org/project/serialized-data-interface/,,https://github.com/canonical/serialized-data-interface,PyPI,y,y,Relation data validation – use the features available in ops instead.
@@ -35,30 +35,28 @@ jujuresources,legacy,https://pypi.org/project/jujuresources/,http://pythonhosted
 ops_reactive_interface,,https://pypi.org/project/ops-reactive-interface/,https://github.com/canonical/ops-reactive-interface/tree/main/docs,https://github.com/juju-solutions/ops-reactive-interface,PyPI,y,y,"Helper for relation library developers, to allow an ops based relation library to interact with legacy, reactive charms."
 ops.manifest,,https://pypi.org/project/ops.manifest/,,https://github.com/canonical/ops-lib-manifest,PyPI,,y,Work with Kubernetes manifests.
 sborl,legacy,https://pypi.org/project/sborl/,,https://github.com/canonical/sborl,PyPI,y,y,Legacy library for implementing relation libraries.
-juju_topology,legacy,https://charmhub.io/observability-libs/libraries/juju_topology,,,Charmhub,y,y,Deprecated in favour of ``cosl.juju_topology.JujuTopology``.
-kubernetes_service_patch,legacy,https://charmhub.io/observability-libs/libraries/kubernetes_service_patch,,,Charmhub,,y,Deprecated in favour of ops.Unit.set_ports.
-charm_tracing,legacy,https://charmhub.io/tempo-coordinator-k8s/libraries/charm_tracing,,,Charmhub,y,y,Consider using ops[tracing] instead.
-data_models,,https://charmhub.io/data-platform-libs/libraries/data_models,,,Charmhub,,,
-upgrade,,https://charmhub.io/data-platform-libs/libraries/upgrade,,,Charmhub,,,
-kubernetes_compute_resources_patch,,https://charmhub.io/observability-libs/libraries/kubernetes_compute_resources_patch,,,Charmhub,,,
-rollingops,,https://charmhub.io/rolling-ops/libraries/rollingops,,,Charmhub,,,
-client,,https://charmhub.io/zookeeper/libraries/client,,,Charmhub,,,
-capture_events,,https://charmhub.io/harness-extensions/libraries/capture_events,,,Charmhub,,,
-postgresql,,https://charmhub.io/postgresql-k8s/libraries/postgresql,,,Charmhub,,,
-multus,,https://charmhub.io/kubernetes-charm-libraries/libraries/multus,,,Charmhub,,,
-backups,team,https://charmhub.io/mysql/libraries/backups,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
-architecture,team,https://charmhub.io/mysql/libraries/architecture,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
-mysql,team,https://charmhub.io/mysql/libraries/mysql,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
-async_replication,team,https://charmhub.io/mysql/libraries/async_replication,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
-s3_helpers,team,https://charmhub.io/mysql/libraries/s3_helpers,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
-pgb,team,https://charmhub.io/pgbouncer-k8s/libraries/pgb,,,Charmhub,y,y,Shared code between ``pgbouncer`` and ``pgbouncer-k8s`` charms.
-metrics_endpoint_discovery,,https://charmhub.io/observability-libs/libraries/metrics_endpoint_discovery,,,Charmhub,,,Discover metric endpoints exposed by applications deployed to a K8s cluster.
-charm_tracing,legacy,https://charmhub.io/tempo-k8s/libraries/charm_tracing,,,Charmhub,y,y,Deprecated in favour of the tempo_coordinator_k8s charmlibs – but consider using ops[tracing] instead.
-data_secrets,team,https://charmhub.io/data-platform-libs/libraries/data_secrets,,,Charmhub,y,y,Secrets related helpers.
-helper_cos,team,https://charmhub.io/opensearch/libraries/helper_cos,,,Charmhub,,,Relies on data_platform_helpers.
-evt_sequences,legacy,https://charmhub.io/harness-extensions/libraries/evt_sequences,,,Charmhub,,,Deprecated in favour of ops[testing].
-charm_logging,,https://charmhub.io/loki-k8s/libraries/charm_logging,,,Charmhub,,,Add charm code logging to logs sent via ``loki_push_api``.
-data_interfaces,team,https://charmhub.io/data-platform-libs/libraries/data_interfaces,,,Charmhub,,,
-lego_client,,https://charmhub.io/lego-base-k8s/libraries/lego_client,,,Charmhub,y,y,This library contains all the logic necessary to get certificates from an ACME server.
-cert_handler,,https://charmhub.io/observability-libs/libraries/cert_handler,,,Charmhub,y,y,Wraps the requirer side of the ``tls-certificates-interface`` charm's ``tls_certificates`` lib.
-tls,team,https://charmhub.io/mysql/libraries/tls,,,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+juju_topology,legacy,https://charmhub.io/observability-libs/libraries/juju_topology,,https://github.com/canonical/observability-libs,Charmhub,y,y,Deprecated in favour of ``cosl.juju_topology.JujuTopology``.
+kubernetes_service_patch,legacy,https://charmhub.io/observability-libs/libraries/kubernetes_service_patch,,https://github.com/canonical/observability-libs,Charmhub,,y,Deprecated in favour of ops.Unit.set_ports.
+charm_tracing,legacy,https://charmhub.io/tempo-coordinator-k8s/libraries/charm_tracing,,https://github.com/canonical/tempo-coordinator-k8s-operator,Charmhub,y,y,Consider using ops[tracing] instead.
+data_models,legacy,https://charmhub.io/data-platform-libs/libraries/data_models,,https://github.com/canonical/data-platform-libs,Charmhub,y,y,``pydantic``-based typed relation data – unnecessary with ops 2.23+ due to the addition of typed relation data.
+upgrade,,https://charmhub.io/data-platform-libs/libraries/upgrade,,https://github.com/canonical/data-platform-libs,Charmhub,y,y,Manage in-place upgrades.
+kubernetes_compute_resources_patch,,https://charmhub.io/observability-libs/libraries/kubernetes_compute_resources_patch,,https://github.com/canonical/observability-libs,Charmhub,,y,Patch Kubernetes compute resource limits.
+rollingops,,https://charmhub.io/rolling-ops/libraries/rollingops,,https://github.com/canonical/charm-rolling-ops,Charmhub,y,y,"Perform ""rolling"" operations across units, for example rolling restarts."
+client,,https://charmhub.io/zookeeper/libraries/client,,http://github.com/canonical/zookeeper-operator,Charmhub,y,y,Perform ``zookeeper`` operations.
+capture_events,legacy,https://charmhub.io/harness-extensions/libraries/capture_events,,https://github.com/PietroPasotti/harness-extensions,Charmhub,y,y,Helper for legacy harness tests. New charms should write scenario tests with ``ops[testing]`` instead.
+postgresql,team,https://charmhub.io/postgresql-k8s/libraries/postgresql,,https://github.com/canonical/postgresql-k8s-operator,Charmhub,y,y,Shared code between the ``posgresql`` and ``postgresql-k8s`` charms.
+multus,,https://charmhub.io/kubernetes-charm-libraries/libraries/multus,,https://github.com/canonical/kubernetes-charm-libraries,Charmhub,,y,Use the Multus Kubernetes CNI.
+backups,team,https://charmhub.io/mysql/libraries/backups,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+architecture,team,https://charmhub.io/mysql/libraries/architecture,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+mysql,team,https://charmhub.io/mysql/libraries/mysql,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+async_replication,team,https://charmhub.io/mysql/libraries/async_replication,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+s3_helpers,team,https://charmhub.io/mysql/libraries/s3_helpers,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
+pgb,team,https://charmhub.io/pgbouncer-k8s/libraries/pgb,,https://github.com/canonical/pgbouncer-k8s-operator,Charmhub,y,y,Shared code between ``pgbouncer`` and ``pgbouncer-k8s`` charms.
+metrics_endpoint_discovery,,https://charmhub.io/observability-libs/libraries/metrics_endpoint_discovery,,https://github.com/canonical/observability-libs,Charmhub,,,Discover metric endpoints exposed by applications deployed to a K8s cluster.
+charm_tracing,legacy,https://charmhub.io/tempo-k8s/libraries/charm_tracing,,https://github.com/canonical/tempo-k8s-operator,Charmhub,y,y,Deprecated in favour of the ``tempo-coordinator-k8s`` charm's libs. New charms should use ops[tracing] for tracing charm code instead.
+data_secrets,team,https://charmhub.io/data-platform-libs/libraries/data_secrets,,https://github.com/canonical/data-platform-libs,Charmhub,y,y,Secrets related helpers.
+helper_cos,team,https://charmhub.io/opensearch/libraries/helper_cos,,https://github.com/canonical/opensearch-operator,Charmhub,,,Relies on data_platform_helpers.
+evt_sequences,legacy,https://charmhub.io/harness-extensions/libraries/evt_sequences,,https://github.com/PietroPasotti/harness-extensions,Charmhub,y,y,Helper for legacy harness tests. New charms should write scenario tests with ``ops[testing]`` instead.
+charm_logging,,https://charmhub.io/loki-k8s/libraries/charm_logging,,https://github.com/canonical/loki-k8s-operator,Charmhub,,,Add charm code logging to logs sent via ``loki_push_api``.
+cert_handler,,https://charmhub.io/observability-libs/libraries/cert_handler,,https://github.com/canonical/observability-libs,Charmhub,y,y,Wraps the requirer side of the ``tls-certificates-interface`` charm's ``tls_certificates`` lib.
+tls,team,https://charmhub.io/mysql/libraries/tls,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
