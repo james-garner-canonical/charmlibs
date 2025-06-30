@@ -2,6 +2,7 @@
 autocomplete
 autocompletions
 args
+CNI
 codebase
 databag
 databags
@@ -40,6 +41,7 @@ pathops
 ContainerPath
 
 Jinja
+Multus
 PyPI
 
 drwxr
