@@ -85,7 +85,7 @@ See also:
 (charm-libs-general)=
 ### General libraries
 
-This category covers all other use cases for libraries, including general-purpose charming helpers and sharing team-specific code between charms. Non-interface libraries may provide everything you need to use them out of the box, like [](pathops) does. Alternatively, they may rely or build on functionality provided by integrating with another charm.
+This category covers all other use cases for libraries, including general-purpose charming helpers and sharing team-specific code between charms. Non-interface libraries may provide everything you need to use them out of the box, like {mod}`pathops` does. Alternatively, they may rely or build on functionality provided by integrating with another charm.
 
 See also:
 
