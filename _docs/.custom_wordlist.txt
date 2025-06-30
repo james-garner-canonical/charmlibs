@@ -16,6 +16,7 @@ libs
 monorepo
 namespacing
 posix
+reimplemented
 repo
 requirer
 subclasses
@@ -26,6 +27,7 @@ tooltip
 tooltips
 UTF
 vendored
+yaml
 
 charmcraft
 charmlib
