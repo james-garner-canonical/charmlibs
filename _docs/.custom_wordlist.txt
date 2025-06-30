@@ -18,6 +18,7 @@ monorepo
 namespacing
 OCI
 posix
+reimplemented
 repo
 requirer
 stateful
@@ -30,6 +31,7 @@ tooltip
 tooltips
 UTF
 vendored
+yaml
 
 charmcraft
 charmlib
