@@ -79,8 +79,8 @@ To use an interface in your charm, add a requires or provides endpoint to your `
 See also:
 
 - {ref}`interface-libs-listing`
-- {ref}`Ops | How to manage relations <ops:manage-relations>
-- {ref}`Ops | How to manage interfaces <ops:manage-interfaces>
+- {ref}`Ops | How to manage relations <ops:manage-relations>`
+- {ref}`Ops | How to manage interfaces <ops:manage-interfaces>`
 
 (charm-libs-general)=
 ### General libraries
