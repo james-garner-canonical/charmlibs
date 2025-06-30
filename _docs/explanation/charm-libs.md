@@ -32,8 +32,6 @@ Each library is a single-file Python module. To use Charmhub-hosted libraries, l
 
 Charm libraries all have an API version and a patch version, broadly equivalent to the major and minor version in semantic versioning. If a library is specified by API version only then rerunning `charmcraft fetch-libs` will update the library if a newer patch release is available.
 
-It is recommended that Charmhub-hosted libraries have no additional dependencies, but some do. If a library depends on a Python package, it should be listed in the `PYDEPS` variable in the module itself. You will need to manually add these dependencies to your charm's Python dependencies. If a library depends on another Charmhub-hosted library, this should be specified in its documentation, and you will need to add this library to your charm via `charmcraft.yaml` and `charmcraft fetch-libs`.
-
 The `lib` directory is added to the `PYTHONPATH` by the charm's `dispatch` script, so these libraries are imported in charm code as `$charm.v$api-version.$lib-name`.
 
 For example, you might add this to your `charmcraft.yaml`:
@@ -45,6 +43,20 @@ charm-libs:
 ```
 
 And then in your charm code, you would write `from operator_libs_linux.v2 import snap`.
+
+It is recommended that Charmhub-hosted libraries have no additional dependencies, but some do. It's possible that a Charmhub-hosted library might depend on a regular Python package, or it might even depend on another Charmhub-hosted library.
+
+If a library depends on a Python package, the package should be listed in the `PYDEPS` variable in the library itself. You will need to manually add these dependencies to your charm's Python dependencies. For example, if the `snap` library depended on a Python package named `foo` (it doesn't), it might have `PYDEPS = ['foo']`, and you would add `foo` to your dependencies in `pyproject.toml`.
+
+If a library depends on another Charmhub-hosted library, the dependency should be clearly specified in the library's documentation. In this case, you will need to add this additional Charmhub-hosted library to your charm's `charmcraft.yaml` and  run `charmcraft fetch-libs`. For example, if the `snap` library depended on a Charmhub-hosted library `foo.v0.bar`, then you would update your `charmcraft.yaml` to look like this:
+
+```yaml
+charm-libs:
+  - lib: operator_libs_linux.snap
+    version: "2"
+  - lib: foo.bar
+    version: "0"
+```
 
 See also:
 
