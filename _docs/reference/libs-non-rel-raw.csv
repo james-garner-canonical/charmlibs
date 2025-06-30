@@ -9,7 +9,7 @@ juju_systemd_notices,recommended,https://charmhub.io/operator-libs-linux/librari
 passwd,recommended,https://charmhub.io/operator-libs-linux/libraries/passwd,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Manage Linux users and groups.
 sysctl,recommended,https://charmhub.io/operator-libs-linux/libraries/sysctl,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Create and configure ``sysctl`` options.
 charmed-kubeflow-chisme,team,https://pypi.org/project/charmed-kubeflow-chisme/,,https://github.com/canonical/charmed-kubeflow-chisme,PyPI,y,y,Used internally by Charmed Kubeflow team.
-hpc-libs,team,https://pypi.org/project/charmed-kubeflow-chisme/,,,git,y,y,Used internally by HPC charms.
+hpc-libs,team,https://github.com/charmed-hpc/hpc-libs,,,git,y,y,Used internally by HPC charms.
 charm-helpers,legacy,https://pypi.org/project/charmhelpers/,https://charm-helpers.readthedocs.io/,https://github.com/juju/charm-helpers,PyPI,y,y,Pre-``ops`` library used by reactive charms.
 cos-lib,dep,https://pypi.org/project/cosl/,,https://github.com/canonical/cos-lib,PyPI,y,y,A dependency (via PYDEPS) of popular charm libs such as ``loki_push_api``.
 serialized-data-interface,legacy,https://pypi.org/project/serialized-data-interface/,,https://github.com/canonical/serialized-data-interface,PyPI,y,y,Relation data validation – use the features available in ops instead.
