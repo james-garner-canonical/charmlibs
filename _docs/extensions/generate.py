@@ -53,8 +53,8 @@ _EMOJIS = {
     'recommended': '✅',
     'dep': '↪️',
     'experimental': '⚗️',
-    'legacy': '🪦',
-    'team': '🚫',
+    'legacy': '🚫',
+    'team': '💬',
     # substrate
     'machine': '🖥️',
     'K8s': '☸️',
