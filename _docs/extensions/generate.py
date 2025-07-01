@@ -132,9 +132,10 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     # interface / relation libs
     with (ref_dir / 'libs-rel-raw.csv').open() as f:
         rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
-    rel_table = _get_rel_libs_table(rel_entries)
-    _write_if_needed(path=(gen_dir / 'libs-rel-table.rst'), content=rel_table)
-    # status key
+    _write_if_needed(
+        path=(gen_dir / 'libs-rel-table.rst'),
+        content=_get_rel_libs_table(rel_entries),
+    )
     _write_if_needed(
         path=(gen_dir / 'libs-rel-status-key-table.rst'),
         content=_get_status_key_table_dropdown(rel_entries),
@@ -142,9 +143,10 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     # general / non-relation libs
     with (ref_dir / 'libs-non-rel-raw.csv').open() as f:
         non_rel_entries: list[_GenCSVRow] = list(csv.DictReader(f))  # type: ignore
-    non_rel_table = _get_gen_libs_table(non_rel_entries)
-    _write_if_needed(path=(gen_dir / 'libs-non-rel-table.rst'), content=non_rel_table)
-    # status key
+    _write_if_needed(
+        path=(gen_dir / 'libs-non-rel-table.rst'),
+        content=_get_gen_libs_table(non_rel_entries),
+    )
     _write_if_needed(
         path=(gen_dir / 'libs-non-rel-status-key-table.rst'),
         content=_get_status_key_table_dropdown(non_rel_entries),
