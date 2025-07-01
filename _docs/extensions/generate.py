@@ -169,7 +169,7 @@ def _get_rel_libs_table(entries: list[_RelCSVRow]) -> str:
 
 def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
     def inclusion(row: _CSVRow) -> bool:
-        return row['description'] != 'unlisted'
+        return row['status'] != 'unlisted'
 
     def key(row: _TableRow) -> tuple[str, ...]:
         return row.status, row.kind, row.name, row.description
