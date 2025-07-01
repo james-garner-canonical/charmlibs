@@ -161,11 +161,17 @@ def _get_rel_libs_table(entries: list[_RelCSVRow]) -> str:
 
 
 def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
+    def inclusion(row: _CSVRow) -> bool:
+        return row['description'] != 'unlisted'
+
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, kind, desc = row
         return status, kind, desc
 
-    rows = [(_status(e), _name(e), _kind(e), _gen_description(e)) for e in entries]
+    rows = [
+        (_status(entry), _name(entry), _kind(entry), _gen_description(entry))
+        for entry in filter(inclusion, entries)
+    ]
     return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
