@@ -67,7 +67,7 @@ _STATUS_TOOLTIPS = {
     'team': 'Team internal lib, may not be stable for external use.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
-_STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'experimental': 3, 'legacy': 4, 'team': 5}
+_STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'experimental': 3, 'team': 4, 'legacy': 5}
 _FILE_HEADER = """..
     This file was automatically generated.
     It should not be manually edited!
