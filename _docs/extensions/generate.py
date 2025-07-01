@@ -205,14 +205,18 @@ def _status(entry: _CSVRow) -> str:
 
 
 def _name(entry: _CSVRow) -> str:
-    main_link = _html_link(entry['name'], entry['url'])
+    name = entry['name']
+    main_link = _html_link(name, entry['url'])
     extra_links = ', '.join([
         _html_link(_EMOJIS.get(text, '') + text, url)
         for text in ('docs', 'src')
         if (url := entry[text])
     ])
-    html = f'{main_link} ({extra_links})' if extra_links else main_link
-    return _rst_table_indent(_rst_raw_html(html))
+    html_lines = [
+        _html_hidden_span(name.ljust(64, 'z')),
+        f'{main_link} ({extra_links})' if extra_links else main_link,
+    ]
+    return _rst_table_indent(_rst_raw_html('\n'.join(html_lines)))
 
 
 def _kind(entry: _CSVRow) -> str:
