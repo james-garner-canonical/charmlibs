@@ -114,6 +114,13 @@ class _GenCSVRow(_CSVRow, total=True):
     K8s: str
 
 
+class _TableRow(typing.NamedTuple):
+    status: str
+    name: str
+    kind: str
+    description: str
+
+
 def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     ref_dir = pathlib.Path(docs_dir) / 'reference'
     gen_dir = ref_dir / 'generated'
@@ -164,12 +171,11 @@ def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
     def inclusion(row: _CSVRow) -> bool:
         return row['description'] != 'unlisted'
 
-    def key(row: tuple[str, ...]) -> tuple[str, ...]:
-        status, _name, kind, desc = row
-        return status, kind, desc
+    def key(row: _TableRow) -> tuple[str, ...]:
+        return row.status, row.kind, row.description
 
     rows = [
-        (_status(entry), _name(entry), _kind(entry), _gen_description(entry))
+        _TableRow(_status(entry), _name(entry), _kind(entry), _gen_description(entry))
         for entry in filter(inclusion, entries)
     ]
     return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
