@@ -172,7 +172,7 @@ def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
         return row['description'] != 'unlisted'
 
     def key(row: _TableRow) -> tuple[str, ...]:
-        return row.status, row.kind, row.description
+        return row.status, row.kind, row.name, row.description
 
     rows = [
         _TableRow(_status(entry), _name(entry), _kind(entry), _gen_description(entry))
