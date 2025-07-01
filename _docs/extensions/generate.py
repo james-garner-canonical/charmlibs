@@ -91,6 +91,7 @@ _KEY_TABLE_HEADER = """.. list-table::
    * -
      - description
 """
+_KEY_MSG = 'Library status is shown in the left column. See tooltips, or click here for a key.'
 
 
 class _CSVRow(typing.TypedDict, total=True):
@@ -137,8 +138,7 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     _write_if_needed(path=(gen_dir / 'libs-non-rel-table.rst'), content=non_rel_table)
     # status key
     key_table = _get_status_key_table()
-    msg = ' Library status is shown in the left column. See tooltips, or click here for a key.'
-    content = f'.. dropdown::{msg}\n\n' + '\n'.join('   ' + line for line in key_table.split('\n'))
+    content = f'.. dropdown:: {_KEY_MSG}\n\n' + _indent_lines(key_table, level=3)
     _write_if_needed(path=(gen_dir / 'status-key-table.rst'), content=content)
 
 
