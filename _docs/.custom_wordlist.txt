@@ -2,7 +2,6 @@
 autocomplete
 autocompletions
 args
-CNI
 codebase
 databag
 databags

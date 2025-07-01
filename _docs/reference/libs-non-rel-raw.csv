@@ -45,7 +45,7 @@ rollingops,,https://charmhub.io/rolling-ops/libraries/rollingops,,https://github
 client,,https://charmhub.io/zookeeper/libraries/client,,http://github.com/canonical/zookeeper-operator,Charmhub,y,y,Perform ``zookeeper`` operations.
 capture_events,legacy,https://charmhub.io/harness-extensions/libraries/capture_events,,https://github.com/PietroPasotti/harness-extensions,Charmhub,y,y,Helper for legacy harness tests. New charms should write scenario tests with ``ops[testing]`` instead.
 postgresql,team,https://charmhub.io/postgresql-k8s/libraries/postgresql,,https://github.com/canonical/postgresql-k8s-operator,Charmhub,y,y,Shared code between the ``posgresql`` and ``postgresql-k8s`` charms.
-multus,,https://charmhub.io/kubernetes-charm-libraries/libraries/multus,,https://github.com/canonical/kubernetes-charm-libraries,Charmhub,,y,Use the Multus Kubernetes CNI.
+multus,,https://charmhub.io/kubernetes-charm-libraries/libraries/multus,,https://github.com/canonical/kubernetes-charm-libraries,Charmhub,,y,Use the Multus Kubernetes Container Network Interface.
 backups,team,https://charmhub.io/mysql/libraries/backups,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
 architecture,team,https://charmhub.io/mysql/libraries/architecture,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
 mysql,team,https://charmhub.io/mysql/libraries/mysql,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
