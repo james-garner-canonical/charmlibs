@@ -56,6 +56,6 @@ charm_tracing,legacy,https://charmhub.io/tempo-k8s/libraries/charm_tracing,,http
 data_secrets,legacy,https://charmhub.io/data-platform-libs/libraries/data_secrets,,https://github.com/canonical/data-platform-libs,Charmhub,y,y,Secrets-related helpers for interfaces. Deprecated in favour of the ``data-platform-libs.data_inferfaces`` interface lib.
 helper_cos,team,https://charmhub.io/opensearch/libraries/helper_cos,,https://github.com/canonical/opensearch-operator,Charmhub,,,Relies on ``data_platform_helpers``.
 evt_sequences,legacy,https://charmhub.io/harness-extensions/libraries/evt_sequences,,https://github.com/PietroPasotti/harness-extensions,Charmhub,y,y,Helper for legacy harness tests. New charms should write state-transition tests with ``ops[testing]`` instead.
-charm_logging,,https://charmhub.io/loki-k8s/libraries/charm_logging,,https://github.com/canonical/loki-k8s-operator,Charmhub,,,Add charm code logging to logs sent via ``loki_push_api``.
+charm_logging,,https://charmhub.io/loki-k8s/libraries/charm_logging,,https://github.com/canonical/loki-k8s-operator,Charmhub,y,y,Add charm code logging to logs sent via ``loki_push_api``.
 cert_handler,,https://charmhub.io/observability-libs/libraries/cert_handler,,https://github.com/canonical/observability-libs,Charmhub,y,y,Wraps the requirer side of the ``tls-certificates-interface`` charm's ``tls_certificates`` lib.
 tls,team,https://charmhub.io/mysql/libraries/tls,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
