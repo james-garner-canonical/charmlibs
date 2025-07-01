@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import csv
 import pathlib
+import re
 import typing
 from xml.etree import ElementTree
 
@@ -218,12 +219,21 @@ def _status(entry: _CSVRow) -> str:
 
 
 def _name(entry: _CSVRow) -> str:
-    name = entry['name']
+    name = entry['name'] if entry['kind'] != 'Charmhub' else _charmcraft_namespaced_name(entry)
     link = _html_link(name, entry['url'])
     extras = ', '.join(_html_link(s, url) for s in ('docs', 'src') if (url := entry[s]))
     links = f'{link} <span style="white-space:nowrap;">({extras})</span>' if extras else link
     html_lines = [_html_hidden_span(name.ljust(64, 'z')), links]
     return _rst_table_indent(_rst_raw_html('\n'.join(html_lines)))
+
+
+def _charmcraft_namespaced_name(entry: _CSVRow) -> str:
+    lib_name = entry['name']
+    match = re.search(r'charmhub\.io/([^/]+)/', entry['url'])
+    assert match is not None
+    charm = match.group(1)
+    namespace = charm.replace('-', '_')
+    return f'{namespace}.{lib_name}'
 
 
 def _kind(entry: _CSVRow) -> str:
