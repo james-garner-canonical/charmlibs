@@ -219,16 +219,10 @@ def _status(entry: _CSVRow) -> str:
 
 def _name(entry: _CSVRow) -> str:
     name = entry['name']
-    main_link = _html_link(name, entry['url'])
-    extra_links = ', '.join([
-        _html_link(_EMOJIS.get(text, '') + text, url)
-        for text in ('docs', 'src')
-        if (url := entry[text])
-    ])
-    html_lines = [
-        _html_hidden_span(name.ljust(64, 'z')),
-        f'{main_link} ({extra_links})' if extra_links else main_link,
-    ]
+    link = _html_link(name, entry['url'])
+    extras = ', '.join(_html_link(s, url) for s in ('docs', 'src') if (url := entry[s]))
+    links = f'{link} <span style="white-space:nowrap;">({extras})</span>' if extras else link
+    html_lines = [_html_hidden_span(name.ljust(64, 'z')), links]
     return _rst_table_indent(_rst_raw_html('\n'.join(html_lines)))
 
 
@@ -341,6 +335,6 @@ def _html_hidden_span(text: object) -> str:
 
 
 def _html_link(text: str, url: str) -> str:
-    e = ElementTree.Element('a', attrib={'href': url, 'class': 'no-spellcheck'})
-    e.text = text
-    return ElementTree.tostring(e, encoding='unicode')
+    for char in ('.', '-', '_'):
+        text = text.replace(char, f'{char}<wbr>')
+    return f'<a href="{url}" class="no-spellcheck">{text}</a>'
