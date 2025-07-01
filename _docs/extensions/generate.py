@@ -63,7 +63,7 @@ _STATUS_TOOLTIPS = {
     'recommended': 'Recommended for use in new charms today!',
     'dep': 'Dependency of other libs, unlikely to be required directly.',
     'experimental': 'Experimental, use at your own risk!',
-    'legacy': 'Not recommended, there are better alternatives available.',
+    'legacy': 'Deprecated library, not recommended for use in new charms.',
     'team': 'Team internal lib, may not be stable for external use.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
