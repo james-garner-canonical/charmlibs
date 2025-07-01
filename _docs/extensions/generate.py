@@ -92,6 +92,9 @@ _KEY_TABLE_HEADER = """.. list-table::
      - description
 """
 _KEY_MSG = 'Library status is shown in the left column. See tooltips, or click here for a key.'
+_KEY_DROPDOWN_HEADER = f""".. dropdown:: {_KEY_MSG}
+
+"""
 
 
 class _CSVRow(typing.TypedDict, total=True):
@@ -131,15 +134,17 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
         rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
     rel_table = _get_rel_libs_table(rel_entries)
     _write_if_needed(path=(gen_dir / 'libs-rel-table.rst'), content=rel_table)
+    # status key
+    rel_key_table = _get_status_key_table_dropdown(rel_entries)
+    _write_if_needed(path=(gen_dir / 'libs-rel-status-key-table.rst'), content=rel_key_table)
     # general / non-relation libs
     with (ref_dir / 'libs-non-rel-raw.csv').open() as f:
         non_rel_entries: list[_GenCSVRow] = list(csv.DictReader(f))  # type: ignore
     non_rel_table = _get_gen_libs_table(non_rel_entries)
     _write_if_needed(path=(gen_dir / 'libs-non-rel-table.rst'), content=non_rel_table)
     # status key
-    key_table = _get_status_key_table()
-    content = f'.. dropdown:: {_KEY_MSG}\n\n' + _indent_lines(key_table, level=3)
-    _write_if_needed(path=(gen_dir / 'status-key-table.rst'), content=content)
+    non_rel_key_table = _get_status_key_table_dropdown(non_rel_entries)
+    _write_if_needed(path=(gen_dir / 'libs-non-rel-status-key-table.rst'), content=non_rel_key_table)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
@@ -158,7 +163,7 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
 ##########
 
 
-def _get_rel_libs_table(entries: list[_RelCSVRow]) -> str:
+def _get_rel_libs_table(entries: Iterable[_RelCSVRow]) -> str:
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, _kind, desc = row
         return status, desc
@@ -167,7 +172,7 @@ def _get_rel_libs_table(entries: list[_RelCSVRow]) -> str:
     return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
+def _get_gen_libs_table(entries: Iterable[_GenCSVRow]) -> str:
     def inclusion(row: _CSVRow) -> bool:
         return row['status'] != 'unlisted'
 
@@ -181,14 +186,16 @@ def _get_gen_libs_table(entries: list[_GenCSVRow]) -> str:
     return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_status_key_table() -> str:
+def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
+    used_statuses = {entry['status'] for entry in entries}
     rows = [
         (_status({'status': s}), _STATUS_TOOLTIPS[s])  # type: ignore
         for s in _STATUS_SORTKEYS
-        if s in _EMOJIS
+        if s in _EMOJIS and s in used_statuses
     ]
     rows.append(('', 'None of the above.'))
-    return _KEY_TABLE_HEADER + _rst_rows(rows)
+    table = _KEY_TABLE_HEADER + _rst_rows(rows)
+    return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
 
 
 ##########
