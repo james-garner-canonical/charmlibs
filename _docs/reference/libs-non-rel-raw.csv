@@ -23,7 +23,7 @@ charm-refresh-build-version,unlisted,https://pypi.org/project/charm-refresh-buil
 charm-refresh,recommended,https://pypi.org/project/charm-refresh/,https://canonical-charm-refresh.readthedocs-hosted.com/latest/,https://github.com/canonical/charm-refresh,PyPI,y,y,In-place rolling refreshes of stateful charmed applications.
 charm-upgrade,unlisted,https://pypi.org/project/charm-upgrade/,,https://github.com/canonical/charm-upgrade,PyPI,y,y,Alias for charm-refresh? (Repo URL redirects.)
 charmed-service-mesh-helpers,team,https://pypi.org/project/charmed-service-mesh-helpers/,,https://github.com/canonical/charmed-service-mesh-helpers/,PyPI,,y,Used internally by the Service Mesh team.
-charms.contextual_status,,https://pypi.org/project/charms.contextual-status/,,https://github.com/charmed-kubernetes/charm-lib-contextual-status,PyPI,y,y,Context manager based library for setting charm statuses.
+charms.contextual_status,experimental,https://pypi.org/project/charms.contextual-status/,,https://github.com/charmed-kubernetes/charm-lib-contextual-status,PyPI,y,y,Context manager based library for setting charm statuses.
 charms.docker,legacy,https://pypi.org/project/charms.docker/,,https://github.com/juju-solutions/charms.docker,PyPI,,,Legacy library used by the docker-layer reactive charm.
 charms.reactive,legacy,https://pypi.org/project/charms.reactive/,https://charmsreactive.readthedocs.io/en/latest/,https://github.com/canonical/charms.reactive,PyPI,y,y,Legacy library used to implement reactive charms.
 charms.reconciler,experimental,https://pypi.org/project/charms.reconciler/,,https://github.com/charmed-kubernetes/charm-lib-reconciler,PyPI,y,y,Handle all Juju events in an Ops-based charm with a single method.
