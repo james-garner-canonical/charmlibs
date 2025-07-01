@@ -16,7 +16,6 @@ serialized-data-interface,legacy,https://pypi.org/project/serialized-data-interf
 oci-image,legacy,https://pypi.org/project/oci-image/,,https://github.com/juju-solutions/resource-oci-image,PyPI,,y,Work with OCI images in podspec charms. New Kubernetes charms should use the sidecar pattern. Repo archived in March 2024.
 data-platform-helpers,team,https://pypi.org/project/data-platform-helpers/,,https://github.com/canonical/data-platform-helpers,PyPI,y,y,Used internally by the Data Charm Engineering team.
 mongo-charms-single-kernel,team,https://pypi.org/project/mongo-charms-single-kernel/,,https://github.com/canonical/mongo-single-kernel-library,PyPI,y,y,Used internally by the Data Charm Engineering team.
-data-platform-libs,team,https://charmhub.io/data-platform-libs/libraries,,https://github.com/canonical/data-platform-libs,Charmhub,y,y,Used internally by the Data Charm Engineering team.
 awsjuju,unlisted,https://pypi.org/project/awsjuju/,,https://github.com/kapilt/awsjuju,PyPI,,,Legacy library for managing AWS resources.
 charm-api,experimental,https://pypi.org/project/charm-api/,,https://github.com/canonical/charm-api,PyPI,y,y,Experimental API for writing charms.
 charm-json,legacy,https://pypi.org/project/charm-json/,,https://github.com/canonical/charm-json,PyPI,y,y,JSON typed relation data – unnecessary with Ops 2.23+ due to the addition of typed relation data.
