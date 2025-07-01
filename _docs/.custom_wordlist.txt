@@ -35,6 +35,7 @@ yaml
 charmcraft
 charmlib
 charmlibs
+podspec
 PYDEPS
 
 pathlib
