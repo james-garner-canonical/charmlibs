@@ -56,6 +56,7 @@ _EMOJIS = {
     'experimental': '⚗️',
     'legacy': '🚫',
     'team': '💬',
+    'popular': '👥',
     # substrate
     'machine': '🖥️',
     'K8s': '☸️',
@@ -66,31 +67,53 @@ _STATUS_TOOLTIPS = {
     'experimental': 'Experimental, use at your own risk!',
     'legacy': 'Deprecated library, not recommended for use in new charms.',
     'team': 'Team internal lib, may not be stable for external use.',
+    'popular': 'Widely used library.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
-_STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'experimental': 3, 'team': 4, 'legacy': 5}
+_STATUS_SORTKEYS = {
+    status: priority
+    for priority, status in enumerate([
+        'recommended',
+        'popular',
+        '',
+        'dep',
+        'experimental',
+        'team',
+        'legacy',
+    ])
+}
 _FILE_HEADER = """..
     This file was automatically generated.
     It should not be manually edited!
     Instead, edit the corresponding -raw.csv file and then rebuild the docs.
 
 """
-_LIBS_TABLE_HEADER = """.. list-table::
+_REL_LIBS_TABLE_HEADER = """.. list-table::
    :class: sphinx-datatable
    :widths: 1, 40, 1, 60
    :header-rows: 1
 
    * -
-     - name
-     - kind
-     - description
+     - Library
+     - Kind
+     - Interface
+"""
+_GEN_LIBS_TABLE_HEADER = """.. list-table::
+   :class: sphinx-datatable
+   :widths: 1, 40, 1, 60
+   :header-rows: 1
+
+   * -
+     - Library
+     - Kind
+     - Description
 """
 _KEY_TABLE_HEADER = """.. list-table::
    :widths: 1, 100
    :header-rows: 1
 
    * -
-     - description
+     - Description
 """
 _KEY_MSG = 'Library status is shown in the left column. See tooltips, or click here for a key.'
 _KEY_DROPDOWN_HEADER = f""".. dropdown:: {_KEY_MSG}
@@ -175,22 +198,22 @@ def _get_rel_libs_table(entries: Iterable[_RelCSVRow]) -> str:
         status, _name, _kind, desc = row
         return status, desc
 
-    rows = [(_status(e), _name(e), _kind(e), _rel_description(e)) for e in entries]
-    return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
+    rows = [
+        (_status(entry), _name(entry), _kind(entry), _rel_description(entry))
+        for entry in filter(_not_unlisted, entries)
+    ]
+    return _REL_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
 def _get_gen_libs_table(entries: Iterable[_GenCSVRow]) -> str:
-    def inclusion(row: _CSVRow) -> bool:
-        return row['status'] != 'unlisted'
-
     def key(row: _TableRow) -> tuple[str, ...]:
         return row.status, row.kind, row.name, row.description
 
     rows = [
         _TableRow(_status(entry), _name(entry), _kind(entry), _gen_description(entry))
-        for entry in filter(inclusion, entries)
+        for entry in filter(_not_unlisted, entries)
     ]
-    return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
+    return _GEN_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
 def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
@@ -203,6 +226,10 @@ def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
     rows.append(('', 'None of the above.'))
     table = _KEY_TABLE_HEADER + _rst_rows(rows)
     return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
+
+
+def _not_unlisted(row: _CSVRow) -> bool:
+    return row['status'] != 'unlisted'
 
 
 ##########
@@ -264,7 +291,7 @@ def _rel_links(entry: _RelCSVRow) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
-        return name
+        return _html_no_spellcheck_span(name)
     main_link = _html_link(name, main_url)
     if not (schema_url := entry['rel_url_schema']):
         return main_link
@@ -348,3 +375,9 @@ def _html_link(text: str, url: str) -> str:
     for char in ('.', '-', '_'):
         text = text.replace(char, f'{char}<wbr>')
     return f'<a href="{url}" class="no-spellcheck">{text}</a>'
+
+
+def _html_no_spellcheck_span(text: object) -> str:
+    e = ElementTree.Element('span', attrib={'class': 'no-spellcheck'})
+    e.text = str(text)
+    return ElementTree.tostring(e, encoding='unicode')
