@@ -198,7 +198,8 @@ def _get_interface_libs_table(entries: Iterable[_InterfaceCSVRow]) -> str:
 
     rows = [
         (_status(entry), _name(entry), _kind(entry), _interface_description(entry))
-        for entry in filter(_not_unlisted, entries)
+        for entry in entries
+        if _not_unlisted(entry)
     ]
     return _INTERFACE_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
@@ -209,7 +210,8 @@ def _get_general_libs_table(entries: Iterable[_GeneralCSVRow]) -> str:
 
     rows = [
         _TableRow(_status(entry), _name(entry), _kind(entry), _general_description(entry))
-        for entry in filter(_not_unlisted, entries)
+        for entry in entries
+        if _not_unlisted(entry)
     ]
     return _GENERAL_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
