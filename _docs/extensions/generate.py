@@ -66,7 +66,6 @@ _STATUS_TOOLTIPS = {
     'experimental': 'Experimental, use at your own risk!',
     'legacy': 'Deprecated library, not recommended for use in new charms.',
     'team': 'Team internal lib, may not be stable for external use.',
-    'popular': 'Widely used library.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
 _STATUS_SORTKEYS = {
