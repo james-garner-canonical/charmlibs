@@ -152,25 +152,25 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     generated_dir = reference_dir / 'generated'
     generated_dir.mkdir(exist_ok=True)
     # interface libs
-    with (reference_dir / 'libs-rel-raw.csv').open() as f:
+    with (reference_dir / 'interface-libs.csv').open() as f:
         interface_entries: list[_InterfaceCSVRow] = list(csv.DictReader(f))  # type: ignore
     _write_if_needed(
-        path=(generated_dir / 'libs-rel-table.rst'),
+        path=(generated_dir / 'interface-libs-table.rst'),
         content=_get_interface_libs_table(interface_entries),
     )
     _write_if_needed(
-        path=(generated_dir / 'libs-rel-status-key-table.rst'),
+        path=(generated_dir / 'interface-libs-status-key-table.rst'),
         content=_get_status_key_table_dropdown(interface_entries),
     )
     # general libs
-    with (reference_dir / 'libs-non-rel-raw.csv').open() as f:
+    with (reference_dir / 'general-libs.csv').open() as f:
         general_entries: list[_GeneralCSVRow] = list(csv.DictReader(f))  # type: ignore
     _write_if_needed(
-        path=(generated_dir / 'libs-non-rel-table.rst'),
+        path=(generated_dir / 'general-libs-table.rst'),
         content=_get_general_libs_table(general_entries),
     )
     _write_if_needed(
-        path=(generated_dir / 'libs-non-rel-status-key-table.rst'),
+        path=(generated_dir / 'general-libs-status-key-table.rst'),
         content=_get_status_key_table_dropdown(general_entries),
     )
 
