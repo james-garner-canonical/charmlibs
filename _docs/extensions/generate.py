@@ -56,7 +56,6 @@ _EMOJIS = {
     'experimental': '⚗️',
     'legacy': '🚫',
     'team': '💬',
-    'popular': '👥',
     # substrate
     'machine': '🖥️',
     'K8s': '☸️',
@@ -74,7 +73,6 @@ _STATUS_SORTKEYS = {
     status: priority
     for priority, status in enumerate([
         'recommended',
-        'popular',
         '',
         'dep',
         'experimental',
