@@ -199,7 +199,7 @@ def _get_interface_libs_table(entries: Iterable[_InterfaceCSVRow]) -> str:
     rows = [
         (_status(entry), _name(entry), _kind(entry), _interface_description(entry))
         for entry in entries
-        if _not_unlisted(entry)
+        if _is_listed(entry)
     ]
     return _INTERFACE_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
@@ -211,7 +211,7 @@ def _get_general_libs_table(entries: Iterable[_GeneralCSVRow]) -> str:
     rows = [
         _TableRow(_status(entry), _name(entry), _kind(entry), _general_description(entry))
         for entry in entries
-        if _not_unlisted(entry)
+        if _is_listed(entry)
     ]
     return _GENERAL_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
@@ -228,7 +228,7 @@ def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
     return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
 
 
-def _not_unlisted(row: _CSVRow) -> bool:
+def _is_listed(row: _CSVRow) -> bool:
     return row['status'] != 'unlisted'
 
 
