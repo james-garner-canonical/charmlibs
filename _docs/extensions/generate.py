@@ -36,7 +36,7 @@ if typing.TYPE_CHECKING:
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Entrypoint for Sphinx extensions, connects generation code to Sphinx event."""
-    app.connect('builder-inited', _generate)  # type: ignore
+    app.connect('builder-inited', _generate)
     return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
 
 
@@ -68,29 +68,49 @@ _STATUS_TOOLTIPS = {
     'team': 'Team internal lib, may not be stable for external use.',
 }
 _KIND_SORTKEYS = {'PyPI': 0, 'git': 1, 'Charmhub': 2, '': 3}
-_STATUS_SORTKEYS = {'recommended': 0, '': 1, 'dep': 2, 'experimental': 3, 'team': 4, 'legacy': 5}
+_STATUS_SORTKEYS = {
+    status: priority
+    for priority, status in enumerate([
+        'recommended',
+        '',
+        'dep',
+        'experimental',
+        'team',
+        'legacy',
+    ])
+}
 _FILE_HEADER = """..
     This file was automatically generated.
     It should not be manually edited!
     Instead, edit the corresponding -raw.csv file and then rebuild the docs.
 
 """
-_LIBS_TABLE_HEADER = """.. list-table::
+_INTERFACE_LIBS_TABLE_HEADER = """.. list-table::
    :class: sphinx-datatable
    :widths: 1, 40, 1, 60
    :header-rows: 1
 
    * -
-     - name
-     - kind
-     - description
+     - Library
+     - Kind
+     - Interface
+"""
+_GENERAL_LIBS_TABLE_HEADER = """.. list-table::
+   :class: sphinx-datatable
+   :widths: 1, 40, 1, 60
+   :header-rows: 1
+
+   * -
+     - Library
+     - Kind
+     - Description
 """
 _KEY_TABLE_HEADER = """.. list-table::
    :widths: 1, 100
    :header-rows: 1
 
    * -
-     - description
+     - Description
 """
 _KEY_MSG = 'Library status is shown in the left column. See tooltips, or click here for a key.'
 _KEY_DROPDOWN_HEADER = f""".. dropdown:: {_KEY_MSG}
@@ -108,13 +128,13 @@ class _CSVRow(typing.TypedDict, total=True):
     description: str
 
 
-class _RelCSVRow(_CSVRow, total=True):
+class _InterfaceCSVRow(_CSVRow, total=True):
     rel_name: str
     rel_url_charmhub: str
     rel_url_schema: str
 
 
-class _GenCSVRow(_CSVRow, total=True):
+class _GeneralCSVRow(_CSVRow, total=True):
     machine: str
     K8s: str
 
@@ -127,30 +147,30 @@ class _TableRow(typing.NamedTuple):
 
 
 def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
-    ref_dir = pathlib.Path(docs_dir) / 'reference'
-    gen_dir = ref_dir / 'generated'
-    gen_dir.mkdir(exist_ok=True)
-    # interface / relation libs
-    with (ref_dir / 'libs-rel-raw.csv').open() as f:
-        rel_entries: list[_RelCSVRow] = list(csv.DictReader(f))  # type: ignore
+    reference_dir = pathlib.Path(docs_dir) / 'reference'
+    generated_dir = reference_dir / 'generated'
+    generated_dir.mkdir(exist_ok=True)
+    # interface libs
+    with (reference_dir / 'interface-libs.csv').open() as f:
+        interface_entries: list[_InterfaceCSVRow] = list(csv.DictReader(f))  # type: ignore
     _write_if_needed(
-        path=(gen_dir / 'libs-rel-table.rst'),
-        content=_get_rel_libs_table(rel_entries),
+        path=(generated_dir / 'interface-libs-table.rst'),
+        content=_get_interface_libs_table(interface_entries),
     )
     _write_if_needed(
-        path=(gen_dir / 'libs-rel-status-key-table.rst'),
-        content=_get_status_key_table_dropdown(rel_entries),
+        path=(generated_dir / 'interface-libs-status-key-table.rst'),
+        content=_get_status_key_table_dropdown(interface_entries),
     )
-    # general / non-relation libs
-    with (ref_dir / 'libs-non-rel-raw.csv').open() as f:
-        non_rel_entries: list[_GenCSVRow] = list(csv.DictReader(f))  # type: ignore
+    # general libs
+    with (reference_dir / 'general-libs.csv').open() as f:
+        general_entries: list[_GeneralCSVRow] = list(csv.DictReader(f))  # type: ignore
     _write_if_needed(
-        path=(gen_dir / 'libs-non-rel-table.rst'),
-        content=_get_gen_libs_table(non_rel_entries),
+        path=(generated_dir / 'general-libs-table.rst'),
+        content=_get_general_libs_table(general_entries),
     )
     _write_if_needed(
-        path=(gen_dir / 'libs-non-rel-status-key-table.rst'),
-        content=_get_status_key_table_dropdown(non_rel_entries),
+        path=(generated_dir / 'general-libs-status-key-table.rst'),
+        content=_get_status_key_table_dropdown(general_entries),
     )
 
 
@@ -170,27 +190,29 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
 ##########
 
 
-def _get_rel_libs_table(entries: Iterable[_RelCSVRow]) -> str:
+def _get_interface_libs_table(entries: Iterable[_InterfaceCSVRow]) -> str:
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, _kind, desc = row
         return status, desc
 
-    rows = [(_status(e), _name(e), _kind(e), _rel_description(e)) for e in entries]
-    return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
+    rows = [
+        (_status(entry), _name(entry), _kind(entry), _interface_description(entry))
+        for entry in entries
+        if _is_listed(entry)
+    ]
+    return _INTERFACE_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_gen_libs_table(entries: Iterable[_GenCSVRow]) -> str:
-    def inclusion(row: _CSVRow) -> bool:
-        return row['status'] != 'unlisted'
-
+def _get_general_libs_table(entries: Iterable[_GeneralCSVRow]) -> str:
     def key(row: _TableRow) -> tuple[str, ...]:
         return row.status, row.kind, row.name, row.description
 
     rows = [
-        _TableRow(_status(entry), _name(entry), _kind(entry), _gen_description(entry))
-        for entry in filter(inclusion, entries)
+        _TableRow(_status(entry), _name(entry), _kind(entry), _general_description(entry))
+        for entry in entries
+        if _is_listed(entry)
     ]
-    return _LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
+    return _GENERAL_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
 def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
@@ -203,6 +225,10 @@ def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
     rows.append(('', 'None of the above.'))
     table = _KEY_TABLE_HEADER + _rst_rows(rows)
     return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
+
+
+def _is_listed(row: _CSVRow) -> bool:
+    return row['status'] != 'unlisted'
 
 
 ##########
@@ -244,7 +270,7 @@ def _kind(entry: _CSVRow) -> str:
     return _rst_table_indent('\n'.join(content))
 
 
-def _rel_description(entry: _RelCSVRow) -> str:
+def _interface_description(entry: _InterfaceCSVRow) -> str:
     sortkeys = [
         entry['rel_name'].ljust(64, 'z'),
         str(_STATUS_SORTKEYS[entry['status']]),
@@ -260,11 +286,11 @@ def _rel_description(entry: _RelCSVRow) -> str:
     return _rst_table_indent('\n'.join(content))
 
 
-def _rel_links(entry: _RelCSVRow) -> str:
+def _rel_links(entry: _InterfaceCSVRow) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
-        return name
+        return _html_no_spellcheck_span(name)
     main_link = _html_link(name, main_url)
     if not (schema_url := entry['rel_url_schema']):
         return main_link
@@ -272,7 +298,7 @@ def _rel_links(entry: _RelCSVRow) -> str:
     return f'{main_link} ({schema_link})'
 
 
-def _gen_description(entry: _GenCSVRow) -> str:
+def _general_description(entry: _GeneralCSVRow) -> str:
     substrates = ('machine', 'K8s')
     sortkeys = [
         *('0' if entry[s] else '1' for s in substrates),
@@ -348,3 +374,9 @@ def _html_link(text: str, url: str) -> str:
     for char in ('.', '-', '_'):
         text = text.replace(char, f'{char}<wbr>')
     return f'<a href="{url}" class="no-spellcheck">{text}</a>'
+
+
+def _html_no_spellcheck_span(text: object) -> str:
+    e = ElementTree.Element('span', attrib={'class': 'no-spellcheck'})
+    e.text = str(text)
+    return ElementTree.tostring(e, encoding='unicode')

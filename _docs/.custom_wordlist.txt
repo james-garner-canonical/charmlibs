@@ -28,6 +28,7 @@ symlinks
 templating
 tooltip
 tooltips
+TLS
 UTF
 vendored
 yaml
@@ -42,8 +43,10 @@ pathlib
 pathops
 ContainerPath
 
+gRPC
 Jinja
 Multus
+Nginx
 PyPI
 
 drwxr
