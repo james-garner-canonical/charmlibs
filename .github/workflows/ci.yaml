@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yaml
+  check:
+    uses: ./.github/workflows/check.yaml
 
   get-packages:
     runs-on: ubuntu-latest

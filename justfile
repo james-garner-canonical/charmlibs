@@ -12,7 +12,7 @@ _help:
     @just --list --unsorted --list-submodules
 
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]
-lint:
+check:
     #!/usr/bin/env bash
     set -xueo pipefail
     FAILURES=0
@@ -29,7 +29,8 @@ format:
     uv run ruff format --preview
 
 [doc('Run `pyright`, e.g. `just python=3.8 static pathops`.')]
-static package *pyright_args:
+lint package *pyright_args:
+    just --justfile='{{justfile()}}' python='{{python}}' check
     uv sync  # ensure venv exists before uv pip install
     uv pip install --editable './{{package}}'
     uv run pyright --pythonversion='{{python}}' {{pyright_args}} '{{package}}'
