@@ -5,8 +5,8 @@ on:
       - 'charmlibs-v*.*.*'
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yaml
+  check:
+    uses: ./.github/workflows/check.yaml
   tests:
     uses: ./.github/workflows/tests.yaml
     with:
@@ -18,7 +18,7 @@ jobs:
       id-token: write
       attestations: write
       contents: read
-    needs: [lint, tests]
+    needs: [check, tests]
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
