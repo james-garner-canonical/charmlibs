@@ -159,7 +159,7 @@ html_context = {
 
 
     # TODO: To customise the directory, uncomment and update as needed.
-    "repo_folder": "/_docs/",
+    "repo_folder": "/.docs/",
     # TODO: To enable or disable the Previous / Next buttons at the bottom of pages
     # Valid options: none, prev, next, both
     # "sequential_nav": "both",
