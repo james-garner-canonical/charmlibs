@@ -45,8 +45,7 @@ jobs:
           echo "tests=$js"
           echo "tests=$js" >> "$GITHUB_OUTPUT"
 
-
-  static:
+  lint:
     needs: init
     runs-on: ubuntu-latest
     strategy:
@@ -59,8 +58,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Run static analysis
-        run: uvx --from rust-just just python=${{ matrix.python-version }} static ${{ inputs.package }}
+      - name: Run static analysis and other checks
+        run: uvx --from rust-just just python=${{ matrix.python-version }} lint ${{ inputs.package }}
 
   unit:
     needs: init
