@@ -62,14 +62,12 @@ INDEX_TEMPLATE = """
 def _generate_files(docs_dir: str | pathlib.Path) -> None:
     reference_dir = pathlib.Path(docs_dir) / 'reference' / 'charmlibs'
     packages = sorted(
-        path
+        path.name
         for path in pathlib.Path().glob(r'[a-z]*')
         if path.is_dir() and path.name != 'interfaces'
     )
     for package in packages:
-        file_contents = AUTOMODULE_TEMPLATE.format(
-            package=package.name, underline='=' * len(package.name)
-        )
+        file_contents = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
         _write_if_needed(path=(reference_dir / f'{package}.rst'), content=file_contents)
     index_contents = INDEX_TEMPLATE.format(packages='\n'.join(packages))
     _write_if_needed(path=(reference_dir / 'index.md'), content=index_contents)
