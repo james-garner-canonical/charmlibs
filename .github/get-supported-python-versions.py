@@ -20,10 +20,10 @@
 # ]
 # ///
 
-"""Output changed packages, or all packages if global config files have changed.
+"""Output the subset of Python versions used in testing that the provided package supports.
 
 Assumes that the current working directory is the project root.
-The git reference to diff with must be provided as a commandline argument.
+The package name must be provided as a positional commandline argument.
 """
 
 from __future__ import annotations
