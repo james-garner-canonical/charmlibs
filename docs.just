@@ -1,4 +1,4 @@
-set working-directory := '_docs'
+set working-directory := '.docs'
 
 build_dir := env('READTHEDOCS_OUTPUT', '_build')
 

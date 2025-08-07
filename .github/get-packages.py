@@ -45,7 +45,7 @@ def _main(git_base_ref: str) -> None:
 
 
 def _get_changed_packages(git_base_ref: str) -> list[str]:
-    paths = [pathlib.Path('_charmlibs'), *pathlib.Path().glob(r'[a-z]*')]
+    paths = [pathlib.Path('.package'), *pathlib.Path().glob(r'[a-z]*')]
     all_packages = sorted(path.name for path in paths if path.is_dir())
     if not git_base_ref:
         print('Using all packages because no git base ref was provided:')
