@@ -1,0 +1,14 @@
+<!---
+`index.md` is generated from `index.md.template` and should not be modified directly
+`index.md.template` is consumed by the `package_docs` local Sphinx extension
+--->
+
+# Reference
+
+```{{toctree}}
+:maxdepth: 1
+
+general-libs
+interface-libs
+{charmlibs}
+```

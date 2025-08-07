@@ -33,8 +33,8 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
 
 
-def _package_docs(app: sphinx.application.Sphinx):
-    _generate_files(app.confdir)
+def _package_docs(app: sphinx.application.Sphinx) -> None:
+    _generate_files(pathlib.Path(app.confdir))
 
 
 ####################
@@ -48,31 +48,21 @@ AUTOMODULE_TEMPLATE = """
 .. automodule:: {package}
 """.strip()
 
-INDEX_TEMPLATE = """
-# Charmlibs
 
-```{{toctree}}
-:maxdepth: 1
-
-{packages}
-```
-""".strip()
-
-
-def _generate_files(docs_dir: str | pathlib.Path) -> None:
-    root_dir = pathlib.Path(docs_dir).parent
-    reference_dir = pathlib.Path(docs_dir) / 'reference' / 'charmlibs'
+def _generate_files(docs_dir: pathlib.Path) -> None:
+    reference_dir = docs_dir / 'reference'
     # Any directory starting with a-z is assumed to be a package (except the interfaces directory)
     packages = sorted(
         path.name
-        for path in pathlib.Path(root_dir).glob(r'[a-z]*')
+        for path in docs_dir.parent.glob(r'[a-z]*')
         if path.is_dir() and path.name != 'interfaces'
     )
     for package in packages:
-        file_contents = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
-        _write_if_needed(path=(reference_dir / f'{package}.rst'), content=file_contents)
-    index_contents = INDEX_TEMPLATE.format(packages='\n'.join(packages))
-    _write_if_needed(path=(reference_dir / 'index.md'), content=index_contents)
+        automodule = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
+        _write_if_needed(path=(reference_dir / f'charmlibs-{package}.rst'), content=automodule)
+    index_template = (reference_dir / 'index.md.template').read_text()
+    index = index_template.format(charmlibs='\n'.join(f'charmlibs-{p}' for p in packages))
+    _write_if_needed(path=(reference_dir / 'index.md'), content=index)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
