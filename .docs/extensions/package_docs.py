@@ -60,10 +60,11 @@ INDEX_TEMPLATE = """
 
 
 def _generate_files(docs_dir: str | pathlib.Path) -> None:
+    root_dir = pathlib.Path(docs_dir).parent
     reference_dir = pathlib.Path(docs_dir) / 'reference' / 'charmlibs'
     packages = sorted(
         path.name
-        for path in pathlib.Path().glob(r'[a-z]*')
+        for path in pathlib.Path(root_dir).glob(r'[a-z]*')
         if path.is_dir() and path.name != 'interfaces'
     )
     for package in packages:
