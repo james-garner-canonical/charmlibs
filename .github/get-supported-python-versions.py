@@ -60,10 +60,11 @@ def _main(package: str) -> None:
 
 
 def _get_supported_python_versions(package: pathlib.Path) -> dict[str, list[str]]:
-    version_constraint = tomli.load(package / 'pyproject.toml')['project']['requires-python']
-    version_set = packaging.specifiers.SpecifierSet(version_constraint)
+    pyproject_toml = tomli.loads((package / 'pyproject.toml').read_text())
+    requires_python = pyproject_toml['project']['requires-python']
+    version_set = packaging.specifiers.SpecifierSet(requires_python)
     supported_versions = [v for v in VERSIONS if v in version_set]
-    assert supported_versions, f'No version from {VERSIONS} matches {version_constraint}!'
+    assert supported_versions, f'No version from {VERSIONS} matches {requires_python}!'
     return supported_versions
 
 
