@@ -67,7 +67,9 @@ def _generate_files(docs_dir: str | pathlib.Path) -> None:
         if path.is_dir() and path.name != 'interfaces'
     )
     for package in packages:
-        file_contents = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
+        file_contents = AUTOMODULE_TEMPLATE.format(
+            package=package.name, underline='=' * len(package.name)
+        )
         _write_if_needed(path=(reference_dir / f'{package}.rst'), contents=file_contents)
     index_contents = INDEX_TEMPLATE.format(packages='\n'.join(packages))
     _write_if_needed(path=(reference_dir / 'index.md'), contents=index_contents)
