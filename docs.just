@@ -29,8 +29,6 @@ clean:
     rm -rf .sphinx/styles
     rm -rf .sphinx/vale.ini
     rm -rf reference/generated
-    rm reference/index.md
-    rm reference/charmlibs-*.rst
 
 [doc('Run `pyright` for local sphinx extensions.')]
 ext-static *pyrightargs:

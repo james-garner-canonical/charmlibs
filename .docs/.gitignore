@@ -26,6 +26,4 @@ __pycache__
 
 # generated docs
 generated/
-reference/charmlibs-*.rst
-reference/index.md
 .~lock.*
