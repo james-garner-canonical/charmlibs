@@ -81,6 +81,5 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
     This allows sphinx-build to skip rebuilding pages that depend on the output of this extension
     if the output hasn't actually changed.
     """
-    to_write = _FILE_HEADER + content
-    if not path.exists() or path.read_text() != to_write:
-        path.write_text(to_write)
+    if not path.exists() or path.read_text() != content:
+        path.write_text(content)
