@@ -5,5 +5,5 @@
 
 general-libs
 interface-libs
-charmlibs
+charmlibs/index
 ```
