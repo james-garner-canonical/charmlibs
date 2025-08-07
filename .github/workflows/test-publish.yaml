@@ -1,0 +1,14 @@
+name: Publish a package to test.pypi.org
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        required: true
+        type: string
+
+jobs:
+  test-publish:
+    uses: ./.github/workflows/publish.yaml
+    with: 
+      package: ${{ inputs.package }}
+      repository-url: https://test.pypi.org/legacy/
