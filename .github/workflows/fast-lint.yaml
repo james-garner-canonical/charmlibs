@@ -1,4 +1,4 @@
-name: Check
+name: Fast lint
 
 on:
   workflow_call:
@@ -14,4 +14,4 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Run linting
-        run: uvx --from rust-just just check
+        run: uvx --from rust-just just fast-lint
