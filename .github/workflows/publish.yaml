@@ -15,14 +15,12 @@ on:
         type: string
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yaml
   tests:
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ inputs.package }}
   build-n-publish:
-    needs: [lint, tests]
+    needs: tests
     name: Build and publish package
     runs-on: ubuntu-latest
     permissions:

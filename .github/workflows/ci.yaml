@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yaml
+  fast-lint:
+    uses: ./.github/workflows/fast-lint.yaml
 
   get-packages:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
         run: uv run --no-project --script .github/get-packages.py ${{ github.base_ref }}
 
   tests:
-    needs: get-packages
+    needs: [fast-lint, get-packages]
     if: ${{ needs.get-packages.outputs.packages != '[]' }}
     strategy:
       matrix:
