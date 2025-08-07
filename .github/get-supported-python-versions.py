@@ -13,9 +13,10 @@
 # limitations under the License.
 
 # /// script
-# requires-python = '>=3.11'  # tomllib added to stdlib
+# requires-python = '>=3.8'
 # dependencies = [
 #     'packaging',
+#     'tomli',
 # ]
 # ///
 
@@ -25,12 +26,14 @@ Assumes that the current working directory is the project root.
 The git reference to diff with must be provided as a commandline argument.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import pathlib
-import tomllib
 
 import packaging.specifiers
+import tomli
 
 VERSIONS = [
     '3.8',  # Ubuntu 20.04  (ops 2)
@@ -56,7 +59,7 @@ def _main(package: str) -> None:
 
 
 def _get_supported_python_versions(package: pathlib.Path) -> dict[str, list[str]]:
-    version_constraint = tomllib.load(package / 'pyproject.toml')['project']['requires-python']
+    version_constraint = tomli.load(package / 'pyproject.toml')['project']['requires-python']
     version_set = packaging.specifiers.SpecifierSet(version_constraint)
     supported_versions = [v for v in VERSIONS if v in version_set]
     assert supported_versions, f'No version from {VERSIONS} matches {version_constraint}!'
