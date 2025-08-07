@@ -5,32 +5,7 @@ on:
       - 'charmlibs-v*.*.*'
 
 jobs:
-  check:
-    uses: ./.github/workflows/check.yaml
-  tests:
-    uses: ./.github/workflows/tests.yaml
+  publish:
+    uses: ./.github/workflows/publish.yaml
     with:
       package: _charmlibs
-  build-n-publish:
-    name: Build and Publish 'charmlibs' to PyPI
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      attestations: write
-      contents: read
-    needs: [check, tests]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-      - name: Build
-        run: uv build
-        working-directory: ./_charmlibs
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2.4.0
-        with:
-          subject-path: '_charmlibs/dist/*'
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: ./_charmlibs/dist/

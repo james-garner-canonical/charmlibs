@@ -31,7 +31,7 @@ jobs:
         run: uv run --no-project --script .github/get-packages.py ${{ github.base_ref }}
 
   tests:
-    needs: get-packages
+    needs: [check, get-packages]
     if: ${{ needs.get-packages.outputs.packages != '[]' }}
     strategy:
       matrix:
