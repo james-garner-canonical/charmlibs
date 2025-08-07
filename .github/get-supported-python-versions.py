@@ -65,7 +65,16 @@ def _get_supported_python_versions(package: pathlib.Path) -> dict[str, list[str]
     version_set = packaging.specifiers.SpecifierSet(requires_python)
     supported_versions = [v for v in VERSIONS if v in version_set]
     assert supported_versions, f'No version from {VERSIONS} matches {requires_python}!'
-    return supported_versions
+    return {
+        'lint': supported_versions,
+        'unit': supported_versions,
+        'pebble': (
+            [supported_versions[0], supported_versions[-1]]
+            if len(supported_versions) > 1
+            else supported_versions
+        ),
+
+    }
 
 
 if __name__ == '__main__':
