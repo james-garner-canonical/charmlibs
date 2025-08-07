@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJson(needs.init.outputs.py-versions).static }}
+        python-version: ${{ fromJson(needs.init.outputs.py-versions) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -68,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJson(needs.init.outputs.py-versions).unit }}
+        python-version: ${{ fromJson(needs.init.outputs.py-versions) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -92,7 +92,7 @@ jobs:
           # 'v1.19.0',  # Juju 3.6.4 LTS
           'master',
         ]
-        python-version: ${{ fromJson(needs.init.outputs.py-versions).pebble }}
+        python-version: ${{ fromJson(needs.init.outputs.py-versions) }}
     steps:
       - uses: actions/checkout@v4
 
