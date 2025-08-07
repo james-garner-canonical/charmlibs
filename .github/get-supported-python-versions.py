@@ -73,7 +73,6 @@ def _get_supported_python_versions(package: pathlib.Path) -> dict[str, list[str]
             if len(supported_versions) > 1
             else supported_versions
         ),
-
     }
 
 
