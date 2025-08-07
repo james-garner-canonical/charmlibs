@@ -51,7 +51,7 @@ AUTOMODULE_TEMPLATE = """
 INDEX_TEMPLATE = """
 # Charmlibs
 
-```{toctree}
+```{{toctree}}
 :maxdepth: 1
 
 {packages}
