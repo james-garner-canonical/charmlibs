@@ -46,7 +46,7 @@ VERSIONS = [
 
 def _parse_args() -> pathlib.Path:
     parser = argparse.ArgumentParser()
-    parser.add_argument('package', nargs=1, type=pathlib.Path)
+    parser.add_argument('package', type=pathlib.Path)
     args = parser.parse_args()
     return args.package
 
