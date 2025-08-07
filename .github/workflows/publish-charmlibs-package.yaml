@@ -8,4 +8,4 @@ jobs:
   publish:
     uses: ./.github/workflows/publish.yaml
     with:
-      package: _charmlibs
+      package: .package
