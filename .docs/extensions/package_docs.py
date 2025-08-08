@@ -50,8 +50,8 @@ AUTOMODULE_TEMPLATE = """
 
 
 def _generate_files(docs_dir: pathlib.Path) -> None:
-    reference_dir = docs_dir / 'reference'
-    generated_dir = reference_dir / 'generated'
+    generated_dir = docs_dir / 'reference' / 'charmlibs'
+    generated_dir.mkdir(exist_ok=True)
     # Any directory starting with a-z is assumed to be a package (except the interfaces directory)
     packages = sorted(
         path.name
@@ -61,9 +61,6 @@ def _generate_files(docs_dir: pathlib.Path) -> None:
     for package in packages:
         automodule = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
         _write_if_needed(path=generated_dir / f'{package}.rst', content=automodule)
-    index_template = (reference_dir / 'index.md.template').read_text()
-    index = index_template.format(charmlibs='\n'.join(f'generated/{p}' for p in packages))
-    _write_if_needed(path=generated_dir / 'index.md', content=index)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:

@@ -28,6 +28,7 @@ clean:
     rm -rf .sphinx/node_modules/
     rm -rf .sphinx/styles
     rm -rf .sphinx/vale.ini
+    rm -rf reference/charmlibs
     rm -rf reference/generated
 
 [doc('Run `pyright` for local sphinx extensions.')]
