@@ -25,6 +25,8 @@ jobs:
       skip-juju:  ${{ steps.main.outputs.skip-juju }}
       repository-url:  ${{ steps.main.outputs.repository-url }}
     steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - id: main
         run: uv run --no-project --script .github/unify-publish-inputs.py
 
@@ -37,7 +39,7 @@ jobs:
 
   build-n-publish:
     needs: [unify-inputs,tests]
-    name: Build and publish package
+    name: Build and publish ${{ needs.unify-inputs.outputs.package }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
