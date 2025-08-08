@@ -38,6 +38,8 @@ jobs:
         env:
           PACKAGE: ${{ needs.unify-inputs.outputs.package }}
           SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
+          SKIP_EQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
+          SKIP_NEQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju != 'false' }}
           REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
         run: echo
 
