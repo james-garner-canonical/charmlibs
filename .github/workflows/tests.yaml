@@ -9,6 +9,10 @@ on:
       package:
         required: true
         type: string
+      skip-juju:
+        # no default will be null, which is falsey -- if we set a default it will be coerced to a string
+        required: false
+        type: boolean
 
 jobs:
   init:
@@ -114,7 +118,7 @@ jobs:
 
   juju:
     needs: init
-    if: contains(fromJson(needs.init.outputs.tests), 'juju')
+    if: contains(fromJson(needs.init.outputs.tests), 'juju') && !inputs.skip-juju
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

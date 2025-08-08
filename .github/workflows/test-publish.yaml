@@ -5,10 +5,15 @@ on:
       package:
         required: true
         type: string
+      skip-juju:
+        description: Skip Juju integration tests.
+        required: false
+        type: boolean
 
 jobs:
   test-publish:
     uses: ./.github/workflows/publish.yaml
     with: 
       package: ${{ inputs.package }}
+      skip-juju: ${{ inputs.skip-juju }}
       repository-url: https://test.pypi.org/legacy/
