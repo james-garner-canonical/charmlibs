@@ -38,8 +38,8 @@ jobs:
         env:
           PACKAGE: ${{ needs.unify-inputs.outputs.package }}
           SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
-          SKIP_EQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
-          SKIP_NEQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju != 'false' }}
+          SKIP_EQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju == true }}
+          SKIP_NEQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju != false }}
           REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
         run: echo
 
@@ -48,7 +48,7 @@ jobs:
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ needs.unify-inputs.outputs.package }}
-      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
+      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju == true }}
 
   build-n-publish:
     needs: [unify-inputs,tests]
