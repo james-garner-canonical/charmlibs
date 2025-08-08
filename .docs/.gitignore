@@ -25,5 +25,6 @@ __pycache__
 .vscode/
 
 # generated docs
+charmlibs/
 generated/
 .~lock.*
