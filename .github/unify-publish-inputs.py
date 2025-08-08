@@ -28,7 +28,7 @@ def _main() -> None:
     if event_name == 'push':
         _output({
             'package': _parse_tag(os.environ['GITHUB_REF']),
-            'skip-juju': False,
+            'skip-juju': 'false',
             'repository-url': 'https://upload.pypi.org/legacy/',
         })
     elif event_name == 'workflow_dispatch':
