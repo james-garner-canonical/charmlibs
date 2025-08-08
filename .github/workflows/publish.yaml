@@ -1,30 +1,42 @@
-name: Publish a package
+name: Publish
 
 on:
+  push:
+    tags:
+      - 'charmlibs-v[0-9]*'
+      - 'pathops-v[0-9]*'
   workflow_call:
     inputs:
       package:
+        description: Package to be published to test.pypi.org
         required: true
         type: string
       skip-juju:
+        description: Skip Juju integration tests
         required: false
         type: boolean
-      repository-url:
-        # One of:
-        # https://upload.pypi.org/legacy/
-        # https://test.pypi.org/legacy/
-        default: https://upload.pypi.org/legacy/
-        required: false
-        type: string
+        default: false
 
 jobs:
+  unify-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.main.outputs.package }}
+      skip-juju:  ${{ steps.main.outputs.skip-juju }}
+      repository-url:  ${{ steps.main.outputs.repository-url }}
+    steps:
+      - id: main
+        run: uv run --no-project --script .github/unify-publish-inputs.py
+
   tests:
+    needs: unify-inputs
     uses: ./.github/workflows/tests.yaml
     with:
-      package: ${{ inputs.package }}
-      skip-juju: ${{ inputs.skip-juju }}
+      package: ${{ needs.unify-inputs.outputs.package }}
+      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju }}
+
   build-n-publish:
-    needs: tests
+    needs: [unify-inputs,tests]
     name: Build and publish package
     runs-on: ubuntu-latest
     permissions:
@@ -37,14 +49,14 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Build
         run: uv build
-        working-directory: ./${{ inputs.package }}
+        working-directory: ./${{ needs.unify-inputs.outputs.package }}
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2.4.0
         with:
-          subject-path: '${{ inputs.package }}/dist/*'
+          subject-path: '${{ needs.unify-inputs.outputs.package }}/dist/*'
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: ./${{ inputs.package }}/dist/
-          repository-url: ${{ inputs.repository-url }}
+          packages-dir: ./${{ needs.unify-inputs.outputs.package }}/dist/
+          repository-url: ${{ needs.unify-inputs.outputs.repository-url }}
           verbose: true
