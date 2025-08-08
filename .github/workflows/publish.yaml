@@ -30,34 +30,12 @@ jobs:
       - id: main
         run: uv run --no-project --script .github/unify-publish-inputs.py
 
-  debug:
-    runs-on: ubuntu-latest
-    needs: unify-inputs
-    steps:
-      - name: Debug
-        env:
-          PACKAGE: ${{ needs.unify-inputs.outputs.package }}
-          SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
-          SKIP_FROM_JSON: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
-          SKIP_EQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju == true }}
-          SKIP_EQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju == false }}
-          SKIP_NEQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju != true }}
-          SKIP_NEQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju != false }}
-          SKIP_EQUALS_STRUE: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
-          SKIP_NEQUALS_SFALSE: ${{ needs.unify-inputs.outputs.skip-juju != 'false' }}
-          SKIP_FROM_JSON_EQUALS_TRUE: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) == true }}
-          SKIP_FROM_JSON_NEQUALS_FALSE: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) != false }}
-          SKIP_FROM_JSON_EQUALS_STRUE: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) == 'true' }}
-          SKIP_FROM_JSON_NEQUALS_SFALSE: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) != 'false' }}
-          REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
-        run: echo
-
   tests:
     needs: unify-inputs
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ needs.unify-inputs.outputs.package }}
-      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
+      skip-juju: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
 
   build-n-publish:
     needs: [unify-inputs,tests]
