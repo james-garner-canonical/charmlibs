@@ -10,6 +10,7 @@ on:
         required: true
         type: string
       skip-juju:
+        description: Skip Juju integration tests.
         # no default will be null, which is falsey -- if we set a default it will be coerced to a string
         required: false
         type: boolean
@@ -19,6 +20,7 @@ on:
         required: true
         type: string
       skip-juju:
+        description: Skip Juju integration tests.
         # no default will be null, which is falsey -- if we set a default it will be coerced to a string
         required: false
         type: boolean
