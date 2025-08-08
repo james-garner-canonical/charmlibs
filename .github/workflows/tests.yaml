@@ -13,6 +13,15 @@ on:
         # no default will be null, which is falsey -- if we set a default it will be coerced to a string
         required: false
         type: boolean
+  workflow_dispatch:
+    inputs:
+      package:
+        required: true
+        type: string
+      skip-juju:
+        # no default will be null, which is falsey -- if we set a default it will be coerced to a string
+        required: false
+        type: boolean
 
 jobs:
   init:
