@@ -15,7 +15,6 @@ on:
         description: Skip Juju integration tests
         required: false
         type: boolean
-        default: false
 
 jobs:
   unify-inputs:
@@ -31,12 +30,26 @@ jobs:
       - id: main
         run: uv run --no-project --script .github/unify-publish-inputs.py
 
+  debug:
+    runs-on: ubuntu-latest
+    needs: unify-inputs
+    steps:
+      - name: Debug
+        env:
+          PACKAGE: ${{ needs.unify-inputs.outputs.package }}
+          SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
+          REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
+        run: |
+          echo "$PACKAGE"
+          echo "$SKIP"
+          echo "$REPO"
+
   tests:
     needs: unify-inputs
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ needs.unify-inputs.outputs.package }}
-      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju }}
+      skip-juju: ${{ fromJson(needs.unify-inputs.outputs.skip-juju) }}
 
   build-n-publish:
     needs: [unify-inputs,tests]
