@@ -40,6 +40,8 @@ jobs:
           SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
           SKIP_FROM_JSON: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
           SKIP_EQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju == true }}
+          SKIP_EQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju == false }}
+          SKIP_NEQUALS_TRUE: ${{ needs.unify-inputs.outputs.skip-juju != true }}
           SKIP_NEQUALS_FALSE: ${{ needs.unify-inputs.outputs.skip-juju != false }}
           SKIP_EQUALS_STRUE: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
           SKIP_NEQUALS_SFALSE: ${{ needs.unify-inputs.outputs.skip-juju != 'false' }}
@@ -55,7 +57,7 @@ jobs:
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ needs.unify-inputs.outputs.package }}
-      skip-juju: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
+      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
 
   build-n-publish:
     needs: [unify-inputs,tests]

@@ -33,8 +33,6 @@ def _main() -> None:
         })
     elif event_name == 'workflow_dispatch':
         event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
-        s = event['inputs']['skip-juju']
-        print(s, type(s))
         _output({
             'package': event['inputs']['package'],
             'skip-juju': event['inputs']['skip-juju'],
@@ -63,8 +61,12 @@ def _parse_tag(ref: str) -> str:
     return package
 
 
-def _output(di: dict[str, str | bool]) -> None:
-    output = '\n'.join(f'{k}={json.dumps(v)}' for k, v in di.items())
+def _output(di: dict[str, str]) -> None:
+    for v in di.values():
+        if not isinstance(v, str):  # type: ignore
+            print(f'Unexpected type {type(v)} for value: v')
+            sys.exit(1)
+    output = '\n'.join(f'{k}={v}' for k, v in di.items())
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
         print(output)
         print(output, file=f)
