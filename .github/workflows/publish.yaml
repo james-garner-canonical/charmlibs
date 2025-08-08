@@ -46,7 +46,7 @@ jobs:
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ needs.unify-inputs.outputs.package }}
-      #skip-juju: ${{ needs.unify-inputs.outputs.skip-juju }}
+      skip-juju: ${{ needs.unify-inputs.outputs.skip-juju == 'true' }}
 
   build-n-publish:
     needs: [unify-inputs,tests]
