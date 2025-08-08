@@ -32,6 +32,16 @@ jobs:
       tests: ${{ steps.tests.outputs.tests }}
       py-versions: ${{ steps.py-versions.outputs.versions }}
     steps:
+      - name: Debug
+        env:
+          PACKAGE: ${{ needs.unify-inputs.outputs.package }}
+          SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
+          REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
+        run: |
+          echo "$PACKAGE"
+          echo "$SKIP"
+          echo "$REPO"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0

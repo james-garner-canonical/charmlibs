@@ -64,7 +64,7 @@ def _parse_tag(ref: str) -> str:
 
 
 def _output(di: dict[str, str | bool]) -> None:
-    output = '\n'.join(f'k={json.dumps(v)}' for k, v in di.items())
+    output = '\n'.join(f'{k}={json.dumps(v)}' for k, v in di.items())
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
         print(output)
         print(output, file=f)
