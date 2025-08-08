@@ -5,7 +5,7 @@ on:
     tags:
       - 'charmlibs-v[0-9]*'
       - 'pathops-v[0-9]*'
-  workflow_call:
+  workflow_dispatch:
     inputs:
       package:
         description: Package to be published to test.pypi.org
