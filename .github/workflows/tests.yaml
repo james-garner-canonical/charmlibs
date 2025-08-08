@@ -34,9 +34,20 @@ jobs:
         env:
           PACKAGE: ${{ inputs.package }}
           SKIP: ${{ inputs.skip-juju }}
-        run: |
-          echo "$PACKAGE"
-          echo "$SKIP"
+          SKIP_FROM_JSON: ${{ fromJSON(inputs.skip-juju) }}
+          SKIP_EQUALS_TRUE: ${{ inputs.skip-juju == true }}
+          SKIP_NEQUALS_FALSE: ${{ inputs.skip-juju != false }}
+          SKIP_EQUALS_STRUE: ${{ inputs.skip-juju == 'true' }}
+          SKIP_NEQUALS_SFALSE: ${{ inputs.skip-juju != 'false' }}
+          SKIP_EQUALS_SSTRUE: ${{ inputs.skip-juju == "true" }}
+          SKIP_NEQUALS_SSFALSE: ${{ inputs.skip-juju != "false" }}
+          SKIP_FROM_JSON_EQUALS_TRUE: ${{ fromJSON(inputs.skip-juju) == true }}
+          SKIP_FROM_JSON_NEQUALS_FALSE: ${{ fromJSON(inputs.skip-juju) != false }}
+          SKIP_FROM_JSON_EQUALS_STRUE: ${{ fromJSON(inputs.skip-juju) == 'true' }}
+          SKIP_FROM_JSON_NEQUALS_SFALSE: ${{ fromJSON(inputs.skip-juju) != 'false' }}
+          SKIP_FROM_JSON_EQUALS_SSTRUE: ${{ fromJSON(inputs.skip-juju) == "true" }}
+          SKIP_FROM_JSON_NEQUALS_SSFALSE: ${{ fromJSON(inputs.skip-juju) != "false" }}
+        run: echo
 
       - uses: actions/checkout@v4
         with:
