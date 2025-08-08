@@ -34,13 +34,11 @@ jobs:
     steps:
       - name: Debug
         env:
-          PACKAGE: ${{ needs.unify-inputs.outputs.package }}
-          SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
-          REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
+          PACKAGE: ${{ inputs.package }}
+          SKIP: ${{ inputs.skip-juju }}
         run: |
           echo "$PACKAGE"
           echo "$SKIP"
-          echo "$REPO"
 
       - uses: actions/checkout@v4
         with:
