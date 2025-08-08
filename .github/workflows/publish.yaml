@@ -39,17 +39,14 @@ jobs:
           PACKAGE: ${{ needs.unify-inputs.outputs.package }}
           SKIP: ${{ needs.unify-inputs.outputs.skip-juju }}
           REPO:  ${{ needs.unify-inputs.outputs.repository-url }}
-        run: |
-          echo "$PACKAGE"
-          echo "$SKIP"
-          echo "$REPO"
+        run: echo
 
   tests:
     needs: unify-inputs
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ needs.unify-inputs.outputs.package }}
-      skip-juju: ${{ fromJson(needs.unify-inputs.outputs.skip-juju) }}
+      #skip-juju: ${{ needs.unify-inputs.outputs.skip-juju }}
 
   build-n-publish:
     needs: [unify-inputs,tests]

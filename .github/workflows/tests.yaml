@@ -10,12 +10,12 @@ on:
         required: true
         type: string
       skip-juju:
-        description: Skip Juju integration tests.
         required: false
         type: boolean
   workflow_dispatch:
     inputs:
       package:
+        description: Package (by path) to run tests for.
         required: true
         type: string
       skip-juju:
