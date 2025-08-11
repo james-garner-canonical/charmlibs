@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List
 from urllib.request import urlopen
 
-from charmlibs import apt
+import charmlibs.apt as apt
 from helpers import get_command_path
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def test_install_package_from_external_repository():
     subprocess.run(['mongod', '--version'], check=True)
     # cleanup
     os.remove(key_file)
-    apt._add_repository(repo, remove=True)  # pyright: ignore[reportPrivateUsage]
+    apt._add_repository(repo, remove=True)
     assert repo_id not in apt.RepositoryMapping()
     apt.update()
     apt.remove_package('mongodb-org')
@@ -130,7 +130,7 @@ def test_install_higher_version_package_from_external_repository():
     assert version_after > version_before  # lexical comparison :(
     # cleanup
     os.remove(key_file)
-    apt._add_repository(repo, remove=True)  # pyright: ignore[reportPrivateUsage]
+    apt._add_repository(repo, remove=True)
     assert repo_id not in apt.RepositoryMapping()
     apt.update()
     apt.remove_package('fish')
@@ -151,9 +151,7 @@ def test_install_hardware_observer_ssacli():
         apt.add_package(self.pkg, update_cache=True)
     """
     line = 'deb https://downloads.linux.hpe.com/SDR/repo/mcp stretch/current non-free'
-    repo_id = apt._repo_to_identifier(  # pyright: ignore[reportPrivateUsage]
-        apt.DebianRepository.from_repo_line(line, write_file=False)
-    )
+    repo_id = apt._repo_to_identifier(apt.DebianRepository.from_repo_line(line, write_file=False))
     assert repo_id not in apt.RepositoryMapping()
     assert not get_command_path('ssacli')
     key_files: List[str] = []  # just for cleanup
@@ -181,7 +179,7 @@ def test_install_hardware_observer_ssacli():
     # cleanup
     for key_file in key_files:
         os.remove(key_file)
-    apt._add_repository(repo, remove=True)  # pyright: ignore[reportPrivateUsage]
+    apt._add_repository(repo, remove=True)
     assert repo_id not in apt.RepositoryMapping()
     apt.update()
     apt.remove_package('ssacli')

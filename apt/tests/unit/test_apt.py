@@ -4,11 +4,11 @@
 # ruff: noqa: E501
 
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from charmlibs import apt
+import charmlibs.apt as apt
 
 dpkg_output_zsh = """Desired=Unknown/Install/Remove/Purge/Hold
 | Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
@@ -178,7 +178,7 @@ Description-md5: e7f99df3aa92cf870d335784e155ec33
 
 class TestApt:
     @patch.object(apt, 'check_output')
-    def test_can_load_from_dpkg(self, mock_subprocess):
+    def test_can_load_from_dpkg(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_vim]
 
         vim = apt.DebianPackage.from_installed_package('vim')
@@ -188,7 +188,7 @@ class TestApt:
         assert str(vim.version) == '2:8.1.2269-1ubuntu5'
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_dpkg_with_version(self, mock_subprocess):
+    def test_can_load_from_dpkg_with_version(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_zsh]
 
         zsh = apt.DebianPackage.from_installed_package('zsh', version='5.8-3ubuntu1')
@@ -198,14 +198,14 @@ class TestApt:
         assert str(zsh.version) == '5.8-3ubuntu1'
 
     @patch.object(apt, 'check_output')
-    def test_will_not_load_from_system_with_bad_version(self, mock_subprocess):
+    def test_will_not_load_from_system_with_bad_version(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_zsh]
 
         with pytest.raises(apt.PackageNotFoundError):
             apt.DebianPackage.from_installed_package('zsh', version='1.2-3')
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_dpkg_with_arch(self, mock_subprocess):
+    def test_can_load_from_dpkg_with_arch(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_zsh]
 
         zsh = apt.DebianPackage.from_installed_package('zsh', arch='amd64')
@@ -215,7 +215,7 @@ class TestApt:
         assert str(zsh.version) == '5.8-3ubuntu1'
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_dpkg_with_all_arch(self, mock_subprocess):
+    def test_can_load_from_dpkg_with_all_arch(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_all_arch]
 
         postgresql = apt.DebianPackage.from_installed_package('postgresql')
@@ -225,7 +225,7 @@ class TestApt:
         assert str(postgresql.version) == '12+214ubuntu0.1'
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_dpkg_multi_arch(self, mock_subprocess):
+    def test_can_load_from_dpkg_multi_arch(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_multi_arch]
 
         vim = apt.DebianPackage.from_installed_package('vim', arch='i386')
@@ -235,7 +235,7 @@ class TestApt:
         assert str(vim.version) == '2:8.1.2269-1ubuntu5'
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_dpkg_not_installed(self, mock_subprocess):
+    def test_can_load_from_dpkg_not_installed(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', dpkg_output_not_installed]
 
         with pytest.raises(apt.PackageNotFoundError) as exc_info:
@@ -245,7 +245,7 @@ class TestApt:
         assert 'Package ubuntu-advantage-tools.amd64 is not installed!' in exc_info.value.message
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_apt_cache(self, mock_subprocess):
+    def test_can_load_from_apt_cache(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', apt_cache_mocktester]
 
         tester = apt.DebianPackage.from_apt_cache('mocktester')
@@ -255,7 +255,7 @@ class TestApt:
         assert str(tester.version) == '1:1.2.3-4'
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_apt_cache_all_arch(self, mock_subprocess):
+    def test_can_load_from_apt_cache_all_arch(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', apt_cache_mocktester_all_arch]
 
         tester = apt.DebianPackage.from_apt_cache('mocktester')
@@ -265,7 +265,7 @@ class TestApt:
         assert str(tester.version) == '1:1.2.3-4'
 
     @patch.object(apt, 'check_output')
-    def test_can_load_from_apt_cache_multi_arch(self, mock_subprocess):
+    def test_can_load_from_apt_cache_multi_arch(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = ['amd64', apt_cache_mocktester_multi]
 
         tester = apt.DebianPackage.from_apt_cache('mocktester', arch='i386')
@@ -275,7 +275,7 @@ class TestApt:
         assert str(tester.version) == '1:1.2.3-4'
 
     @patch.object(apt, 'check_output')
-    def test_will_throw_apt_cache_errors(self, mock_subprocess):
+    def test_will_throw_apt_cache_errors(self, mock_subprocess: MagicMock):
         mock_subprocess.side_effect = [
             'amd64',
             subprocess.CalledProcessError(
@@ -296,7 +296,10 @@ class TestApt:
     @patch.object(apt.subprocess, 'run')
     @patch('os.environ.copy')
     def test_can_run_apt_commands(
-        self, mock_environ, mock_subprocess_call, mock_subprocess_output
+        self,
+        mock_environ: MagicMock,
+        mock_subprocess_call: MagicMock,
+        mock_subprocess_output: MagicMock,
     ):
         mock_subprocess_call.return_value = 0
         mock_subprocess_output.side_effect = [
@@ -339,7 +342,11 @@ class TestApt:
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
-    def test_will_throw_apt_errors(self, mock_subprocess_call, mock_subprocess_output):
+    def test_will_throw_apt_errors(
+        self,
+        mock_subprocess_call: MagicMock,
+        mock_subprocess_output: MagicMock,
+    ):
         mock_subprocess_call.side_effect = subprocess.CalledProcessError(
             returncode=1,
             cmd=['apt-get', '-y', 'install'],
@@ -386,7 +393,10 @@ class TestAptBareMethods:
     @patch.object(apt.subprocess, 'run')
     @patch('os.environ.copy')
     def test_can_run_bare_changes_on_single_package(
-        self, mock_environ, mock_subprocess, mock_subprocess_output
+        self,
+        mock_environ: MagicMock,
+        mock_subprocess: MagicMock,
+        mock_subprocess_output: MagicMock,
     ):
         mock_subprocess.return_value = 0
         mock_subprocess_output.side_effect = [
@@ -429,7 +439,10 @@ class TestAptBareMethods:
     @patch.object(apt.subprocess, 'run')
     @patch('os.environ.copy')
     def test_can_run_bare_changes_on_multiple_packages(
-        self, mock_environ, mock_subprocess, mock_subprocess_output
+        self,
+        mock_environ: MagicMock,
+        mock_subprocess: MagicMock,
+        mock_subprocess_output: MagicMock,
     ):
         mock_subprocess.return_value = 0
         mock_subprocess_output.side_effect = [
@@ -445,6 +458,7 @@ class TestAptBareMethods:
         mock_environ.return_value = {}
 
         foo = apt.add_package(['aisleriot', 'mocktester'])
+        assert isinstance(foo, list)
         mock_subprocess.assert_any_call(
             [
                 'apt-get',
@@ -476,6 +490,7 @@ class TestAptBareMethods:
 
         mock_subprocess_output.side_effect = ['amd64', dpkg_output_vim, 'amd64', dpkg_output_zsh]
         bar = apt.remove_package(['vim', 'zsh'])
+        assert isinstance(bar, list)
         mock_subprocess.assert_any_call(
             ['apt-get', '-y', 'remove', 'vim=2:8.1.2269-1ubuntu5'],
             capture_output=True,
@@ -495,7 +510,11 @@ class TestAptBareMethods:
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
-    def test_refreshes_apt_cache_if_not_found(self, mock_subprocess, mock_subprocess_output):
+    def test_refreshes_apt_cache_if_not_found(
+        self,
+        mock_subprocess: MagicMock,
+        mock_subprocess_output: MagicMock,
+    ):
         mock_subprocess.return_value = 0
         mock_subprocess_output.side_effect = [
             'amd64',
@@ -516,7 +535,11 @@ class TestAptBareMethods:
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
-    def test_refreshes_apt_cache_before_apt_install(self, mock_subprocess, mock_subprocess_output):
+    def test_refreshes_apt_cache_before_apt_install(
+        self,
+        mock_subprocess: MagicMock,
+        mock_subprocess_output: MagicMock,
+    ):
         mock_subprocess.return_value = 0
         mock_subprocess_output.side_effect = [
             'amd64',
@@ -534,7 +557,11 @@ class TestAptBareMethods:
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
-    def test_raises_package_not_found_error(self, mock_subprocess, mock_subprocess_output):
+    def test_raises_package_not_found_error(
+        self,
+        mock_subprocess: MagicMock,
+        mock_subprocess_output: MagicMock,
+    ):
         mock_subprocess.return_value = 0
         mock_subprocess_output.side_effect = [
             'amd64',
@@ -552,7 +579,11 @@ class TestAptBareMethods:
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
-    def test_remove_package_not_installed(self, mock_subprocess, mock_subprocess_output):
+    def test_remove_package_not_installed(
+        self,
+        mock_subprocess: MagicMock,
+        mock_subprocess_output: MagicMock,
+    ):
         mock_subprocess_output.side_effect = ['amd64', dpkg_output_not_installed]
 
         packages = apt.remove_package('ubuntu-advantage-tools')
