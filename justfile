@@ -39,7 +39,7 @@ lint package *pyright_args:
 unit package +flags='-rA': (_coverage package 'unit' flags)
 
 [doc("Run ubuntu integration tests with `coverage`, e.g. `just python=3.8 ubuntu pathops`.")]
-unit package +flags='-rA': (_coverage package 'integration/ubuntu' flags)
+ubuntu package +flags='-rA': (_coverage package 'integration/ubuntu' flags)
 
 [doc("Run pebble integration tests with `coverage`. Requires `pebble`.")]
 pebble package +flags='-rA':
