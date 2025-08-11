@@ -308,7 +308,7 @@ class TestApt:
         mock_environ.return_value = {'PING': 'PONG'}
 
         pkg = apt.DebianPackage.from_system('mocktester')
-        assert pkg.present == False
+        assert not pkg.present
         assert pkg.version.epoch == '1'
         assert pkg.version.number == '1.2.3-4'
 
@@ -353,7 +353,7 @@ class TestApt:
         ]
 
         pkg = apt.DebianPackage.from_system('mocktester')
-        assert pkg.present == False
+        assert not pkg.present
 
         with pytest.raises(apt.PackageError) as exc_info:
             pkg.ensure(apt.PackageState.Latest)
@@ -411,7 +411,7 @@ class TestAptBareMethods:
             text=True,
             env={'DEBIAN_FRONTEND': 'noninteractive'},
         )
-        assert foo.present == True
+        assert foo.present
 
         mock_subprocess_output.side_effect = ['amd64', dpkg_output_zsh]
         bar = apt.remove_package('zsh')
@@ -423,7 +423,7 @@ class TestAptBareMethods:
             text=True,
             env={'DEBIAN_FRONTEND': 'noninteractive'},
         )
-        assert bar.present == False
+        assert not bar.present
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
@@ -471,8 +471,8 @@ class TestAptBareMethods:
             text=True,
             env={'DEBIAN_FRONTEND': 'noninteractive'},
         )
-        assert foo[0].present == True
-        assert foo[1].present == True
+        assert foo[0].present
+        assert foo[1].present
 
         mock_subprocess_output.side_effect = ['amd64', dpkg_output_vim, 'amd64', dpkg_output_zsh]
         bar = apt.remove_package(['vim', 'zsh'])
@@ -490,8 +490,8 @@ class TestAptBareMethods:
             text=True,
             env={'DEBIAN_FRONTEND': 'noninteractive'},
         )
-        assert bar[0].present == False
-        assert bar[1].present == False
+        assert not bar[0].present
+        assert not bar[1].present
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
@@ -512,7 +512,7 @@ class TestAptBareMethods:
             ['apt-get', 'update', '--error-on=any'], capture_output=True, check=True
         )
         assert pkg.name == 'aisleriot'
-        assert pkg.present == True
+        assert pkg.present
 
     @patch.object(apt, 'check_output')
     @patch.object(apt.subprocess, 'run')
