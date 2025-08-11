@@ -108,8 +108,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Run Ubuntu integration tests
-        run: uvx --from rust-just just ubuntu ${{ inputs.package }}
+      - name: Run Ubuntu integration tests (with sudo)
+        run: sudo uvx --from rust-just just ubuntu ${{ inputs.package }}
 
   pebble:
     needs: init
