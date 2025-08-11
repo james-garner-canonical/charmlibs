@@ -27,40 +27,35 @@ provided with a string indicating the package name. If it cannot be located, `Pa
 will be returned, as `apt` and `dpkg` otherwise return `100` for all errors, and a meaningful error
 message if the package is not known is desirable.
 
-To install packages with convenience methods:
+To install packages with convenience methods::
 
-```python
-try:
-    # Run `apt-get update`
-    apt.update()
-    apt.add_package("zsh")
-    apt.add_package(["vim", "htop", "wget"])
-except PackageNotFoundError:
-    logger.error("a specified package not found in package cache or on system")
-except PackageError as e:
-    logger.error("could not install package. Reason: %s", e.message)
-````
+    try:
+        # Run `apt-get update`
+        apt.update()
+        apt.add_package("zsh")
+        apt.add_package(["vim", "htop", "wget"])
+    except PackageNotFoundError:
+        logger.error("a specified package not found in package cache or on system")
+    except PackageError as e:
+        logger.error("could not install package. Reason: %s", e.message)
 
-To find details of a specific package:
+To find details of a specific package::
 
-```python
-try:
-    vim = apt.DebianPackage.from_system("vim")
+    try:
+        vim = apt.DebianPackage.from_system("vim")
 
-    # To find from the apt cache only
-    # apt.DebianPackage.from_apt_cache("vim")
+        # To find from the apt cache only
+        # apt.DebianPackage.from_apt_cache("vim")
 
-    # To find from installed packages only
-    # apt.DebianPackage.from_installed_package("vim")
+        # To find from installed packages only
+        # apt.DebianPackage.from_installed_package("vim")
 
-    vim.ensure(PackageState.Latest)
-    logger.info("updated vim to version: %s", vim.fullversion)
-except PackageNotFoundError:
-    logger.error("a specified package not found in package cache or on system")
-except PackageError as e:
-    logger.error("could not install package. Reason: %s", e.message)
-```
-
+        vim.ensure(PackageState.Latest)
+        logger.info("updated vim to version: %s", vim.fullversion)
+    except PackageNotFoundError:
+        logger.error("a specified package not found in package cache or on system")
+    except PackageError as e:
+        logger.error("could not install package. Reason: %s", e.message)
 
 `RepositoryMapping` will return a dict-like object containing enabled system repositories
 and their properties (available groups, baseuri. gpg key). This class can add, disable, or
@@ -77,31 +72,30 @@ Keys are constructed as `{repo_type}-{}-{release}` in order to uniquely identify
 
 Repositories can be added with explicit values through a Python constructor.
 
-Example:
-```python
-repositories = apt.RepositoryMapping()
+Example::
 
-if "deb-example.com-focal" not in repositories:
-    repositories.add(DebianRepository(enabled=True, repotype="deb",
-                     uri="https://example.com", release="focal", groups=["universe"]))
-```
+    repositories = apt.RepositoryMapping()
+    if "deb-example.com-focal" not in repositories:
+        repositories.add(
+            DebianRepository(
+                enabled=True,
+                repotype="deb",
+                uri="https://example.com",
+                release="focal",
+                groups=["universe"],
+            )
+        )
 
 Alternatively, any valid `sources.list` line may be used to construct a new
 `DebianRepository`.
 
-Example:
-```python
-repositories = apt.RepositoryMapping()
+Example::
 
-if "deb-us.archive.ubuntu.com-xenial" not in repositories:
-    line = "deb http://us.archive.ubuntu.com/ubuntu xenial main restricted"
-    repo = DebianRepository.from_repo_line(line)
-    repositories.add(repo)
-```
-
-Dependencies:
-Note that this module requires `opentelemetry-api`, which is already included into
-your charm's virtual environment via `ops >= 2.21`.
+    repositories = apt.RepositoryMapping()
+    if "deb-us.archive.ubuntu.com-xenial" not in repositories:
+        line = "deb http://us.archive.ubuntu.com/ubuntu xenial main restricted"
+        repo = DebianRepository.from_repo_line(line)
+        repositories.add(repo)
 """
 
 from __future__ import annotations
@@ -1075,7 +1069,8 @@ class DebianRepository:
         Args:
             repo_line: a string representing a repository entry
             write_file: boolean to enable writing the new repo to disk. True by default.
-                Expect it to result in an add-apt-repository call under the hood, like:
+                Expect it to result in an add-apt-repository call under the hood, like::
+
                     add-apt-repository --no-update --sourceslist="$repo_line"
         """
         repo = RepositoryMapping._parse(
@@ -1271,13 +1266,18 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
     filesystem, parse out repository files in `/etc/apt/...`, and create
     `DebianRepository` objects in this list.
 
-    Typical usage:
+    Typical usage::
 
         repositories = apt.RepositoryMapping()
-        repositories.add(DebianRepository(
-            enabled=True, repotype="deb", uri="https://example.com", release="focal",
-            groups=["universe"]
-        ))
+        repositories.add(
+            DebianRepository(
+                enabled=True,
+                repotype="deb",
+                uri="https://example.com",
+                release="focal",
+                groups=["universe"],
+            )
+        )
     """
 
     _apt_dir = '/etc/apt'
@@ -1325,8 +1325,9 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         """Return iterator for RepositoryMapping.
 
         Iterates over the DebianRepository values rather than the string names.
+
         FIXME: this breaks the expectations of the Mapping abstract base class
-            for example when it provides methods like keys and items
+        for example when it provides methods like keys and items
         """
         return iter(self._repository_map.values())
 
