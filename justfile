@@ -38,6 +38,9 @@ lint package *pyright_args:
 [doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
 unit package +flags='-rA': (_coverage package 'unit' flags)
 
+[doc("Run ubuntu integration tests with `coverage`, e.g. `just python=3.8 ubuntu pathops`.")]
+unit package +flags='-rA': (_coverage package 'integration/ubuntu' flags)
+
 [doc("Run pebble integration tests with `coverage`. Requires `pebble`.")]
 pebble package +flags='-rA':
     #!/usr/bin/env bash
@@ -73,7 +76,7 @@ combine-coverage package:
     set -xueo pipefail
     : 'Collect the coverage data files that exist for this package.'
     data_files=()
-    for test_id in unit pebble juju; do
+    for test_id in unit ubuntu pebble juju; do
         data_file="{{package}}/.report/coverage-$test_id-{{python}}.db"
         if [ -e "$data_file" ]; then
             data_files+=("$data_file")
