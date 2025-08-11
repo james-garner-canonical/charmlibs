@@ -120,15 +120,15 @@ from urllib.parse import urlparse
 
 import opentelemetry.trace
 
-__version__ = "1.0.0"
+__version__ = '1.0.0'
 
 logger = logging.getLogger(__name__)
 tracer = opentelemetry.trace.get_tracer(__name__)
 
 
-VALID_SOURCE_TYPES = ("deb", "deb-src")
-OPTIONS_MATCHER = re.compile(r"\[.*?\]")
-_GPG_KEY_DIR = "/etc/apt/trusted.gpg.d/"
+VALID_SOURCE_TYPES = ('deb', 'deb-src')
+OPTIONS_MATCHER = re.compile(r'\[.*?\]')
+_GPG_KEY_DIR = '/etc/apt/trusted.gpg.d/'
 
 
 class Error(Exception):
@@ -136,12 +136,12 @@ class Error(Exception):
 
     def __repr__(self):
         """Represent the Error."""
-        return f"<{type(self).__module__}.{type(self).__name__} {self.args}>"
+        return f'<{type(self).__module__}.{type(self).__name__} {self.args}>'
 
     @property
     def name(self):
         """Return a string representation of the model plus class."""
-        return f"<{type(self).__module__}.{type(self).__name__}>"
+        return f'<{type(self).__module__}.{type(self).__name__}>'
 
     @property
     def message(self):
@@ -160,10 +160,10 @@ class PackageNotFoundError(Error):
 class PackageState(Enum):
     """A class to represent possible package states."""
 
-    Present = "present"
-    Absent = "absent"
-    Latest = "latest"
-    Available = "available"
+    Present = 'present'
+    Absent = 'absent'
+    Latest = 'latest'
+    Available = 'available'
 
 
 class DebianPackage:
@@ -217,12 +217,12 @@ class DebianPackage:
 
     def __repr__(self):
         """Represent the package."""
-        return f"<{self.__module__}.{type(self).__name__}: {self.__dict__}>"
+        return f'<{self.__module__}.{type(self).__name__}: {self.__dict__}>'
 
     def __str__(self):
         """Return a human-readable representation of the package."""
         return (
-            f"<{type(self).__name__}: {self._name}-{self._version}.{self._arch} -- {self._state}>"
+            f'<{type(self).__name__}: {self._name}-{self._version}.{self._arch} -- {self._state}>'
         )
 
     @staticmethod
@@ -244,29 +244,29 @@ class DebianPackage:
         optargs = optargs if optargs is not None else []
         if isinstance(package_names, str):
             package_names = [package_names]
-        _cmd = ["apt-get", "-y", *optargs, command, *package_names]
+        cmd = ['apt-get', '-y', *optargs, command, *package_names]
         try:
             env = os.environ.copy()
-            env["DEBIAN_FRONTEND"] = "noninteractive"
-            with tracer.start_as_current_span(_cmd[0]) as span:
-                span.set_attribute("argv", _cmd)
-                subprocess.run(_cmd, capture_output=True, check=True, text=True, env=env)
+            env['DEBIAN_FRONTEND'] = 'noninteractive'
+            with tracer.start_as_current_span(cmd[0]) as span:
+                span.set_attribute('argv', cmd)
+                subprocess.run(cmd, capture_output=True, check=True, text=True, env=env)
         except CalledProcessError as e:
             raise PackageError(
-                f"Could not {command} package(s) {package_names}: {e.stderr}"
+                f'Could not {command} package(s) {package_names}: {e.stderr}'
             ) from None
 
     def _add(self) -> None:
         """Add a package to the system."""
         self._apt(
-            "install",
-            f"{self.name}={self.version}",
-            optargs=["--option=Dpkg::Options::=--force-confold"],
+            'install',
+            f'{self.name}={self.version}',
+            optargs=['--option=Dpkg::Options::=--force-confold'],
         )
 
     def _remove(self) -> None:
         """Remove a package from the system. Implementation-specific."""
-        return self._apt("remove", f"{self.name}={self.version}")
+        return self._apt('remove', f'{self.name}={self.version}')
 
     @property
     def name(self) -> str:
@@ -338,20 +338,20 @@ class DebianPackage:
     @property
     def fullversion(self) -> str:
         """Returns the name+epoch for a package."""
-        return f"{self._version}.{self._arch}"
+        return f'{self._version}.{self._arch}'
 
     @staticmethod
     def _get_epoch_from_version(version: str) -> tuple[str, str]:
         """Pull the epoch, if any, out of a version string."""
-        epoch_matcher = re.compile(r"^((?P<epoch>\d+):)?(?P<version>.*)")
+        epoch_matcher = re.compile(r'^((?P<epoch>\d+):)?(?P<version>.*)')
         result = epoch_matcher.search(version)
         assert result is not None
         matches = result.groupdict()
-        return matches.get("epoch", ""), matches["version"]
+        return matches.get('epoch', ''), matches['version']
 
     @classmethod
     def from_system(
-        cls, package: str, version: str | None = "", arch: str | None = ""
+        cls, package: str, version: str | None = '', arch: str | None = ''
     ) -> DebianPackage:
         """Locates a package, either on the system or known to apt, and serializes the information.
 
@@ -376,15 +376,15 @@ class DebianPackage:
             # If we get here, it's not known to the systems.
             # This seems unnecessary, but virtually all `apt` commands have a return code of `100`,
             # and providing meaningful error messages without this is ugly.
-            arch_str = f".{arch}" if arch else ""
+            arch_str = f'.{arch}' if arch else ''
             raise PackageNotFoundError(
                 f"Package '{package}{arch_str}' "
-                "could not be found on the system or in the apt cache!"
+                'could not be found on the system or in the apt cache!'
             ) from None
 
     @classmethod
     def from_installed_package(
-        cls, package: str, version: str | None = "", arch: str | None = ""
+        cls, package: str, version: str | None = '', arch: str | None = ''
     ) -> DebianPackage:
         """Check whether the package is already installed and return an instance.
 
@@ -395,16 +395,16 @@ class DebianPackage:
                 If an architecture is not specified, this will be used for selection.
         """
         system_arch = check_output(
-            ["dpkg", "--print-architecture"], universal_newlines=True
+            ['dpkg', '--print-architecture'], universal_newlines=True
         ).strip()
         arch = arch if arch else system_arch
 
         # Regexps are a really terrible way to do this. Thanks dpkg
-        output = ""
+        output = ''
         try:
-            output = check_output(["dpkg", "-l", package], stderr=PIPE, universal_newlines=True)
+            output = check_output(['dpkg', '-l', package], stderr=PIPE, universal_newlines=True)
         except CalledProcessError:
-            raise PackageNotFoundError(f"Package is not installed: {package}") from None
+            raise PackageNotFoundError(f'Package is not installed: {package}') from None
 
         # Pop off the output from `dpkg -l' because there's no flag to
         # omit it`
@@ -424,12 +424,12 @@ class DebianPackage:
         for line in lines:
             result = dpkg_matcher.search(line)
             if result is None:
-                logger.warning("dpkg matcher could not parse line: %s", line)
+                logger.warning('dpkg matcher could not parse line: %s', line)
                 continue
             matches = result.groupdict()
-            package_status = matches["package_status"]
+            package_status = matches['package_status']
 
-            if not package_status.endswith("i"):
+            if not package_status.endswith('i'):
                 logger.debug(
                     "package '%s' in dpkg output but not installed, status: '%s'",
                     package,
@@ -437,25 +437,25 @@ class DebianPackage:
                 )
                 break
 
-            epoch, split_version = DebianPackage._get_epoch_from_version(matches["version"])
+            epoch, split_version = DebianPackage._get_epoch_from_version(matches['version'])
             pkg = DebianPackage(
-                name=matches["package_name"],
+                name=matches['package_name'],
                 version=split_version,
                 epoch=epoch,
-                arch=matches["arch"],
+                arch=matches['arch'],
                 state=PackageState.Present,
             )
-            if (pkg.arch == "all" or pkg.arch == arch) and (
-                version == "" or str(pkg.version) == version
+            if (pkg.arch == 'all' or pkg.arch == arch) and (
+                version == '' or str(pkg.version) == version
             ):
                 return pkg
 
         # If we didn't find it, fail through
-        raise PackageNotFoundError(f"Package {package}.{arch} is not installed!")
+        raise PackageNotFoundError(f'Package {package}.{arch} is not installed!')
 
     @classmethod
     def from_apt_cache(
-        cls, package: str, version: str | None = "", arch: str | None = ""
+        cls, package: str, version: str | None = '', arch: str | None = ''
     ) -> DebianPackage:
         """Check whether the package is already installed and return an instance.
 
@@ -465,52 +465,52 @@ class DebianPackage:
             arch: an optional architecture, defaulting to `dpkg --print-architecture`.
                 If an architecture is not specified, this will be used for selection.
         """
-        cmd = ["dpkg", "--print-architecture"]
+        cmd = ['dpkg', '--print-architecture']
         with tracer.start_as_current_span(cmd[0]) as span:
-            span.set_attribute("argv", cmd)
+            span.set_attribute('argv', cmd)
             system_arch = check_output(cmd, universal_newlines=True).strip()
         arch = arch if arch else system_arch
 
         # Regexps are a really terrible way to do this. Thanks dpkg
-        keys = ("Package", "Architecture", "Version")
+        keys = ('Package', 'Architecture', 'Version')
 
-        cmd = ["apt-cache", "show", package]
+        cmd = ['apt-cache', 'show', package]
         try:
             with tracer.start_as_current_span(cmd[0]) as span:
-                span.set_attribute("argv", cmd)
+                span.set_attribute('argv', cmd)
                 output = check_output(cmd, stderr=PIPE, universal_newlines=True)
         except CalledProcessError as e:
-            raise PackageError(f"Could not list packages in apt-cache: {e.stderr}") from None
+            raise PackageError(f'Could not list packages in apt-cache: {e.stderr}') from None
 
-        pkg_groups = output.strip().split("\n\n")
-        keys = ("Package", "Architecture", "Version")
+        pkg_groups = output.strip().split('\n\n')
+        keys = ('Package', 'Architecture', 'Version')
 
         for pkg_raw in pkg_groups:
             lines = str(pkg_raw).splitlines()
             vals: dict[str, str] = {}
             for line in lines:
                 if line.startswith(keys):
-                    items = line.split(":", 1)
+                    items = line.split(':', 1)
                     vals[items[0]] = items[1].strip()
                 else:
                     continue
 
-            epoch, split_version = DebianPackage._get_epoch_from_version(vals["Version"])
+            epoch, split_version = DebianPackage._get_epoch_from_version(vals['Version'])
             pkg = DebianPackage(
-                name=vals["Package"],
+                name=vals['Package'],
                 version=split_version,
                 epoch=epoch,
-                arch=vals["Architecture"],
+                arch=vals['Architecture'],
                 state=PackageState.Available,
             )
 
-            if (pkg.arch == "all" or pkg.arch == arch) and (
-                version == "" or str(pkg.version) == version
+            if (pkg.arch == 'all' or pkg.arch == arch) and (
+                version == '' or str(pkg.version) == version
             ):
                 return pkg
 
         # If we didn't find it, fail through
-        raise PackageNotFoundError(f"Package {package}.{arch} is not in the apt cache!")
+        raise PackageNotFoundError(f'Package {package}.{arch} is not in the apt cache!')
 
 
 class Version:
@@ -525,16 +525,16 @@ class Version:
 
     def __init__(self, version: str, epoch: str):
         self._version = version
-        self._epoch = epoch or ""
+        self._epoch = epoch or ''
 
     def __repr__(self):
         """Represent the package."""
-        return f"<{self.__module__}.{type(self).__name__}: {self.__dict__}>"
+        return f'<{self.__module__}.{type(self).__name__}: {self.__dict__}>'
 
     def __str__(self):
         """Return human-readable representation of the package."""
-        epoch = f"{self._epoch}:" if self._epoch else ""
-        return f"{epoch}{self._version}"
+        epoch = f'{self._epoch}:' if self._epoch else ''
+        return f'{epoch}{self._version}'
 
     @property
     def epoch(self):
@@ -549,12 +549,12 @@ class Version:
     def _get_parts(self, version: str) -> tuple[str, str]:
         """Separate the version into component upstream and Debian pieces."""
         try:
-            version.rindex("-")
+            version.rindex('-')
         except ValueError:
             # No hyphens means no Debian version
-            return version, "0"
+            return version, '0'
 
-        upstream, debian = version.rsplit("-", 1)
+        upstream, debian = version.rsplit('-', 1)
         return upstream, debian
 
     def _listify(self, revision: str) -> list[str | int]:
@@ -579,16 +579,16 @@ class Version:
         for i, char in enumerate(revision):
             if char.isdigit():
                 if i == 0:
-                    return "", revision
+                    return '', revision
                 return revision[0:i], revision[i:]
         # string is entirely alphas
-        return revision, ""
+        return revision, ''
 
     def _get_digits(self, revision: str) -> tuple[int, str]:
         """Return a tuple of the first integer characters of a revision."""
         # If the string is empty, return (0,'')
         if not revision:
-            return 0, ""
+            return 0, ''
         # get the index of the first non-digit
         for i, char in enumerate(revision):
             if not char.isdigit():
@@ -596,7 +596,7 @@ class Version:
                     return 0, revision
                 return int(revision[0:i]), revision[i:]
         # string is entirely digits
-        return int(revision), ""
+        return int(revision), ''
 
     def _dstringcmp(self, a: str, b: str) -> Literal[-1, 0, 1]:
         """Debian package version string section lexical sort algorithm.
@@ -613,9 +613,9 @@ class Version:
                     continue
                 # "a tilde sorts before anything, even the end of a part"
                 # (emptyness)
-                if char == "~":
+                if char == '~':
                     return -1
-                if b[i] == "~":
+                if b[i] == '~':
                     return 1
                 # "all the letters sort earlier than all the non-letters"
                 if char.isalpha() and not b[i].isalpha():
@@ -632,11 +632,11 @@ class Version:
             # FIXME: type checker thinks "char" is possibly unbound as it's a loop variable
             #        but it won't be since the IndexError can only occur inside the loop
             #        -- I'd like to refactor away this `try ... except` anyway
-            if char == "~":  # pyright: ignore[reportPossiblyUnboundVariable]
+            if char == '~':  # pyright: ignore[reportPossiblyUnboundVariable]
                 return -1
             return 1
         # if we get here, a is shorter than b but otherwise equal, so check for tildes...
-        if b[len(a)] == "~":
+        if b[len(a)] == '~':
             return 1
         return -1
 
@@ -677,14 +677,14 @@ class Version:
             # FIXME: bug?? we return 1 in both cases
             # FIXME: first_list[len(second_list)] should be a string
             #        why are we indexing to 0 twice?
-            if first_list[len(second_list)][0][0] == "~":  # type: ignore
+            if first_list[len(second_list)][0][0] == '~':  # type: ignore
                 return 1
             return 1
         # rev1 is shorter than rev2 but otherwise equal, hence lesser
         # ...except for goddamn tildes
         # FIXME: bug?? we return -1 in both cases
         # FIXME: first_list[len(second_list)] should be a string, why are we indexing to 0 twice?
-        if second_list[len(first_list)][0][0] == "~":  # type: ignore
+        if second_list[len(first_list)][0][0] == '~':  # type: ignore
             return -1
         return -1
 
@@ -741,21 +741,21 @@ class Version:
 @typing.overload
 def add_package(
     package_names: str,
-    version: str | None = "",
-    arch: str | None = "",
+    version: str | None = '',
+    arch: str | None = '',
     update_cache: bool = False,
 ) -> DebianPackage: ...
 @typing.overload
 def add_package(
     package_names: list[str],
-    version: str | None = "",
-    arch: str | None = "",
+    version: str | None = '',
+    arch: str | None = '',
     update_cache: bool = False,
 ) -> DebianPackage | list[DebianPackage]: ...
 def add_package(
     package_names: str | list[str],
-    version: str | None = "",
-    arch: str | None = "",
+    version: str | None = '',
+    arch: str | None = '',
     update_cache: bool = False,
 ) -> DebianPackage | list[DebianPackage]:
     """Add a package or list of packages to the system.
@@ -779,11 +779,11 @@ def add_package(
 
     package_names = [package_names] if isinstance(package_names, str) else package_names
     if not package_names:
-        raise TypeError("Expected at least one package name to add, received zero!")
+        raise TypeError('Expected at least one package name to add, received zero!')
 
     if len(package_names) != 1 and version:
         raise TypeError(
-            "Explicit version should not be set if more than one package is being added!"
+            'Explicit version should not be set if more than one package is being added!'
         )
 
     succeeded: list[DebianPackage] = []
@@ -802,7 +802,7 @@ def add_package(
             retry.append(p)
 
     if retry:
-        logger.info("updating the apt-cache and retrying installation of failed packages.")
+        logger.info('updating the apt-cache and retrying installation of failed packages.')
         update()
 
         for p in retry:
@@ -813,15 +813,15 @@ def add_package(
                 failed.append(p)
 
     if failed:
-        raise PackageError(f"Failed to install packages: {', '.join(failed)}")
+        raise PackageError(f'Failed to install packages: {", ".join(failed)}')
 
     return succeeded[0] if len(succeeded) == 1 else succeeded
 
 
 def _add(
     name: str,
-    version: str | None = "",
-    arch: str | None = "",
+    version: str | None = '',
+    arch: str | None = '',
 ) -> tuple[DebianPackage, Literal[True]] | tuple[str, Literal[False]]:
     """Add a package to the system.
 
@@ -864,7 +864,7 @@ def remove_package(
 
     package_names = [package_names] if isinstance(package_names, str) else package_names
     if not package_names:
-        raise TypeError("Expected at least one package name to add, received zero!")
+        raise TypeError('Expected at least one package name to add, received zero!')
 
     for p in package_names:
         try:
@@ -881,15 +881,15 @@ def remove_package(
 
 def update() -> None:
     """Update the apt cache via `apt-get update`."""
-    cmd = ["apt-get", "update", "--error-on=any"]
+    cmd = ['apt-get', 'update', '--error-on=any']
     try:
         with tracer.start_as_current_span(cmd[0]) as span:
-            span.set_attribute("argv", cmd)
+            span.set_attribute('argv', cmd)
             subprocess.run(cmd, capture_output=True, check=True)
     except CalledProcessError as e:
         logger.error(
-            "%s:\nstdout:\n%s\nstderr:\n%s",
-            " ".join(cmd),
+            '%s:\nstdout:\n%s\nstderr:\n%s',
+            ' '.join(cmd),
             e.stdout.decode(),
             e.stderr.decode(),
         )
@@ -919,31 +919,31 @@ def import_key(key: str) -> str:
         GPGKeyError if the key could not be imported
     """
     key = key.strip()
-    if "-" in key or "\n" in key:
+    if '-' in key or '\n' in key:
         # Send everything not obviously a keyid to GPG to import, as
         # we trust its validation better than our own. eg. handling
         # comments before the key.
-        logger.debug("PGP key found (looks like ASCII Armor format)")
+        logger.debug('PGP key found (looks like ASCII Armor format)')
         if (
-            "-----BEGIN PGP PUBLIC KEY BLOCK-----" in key
-            and "-----END PGP PUBLIC KEY BLOCK-----" in key
+            '-----BEGIN PGP PUBLIC KEY BLOCK-----' in key
+            and '-----END PGP PUBLIC KEY BLOCK-----' in key
         ):
-            logger.debug("Writing provided PGP key in the binary format")
-            key_bytes = key.encode("utf-8")
+            logger.debug('Writing provided PGP key in the binary format')
+            key_bytes = key.encode('utf-8')
             key_name = DebianRepository._get_keyid_by_gpg_key(key_bytes)
             key_gpg = DebianRepository._dearmor_gpg_key(key_bytes)
-            gpg_key_filename = os.path.join(_GPG_KEY_DIR, f"{key_name}.gpg")
+            gpg_key_filename = os.path.join(_GPG_KEY_DIR, f'{key_name}.gpg')
             DebianRepository._write_apt_gpg_keyfile(
                 key_name=gpg_key_filename, key_material=key_gpg
             )
             return gpg_key_filename
         else:
-            raise GPGKeyError("ASCII armor markers missing from GPG key")
+            raise GPGKeyError('ASCII armor markers missing from GPG key')
     else:
         logger.warning(
-            "PGP key found (looks like Radix64 format). "
-            "SECURELY importing PGP key from keyserver; "
-            "full key not provided."
+            'PGP key found (looks like Radix64 format). '
+            'SECURELY importing PGP key from keyserver; '
+            'full key not provided.'
         )
         # as of bionic add-apt-repository uses curl with an HTTPS keyserver URL
         # to retrieve GPG keys. `apt-key adv` command is deprecated as is
@@ -952,8 +952,8 @@ def import_key(key: str) -> str:
         # gpg
         key_asc = DebianRepository._get_key_by_keyid(key)
         # write the key in GPG format so that apt-key list shows it
-        key_gpg = DebianRepository._dearmor_gpg_key(key_asc.encode("utf-8"))
-        gpg_key_filename = os.path.join(_GPG_KEY_DIR, f"{key}.gpg")
+        key_gpg = DebianRepository._dearmor_gpg_key(key_asc.encode('utf-8'))
+        gpg_key_filename = os.path.join(_GPG_KEY_DIR, f'{key}.gpg')
         DebianRepository._write_apt_gpg_keyfile(key_name=gpg_key_filename, key_material=key_gpg)
         return gpg_key_filename
 
@@ -979,8 +979,8 @@ class DebianRepository:
         uri: str,
         release: str,
         groups: list[str],
-        filename: str = "",
-        gpg_key_filename: str = "",
+        filename: str = '',
+        gpg_key_filename: str = '',
         options: dict[str, str] | None = None,
     ):
         self._enabled = enabled
@@ -1029,8 +1029,8 @@ class DebianRepository:
         Args:
             fname: a filename to write the repository information to.
         """
-        if not fname.endswith((".list", ".sources")):
-            raise InvalidSourceError("apt source filenames should end in .list or .sources!")
+        if not fname.endswith(('.list', '.sources')):
+            raise InvalidSourceError('apt source filenames should end in .list or .sources!')
         self._filename = fname
 
     @property
@@ -1053,20 +1053,20 @@ class DebianRepository:
         """
         options = self._options if self._options else {}
         if include_signed_by and self.gpg_key:
-            options["signed-by"] = self.gpg_key
+            options['signed-by'] = self.gpg_key
         if not options:
-            return ""
-        pairs = (f"{k}={v}" for k, v in sorted(options.items()))
-        return "[{}] ".format(" ".join(pairs))
+            return ''
+        pairs = (f'{k}={v}' for k, v in sorted(options.items()))
+        return '[{}] '.format(' '.join(pairs))
 
     @staticmethod
     def prefix_from_uri(uri: str) -> str:
         """Get a repo list prefix from the uri, depending on whether a path is set."""
         uridetails = urlparse(uri)
         path = (
-            uridetails.path.lstrip("/").replace("/", "-") if uridetails.path else uridetails.netloc
+            uridetails.path.lstrip('/').replace('/', '-') if uridetails.path else uridetails.netloc
         )
-        return f"/etc/apt/sources.list.d/{path}"
+        return f'/etc/apt/sources.list.d/{path}'
 
     @staticmethod
     def from_repo_line(repo_line: str, write_file: bool | None = True) -> DebianRepository:
@@ -1080,7 +1080,7 @@ class DebianRepository:
         """
         repo = RepositoryMapping._parse(
             repo_line,
-            filename="UserInput",  # temp filename
+            filename='UserInput',  # temp filename
         )
         repo.filename = repo._make_filename()
         if write_file:
@@ -1093,9 +1093,9 @@ class DebianRepository:
         For internal use when a filename isn't set.
         Should match the filename written to by add-apt-repository.
         """
-        return "{}-{}.list".format(
+        return '{}-{}.list'.format(
             DebianRepository.prefix_from_uri(self.uri),
-            self.release.replace("/", "-"),
+            self.release.replace('/', '-'),
         )
 
     def disable(self) -> None:
@@ -1108,18 +1108,18 @@ class DebianRepository:
         """
         if self._deb822_stanza is not None:
             raise NotImplementedError(
-                "Disabling a repository defined by a deb822 format source is not implemented."
-                " Please raise an issue if you require this feature."
+                'Disabling a repository defined by a deb822 format source is not implemented.'
+                ' Please raise an issue if you require this feature.'
             )
-        searcher = f"{self.repotype} {self.make_options_string()}{self.uri} {self.release}"
-        with tracer.start_as_current_span("disable source") as span:
-            span.set_attribute("filename", self._filename)
+        searcher = f'{self.repotype} {self.make_options_string()}{self.uri} {self.release}'
+        with tracer.start_as_current_span('disable source') as span:
+            span.set_attribute('filename', self._filename)
             with fileinput.input(self._filename, inplace=True) as lines:
                 for line in lines:
-                    if re.match(rf"^{re.escape(searcher)}\s", line):
-                        print(f"# {line}", end="")
+                    if re.match(rf'^{re.escape(searcher)}\s', line):
+                        print(f'# {line}', end='')
                     else:
-                        print(line, end="")
+                        print(line, end='')
 
     def import_key(self, key: str) -> None:
         """Import an ASCII Armor key.
@@ -1151,15 +1151,15 @@ class DebianRepository:
         names for keys passed via charm options.
         """
         # Use the same gpg command for both Xenial and Bionic
-        cmd = ["gpg", "--with-colons", "--with-fingerprint"]
+        cmd = ['gpg', '--with-colons', '--with-fingerprint']
         with tracer.start_as_current_span(cmd[0]) as span:
-            span.set_attribute("argv", cmd)
+            span.set_attribute('argv', cmd)
             ps = subprocess.run(cmd, capture_output=True, input=key_material)
             out, err = ps.stdout.decode(), ps.stderr.decode()
-        if "gpg: no valid OpenPGP data found." in err:
-            raise GPGKeyError("Invalid GPG key material provided")
-        # from gnupg2 docs: fpr :: Fingerprint (fingerprint is in field 10)
-        result = re.search(r"^fpr:{9}([0-9A-F]{40}):$", out, re.MULTILINE)
+        if 'gpg: no valid OpenPGP data found.' in err:
+            raise GPGKeyError('Invalid GPG key material provided')
+        # from gnupg2 docs: fpr :: Fingerprint (fingerprint is in field 10)  # codespell:ignore fpr
+        result = re.search(r'^fpr:{9}([0-9A-F]{40}):$', out, re.MULTILINE)  # codespell:ignore fpr
         assert result is not None
         return result.group(1)
 
@@ -1197,11 +1197,11 @@ class DebianRepository:
         """
         # options=mr - machine-readable output (disables html wrappers)
         keyserver_url = (
-            "https://keyserver.ubuntu.com" "/pks/lookup?op=get&options=mr&exact=on&search=0x{}"
+            'https://keyserver.ubuntu.com/pks/lookup?op=get&options=mr&exact=on&search=0x{}'
         )
-        curl_cmd = ["curl", keyserver_url.format(keyid)]
+        curl_cmd = ['curl', keyserver_url.format(keyid)]
         with tracer.start_as_current_span(curl_cmd[0]) as span:
-            span.set_attribute("argv", curl_cmd)
+            span.set_attribute('argv', curl_cmd)
             # use proxy server settings in order to retrieve the key
             return check_output(curl_cmd).decode()
 
@@ -1218,16 +1218,16 @@ class DebianRepository:
         Raises:
           GPGKeyError
         """
-        cmd = ["gpg", "--dearmor"]
+        cmd = ['gpg', '--dearmor']
         with tracer.start_as_current_span(cmd[0]) as span:
-            span.set_attribute("argv", cmd)
+            span.set_attribute('argv', cmd)
             ps = subprocess.run(cmd, capture_output=True, input=key_asc)
             out, err = ps.stdout, ps.stderr.decode()
-        if "gpg: no valid OpenPGP data found." in err:
+        if 'gpg: no valid OpenPGP data found.' in err:
             raise GPGKeyError(
-                "Invalid GPG key material. Check your network setup"
-                " (MTU, routing, DNS) and/or proxy server settings"
-                " as well as destination keyserver status."
+                'Invalid GPG key material. Check your network setup'
+                ' (MTU, routing, DNS) and/or proxy server settings'
+                ' as well as destination keyserver status.'
             )
         else:
             return out
@@ -1240,7 +1240,7 @@ class DebianRepository:
           key_name: A key name to use for a key file (could be a fingerprint)
           key_material: A GPG key material (binary)
         """
-        with open(key_name, "wb") as keyf:
+        with open(key_name, 'wb') as keyf:
             keyf.write(key_material)
 
 
@@ -1249,18 +1249,18 @@ def _repo_to_identifier(repo: DebianRepository) -> str:
 
     Private method used to produce the identifiers used by RepositoryMapping.
     """
-    return f"{repo.repotype}-{repo.uri}-{repo.release}"
+    return f'{repo.repotype}-{repo.uri}-{repo.release}'
 
 
 def _repo_to_line(repo: DebianRepository, include_signed_by: bool = True) -> str:
     """Return the one-per-line format repository definition."""
-    return "{prefix}{repotype} {options}{uri} {release} {groups}".format(
-        prefix="" if repo.enabled else "#",
+    return '{prefix}{repotype} {options}{uri} {release} {groups}'.format(
+        prefix='' if repo.enabled else '#',
         repotype=repo.repotype,
         options=repo.make_options_string(include_signed_by=include_signed_by),
         uri=repo.uri,
         release=repo.release,
-        groups=" ".join(repo.groups),
+        groups=' '.join(repo.groups),
     )
 
 
@@ -1280,10 +1280,10 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         ))
     """
 
-    _apt_dir = "/etc/apt"
-    _sources_subdir = "sources.list.d"
-    _default_list_name = "sources.list"
-    _default_sources_name = "ubuntu.sources"
+    _apt_dir = '/etc/apt'
+    _sources_subdir = 'sources.list.d'
+    _default_list_name = 'sources.list'
+    _default_sources_name = 'ubuntu.sources'
     _last_errors: tuple[Error, ...] = ()
 
     def __init__(self):
@@ -1303,11 +1303,11 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
                 if not os.path.isfile(default_sources):
                     raise
 
-        with tracer.start_as_current_span("load sources"):
+        with tracer.start_as_current_span('load sources'):
             # read sources.list.d
-            for file in glob.iglob(os.path.join(sources_dir, "*.list")):
+            for file in glob.iglob(os.path.join(sources_dir, '*.list')):
                 self.load(file)
-            for file in glob.iglob(os.path.join(sources_dir, "*.sources")):
+            for file in glob.iglob(os.path.join(sources_dir, '*.sources')):
                 self.load_deb822(file)
 
     def __contains__(self, key: Any) -> bool:
@@ -1358,12 +1358,12 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         if errors:
             self._last_errors = tuple(errors)
             logger.debug(
-                "the following %d error(s) were encountered when reading deb822 sources:\n%s",
+                'the following %d error(s) were encountered when reading deb822 sources:\n%s',
                 len(errors),
-                "\n".join(str(e) for e in errors),
+                '\n'.join(str(e) for e in errors),
             )
         if repos:
-            logger.info("parsed %d apt package repositories from %s", len(repos), filename)
+            logger.info('parsed %d apt package repositories from %s', len(repos), filename)
         else:
             raise InvalidSourceError(f"all repository lines in '{filename}' were invalid!")
 
@@ -1371,7 +1371,7 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
     def _parse_deb822_lines(
         cls,
         lines: Iterable[str],
-        filename: str = "",
+        filename: str = '',
     ) -> tuple[list[DebianRepository], list[InvalidSourceError]]:
         """Parse lines from a deb822 file into a list of repos and a list of errors.
 
@@ -1412,11 +1412,11 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
                     logger.debug("parsed repo: '%s'", repo_identifier)
 
         if skipped:
-            skip_list = ", ".join(str(s) for s in skipped)
+            skip_list = ', '.join(str(s) for s in skipped)
             logger.debug("skipped the following lines in file '%s': %s", filename, skip_list)
 
         if parsed:
-            logger.info("parsed %d apt package repositories from %s", len(parsed), filename)
+            logger.info('parsed %d apt package repositories from %s', len(parsed), filename)
         else:
             raise InvalidSourceError(f"all repository lines in '{filename}' were invalid!")
 
@@ -1432,17 +1432,17 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
           InvalidSourceError if the source type is unknown
         """
         enabled = True
-        repotype = uri = release = gpg_key = ""
+        repotype = uri = release = gpg_key = ''
         options = {}
         groups = []
 
         line = line.strip()
-        if line.startswith("#"):
+        if line.startswith('#'):
             enabled = False
             line = line[1:]
 
         # Check for "#" in the line and treat a part after it as a comment then strip it off.
-        i = line.find("#")
+        i = line.find('#')
         if i > 0:
             line = line[:i]
 
@@ -1451,18 +1451,18 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         if source:
             # Match any repo options, and get a dict representation.
             for v in re.findall(OPTIONS_MATCHER, source):
-                opts = dict(o.split("=") for o in v.strip("[]").split())
+                opts = dict(o.split('=') for o in v.strip('[]').split())
                 # Extract the 'signed-by' option for the gpg_key
-                gpg_key = opts.pop("signed-by", "")
+                gpg_key = opts.pop('signed-by', '')
                 options = opts
 
             # Remove any options from the source string and split the string into chunks
-            source = re.sub(OPTIONS_MATCHER, "", source)
+            source = re.sub(OPTIONS_MATCHER, '', source)
             chunks = source.split()
 
             # Check we've got a valid list of chunks
             if len(chunks) < 3 or chunks[0] not in VALID_SOURCE_TYPES:
-                raise InvalidSourceError("An invalid sources line was found in %s!", filename)
+                raise InvalidSourceError('An invalid sources line was found in %s!', filename)
 
             repotype = chunks[0]
             uri = chunks[1]
@@ -1473,7 +1473,7 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
                 enabled, repotype, uri, release, groups, filename, gpg_key, options
             )
         else:
-            raise InvalidSourceError("An invalid sources line was found in %s!", filename)
+            raise InvalidSourceError('An invalid sources line was found in %s!', filename)
 
     def add(  # noqa: D417  # undocumented-param: default_filename intentionally undocumented
         self, repo: DebianRepository, default_filename: bool | None = False
@@ -1500,8 +1500,8 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         if not repo.enabled:
             logger.warning(
                 (
-                    "Returning from RepositoryMapping.add(repo=%s) without adding the repo"
-                    " because repo.enabled is %s"
+                    'Returning from RepositoryMapping.add(repo=%s) without adding the repo'
+                    ' because repo.enabled is %s'
                 ),
                 repo,
                 repo.enabled,
@@ -1534,26 +1534,26 @@ def _add_repository(
         msg = (
             "Adding repository '%s' with add-apt-repository."
             " Key file '%s' does not exist."
-            " Ensure it is imported correctly to use this repository."
+            ' Ensure it is imported correctly to use this repository.'
         )
         logger.warning(msg, line, key_file)
     cmd = [
-        "add-apt-repository",
-        "--yes",
-        "--sourceslist=" + line,
+        'add-apt-repository',
+        '--yes',
+        '--sourceslist=' + line,
     ]
     if remove:
-        cmd.append("--remove")
+        cmd.append('--remove')
     if not update_cache:
-        cmd.append("--no-update")
-    logger.info("%s", cmd)
+        cmd.append('--no-update')
+    logger.info('%s', cmd)
     try:
         with tracer.start_as_current_span(cmd[0]) as span:
-            span.set_attribute("argv", cmd)
+            span.set_attribute('argv', cmd)
             subprocess.run(cmd, check=True, capture_output=True)
     except CalledProcessError as e:
         logger.error(
-            "subprocess.run(%s):\nstdout:\n%s\nstderr:\n%s",
+            'subprocess.run(%s):\nstdout:\n%s\nstderr:\n%s',
             cmd,
             e.stdout.decode(),
             e.stderr.decode(),
@@ -1567,12 +1567,12 @@ class _Deb822Stanza:
     May define multiple DebianRepository objects.
     """
 
-    def __init__(self, numbered_lines: list[tuple[int, str]], filename: str = ""):
+    def __init__(self, numbered_lines: list[tuple[int, str]], filename: str = ''):
         self._filename = filename
         self._numbered_lines = numbered_lines
         if not numbered_lines:
             self._repos = ()
-            self._gpg_key_filename = ""
+            self._gpg_key_filename = ''
             self._gpg_key_from_stanza = None
             return
         options, line_numbers = _deb822_stanza_to_options(numbered_lines)
@@ -1598,7 +1598,7 @@ class _Deb822Stanza:
         if self._gpg_key_filename:
             return self._gpg_key_filename
         if self._gpg_key_from_stanza is None:
-            return ""
+            return ''
         # a gpg key was provided in the stanza
         # and we haven't already imported it
         self._gpg_key_filename = import_key(self._gpg_key_from_stanza)
@@ -1608,7 +1608,7 @@ class _Deb822Stanza:
 class MissingRequiredKeyError(InvalidSourceError):
     """Missing a required value in a source file."""
 
-    def __init__(self, message: str = "", *, file: str, line: int | None, key: str) -> None:
+    def __init__(self, message: str = '', *, file: str, line: int | None, key: str) -> None:
         super().__init__(message, file, line, key)
         self.file = file
         self.line = line
@@ -1620,7 +1620,7 @@ class BadValueError(InvalidSourceError):
 
     def __init__(
         self,
-        message: str = "",
+        message: str = '',
         *,
         file: str,
         line: int | None,
@@ -1651,7 +1651,7 @@ def _iter_deb822_stanzas(lines: Iterable[str]) -> Iterator[list[tuple[int, str]]
                 yield current_stanza
                 current_stanza = []
             continue
-        content, _delim, _comment = line.partition("#")
+        content, _delim, _comment = line.partition('#')
         if content.strip():  # skip (potentially indented) comment line
             current_stanza.append((n, content.rstrip()))  # preserve indent
     if current_stanza:
@@ -1674,21 +1674,21 @@ def _deb822_stanza_to_options(
     line_numbers: dict[str, int] = {}
     current = None
     for n, line in lines:
-        assert "#" not in line  # comments should be stripped out
-        if line.startswith(" "):  # continuation of previous key's value
+        assert '#' not in line  # comments should be stripped out
+        if line.startswith(' '):  # continuation of previous key's value
             assert current is not None
             parts[current].append(line.rstrip())  # preserve indent
             continue
-        raw_key, _, raw_value = line.partition(":")
+        raw_key, _, raw_value = line.partition(':')
         current = raw_key.strip()
         parts[current] = [raw_value.strip()]
         line_numbers[current] = n
-    options = {k: "\n".join(v) for k, v in parts.items()}
+    options = {k: '\n'.join(v) for k, v in parts.items()}
     return options, line_numbers
 
 
 def _deb822_options_to_repos(
-    options: dict[str, str], line_numbers: Mapping[str, int] = {}, filename: str = ""
+    options: dict[str, str], line_numbers: Mapping[str, int] = {}, filename: str = ''
 ) -> tuple[tuple[DebianRepository, ...], tuple[str, str | None]]:
     """Return a collections of DebianRepository objects defined by this deb822 stanza.
 
@@ -1705,31 +1705,31 @@ def _deb822_options_to_repos(
       InvalidSourceError if any options are malformed or required options are missing
     """
     # Enabled
-    enabled_field = options.pop("Enabled", "yes")
-    if enabled_field == "yes":
+    enabled_field = options.pop('Enabled', 'yes')
+    if enabled_field == 'yes':
         enabled = True
-    elif enabled_field == "no":
+    elif enabled_field == 'no':
         enabled = False
     else:
         raise BadValueError(
-            "Must be one of yes or no (default: yes).",
+            'Must be one of yes or no (default: yes).',
             file=filename,
-            line=line_numbers.get("Enabled"),
-            key="Enabled",
+            line=line_numbers.get('Enabled'),
+            key='Enabled',
             value=enabled_field,
         )
     # Signed-By
-    gpg_key_file = options.pop("Signed-By", "")
+    gpg_key_file = options.pop('Signed-By', '')
     gpg_key_from_stanza: str | None = None
-    if "\n" in gpg_key_file:
+    if '\n' in gpg_key_file:
         # actually a literal multi-line gpg-key rather than a filename
         gpg_key_from_stanza = gpg_key_file
-        gpg_key_file = ""
+        gpg_key_file = ''
     # Types
     try:
-        repotypes = options.pop("Types").split()
-        uris = options.pop("URIs").split()
-        suites = options.pop("Suites").split()
+        repotypes = options.pop('Types').split()
+        uris = options.pop('URIs').split()
+        suites = options.pop('Suites').split()
     except KeyError as e:
         [key] = e.args
         raise MissingRequiredKeyError(
@@ -1743,41 +1743,41 @@ def _deb822_options_to_repos(
     # If suite does not specify an exact path, at least one component must be present.
     # https://manpages.ubuntu.com/manpages/noble/man5/sources.list.5.html
     components: list[str]
-    if len(suites) == 1 and suites[0].endswith("/"):
-        if "Components" in options:
+    if len(suites) == 1 and suites[0].endswith('/'):
+        if 'Components' in options:
             msg = (
                 "Since 'Suites' (line {suites_line}) specifies"
                 " a path relative to  'URIs' (line {uris_line}),"
                 " 'Components' must be  omitted."
             ).format(
-                suites_line=line_numbers.get("Suites"),
-                uris_line=line_numbers.get("URIs"),
+                suites_line=line_numbers.get('Suites'),
+                uris_line=line_numbers.get('URIs'),
             )
             raise BadValueError(
                 msg,
                 file=filename,
-                line=line_numbers.get("Components"),
-                key="Components",
-                value=options["Components"],
+                line=line_numbers.get('Components'),
+                key='Components',
+                value=options['Components'],
             )
         components = []
     else:
-        if "Components" not in options:
+        if 'Components' not in options:
             msg = (
                 "Since 'Suites' (line {suites_line}) does not specify"
                 " a path relative to  'URIs' (line {uris_line}),"
                 " 'Components' must be  present in this stanza."
             ).format(
-                suites_line=line_numbers.get("Suites"),
-                uris_line=line_numbers.get("URIs"),
+                suites_line=line_numbers.get('Suites'),
+                uris_line=line_numbers.get('URIs'),
             )
             raise MissingRequiredKeyError(
                 msg,
                 file=filename,
                 line=min(line_numbers.values()) if line_numbers else None,
-                key="Components",
+                key='Components',
             )
-        components = options.pop("Components").split()
+        components = options.pop('Components').split()
     repos = tuple(
         DebianRepository(
             enabled=enabled,
