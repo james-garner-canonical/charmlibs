@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List
 from urllib.request import urlopen
 
-from charms.operator_libs_linux.v0 import apt
+from charmlibs import apt
 
 from helpers import get_command_path
 
