@@ -11,7 +11,6 @@ from typing import List
 from urllib.request import urlopen
 
 from charmlibs import apt
-
 from helpers import get_command_path
 
 logger = logging.getLogger(__name__)
