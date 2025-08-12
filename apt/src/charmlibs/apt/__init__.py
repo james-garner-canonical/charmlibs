@@ -624,9 +624,9 @@ class Version:
                     return -1
         except IndexError:
             # a is longer than b but otherwise equal, greater unless there are tildes
-            # FIXME: type checker thinks "char" is possibly unbound as it's a loop variable
-            #        but it won't be since the IndexError can only occur inside the loop
-            #        -- I'd like to refactor away this `try ... except` anyway
+            # Note: type checker thinks "char" is possibly unbound as it's a loop variable
+            #       but it won't be since the IndexError can only occur inside the loop
+            #       -- I'd like to refactor away this `try ... except` anyway
             if char == '~':  # pyright: ignore[reportPossiblyUnboundVariable]
                 return -1
             return 1
@@ -669,16 +669,16 @@ class Version:
         except IndexError:
             # rev1 is longer than rev2 but otherwise equal, hence greater
             # ...except for goddamn tildes
-            # FIXME: bug?? we return 1 in both cases
-            # FIXME: first_list[len(second_list)] should be a string
-            #        why are we indexing to 0 twice?
+            # bug??: we return 1 in both cases
+            # also: first_list[len(second_list)] should be a string
+            #       why are we indexing to 0 twice?
             if first_list[len(second_list)][0][0] == '~':  # type: ignore
                 return 1
             return 1
         # rev1 is shorter than rev2 but otherwise equal, hence lesser
         # ...except for goddamn tildes
-        # FIXME: bug?? we return -1 in both cases
-        # FIXME: first_list[len(second_list)] should be a string, why are we indexing to 0 twice?
+        # bug??: we return -1 in both cases
+        # also: first_list[len(second_list)] should be a string, why are we indexing to 0 twice?
         if second_list[len(first_list)][0][0] == '~':  # type: ignore
             return -1
         return -1
