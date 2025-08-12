@@ -3,6 +3,7 @@ autocomplete
 autocompletions
 args
 armor
+boolean
 codebase
 databag
 databags
