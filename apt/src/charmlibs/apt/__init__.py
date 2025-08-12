@@ -198,7 +198,7 @@ class DebianPackage:
           other: a :class:`DebianPackage` object for comparison
 
         Returns:
-          A boolean reflecting equality
+          A Boolean reflecting equality
         """
         return isinstance(other, self.__class__) and (
             self._name,
@@ -826,7 +826,7 @@ def _add(
         arch: an optional architecture for the package
 
     Returns: a tuple of :class:`DebianPackage` if found, or a ``str`` if it is not, and
-        a boolean indicating success
+        a Boolean indicating success
     """
     try:
         pkg = DebianPackage.from_system(name, version, arch)
@@ -1069,7 +1069,7 @@ class DebianRepository:
 
         Args:
             repo_line: a string representing a repository entry
-            write_file: boolean to enable writing the new repo to disk. True by default.
+            write_file: Boolean to enable writing the new repo to disk. True by default.
                 Expect it to result in an add-apt-repository call under the hood, like
                 ``add-apt-repository --no-update --sourceslist="$repo_line"``
         """
