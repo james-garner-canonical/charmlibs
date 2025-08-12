@@ -1326,7 +1326,7 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
 
         Iterates over the :class:`DebianRepository` values rather than the string names.
 
-        FIXME: this breaks the expectations of the :class:`Mapping` abstract base class
+        Note: this breaks the expectations of the :class:`Mapping` abstract base class
         for example when it provides methods like keys and items
         """
         return iter(self._repository_map.values())

@@ -9,7 +9,6 @@ databags
 dev
 discoverability
 filesystem
-FIXME
 GPG
 hashable
 HPC
