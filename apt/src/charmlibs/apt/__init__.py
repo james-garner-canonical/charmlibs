@@ -19,13 +19,13 @@ packages, in order to easily provide an idiomatic and Pythonic mechanism for add
 repositories to systems for use in machine charms.
 
 A sane default configuration is attainable through nothing more than instantiation of the
-appropriate classes. `DebianPackage` objects provide information about the architecture, version,
-name, and status of a package.
+appropriate classes. :class:`DebianPackage` objects provide information about the architecture,
+version, name, and status of a package.
 
-`DebianPackage` will try to look up a package either from `dpkg -L` or from `apt-cache` when
-provided with a string indicating the package name. If it cannot be located, `PackageNotFoundError`
-will be returned, as `apt` and `dpkg` otherwise return `100` for all errors, and a meaningful error
-message if the package is not known is desirable.
+:class:`DebianPackage` will try to look up a package either from ``dpkg -L`` or from ``apt-cache``
+when provided with a string indicating the package name. If it cannot be located,
+:class:`PackageNotFoundError` will be raised, as ``apt`` and ``dpkg`` otherwise return ``100`` for
+all errors, and a meaningful error message if the package is not known is desirable.
 
 To install packages with convenience methods::
 
@@ -57,18 +57,18 @@ To find details of a specific package::
     except PackageError as e:
         logger.error("could not install package. Reason: %s", e.message)
 
-`RepositoryMapping` will return a dict-like object containing enabled system repositories
-and their properties (available groups, baseuri. gpg key). This class can add, disable, or
-manipulate repositories. Items can be retrieved as `DebianRepository` objects.
+:class:`RepositoryMapping` will return a dict-like object containing enabled system repositories
+and their properties (available groups, URI, GPG key). This class can add, disable, or
+manipulate repositories. Items can be retrieved as :class:`DebianRepository` objects.
 
-In order to add a new repository with explicit details for fields, a new `DebianRepository`
-can be added to `RepositoryMapping`
+In order to add a new repository with explicit details for fields, a new :class:`DebianRepository`
+can be added to :class:`RepositoryMapping`
 
-`RepositoryMapping` provides an abstraction around the existing repositories on the system,
-and can be accessed and iterated over like any `Mapping` object, to retrieve values by key,
+:class:`RepositoryMapping` provides an abstraction around the existing repositories on the system,
+and can be accessed and iterated over like any :class:`Mapping` object, to retrieve values by key,
 iterate, or perform other operations.
 
-Keys are constructed as `{repo_type}-{}-{release}` in order to uniquely identify a repository.
+Keys are constructed as ``{repo_type}-{}-{release}`` in order to uniquely identify a repository.
 
 Repositories can be added with explicit values through a Python constructor.
 
@@ -86,8 +86,8 @@ Example::
             )
         )
 
-Alternatively, any valid `sources.list` line may be used to construct a new
-`DebianRepository`.
+Alternatively, any valid ``sources.list`` line may be used to construct a new
+:class:`DebianRepository`.
 
 Example::
 
@@ -163,24 +163,24 @@ class PackageState(Enum):
 class DebianPackage:
     """Represents a traditional Debian package and its utility functions.
 
-    `DebianPackage` wraps information and functionality around a known package, whether installed
-    or available. The version, epoch, name, and architecture can be easily queried and compared
-    against other `DebianPackage` objects to determine the latest version or to install a specific
-    version.
+    :class:`DebianPackage` wraps information and functionality around a known package, whether
+    installed or available. The version, epoch, name, and architecture can be easily queried and
+    compared against other :class:`DebianPackage` objects to determine the latest version or to
+    install a specific version.
 
-    The representation of this object as a string mimics the output from `dpkg` for familiarity.
+    The representation of this object as a string mimics the output from ``dpkg`` for familiarity.
 
-    Installation and removal of packages is handled through the `state` property or `ensure`
+    Installation and removal of packages is handled through the ``state`` property or ``ensure``
     method, with the following options:
 
-        apt.PackageState.Absent
-        apt.PackageState.Available
-        apt.PackageState.Present
-        apt.PackageState.Latest
+        :attr:`apt.PackageState.Absent`
+        :attr:`apt.PackageState.Available`
+        :attr:`apt.PackageState.Present`
+        :attr:`apt.PackageState.Latest`
 
-    When `DebianPackage` is initialized, the state of a given `DebianPackage` object will be set to
-    `Available`, `Present`, or `Latest`, with `Absent` implemented as a convenience for removal
-    (though it operates essentially the same as `Available`).
+    When :class:`DebianPackage` is initialised, the state of a given :class:`DebianPackage` object
+    will be set to ``Available``, ``Present``, or ``Latest``, with ``Absent`` implemented as a
+    convenience for removal (though it operates essentially the same as ``Available``).
     """
 
     def __init__(
@@ -195,7 +195,7 @@ class DebianPackage:
         """Equality for comparison.
 
         Args:
-          other: a `DebianPackage` object for comparison
+          other: a :class:`DebianPackage` object for comparison
 
         Returns:
           A boolean reflecting equality
@@ -228,12 +228,12 @@ class DebianPackage:
         """Wrap package management commands for Debian/Ubuntu systems.
 
         Args:
-          command: the command given to `apt-get`
+          command: the command given to ``apt-get``
           package_names: a package name or list of package names to operate on
-          optargs: an (Optional) list of additional arguments
+          optargs: an (optional) list of additional arguments
 
         Raises:
-          PackageError if an error is encountered
+          PackageError: if an error is encountered
         """
         optargs = optargs if optargs is not None else []
         if isinstance(package_names, str):
@@ -271,10 +271,10 @@ class DebianPackage:
         """Ensure that a package is in a given state.
 
         Args:
-          state: a `PackageState` to reconcile the package to
+          state: a :class:`PackageState` to reconcile the package to
 
         Raises:
-          PackageError from the underlying call to apt
+          PackageError: from the underlying call to ``apt``
         """
         if self._state is not state:
             if state not in (PackageState.Present, PackageState.Latest):
@@ -285,17 +285,17 @@ class DebianPackage:
 
     @property
     def present(self) -> bool:
-        """Returns whether or not a package is present."""
+        """Return whether or not a package is present."""
         return self._state in (PackageState.Present, PackageState.Latest)
 
     @property
     def latest(self) -> bool:
-        """Returns whether the package is the most recent version."""
+        """Return whether the package is the most recent version."""
         return self._state is PackageState.Latest
 
     @property
     def state(self) -> PackageState:
-        """Returns the current package state."""
+        """Return the current package state."""
         return self._state
 
     @state.setter
@@ -303,10 +303,10 @@ class DebianPackage:
         """Set the package state to a given value.
 
         Args:
-          state: a `PackageState` to reconcile the package to
+          state: a :class:`PackageState` to reconcile the package to
 
         Raises:
-          PackageError from the underlying call to apt
+          PackageError: from the underlying call to ``apt``
         """
         if state in (PackageState.Latest, PackageState.Present):
             self._add()
@@ -316,22 +316,22 @@ class DebianPackage:
 
     @property
     def version(self) -> Version:
-        """Returns the version for a package."""
+        """Return the version for a package."""
         return self._version
 
     @property
     def epoch(self) -> str:
-        """Returns the epoch for a package. May be unset."""
+        """Return the epoch for a package. May be unset."""
         return self._version.epoch
 
     @property
     def arch(self) -> str:
-        """Returns the architecture for a package."""
+        """Return the architecture for a package."""
         return self._arch
 
     @property
     def fullversion(self) -> str:
-        """Returns the name+epoch for a package."""
+        """Return the name+epoch for a package."""
         return f'{self._version}.{self._arch}'
 
     @staticmethod
@@ -347,13 +347,13 @@ class DebianPackage:
     def from_system(
         cls, package: str, version: str | None = '', arch: str | None = ''
     ) -> DebianPackage:
-        """Locates a package, either on the system or known to apt, and serializes the information.
+        """Locate a package, either on the system or known to apt, and serialises the information.
 
         Args:
             package: a string representing the package
             version: an optional string if a specific version is requested
-            arch: an optional architecture, defaulting to `dpkg --print-architecture`. If an
-                architecture is not specified, this will be used for selection.
+            arch: an optional architecture, defaulting to ``dpkg --print-architecture``.
+                If an architecture is not specified, this will be used for selection.
 
         """
         try:
@@ -385,7 +385,7 @@ class DebianPackage:
         Args:
             package: a string representing the package
             version: an optional string if a specific version is requested
-            arch: an optional architecture, defaulting to `dpkg --print-architecture`.
+            arch: an optional architecture, defaulting to ``dpkg --print-architecture``.
                 If an architecture is not specified, this will be used for selection.
         """
         system_arch = check_output(
@@ -456,7 +456,7 @@ class DebianPackage:
         Args:
             package: a string representing the package
             version: an optional string if a specific version is requested
-            arch: an optional architecture, defaulting to `dpkg --print-architecture`.
+            arch: an optional architecture, defaulting to ``dpkg --print-architecture``.
                 If an architecture is not specified, this will be used for selection.
         """
         cmd = ['dpkg', '--print-architecture']
@@ -510,8 +510,9 @@ class DebianPackage:
 class Version:
     """An abstraction around package versions.
 
-    This seems like it should be strictly unnecessary, except that `apt_pkg` is not usable inside a
-    venv, and wedging version comparisons into `DebianPackage` would overcomplicate it.
+    This seems like it should be strictly unnecessary, except that ``apt_pkg`` is not usable inside
+    a ``venv``, and wedging version comparisons into :class:`DebianPackage` would over complicate
+    it.
 
     This class implements the algorithm found here:
     https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
@@ -532,12 +533,12 @@ class Version:
 
     @property
     def epoch(self):
-        """Returns the epoch for a package. May be empty."""
+        """Return the epoch for a package. May be empty."""
         return self._epoch
 
     @property
     def number(self) -> str:
-        """Returns the version number for a package."""
+        """Return the version number for a package."""
         return self._version
 
     def _get_parts(self, version: str) -> tuple[str, str]:
@@ -555,7 +556,7 @@ class Version:
         """Split a revision string into a list.
 
         This list is comprised of  alternating between strings and numbers,
-        padded on either end to always be "str, int, str, int..." and
+        padded on either end to always be ``"str, int, str, int..."`` and
         always be of even length.  This allows us to trivially implement the
         comparison algorithm described.
         """
@@ -706,29 +707,29 @@ class Version:
         return 0
 
     def __lt__(self, other: Version) -> bool:
-        """Less than magic method impl."""
+        """Less than magic method implementation."""
         return self._compare_version(other) < 0
 
     def __eq__(self, other: object) -> bool:
-        """Equality magic method impl."""
+        """Equality magic method implementation."""
         if not isinstance(other, Version):
             return False
         return self._compare_version(other) == 0
 
     def __gt__(self, other: Version) -> bool:
-        """Greater than magic method impl."""
+        """Greater than magic method implementation."""
         return self._compare_version(other) > 0
 
     def __le__(self, other: Version) -> bool:
-        """Less than or equal to magic method impl."""
+        """Less than or equal to magic method implementation."""
         return self.__eq__(other) or self.__lt__(other)
 
     def __ge__(self, other: Version) -> bool:
-        """Greater than or equal to magic method impl."""
+        """Greater than or equal to magic method implementation."""
         return self.__gt__(other) or self.__eq__(other)
 
     def __ne__(self, other: object) -> bool:
-        """Not equal to magic method impl."""
+        """Not equal to magic method implementation."""
         return not self.__eq__(other)
 
 
@@ -757,14 +758,14 @@ def add_package(
     Args:
         package_names: single package name, or list of package names
         name: the name(s) of the package(s)
-        version: an (Optional) version as a string. Defaults to the latest known
+        version: an (optional) version as a string. Defaults to the latest known
         arch: an optional architecture for the package
         update_cache: whether or not to run `apt-get update` prior to operating
 
     Raises:
-        TypeError if no package name is given, or explicit version is set for multiple packages
-        PackageNotFoundError if the package is not in the cache.
-        PackageError if packages fail to install
+        TypeError: if no package name is given, or explicit version is set for multiple packages
+        PackageNotFoundError: if the package is not in the cache.
+        PackageError: if packages fail to install
     """
     cache_refreshed = False
     if update_cache:
@@ -824,7 +825,7 @@ def _add(
         version: an (Optional) version as a string. Defaults to the latest known
         arch: an optional architecture for the package
 
-    Returns: a tuple of `DebianPackage` if found, or a :str: if it is not, and
+    Returns: a tuple of :class:`DebianPackage` if found, or a ``str`` if it is not, and
         a boolean indicating success
     """
     try:
@@ -874,7 +875,7 @@ def remove_package(
 
 
 def update() -> None:
-    """Update the apt cache via `apt-get update`."""
+    """Update the apt cache via ``apt-get update``."""
     cmd = ['apt-get', 'update', '--error-on=any']
     try:
         with tracer.start_as_current_span(cmd[0]) as span:
@@ -893,24 +894,24 @@ def update() -> None:
 def import_key(key: str) -> str:
     """Import an ASCII Armor key.
 
-    A Radix64 format keyid is also supported for backwards
-    compatibility. In this case Ubuntu keyserver will be
-    queried for a key via HTTPS by its keyid. This method
-    is less preferable because https proxy servers may
+    A Radix64 format key ID is also supported for backwards
+    compatibility. In this case Ubuntu key server will be
+    queried for a key via HTTPS by its key ID. This method
+    is less preferable because HTTPS proxy servers may
     require traffic decryption which is equivalent to a
     man-in-the-middle attack (a proxy server impersonates
-    keyserver TLS certificates and has to be explicitly
+    key server TLS certificates and has to be explicitly
     trusted by the system).
 
     Args:
         key: A GPG key in ASCII armor format, including BEGIN
-            and END markers or a keyid.
+            and END markers or a key ID.
 
     Returns:
         The GPG key filename written.
 
     Raises:
-        GPGKeyError if the key could not be imported
+        GPGKeyError: if the key could not be imported
     """
     key = key.strip()
     if '-' in key or '\n' in key:
@@ -936,10 +937,10 @@ def import_key(key: str) -> str:
     else:
         logger.warning(
             'PGP key found (looks like Radix64 format). '
-            'SECURELY importing PGP key from keyserver; '
+            'SECURELY importing PGP key from key server; '
             'full key not provided.'
         )
-        # as of bionic add-apt-repository uses curl with an HTTPS keyserver URL
+        # as of bionic add-apt-repository uses curl with an HTTPS key server URL
         # to retrieve GPG keys. `apt-key adv` command is deprecated as is
         # apt-key in general as noted in its manpage. See lp:1433761 for more
         # history. Instead, /etc/apt/trusted.gpg.d is used directly to drop
@@ -953,18 +954,18 @@ def import_key(key: str) -> str:
 
 
 class InvalidSourceError(Error):
-    """Exceptions for invalid source entries."""
+    """Exception for invalid source entries."""
 
 
 class GPGKeyError(Error):
-    """Exceptions for GPG keys."""
+    """Exception for GPG keys."""
 
 
 class DebianRepository:
     """An abstraction to represent a repository."""
 
     _deb822_stanza: _Deb822Stanza | None = None
-    """set by Deb822Stanza after creating a DebianRepository"""
+    """set by :class:`Deb822Stanza` after creating a :class:`DebianRepository`"""
 
     def __init__(
         self,
@@ -1042,7 +1043,7 @@ class DebianRepository:
     def make_options_string(self, include_signed_by: bool = True) -> str:
         """Generate the complete one-line-style options string for a repository.
 
-        Combining `gpg_key`, if set (and include_signed_by is True), with any other
+        Combining ``gpg_key``, if set (and ``include_signed_by`` is ``True``), with any other
         provided options to form the options section of a one-line-style definition.
         """
         options = self._options if self._options else {}
@@ -1055,7 +1056,7 @@ class DebianRepository:
 
     @staticmethod
     def prefix_from_uri(uri: str) -> str:
-        """Get a repo list prefix from the uri, depending on whether a path is set."""
+        """Get a repo list prefix from the URI, depending on whether a path is set."""
         uridetails = urlparse(uri)
         path = (
             uridetails.path.lstrip('/').replace('/', '-') if uridetails.path else uridetails.netloc
@@ -1064,14 +1065,13 @@ class DebianRepository:
 
     @staticmethod
     def from_repo_line(repo_line: str, write_file: bool | None = True) -> DebianRepository:
-        """Instantiate a new `DebianRepository` from a `sources.list` entry line.
+        """Instantiate a new :class:`DebianRepository` from a ``sources.list`` entry line.
 
         Args:
             repo_line: a string representing a repository entry
             write_file: boolean to enable writing the new repo to disk. True by default.
-                Expect it to result in an add-apt-repository call under the hood, like::
-
-                    add-apt-repository --no-update --sourceslist="$repo_line"
+                Expect it to result in an add-apt-repository call under the hood, like
+                ``add-apt-repository --no-update --sourceslist="$repo_line"``
         """
         repo = RepositoryMapping._parse(
             repo_line,
@@ -1096,10 +1096,10 @@ class DebianRepository:
     def disable(self) -> None:
         """Remove this repository by disabling it in the source file.
 
-        WARNING: This method does NOT alter the `self.enabled` flag.
+        WARNING: This method does NOT alter the :attr:`DebianRepository.enabled` flag.
 
         WARNING: disable is currently not implemented for repositories defined
-        by a deb822 stanza. Raises a NotImplementedError in this case.
+        by a ``deb822`` stanza. Raises a :class:`NotImplementedError` in this case.
         """
         if self._deb822_stanza is not None:
             raise NotImplementedError(
@@ -1119,21 +1119,21 @@ class DebianRepository:
     def import_key(self, key: str) -> None:
         """Import an ASCII Armor key.
 
-        A Radix64 format keyid is also supported for backwards
-        compatibility. In this case Ubuntu keyserver will be
-        queried for a key via HTTPS by its keyid. This method
-        is less preferable because https proxy servers may
+        A Radix64 format key ID is also supported for backwards
+        compatibility. In this case Ubuntu key server will be
+        queried for a key via HTTPS by its key ID. This method
+        is less preferable because HTTPS proxy servers may
         require traffic decryption which is equivalent to a
         man-in-the-middle attack (a proxy server impersonates
-        keyserver TLS certificates and has to be explicitly
+        key server TLS certificates and has to be explicitly
         trusted by the system).
 
         Args:
           key: A GPG key in ASCII armor format,
-                      including BEGIN and END markers or a keyid.
+              including BEGIN and END markers or a key ID.
 
         Raises:
-          GPGKeyError if the key could not be imported
+          GPGKeyError: if the key could not be imported
         """
         self._gpg_key_filename = import_key(key)
 
@@ -1160,13 +1160,13 @@ class DebianRepository:
 
     @staticmethod
     def _get_key_by_keyid(keyid: str) -> str:
-        """Get a key via HTTPS from the Ubuntu keyserver.
+        """Get a key via HTTPS from the Ubuntu key server.
 
-        Different key ID formats are supported by SKS keyservers (the longer ones
+        Different key ID formats are supported by SKS key servers (the longer ones
         are more secure, see "dead beef attack" and https://evil32.com/). Since
         HTTPS is used, if SSLBump-like HTTPS proxies are in place, they will
-        impersonate keyserver.ubuntu.com and generate a certificate with
-        keyserver.ubuntu.com in the CN field or in SubjAltName fields of a
+        impersonate key server.ubuntu.com and generate a certificate with
+        key server.ubuntu.com in the CN field or in SubjAltName fields of a
         certificate. If such proxy behavior is expected it is necessary to add the
         CA certificate chain containing the intermediate CA of the SSLBump proxy to
         every machine that this code runs on via ca-certs cloud-init directive (via
@@ -1181,14 +1181,14 @@ class DebianRepository:
         https://keyserver.ubuntu.com/pks/lookup?search=0x35F77D63B5CEC106C577ED856E85A86E4652B4E6
 
         Args:
-          keyid: An 8, 16 or 40 hex digit keyid to find a key for
+          keyid: An 8, 16 or 40 hex digit key ID to find a key for
 
         Returns:
-          A string containing key material for the specified GPG key id
+          A string containing key material for the specified GPG key ID
 
 
         Raises:
-          subprocess.CalledProcessError
+          CalledProcessError
         """
         # options=mr - machine-readable output (disables html wrappers)
         keyserver_url = (
@@ -1222,7 +1222,7 @@ class DebianRepository:
             raise GPGKeyError(
                 'Invalid GPG key material. Check your network setup'
                 ' (MTU, routing, DNS) and/or proxy server settings'
-                ' as well as destination keyserver status.'
+                ' as well as destination key server status.'
             )
         else:
             return out
@@ -1242,7 +1242,7 @@ class DebianRepository:
 def _repo_to_identifier(repo: DebianRepository) -> str:
     """Return str identifier derived from repotype, uri, and release.
 
-    Private method used to produce the identifiers used by RepositoryMapping.
+    Private method used to produce the identifiers used by :class:`RepositoryMapping`.
     """
     return f'{repo.repotype}-{repo.uri}-{repo.release}'
 
@@ -1262,9 +1262,9 @@ def _repo_to_line(repo: DebianRepository, include_signed_by: bool = True) -> str
 class RepositoryMapping(Mapping[str, DebianRepository]):
     """An representation of known repositories.
 
-    Instantiation of `RepositoryMapping` will iterate through the
+    Instantiation of :class:`RepositoryMapping` will iterate through the
     filesystem, parse out repository files in `/etc/apt/...`, and create
-    `DebianRepository` objects in this list.
+    :class:`DebianRepository` objects in this list.
 
     Typical usage::
 
@@ -1322,35 +1322,35 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         return len(self._repository_map)
 
     def __iter__(self) -> Iterator[DebianRepository]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return iterator for RepositoryMapping.
+        """Return iterator for :class:`RepositoryMapping`.
 
-        Iterates over the DebianRepository values rather than the string names.
+        Iterates over the :class:`DebianRepository` values rather than the string names.
 
-        FIXME: this breaks the expectations of the Mapping abstract base class
+        FIXME: this breaks the expectations of the :class:`Mapping` abstract base class
         for example when it provides methods like keys and items
         """
         return iter(self._repository_map.values())
 
     def __getitem__(self, repository_uri: str) -> DebianRepository:
-        """Return a given `DebianRepository`."""
+        """Return a given :class:`DebianRepository`."""
         return self._repository_map[repository_uri]
 
     def __setitem__(self, repository_uri: str, repository: DebianRepository) -> None:
-        """Add a `DebianRepository` to the cache."""
+        """Add a :class:`DebianRepository` to the cache."""
         self._repository_map[repository_uri] = repository
 
     def load_deb822(self, filename: str) -> None:
-        """Load a deb822 format repository source file into the cache.
+        """Load a ``deb822`` format repository source file into the cache.
 
-        In contrast to one-line-style, the deb822 format specifies a repository
-        using a multi-line stanza. Stanzas are separated by whitespace,
+        In contrast to one-line-style, the ``deb822`` format specifies a repository
+        using a multi-line stanza. Stanzas are separated by white space,
         and each definition consists of lines that are either key: value pairs,
         or continuations of the previous value.
 
-        Read more about the deb822 format here:
+        Read more about the ``deb822`` format here:
             https://manpages.ubuntu.com/manpages/noble/en/man5/sources.list.5.html
-        For instance, ubuntu 24.04 (noble) lists its sources using deb822 style in:
-            /etc/apt/sources.list.d/ubuntu.sources
+        For instance, Ubuntu 24.04 (noble) lists its sources using ``deb822`` style in:
+            ``/etc/apt/sources.list.d/ubuntu.sources``
         """
         with open(filename) as f:
             repos, errors = self._parse_deb822_lines(f, filename=filename)
@@ -1374,11 +1374,11 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         lines: Iterable[str],
         filename: str = '',
     ) -> tuple[list[DebianRepository], list[InvalidSourceError]]:
-        """Parse lines from a deb822 file into a list of repos and a list of errors.
+        """Parse lines from a ``deb822`` file into a list of repos and a list of errors.
 
-        The semantics of `_parse_deb822_lines` slightly different to `_parse`:
-            `_parse` reads a commented out line as an entry that is not enabled
-            `_parse_deb822_lines` strips out comments entirely when parsing a file into stanzas,
+        The semantics of ``_parse_deb822_lines`` slightly different to :meth:`_parse`:
+            ``_parse`` reads a commented out line as an entry that is not enabled
+            ``_parse_deb822_lines`` strips out comments entirely when parsing a file into stanzas,
                 instead only reading the 'Enabled' key to determine if an entry is enabled
         """
         repos: list[DebianRepository] = []
@@ -1430,7 +1430,7 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
           filename: the filename being read
 
         Raises:
-          InvalidSourceError if the source type is unknown
+          InvalidSourceError: if the source type is unknown
         """
         enabled = True
         repotype = uri = release = gpg_key = ''
@@ -1447,7 +1447,7 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         if i > 0:
             line = line[:i]
 
-        # Split a source into substrings to initialize a new repo.
+        # Split a source into substrings to initialise a new repo.
         source = line.strip()
         if source:
             # Match any repo options, and get a dict representation.
@@ -1482,20 +1482,20 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         """Add a new repository to the system using add-apt-repository.
 
         Args:
-            repo: a DebianRepository object
-                if repo.enabled is falsey, will return without adding the repository
+            repo: a :class:`DebianRepository` object
+                if :attr:`DebianRepository.enabled` is false, will return without adding the repo
         Raises:
             CalledProcessError: if there's an error running apt-add-repository
 
         WARNING: Does not associate the repository with a signing key.
-        Use `import_key` to add a signing key globally.
+        Use ``import_key`` to add a signing key globally.
 
-        WARNING: if repo.enabled is falsey, will return without adding the repository
+        WARNING: if :attr:`DebianRepository.enabled` is false, will return without adding the repo
 
-        WARNING: Don't forget to call `apt.update` before installing any packages!
-        Or call `apt.add_package` with `update_cache=True`.
+        WARNING: Don't forget to call :meth:`update` before installing any packages!
+        Or call :meth:`add_package` with ``update_cache=True``.
 
-        WARNING: the default_filename keyword argument is provided for backwards compatibility
+        WARNING: the ``default_filename`` keyword argument is provided for backwards compatibility
         only. It is not used, and was not used in the previous revision of this library.
         """
         if not repo.enabled:
@@ -1515,9 +1515,9 @@ class RepositoryMapping(Mapping[str, DebianRepository]):
         """Remove a repository by disabling it in the source file.
 
         WARNING: disable is currently not implemented for repositories defined
-        by a deb822 stanza, and will raise a NotImplementedError if called on one.
+        by a ``deb822`` stanza, and will raise a :class:`NotImplementedError` if called on one.
 
-        WARNING: This method does NOT alter the `.enabled` flag on the DebianRepository.
+        WARNING: This method does NOT alter the :attr:`DebianRepository.enabled` flag.
         """
         repo.disable()
         self._repository_map[_repo_to_identifier(repo)] = repo
@@ -1563,9 +1563,9 @@ def _add_repository(
 
 
 class _Deb822Stanza:
-    """Representation of a stanza from a deb822 source file.
+    """Representation of a stanza from a ``deb822`` source file.
 
-    May define multiple DebianRepository objects.
+    May define multiple :class:`DebianRepository` objects.
     """
 
     def __init__(self, numbered_lines: list[tuple[int, str]], filename: str = ''):
@@ -1587,7 +1587,7 @@ class _Deb822Stanza:
 
     @property
     def repos(self) -> tuple[DebianRepository, ...]:
-        """The repositories defined by this deb822 stanza."""
+        """The repositories defined by this ``deb822`` stanza."""
         return self._repos
 
     def get_gpg_key_filename(self) -> str:
@@ -1636,14 +1636,14 @@ class BadValueError(InvalidSourceError):
 
 
 def _iter_deb822_stanzas(lines: Iterable[str]) -> Iterator[list[tuple[int, str]]]:
-    """Given lines from a deb822 format file, yield a stanza of lines.
+    """Given lines from a ``deb822`` format file, yield a stanza of lines.
 
     Args:
-        lines: an iterable of lines from a deb822 sources file
+        lines: an iterable of lines from a ``deb822`` sources file
 
     Yields:
         lists of numbered lines (a tuple of line number and line) that make up
-        a deb822 stanza, with comments stripped out (but accounted for in line numbering)
+        a ``deb822`` stanza, with comments stripped out (but accounted for in line numbering)
     """
     current_stanza: list[tuple[int, str]] = []
     for n, line in enumerate(lines, start=1):  # 1 indexed line numbers
@@ -1668,8 +1668,8 @@ def _deb822_stanza_to_options(
         lines: an iterable of numbered lines (a tuple of line number and line)
 
     Returns:
-        a dictionary of option names to (potentially multiline) values, and
-        a dictionary of option names to starting line number
+        A dictionary of option names to (potentially multiline) values, and
+        a dictionary of option names to starting line number.
     """
     parts: dict[str, list[str]] = {}
     line_numbers: dict[str, int] = {}
@@ -1691,19 +1691,19 @@ def _deb822_stanza_to_options(
 def _deb822_options_to_repos(
     options: dict[str, str], line_numbers: Mapping[str, int] = {}, filename: str = ''
 ) -> tuple[tuple[DebianRepository, ...], tuple[str, str | None]]:
-    """Return a collections of DebianRepository objects defined by this deb822 stanza.
+    """Return a collections of :class:`DebianRepository` objects defined by this ``deb822`` stanza.
 
     Args:
-        options: a dictionary of deb822 field names to string options
+        options: a dictionary of ``deb822`` field names to string options
         line_numbers: a dictionary of field names to line numbers (for error messages)
         filename: the file the options were read from (for repository object and errors)
 
     Returns:
-        a tuple of `DebianRepository`s, and
-        a tuple of the gpg key filename and optional in-stanza provided key itself
+        A tuple of :class:`DebianRepository`s, and
+        a tuple of the gpg key filename and optional in-stanza provided key itself.
 
     Raises:
-      InvalidSourceError if any options are malformed or required options are missing
+      InvalidSourceError: if any options are malformed or required options are missing
     """
     # Enabled
     enabled_field = options.pop('Enabled', 'yes')
