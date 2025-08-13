@@ -58,6 +58,8 @@ def _parse_tag(ref: str) -> str:
         return '.package'
     if package == 'interfaces':
         return 'interfaces/.package'
+    if package.startswith('interfaces-'):
+        return package.replace('-', '/', 1)  # interfaces-foo-bar -> interfaces/foo-bar
     return package
 
 
