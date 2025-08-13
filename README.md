@@ -9,7 +9,7 @@ This project uses [just](https://github.com/casey/just) as a task runner, backed
 Consider installing them both like this:
 
 ```bash
-snap install uv
+sudo snap install --classic astral-uv
 uv tool install rust-just
 ```
 
