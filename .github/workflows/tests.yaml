@@ -48,6 +48,9 @@ jobs:
           if [ -d ${{ inputs.package }}/tests/unit ]; then
             tests+=('unit')
           fi
+          if [ -d ${{ inputs.package }}/tests/integration/ubuntu ]; then
+            tests+=('ubuntu')
+          fi
           if [ -d ${{ inputs.package }}/tests/integration/pebble ]; then
             tests+=('pebble')
           fi
@@ -90,6 +93,23 @@ jobs:
 
       - name: Run unit tests
         run: uvx --from rust-just just python=${{ matrix.python-version }} unit ${{ inputs.package }}
+
+  ubuntu:
+    needs: init
+    if: contains(fromJson(needs.init.outputs.tests), 'ubuntu')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Run Ubuntu integration tests (with sudo)
+        run: sudo env "PATH=$PATH" uvx --from rust-just just ubuntu ${{ inputs.package }}
 
   pebble:
     needs: init
