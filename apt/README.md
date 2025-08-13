@@ -8,4 +8,4 @@ To install, add `charmlibs-pathops` to your requirements. Then in your Python co
 from charmlibs import apt
 ```
 
-Check out the reference docs on the [charmlibs docsite](https://canonical-charmlibs.readthedocs-hosted.com/reference/charmlibs/apt/).
+See the [reference documentation](https://canonical-charmlibs.readthedocs-hosted.com/reference/charmlibs/apt/).
