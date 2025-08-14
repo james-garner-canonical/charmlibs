@@ -2,7 +2,7 @@
 
 This package should not be installed - it exists solely to reserve the `charmlibs.interfaces` namespace.
 
-This namespace is for packages designed to be used by [Juju charms](https://juju.is/charms-architecture) to implement [relations](https://documentation.ubuntu.com/ops/latest/howto/manage-relations/), known as charm interface libraries. Visit the [charmlibs documentation site](https://documentation.ubuntu.com/charmlibs) for more information about charm libraries, and the [charmlibs monorepo](https://github.com/canonical/charmlibs) for charm library development.
+This namespace is for packages designed to be used by [Juju charms](https://juju.is/charms-architecture) to implement [relations](https://documentation.ubuntu.com/ops/latest/howto/manage-relations/), known as charm interface libraries. Read the [charmlibs documentation](https://documentation.ubuntu.com/charmlibs) for more information about charm libraries.
 
 See more:
 
