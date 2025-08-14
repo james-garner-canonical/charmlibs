@@ -17,7 +17,7 @@ sys.path[0:0] = [
         if p.is_dir() and not p.name == 'interfaces'
     ),
     *(
-        str(p / 'lib' / 'src' / 'charmlibs' / 'interfaces')
+        str(p / 'src' / 'charmlibs' / 'interfaces')
         for p in (root / 'interfaces').glob(package_glob)
         if p.is_dir()
     ),
