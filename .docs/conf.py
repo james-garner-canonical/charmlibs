@@ -8,11 +8,20 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent / 'extensions'))
 local_extensions = ['generate_tables', 'package_docs']
 
 # So that sphinx.ext.autodoc can find charmlibs code
-sys.path[0:0] = (
-    str(p / 'src' / 'charmlibs')
-    for p in pathlib.Path(__file__).parent.parent.glob('[a-z]*')
-    if p.is_dir()
-)
+root = pathlib.Path(__file__).parent.parent
+package_glob = '[a-z]*'
+sys.path[0:0] = [
+    *(
+        str(p / 'src' / 'charmlibs')
+        for p in root.glob(package_glob)
+        if p.is_dir() and not p.name == 'interfaces'
+    ),
+    *(
+        str(p / 'src' / 'charmlibs' / 'interfaces')
+        for p in (root / 'interfaces').glob(package_glob)
+        if p.is_dir()
+    ),
+]
 
 def setup(app):
     app.add_css_file('project_specific.css')

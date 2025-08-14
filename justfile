@@ -64,7 +64,7 @@ _coverage package test_subdir +flags:
     uv pip install --editable './{{package}}'
     source .venv/bin/activate
     cd '{{package}}'
-    export COVERAGE_RCFILE=../pyproject.toml
+    export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
     DATA_FILE=".report/coverage-$(basename {{test_subdir}})-{{python}}.db"
     uv run --active coverage run --data-file="$DATA_FILE" --source='src' \
         -m pytest --tb=native -vv {{flags}} 'tests/{{test_subdir}}'

@@ -34,7 +34,7 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _package_docs(app: sphinx.application.Sphinx) -> None:
-    _generate_files(pathlib.Path(app.confdir))
+    _main(pathlib.Path(app.confdir))
 
 
 ####################
@@ -42,6 +42,14 @@ def _package_docs(app: sphinx.application.Sphinx) -> None:
 ####################
 
 AUTOMODULE_TEMPLATE = """
+.. raw:: html
+
+   <style>
+      h1:before {{
+         content: "{prefix}";
+      }}
+   </style>
+
 {package}
 {underline}
 
@@ -49,17 +57,26 @@ AUTOMODULE_TEMPLATE = """
 """.strip()
 
 
-def _generate_files(docs_dir: pathlib.Path) -> None:
-    generated_dir = docs_dir / 'reference' / 'charmlibs'
+def _main(docs_dir: pathlib.Path) -> None:
+    _generate_files(docs_dir, exclude='interfaces')
+    _generate_files(docs_dir, subdir='interfaces')
+
+
+def _generate_files(docs_dir: pathlib.Path, subdir: str = '.', exclude: str | None = None) -> None:
+    generated_dir = docs_dir / 'reference' / 'charmlibs' / subdir
     generated_dir.mkdir(exist_ok=True)
     # Any directory starting with a-z is assumed to be a package (except the interfaces directory)
-    packages = sorted(
+    package_dir_names = sorted(
         path.name
-        for path in docs_dir.parent.glob(r'[a-z]*')
-        if path.is_dir() and path.name != 'interfaces'
+        for path in (docs_dir.parent / subdir).glob(r'[a-z]*')
+        if path.is_dir() and path.name != exclude
     )
-    for package in packages:
-        automodule = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
+    for package_dir_name in package_dir_names:
+        prefix = 'charmlibs.' if subdir == '.' else f'charmlibs.{subdir}.'
+        package = package_dir_name.replace('-', '_')
+        automodule = AUTOMODULE_TEMPLATE.format(
+            prefix=prefix, package=package, underline='=' * len(package)
+        )
         _write_if_needed(path=generated_dir / f'{package}.rst', content=automodule)
 
 

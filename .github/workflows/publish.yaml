@@ -3,9 +3,12 @@ name: Publish
 on:
   push:
     tags:
+      # General libraries
       - 'charmlibs-v[0-9]*'
       - 'apt-v[0-9]*'
       - 'pathops-v[0-9]*'
+      # Interface libraries
+      - 'interfaces-v[0-9]*'
   workflow_dispatch:
     inputs:
       package:

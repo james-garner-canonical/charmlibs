@@ -6,5 +6,5 @@
 
 general-libs
 interface-libs
-charmlibs/*
+charmlibs/**
 ```
