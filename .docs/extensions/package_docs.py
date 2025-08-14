@@ -34,7 +34,7 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _package_docs(app: sphinx.application.Sphinx) -> None:
-    _generate_files(pathlib.Path(app.confdir))
+    _main(pathlib.Path(app.confdir))
 
 
 ####################
@@ -49,14 +49,19 @@ AUTOMODULE_TEMPLATE = """
 """.strip()
 
 
-def _generate_files(docs_dir: pathlib.Path) -> None:
-    generated_dir = docs_dir / 'reference' / 'charmlibs'
+def _main(docs_dir: pathlib.Path) -> None:
+    _generate_files(docs_dir, exclude='interfaces')
+    _generate_files(docs_dir, subdir='interfaces')
+
+
+def _generate_files(docs_dir: pathlib.Path, subdir: str = '.', exclude: str | None = None) -> None:
+    generated_dir = docs_dir / 'reference' / 'charmlibs' / subdir
     generated_dir.mkdir(exist_ok=True)
     # Any directory starting with a-z is assumed to be a package (except the interfaces directory)
     packages = sorted(
         path.name
-        for path in docs_dir.parent.glob(r'[a-z]*')
-        if path.is_dir() and path.name != 'interfaces'
+        for path in (docs_dir.parent / subdir).glob(r'[a-z]*')
+        if path.is_dir() and path.name != exclude
     )
     for package in packages:
         automodule = AUTOMODULE_TEMPLATE.format(package=package, underline='=' * len(package))
