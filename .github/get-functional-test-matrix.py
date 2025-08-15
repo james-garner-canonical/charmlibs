@@ -54,9 +54,9 @@ def _get_matrix(package: pathlib.Path) -> dict[str, list[str]]:
     pyproject_toml = tomli.loads((package / 'pyproject.toml').read_text())
     table = pyproject_toml.get('tool', {}).get('charmlibs', {}).get('functional', {})
     return {
-        'pebble': [f'pebble@{v}' for v in table.get('pebble', [])] or ['no-pebble'],
-        'sudo': ['sudo'] if table.get('sudo') else ['no-sudo'],
         'ubuntu': [f'ubuntu-{v}' for v in table.get('ubuntu', ['latest'])],
+        'sudo': ['sudo'] if table.get('sudo') else ['no-sudo'],
+        'pebble': [f'pebble@{v}' for v in table.get('pebble', [])] or ['no-pebble'],
     }
 
 
