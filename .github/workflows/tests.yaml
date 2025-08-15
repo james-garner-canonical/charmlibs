@@ -102,15 +102,15 @@ jobs:
   functional:
     needs: init
     if: contains(fromJson(needs.init.outputs.tests), 'functional')
-    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ${{ fromJson(needs.init.outputs.functional-os) }}
         sudo: ${{ fromJson(needs.init.outputs.functional-sudo) }}
         pebble: ${{ fromJson(needs.init.outputs.functional-pebble) }}
+    runs-on: ${{ matrix.os }}
     env:
-      RECIPE_SUFFIX: ${{ contains(fromJson(needs.init.outputs.functional-requires), 'pebble') && '-pebble' || '' }}
+      RECIPE_SUFFIX: ${{ matrix.pebble != 'no-pebble' && '-pebble' || '' }}
     steps:
       - uses: actions/checkout@v4
 
