@@ -106,10 +106,10 @@ _pack package substrate base:
     ./pack.sh {{substrate}} {{base}}
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-k8s package +flags='-rA': (_integration package 'integration' flags)
+integration-k8s package +flags='-rA': (_integration package 'kubernetes' flags)
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-vm package +flags='-rA': (_integration package 'integration' flags)
+integration-vm package +flags='-rA': (_integration package 'machine' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
 _integration package substrate +flags:
