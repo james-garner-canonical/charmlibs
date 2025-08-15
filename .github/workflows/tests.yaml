@@ -29,9 +29,7 @@ jobs:
     outputs:
       tests: ${{ steps.tests.outputs.tests }}
       python: ${{ steps.python.outputs.versions }}
-      functional-os: ${{ steps.functional.outputs.os }}
-      functional-sudo:  ${{ steps.functional.outputs.sudo }}
-      functional-pebble: ${{ steps.functional.outputs.pebble }}
+      functional-matrix: ${{ steps.functional.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,7 +62,7 @@ jobs:
       - name: Check requirements for functional tests
         id: functional
         if: contains(fromJson(steps.tests.outputs.tests), 'functional')
-        run: uv run --no-project --script .github/get-functional-test-requirements.py ${{ inputs.package }}
+        run: uv run --no-project --script .github/get-functional-test-matrix.py ${{ inputs.package }}
 
   lint:
     needs: init
@@ -104,10 +102,7 @@ jobs:
     if: contains(fromJson(needs.init.outputs.tests), 'functional')
     strategy:
       fail-fast: false
-      matrix:
-        os: ${{ fromJson(needs.init.outputs.functional-os) }}
-        sudo: ${{ fromJson(needs.init.outputs.functional-sudo) }}
-        pebble: ${{ fromJson(needs.init.outputs.functional-pebble) }}
+      matrix: ${{ fromJson(needs.init.outputs.functional-matrix) }}
     runs-on: ${{ matrix.os }}
     env:
       RECIPE_SUFFIX: ${{ matrix.pebble != 'no-pebble' && '-pebble' || '' }}

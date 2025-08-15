@@ -19,7 +19,7 @@
 # ]
 # ///
 
-"""Parse functional test suites for requirements.
+"""Generate functional test matrix from package's pyproject.toml.
 
 Assumes that the current working directory is the project root.
 The package name must be provided as a positional commandline argument.
@@ -43,22 +43,21 @@ def _parse_args() -> pathlib.Path:
 
 
 def _main(package: pathlib.Path) -> None:
-    requirements = _get_requirements(package)
-    lines = '\n'.join(f'{k}={json.dumps(v)}' for k, v in requirements.items())
-    print(lines)
+    matrix = _get_matrix(package)
+    line = f'matrix={json.dumps(matrix)}'
+    print(line)
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
-        print(lines, file=f)
+        print(line, file=f)
 
 
-def _get_requirements(package: pathlib.Path) -> dict[str, list[str]]:
+def _get_matrix(package: pathlib.Path) -> dict[str, list[str]]:
     pyproject_toml = tomli.loads((package / 'pyproject.toml').read_text())
-    functional = pyproject_toml.get('tool', {}).get('charmlibs', {}).get('functional', {})
-    requirements: dict[str, list[str]] = {
-        'os': os if (os := functional.get('os')) is not None else ['ubuntu-latest'],
-        'pebble': pebble if (pebble := functional.get('pebble')) is not None else ['no-pebble'],
-        'sudo': ['sudo'] if functional.get('sudo') else ['no-sudo'],
+    table = pyproject_toml.get('tool', {}).get('charmlibs', {}).get('functional', {})
+    return {
+        'os': os if (os := table.get('os')) is not None else ['ubuntu-latest'],
+        'pebble': pebble if (pebble := table.get('pebble')) is not None else ['no-pebble'],
+        'sudo': ['sudo'] if table.get('sudo') else ['no-sudo'],
     }
-    return requirements
 
 
 if __name__ == '__main__':
