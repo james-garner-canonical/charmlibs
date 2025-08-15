@@ -128,7 +128,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Run functional tests
-        if: i${{ ! contains(fromJson(needs.init.outputs.functional-requires), 'sudo') }}
+        if: ${{ ! contains(fromJson(needs.init.outputs.functional-requires), 'sudo') }}
         run: uvx --from rust-just just python=${{ matrix.python }} functional$RECIPE_SUFFIX ${{ inputs.package }}
 
       - name: Run functional tests with sudo
