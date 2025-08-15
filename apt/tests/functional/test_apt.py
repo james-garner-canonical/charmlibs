@@ -11,11 +11,7 @@ from pathlib import Path
 from typing import List
 from urllib.request import urlopen
 
-import pytest
-
 import charmlibs.apt as apt
-
-pytestmark = pytest.mark.sudo
 
 logger = logging.getLogger(__name__)
 

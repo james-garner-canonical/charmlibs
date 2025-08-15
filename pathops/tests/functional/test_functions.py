@@ -32,9 +32,6 @@ if typing.TYPE_CHECKING:
     import ops
 
 
-pytestmark = pytest.mark.pebble
-
-
 @pytest.mark.parametrize('exists', [True, False])
 @pytest.mark.parametrize('mode', [_constants.DEFAULT_WRITE_MODE, 0o600])
 @pytest.mark.parametrize('input_type', ['bytes', 'str', 'bytes_io', 'str_io'])
