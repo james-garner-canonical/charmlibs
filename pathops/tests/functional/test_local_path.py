@@ -33,6 +33,8 @@ if typing.TYPE_CHECKING:
 
     import ops
 
+pytestmark = pytest.mark.pebble
+
 GOOD_PARENT_DIRECTORY_MODES = (
     '0o777',
     '0o766',

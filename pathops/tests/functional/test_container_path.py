@@ -34,6 +34,8 @@ if typing.TYPE_CHECKING:
 
     import ops
 
+pytestmark = pytest.mark.pebble
+
 
 @pytest.mark.parametrize(
     ('file', 'error'),
