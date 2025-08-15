@@ -74,6 +74,8 @@ html_context = {
 html_static_path = [".sphinx/_static"]
 templates_path = [".sphinx/_templates"]
 
+# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
+html_baseurl = 'https://documentation.ubuntu.com/charmlibs/'
 sitemap_url_scheme = '{link}'  # URL scheme. Add language and version scheme elements.
 sitemap_show_lastmod = True  # Include `lastmod` dates in the sitemap:
 sitemap_excludes = [  # Exclude generated pages from the sitemap:
@@ -140,6 +142,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     "sphinx.ext.napoleon",
     "sphinx_datatables",
+    "sphinx_sitemap",
     *local_extensions,
 ]
 

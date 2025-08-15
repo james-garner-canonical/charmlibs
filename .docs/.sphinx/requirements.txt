@@ -4,3 +4,4 @@ sphinxcontrib-svg2pdfconverter[CairoSVG]
 sphinx-last-updated-by-git
 ops
 sphinx-datatables>=0.3
+sphinx-sitemap
