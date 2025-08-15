@@ -40,3 +40,7 @@ src = ["src", "tests/unit", "tests/functional", "tests/integration"]  # correctl
 extend = "../pyproject.toml"
 include = ["src", "tests"]
 pythonVersion = "3.8"  # check no python > 3.8 features are used
+
+[tool.charmlibs.functional]
+ubuntu = ["22.04", "24.04", "latest"]
+sudo = true

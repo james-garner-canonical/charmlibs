@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# /// script
+# requires-python = '>=3.8'
+# dependencies = [
+#     'tomli',
+# ]
+# ///
+
 """Parse functional test suites for requirements.
 
 Assumes that the current working directory is the project root.
@@ -24,6 +31,8 @@ import argparse
 import json
 import os
 import pathlib
+
+import tomli
 
 
 def _parse_args() -> pathlib.Path:
@@ -42,18 +51,13 @@ def _main(package: pathlib.Path) -> None:
 
 
 def _get_requirements(package: pathlib.Path) -> dict[str, list[str]]:
-    functional_dir = package / 'tests' / 'functional'
+    pyproject_toml = tomli.loads((package / 'pyproject.toml').read_text())
+    functional = pyproject_toml.get('tool', {}).get('charmlibs', {}).get('functional', {})
     requirements: dict[str, list[str]] = {
-        'os': ['ubuntu-latest'],
-        'pebble': ['no-pebble'],
-        'sudo': ['no-sudo'],
+        'os': os if (os := functional.get('os')) is not None else ['ubuntu-latest'],
+        'pebble': pebble if (pebble := functional.get('pebble')) is not None else ['no-pebble'],
+        'sudo': ['sudo'] if functional.get('sudo') else ['no-sudo'],
     }
-    if (path := functional_dir / '.os').exists():
-        requirements['os'] = json.loads(path.read_text().strip())
-    if (path := functional_dir / '.pebble').exists():
-        requirements['pebble'] = json.loads(path.read_text().strip())
-    if (path := functional_dir / '.sudo').exists():
-        requirements['sudo'] = ['sudo']
     return requirements
 
 
