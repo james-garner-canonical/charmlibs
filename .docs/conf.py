@@ -1,15 +1,6 @@
 import datetime
 import pathlib
 import sys
-import typing
-
-if typing.TYPE_CHECKING:
-    import sphinx.application
-
-
-def setup(app: sphinx.application.Sphinx) -> None:
-    app.add_css_file('project_specific.css')
-
 
 # local extensions
 sys.path.insert(0, str(pathlib.Path(__file__).parent / 'extensions'))
@@ -83,6 +74,7 @@ sitemap_excludes = [  # Exclude generated pages from the sitemap:
     'genindex/',
     'py-modindex/',
     'search/',
+   'reference/generated/*',
 ]
 
 #############
@@ -170,7 +162,7 @@ exclude_patterns = [
 
 # Adds custom CSS files, located under 'html_static_path'
 html_css_files = [
-    "css/pdf.css",
+    "project_specific.css",
 ]
 
 # Adds custom JavaScript files, located under 'html_static_path'
