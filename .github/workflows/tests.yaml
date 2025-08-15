@@ -30,8 +30,8 @@ jobs:
       tests: ${{ steps.tests.outputs.tests }}
       python: ${{ steps.python.outputs.versions }}
       functional-os: ${{ steps.functional.outputs.os }}
+      functional-sudo:  ${{ steps.functional.outputs.sudo }}
       functional-pebble: ${{ steps.functional.outputs.pebble }}
-      functional-requires:  ${{ steps.functional.outputs.requires }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -107,6 +107,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJson(needs.init.outputs.functional-os) }}
+        sudo: ${{ fromJson(needs.init.outputs.functional-sudo) }}
         pebble: ${{ fromJson(needs.init.outputs.functional-pebble) }}
     env:
       RECIPE_SUFFIX: ${{ contains(fromJson(needs.init.outputs.functional-requires), 'pebble') && '-pebble' || '' }}
@@ -121,18 +122,18 @@ jobs:
           cache: false
 
       - name: Install Pebble
-        if: contains(fromJson(needs.init.outputs.functional-requires), 'pebble')
+        if: matrix.pebble != 'no-pebble'
         run: go install github.com/canonical/pebble/cmd/pebble@${{ matrix.pebble }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
       - name: Run functional tests
-        if: ${{ ! contains(fromJson(needs.init.outputs.functional-requires), 'sudo') }}
+        if: matrix.sudo == 'no-sudo'
         run: uvx --from rust-just just python=${{ matrix.python }} functional$RECIPE_SUFFIX ${{ inputs.package }}
 
       - name: Run functional tests with sudo
-        if: contains(fromJson(needs.init.outputs.functional-requires), 'sudo')
+        if: matrix.sudo != 'no-sudo'
         run: sudo env "PATH=$PATH" uvx --from rust-just just python=${{ matrix.python }} functional$RECIPE_SUFFIX ${{ inputs.package }}
 
   integration:

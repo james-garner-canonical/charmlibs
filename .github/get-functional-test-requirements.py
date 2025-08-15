@@ -46,15 +46,14 @@ def _get_requirements(package: pathlib.Path) -> dict[str, list[str]]:
     requirements: dict[str, list[str]] = {
         'os': ['ubuntu-latest'],
         'pebble': ['no-pebble'],
-        'requires': [],
+        'sudo': ['no-sudo'],
     }
     if (path := functional_dir / '.os').exists():
         requirements['os'] = json.loads(path.read_text().strip())
     if (path := functional_dir / '.pebble').exists():
         requirements['pebble'] = json.loads(path.read_text().strip())
-        requirements['requires'].append('pebble')
     if (path := functional_dir / '.sudo').exists():
-        requirements['requires'].append('sudo')
+        requirements['sudo'] = ['sudo']
     return requirements
 
 
