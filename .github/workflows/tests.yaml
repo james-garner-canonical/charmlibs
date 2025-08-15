@@ -135,9 +135,9 @@ jobs:
         if: contains(fromJson(needs.init.outputs.functional-requires), 'sudo')
         run: sudo env "PATH=$PATH" uvx --from rust-just just python=${{ matrix.python }} functional$RECIPE_SUFFIX ${{ inputs.package }}
 
-  juju:
+  integration:
     needs: init
-    if: contains(fromJson(needs.init.outputs.tests), 'juju') && !inputs.skip-juju
+    if: contains(fromJson(needs.init.outputs.tests), 'integration') && !inputs.skip-juju
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

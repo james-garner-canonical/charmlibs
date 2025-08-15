@@ -102,21 +102,21 @@ pack-vm package base='24.04': (_pack package 'machine' base)
 _pack package substrate base:
     #!/usr/bin/env bash
     set -xueo pipefail
-    cd '{{package}}/tests/integration/juju/charms'
+    cd '{{package}}/tests/integration/charms'
     ./pack.sh {{substrate}} {{base}}
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-juju-k8s package +flags='-rA': (_juju package 'kubernetes' flags)
+integration-k8s package +flags='-rA': (_integration package 'integration' flags)
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-juju-vm package +flags='-rA': (_juju package 'machine' flags)
+integration-vm package +flags='-rA': (_integration package 'integration' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-_juju package substrate +flags:
+_integration package substrate +flags:
     #!/usr/bin/env bash
     set -xueo pipefail
     uv sync --python='{{python}}'
     uv pip install --editable './{{package}}'
     source .venv/bin/activate
     cd '{{package}}'
-    uv run --active pytest --tb=native -vv {{flags}} tests/integration/juju --substrate='{{substrate}}'
+    uv run --active pytest --tb=native -vv {{flags}} tests/integration --substrate='{{substrate}}'
