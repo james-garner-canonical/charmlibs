@@ -13,8 +13,7 @@ _help:
 
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]
 fast-lint:
-    #!/usr/bin/env bash
-    set -xueo pipefail
+    #!/usr/bin/env -S bash -xueo pipefail
     FAILURES=0
     uv run ruff check --preview || ((FAILURES+=1))
     uv run ruff check --preview --diff || ((FAILURES+=1))
@@ -43,10 +42,9 @@ functional package +flags='-rA': (_venv package 'functional') (_coverage package
 
 [doc("Set up virtual environment for tests, installing `package` with `groups` if specified.")]
 _venv package *groups:
-    #!/usr/bin/env bash
-    set -x
+    #!/usr/bin/env -S bash -x
     GROUP_OPTS=$(just --justfile='{{justfile()}}' python='{{python}}' _groups {{package}} {{groups}})
-    set -xeuo pipefail  # -e and -u will early exit if _groups has no output
+    set -xeuo pipefail  # -e and -u will early exit if just _groups has no output
     uv sync  # ensure venv exists before uv pip install
     uv pip install --editable './{{package}}' $GROUP_OPTS
 
@@ -62,8 +60,7 @@ _groups package *groups:
 
 [doc("Run functional tests with `coverage` and a live `pebble` running. Requires `pebble`.")]
 functional-pebble package +flags='-rA':
-    #!/usr/bin/env bash
-    set -xueo pipefail
+    #!/usr/bin/env -S bash -xueo pipefail
     export PEBBLE=/tmp/pebble-test
     umask 0
     pebble run --create-dirs &>/dev/null &
@@ -77,8 +74,7 @@ functional-pebble package +flags='-rA':
 
 [doc("Use uv to install and run coverage for the specified package's tests.")]
 _coverage package test_subdir +flags:
-    #!/usr/bin/env bash
-    set -xueo pipefail
+    #!/usr/bin/env -S bash -xueo pipefail
     source .venv/bin/activate
     cd '{{package}}'
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
@@ -89,8 +85,7 @@ _coverage package test_subdir +flags:
 
 [doc("Combine `coverage` reports, e.g. `just python=3.8 combine-coverage pathops`.")]
 combine-coverage package:
-    #!/usr/bin/env bash
-    set -xueo pipefail
+    #!/usr/bin/env -S bash -xueo pipefail
     : 'Collect the coverage data files that exist for this package.'
     data_files=()
     for test_id in unit functional juju; do
@@ -117,8 +112,7 @@ pack-vm package base='24.04': (_pack package 'machine' base)
 
 [doc("Execute the pack script for the given package and substrate.")]
 _pack package substrate base:
-    #!/usr/bin/env bash
-    set -xueo pipefail
+    #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}/tests/integration/charms'
     ./pack.sh {{substrate}} {{base}}
 
@@ -130,8 +124,7 @@ integration-vm package +flags='-rA': (_integration package 'machine' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
 _integration package substrate +flags: (_venv package 'integration')
-    #!/usr/bin/env bash
-    set -xueo pipefail
+    #!/usr/bin/env -S bash -xueo pipefail
     source .venv/bin/activate
     cd '{{package}}'
     uv run --active pytest --tb=native -vv {{flags}} tests/integration --substrate='{{substrate}}'
