@@ -58,7 +58,7 @@ functional-pebble package +flags='-rA':
     pebble run --create-dirs &>/dev/null &
     PEBBLE_PID=$!
     set +e  # don't exit if the tests fail
-    just --justfile='{{justfile()}}' python='{{python}}' _coverage '{{package}}' 'functional' {{flags}}
+    just --justfile='{{justfile()}}' python='{{python}}' functional '{{package}}' {{flags}}
     EXITCODE=$?
     set -e  # do exit if anything goes wrong now
     kill $PEBBLE_PID
