@@ -28,8 +28,11 @@ format:
     uv run ruff check --preview --fix
     uv run ruff format --preview
 
-[doc('Run `pyright`, e.g. `just python=3.8 static pathops`.')]
-lint package *pyright_args: fast-lint (_venv package 'lint')
+[doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.8 lint pathops`.')]
+lint package *pyright_args: fast-lint (static package pyright_args)
+
+[doc('Run package specific static analysis only, e.g. `just python=3.8 static pathops`.')]
+static package *pyright_args: (_venv package 'lint')
     uv run pyright --pythonversion='{{python}}' {{pyright_args}} '{{package}}'
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
