@@ -18,6 +18,14 @@ dependencies = [
     "ops>=2.19,<4",
 ]
 
+[dependency-groups]
+lint = [
+    "jubilant",
+]
+integration = [
+    "jubilant",
+]
+
 [project.urls]
 "Repository" = "https://github.com/canonical/charmtech-charmlibs"
 "Issues" = "https://github.com/canonical/charmtech-charmlibs/issues"
