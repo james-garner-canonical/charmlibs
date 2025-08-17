@@ -29,17 +29,25 @@ format:
     uv run ruff format --preview
 
 [doc('Run `pyright`, e.g. `just python=3.8 static pathops`.')]
-lint package *pyright_args:
-    just --justfile='{{justfile()}}' python='{{python}}' fast-lint
-    uv sync  # ensure venv exists before uv pip install
-    uv pip install --editable './{{package}}'
+lint package *pyright_args: fast-lint (_venv package 'lint')
     uv run pyright --pythonversion='{{python}}' {{pyright_args}} '{{package}}'
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
-unit package +flags='-rA': (_coverage package 'unit' flags)
+unit package +flags='-rA': (_venv package 'unit') (_coverage package 'unit' flags)
 
 [doc("Run functional tests with `coverage`, e.g. `just python=3.8 functional pathops`.")]
-functional package +flags='-rA': (_coverage package 'functional' flags)
+functional package +flags='-rA': (_venv package 'functional') (_coverage package 'functional' flags)
+
+[doc("Set up virtual environment for tests, installing `package` with dependency-group `group`.")]
+_venv package group:
+    #!/usr/bin/env bash
+    set -xueo pipefail
+    uv sync  # ensure venv exists before uv pip install
+    if uv run python -c 'import pathlib, tomllib, sys; sys.exit(0 if "{{group}}" in tomllib.loads(pathlib.Path("./{{package}}/pyproject.toml").read_text()).get("dependency-groups", {}) else 1)'; then
+        uv pip install --editable './{{package}}' --group './{{package}}/pyproject.toml:{{group}}'
+    else
+        uv pip install --editable './{{package}}'
+    fi
 
 [doc("Run functional tests with `coverage` and a live `pebble` running. Requires `pebble`.")]
 functional-pebble package +flags='-rA':
@@ -60,8 +68,6 @@ functional-pebble package +flags='-rA':
 _coverage package test_subdir +flags:
     #!/usr/bin/env bash
     set -xueo pipefail
-    uv sync --python='{{python}}'
-    uv pip install --editable './{{package}}'
     source .venv/bin/activate
     cd '{{package}}'
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
@@ -112,11 +118,9 @@ integration-k8s package +flags='-rA': (_integration package 'kubernetes' flags)
 integration-vm package +flags='-rA': (_integration package 'machine' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-_integration package substrate +flags:
+_integration package substrate +flags: (_venv package 'integration')
     #!/usr/bin/env bash
     set -xueo pipefail
-    uv sync --python='{{python}}'
-    uv pip install --editable './{{package}}'
     source .venv/bin/activate
     cd '{{package}}'
     uv run --active pytest --tb=native -vv {{flags}} tests/integration --substrate='{{substrate}}'
