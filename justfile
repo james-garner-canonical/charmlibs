@@ -32,7 +32,7 @@ format:
 lint package *pyright_args: fast-lint (static package pyright_args)
 
 [doc('Run package specific static analysis only, e.g. `just python=3.8 static pathops`.')]
-static package *pyright_args: (_venv package 'lint')
+static package *pyright_args: (_venv package 'lint' 'unit' 'functional' 'integration')
     uv run pyright --pythonversion='{{python}}' {{pyright_args}} '{{package}}'
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
@@ -41,16 +41,24 @@ unit package +flags='-rA': (_venv package 'unit') (_coverage package 'unit' flag
 [doc("Run functional tests with `coverage`, e.g. `just python=3.8 functional pathops`.")]
 functional package +flags='-rA': (_venv package 'functional') (_coverage package 'functional' flags)
 
-[doc("Set up virtual environment for tests, installing `package` with dependency-group `group`.")]
-_venv package group:
+[doc("Set up virtual environment for tests, installing `package` with `groups` if specified.")]
+_venv package *groups:
     #!/usr/bin/env bash
-    set -xueo pipefail
+    set -x
+    GROUP_OPTS=$(just --justfile='{{justfile()}}' python='{{python}}' _groups {{package}} {{groups}})
+    set -xeuo pipefail  # -e and -u will early exit if _groups has no output
     uv sync  # ensure venv exists before uv pip install
-    if uv run python -c 'import pathlib, tomllib, sys; sys.exit(0 if "{{group}}" in tomllib.loads(pathlib.Path("./{{package}}/pyproject.toml").read_text()).get("dependency-groups", {}) else 1)'; then
-        uv pip install --editable './{{package}}' --group './{{package}}/pyproject.toml:{{group}}'
-    else
-        uv pip install --editable './{{package}}'
-    fi
+    uv pip install --editable './{{package}}' $GROUP_OPTS
+
+[doc("Print --group flags for specified `groups` if they're in `package`'s dependency-groups.")]
+_groups package *groups:
+    #!/usr/bin/env -S uv run --script --no-project
+    # /// script
+    # requires-python = ">=3.11"
+    # ///
+    import pathlib, tomllib
+    table = tomllib.loads(pathlib.Path('./{{package}}/pyproject.toml').read_text()).get('dependency-groups', {})
+    print(' '.join(f'--group=./{{package}}/pyproject.toml:{group}' for group in '{{groups}}'.split() if group in table), end='')
 
 [doc("Run functional tests with `coverage` and a live `pebble` running. Requires `pebble`.")]
 functional-pebble package +flags='-rA':

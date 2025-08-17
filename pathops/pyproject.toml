@@ -20,7 +20,7 @@ dependencies = [
 
 [dependency-groups]
 lint = [
-    "jubilant",
+    "typing_extensions",
 ]
 integration = [
     "jubilant",
