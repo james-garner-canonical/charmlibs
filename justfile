@@ -117,10 +117,10 @@ _pack package substrate base:
     CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_BASE={{base}} ./pack.sh
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-k8s package +flags='-rA': (_integration package 'kubernetes' flags)
+integration-k8s package +flags='-rA': (_integration package 'k8s' flags)
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-vm package +flags='-rA': (_integration package 'machine' flags)
+integration-machine package +flags='-rA': (_integration package 'machine' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
 _integration package substrate +flags: (_venv package 'integration')

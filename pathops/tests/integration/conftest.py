@@ -56,7 +56,7 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
 
 
 def _deploy(juju: jubilant.Juju, charm: str) -> None:
-    if charm == 'kubernetes':
+    if charm == 'k8s':
         juju.deploy(
             _get_packed_charm_path(charm),
             resources={'workload': 'ubuntu:latest'},
