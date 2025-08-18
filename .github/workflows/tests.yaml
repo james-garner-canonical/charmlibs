@@ -70,12 +70,14 @@ jobs:
         if: contains(fromJson(steps.tests.outputs.tests), 'integration')
         run: |
           substrates=()
-          if uvx --from rust-just just integration-k8s --collect-only -q; then
-            substrates+=('k8s')
-          fi
-          if uvx --from rust-just just integration-machine --collect-only -q; then
-            substrates+=('machine')
-          fi
+          for substrate in k8s machine; do
+            uvx --from rust-just just integration-$substrate ${{ inputs.package }} --collect-only -q
+            case $? in
+                0) substrates+=($substrate);;
+                5) echo "No tests for $substrate";;
+                *) echo "Unexpected exit code $?"; exit 1;;
+            esac
+          done
           js=$(jq '$ARGS.positional' --null-input --compact-output --args "${substrates[@]}")
           echo "substrates=$js"
           echo "substrates=$js" >> "$GITHUB_OUTPUT"
