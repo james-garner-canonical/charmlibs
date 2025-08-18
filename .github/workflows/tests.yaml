@@ -47,15 +47,11 @@ jobs:
         id: tests
         run: |
           tests=()
-          if [ -d ${{ inputs.package }}/tests/unit ]; then
-            tests+=('unit')
-          fi
-          if [ -d ${{ inputs.package }}/tests/functional ]; then
-            tests+=('functional')
-          fi
-          if [ -d ${{ inputs.package }}/tests/integration ]; then
-            tests+=('integration')
-          fi
+          for test in unit functional integration; do
+            if [ -d ${{ inputs.package }}/tests/$test ]; then
+              tests+=($test)
+            fi
+          done
           js=$(jq '$ARGS.positional' --null-input --compact-output --args "${tests[@]}")
           echo "tests=$js"
           echo "tests=$js" >> "$GITHUB_OUTPUT"
