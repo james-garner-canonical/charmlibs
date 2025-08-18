@@ -117,14 +117,14 @@ _pack package substrate base:
     CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_BASE={{base}} ./pack.sh
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-k8s package +flags='-rA': (_integration package 'k8s' flags)
+integration-k8s package +flags='-rA': (_integration package 'k8s' 'machine' flags)
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-machine package +flags='-rA': (_integration package 'machine' flags)
+integration-machine package +flags='-rA': (_integration package 'machine' 'k8s' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-_integration package substrate +flags: (_venv package 'integration')
+_integration package substrate exclude +flags: (_venv package 'integration')
     #!/usr/bin/env -S bash -xueo pipefail
     source .venv/bin/activate
     cd '{{package}}'
-    CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv {{flags}} tests/integration
+    CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv -m 'not {{exclude}}_only' tests/integration  {{flags}}
