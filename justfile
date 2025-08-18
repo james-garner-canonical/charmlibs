@@ -105,10 +105,10 @@ combine-coverage package:
     uv run coverage report --data-file="$DATA_FILE"
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
-pack-k8s package base='24.04': (_pack package 'kubernetes' base)
+pack-k8s package base='24.04': (_pack package 'k8s' base)
 
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
-pack-vm package base='24.04': (_pack package 'machine' base)
+pack-machine package base='24.04': (_pack package 'machine' base)
 
 [doc("Execute the pack script for the given package and substrate.")]
 _pack package substrate base:
