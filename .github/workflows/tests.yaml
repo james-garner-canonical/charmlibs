@@ -140,6 +140,8 @@ jobs:
       matrix:
         base: ['20.04', '24.04']
         substrate: ['k8s', 'vm']
+    env:
+      CHARMLIBS_BASE: ${{ matrix.base }}
     steps:
       - uses: actions/checkout@v4
 
