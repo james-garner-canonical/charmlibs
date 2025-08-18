@@ -127,4 +127,4 @@ _integration package substrate +flags: (_venv package 'integration')
     #!/usr/bin/env -S bash -xueo pipefail
     source .venv/bin/activate
     cd '{{package}}'
-    uv run --active pytest --tb=native -vv {{flags}} tests/integration --substrate='{{substrate}}'
+    CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv {{flags}} tests/integration
