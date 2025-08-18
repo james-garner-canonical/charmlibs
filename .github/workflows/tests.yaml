@@ -30,6 +30,7 @@ jobs:
       tests: ${{ steps.tests.outputs.tests }}
       python: ${{ steps.python.outputs.versions }}
       functional-matrix: ${{ steps.functional.outputs.matrix }}
+      integration-substrates: ${{ steps.integration.outputs.substrates }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +64,21 @@ jobs:
         id: functional
         if: contains(fromJson(steps.tests.outputs.tests), 'functional')
         run: uv run --no-project --script .github/get-functional-test-matrix.py ${{ inputs.package }}
+
+      - name: Check substrates needed for integration tests
+        id: integration
+        if: contains(fromJson(steps.tests.outputs.tests), 'integration')
+        run: |
+          substrates=()
+          if uvx --from rust-just just integration-k8s --collect-only -q; then
+            substrates+=('k8s')
+          fi
+          if uvx --from rust-just just integration-machine --collect-only -q; then
+            substrates+=('machine')
+          fi
+          js=$(jq '$ARGS.positional' --null-input --compact-output --args "${substrates[@]}")
+          echo "substrates=$js"
+          echo "substrates=$js" >> "$GITHUB_OUTPUT"
 
   lint:
     needs: init
@@ -139,7 +155,7 @@ jobs:
       fail-fast: false
       matrix:
         base: ['20.04', '24.04']
-        substrate: ['k8s', 'machine']
+        substrate: ${{ fromJson(needs.init.outputs.integration-substrates) }}
     env:
       CHARMLIBS_BASE: ${{ matrix.base }}
     steps:
