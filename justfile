@@ -128,3 +128,8 @@ _integration package substrate label +flags: (_venv package 'integration')
     source .venv/bin/activate
     cd '{{package}}'
     CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
+
+version package: (_venv package)
+    #!/usr/bin/env -S uv run --script --active
+    import charmlibs.{{ replace(package, '/', '.') }} as package
+    print(package.__version__)
