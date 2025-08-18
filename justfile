@@ -114,7 +114,7 @@ pack-vm package base='24.04': (_pack package 'machine' base)
 _pack package substrate base:
     #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}/tests/integration'
-    ./pack.sh {{substrate}} {{base}}
+    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_BASE={{base}} ./pack.sh
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
 integration-k8s package +flags='-rA': (_integration package 'kubernetes' flags)
