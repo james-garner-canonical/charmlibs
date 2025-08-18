@@ -105,26 +105,26 @@ combine-coverage package:
     uv run coverage report --data-file="$DATA_FILE"
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
-pack-k8s package base='24.04': (_pack package 'kubernetes' base)
+pack-k8s package base='24.04': (_pack package 'k8s' base)
 
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
-pack-vm package base='24.04': (_pack package 'machine' base)
+pack-machine package base='24.04': (_pack package 'machine' base)
 
 [doc("Execute the pack script for the given package and substrate.")]
 _pack package substrate base:
     #!/usr/bin/env -S bash -xueo pipefail
-    cd '{{package}}/tests/integration/charms'
-    ./pack.sh {{substrate}} {{base}}
+    cd '{{package}}/tests/integration'
+    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_BASE={{base}} ./pack.sh
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-k8s package +flags='-rA': (_integration package 'kubernetes' flags)
+integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_only' flags)
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
-integration-vm package +flags='-rA': (_integration package 'machine' flags)
+integration-machine package +flags='-rA': (_integration package 'machine' 'not k8s_only' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-_integration package substrate +flags: (_venv package 'integration')
+_integration package substrate label +flags: (_venv package 'integration')
     #!/usr/bin/env -S bash -xueo pipefail
     source .venv/bin/activate
     cd '{{package}}'
-    uv run --active pytest --tb=native -vv {{flags}} tests/integration --substrate='{{substrate}}'
+    CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}

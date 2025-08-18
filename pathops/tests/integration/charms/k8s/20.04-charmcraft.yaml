@@ -1,11 +1,13 @@
-name: kubernetes
+name: k8s
 type: charm
 summary: A small Kubernetes charm for use in integration tests.
 description: A small Kubernetes charm for use in integration tests.
 
-base: ubuntu@24.04
-platforms:
-  amd64:
+bases:
+  - name: ubuntu
+    channel: '20.04'
+    architectures:
+      - amd64
 
 parts:
   test-charm:

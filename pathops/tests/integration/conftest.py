@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import typing
 
@@ -31,19 +32,11 @@ def pytest_addoption(parser: pytest.OptionGroup):
         default=False,
         help='keep temporarily-created models',
     )
-    parser.addoption(
-        '--substrate',
-        action='store',
-        default='kubernetes',
-        choices=('machine', 'kubernetes'),
-        help='whether to deploy the machine or kubernetes charm',
-    )
 
 
 @pytest.fixture(scope='session')
-def charm(request: pytest.FixtureRequest) -> str:
-    substrate = typing.cast('str', request.config.getoption('--substrate'))
-    return substrate
+def charm() -> str:
+    return os.environ['CHARMLIBS_SUBSTRATE']
 
 
 @pytest.fixture(scope='module')
@@ -63,7 +56,7 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
 
 
 def _deploy(juju: jubilant.Juju, charm: str) -> None:
-    if charm == 'kubernetes':
+    if charm == 'k8s':
         juju.deploy(
             _get_packed_charm_path(charm),
             resources={'workload': 'ubuntu:latest'},

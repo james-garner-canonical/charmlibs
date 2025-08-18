@@ -78,7 +78,7 @@ def test_chown(
         print(e)
         print(e.task.message)
         if (
-            charm == 'kubernetes'
+            charm == 'k8s'
             and user is None
             and group is not None
             and (method == 'mkdir' or not already_exists)

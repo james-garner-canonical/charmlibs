@@ -152,4 +152,9 @@ stubPath = ""  # silence warning: https://github.com/microsoft/pyright/issues/77
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers"]
-markers = ["pebble: tests that require a running Pebble to interact with"]
+markers = [
+    "pebble: functional tests that require a running Pebble to interact with",
+    "sudo: functional tests that require superuser privileges",
+    "k8s_only: integration tests that should only run with a K8s Juju cloud",
+    "machine_only: integration tests that should only run with a machine Juju cloud",
+]
