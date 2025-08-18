@@ -113,7 +113,7 @@ pack-vm package base='24.04': (_pack package 'machine' base)
 [doc("Execute the pack script for the given package and substrate.")]
 _pack package substrate base:
     #!/usr/bin/env -S bash -xueo pipefail
-    cd '{{package}}/tests/integration/charms'
+    cd '{{package}}/tests/integration'
     ./pack.sh {{substrate}} {{base}}
 
 [doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
