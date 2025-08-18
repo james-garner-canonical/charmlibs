@@ -25,13 +25,13 @@ BASES = ['20.04', '24.04']
 
 
 def test_common_py():
-    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes' / 'src' / 'common.py'
+    k = pathlib.Path(__file__).parent / 'charms' / 'k8s' / 'src' / 'common.py'
     m = pathlib.Path(__file__).parent / 'charms' / 'machine' / 'src' / 'common.py'
     assert k.read_text() == m.read_text()
 
 
 def test_bases():
-    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes'
+    k = pathlib.Path(__file__).parent / 'charms' / 'k8s'
     m = pathlib.Path(__file__).parent / 'charms' / 'machine'
     kb = sorted(p.name for p in k.glob('*-charmcraft.yaml'))
     mb = sorted(p.name for p in m.glob('*-charmcraft.yaml'))
@@ -42,7 +42,7 @@ def test_bases():
 
 @pytest.mark.parametrize('base', BASES)
 def test_charmcraft_yaml(base: str):
-    k = pathlib.Path(__file__).parent / 'charms' / 'kubernetes' / f'{base}-charmcraft.yaml'
+    k = pathlib.Path(__file__).parent / 'charms' / 'k8s' / f'{base}-charmcraft.yaml'
     m = pathlib.Path(__file__).parent / 'charms' / 'machine' / f'{base}-charmcraft.yaml'
     with k.open() as f:
         ky = yaml.safe_load(f)

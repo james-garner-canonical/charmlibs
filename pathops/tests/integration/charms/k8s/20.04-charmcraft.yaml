@@ -1,4 +1,4 @@
-name: kubernetes
+name: k8s
 type: charm
 summary: A small Kubernetes charm for use in integration tests.
 description: A small Kubernetes charm for use in integration tests.
