@@ -2,6 +2,7 @@
 # usage: pack.sh <substrate> <base>
 # e.g. pack.sh machine 24.04
 set -xueo pipefail
+cd charms
 
 CHARMDIR="$1"  # machine or kubernetes
 BASE="$2"  # 20.04, 24.04, etc
