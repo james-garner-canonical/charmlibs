@@ -158,6 +158,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Pack charms
+        if: hashFiles('${{ inputs.package }}/tests/integration/pack.sh') != ''
         run: uvx --from rust-just just pack-${{ matrix.substrate }} ${{ inputs.package }} ${{ matrix.base }}
 
       - name: Run Juju integration tests
