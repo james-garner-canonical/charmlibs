@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Output the packages to publish, PyPI repository-url and whether to skip Juju tests when publishing."""
+"""Output the packages to publish, the PyPI repository-url and whether to skip Juju tests."""
 
 from __future__ import annotations
 
