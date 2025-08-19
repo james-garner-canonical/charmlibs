@@ -36,7 +36,7 @@ def _main() -> None:
     event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
     if event_name == 'push':
         _output({
-            'packages': json.dumps(_get_bumped_packages(event['before'], os.environ['GITHUB_SHA'])),
+            'packages': json.dumps(_get_packages(event['before'], os.environ['GITHUB_SHA'])),
             'skip-juju': 'false',
             'repository-url': 'https://upload.pypi.org/legacy/',
         })
@@ -51,7 +51,7 @@ def _main() -> None:
         sys.exit(1)
 
 
-def _get_bumped_packages(old_ref: str, new_ref: str) -> list[str]:
+def _get_packages(old_ref: str, new_ref: str) -> list[str]:
     changes = _get_changes(old_ref, new_ref)
     with tempfile.TemporaryDirectory() as td1:
         new_root = pathlib.Path(td1)
@@ -100,8 +100,10 @@ def _get_version(root: pathlib.Path, package: str) -> str | None:
         return None
     logger.debug('Computing version for %s', package)
     dist_name = (
-        'charmlibs' if package == '.package'
-        else 'charmlibs-interfaces' if package == 'interfaces/.package'
+        'charmlibs'
+        if package == '.package'
+        else 'charmlibs-interfaces'
+        if package == 'interfaces/.package'
         else 'charmlibs.' + package.replace('/', '-')
     )
     script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
