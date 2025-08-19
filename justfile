@@ -128,13 +128,3 @@ _integration package substrate label +flags: (_venv package 'integration')
     source .venv/bin/activate
     cd '{{package}}'
     CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
-
-version package:
-    #!/usr/bin/env -S uv run --script --no-project
-    # /// script
-    # dependencies = [
-    #     "charmlibs.{{ replace(package, '/', '-') }} @ {{ justfile_directory() }}/{{ package }}",
-    # ]
-    # ///
-    import importlib.metadata
-    print(importlib.metadata.version('charmlibs-{{ replace(package, '/', '-') }}'))
