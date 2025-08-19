@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# /// script
-# requires-python = '>=3.8'
-# dependencies = [
-#     'tomli',
-# ]
-# ///
-
 """Output the packages to publish, PyPI repository-url and whether to skip Juju tests when publishing."""
 
 from __future__ import annotations
