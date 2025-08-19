@@ -49,28 +49,28 @@ def _main() -> None:
         sys.exit(1)
 
 
-def _get_bumped_packages(ref_before: str, ref_after: str) -> list[str]:
-    changes = _get_changes(ref_before, ref_after)
+def _get_bumped_packages(old_ref: str, new_ref: str) -> list[str]:
+    changes = _get_changes(old_ref, new_ref)
     with tempfile.TemporaryDirectory() as tempdirname:
         tempdir = pathlib.Path(tempdirname)
-        root_before = _git_archive(ref=ref_before, path=tempdir / '.before')
-        root_after = _git_archive(ref=ref_after, path=tempdir / '.after')
+        new_root = _git_archive(ref=new_ref, path=tempdir / '.new')
         all_packages_raw = (
-            *_get_all_packages(root_after, exclude='interfaces'),
-            *_get_all_packages(root_after / 'interfaces'),
+            *_get_all_packages(new_root, exclude='interfaces'),
+            *_get_all_packages(new_root / 'interfaces'),
         )
-        all_packages = [str(pathlib.Path(p).relative_to(root_after)) for p in all_packages_raw]
+        all_packages = [str(pathlib.Path(p).relative_to(new_root)) for p in all_packages_raw]
         changed_packages = sorted(changes.intersection(all_packages))
-        versions_after = {p: _get_version(root_after, p) for p in changed_packages}
-        versions_before = {p: _get_version(root_before, p) for p in changed_packages}
-    changed = [p for p in changed_packages if versions_before[p] != versions_after[p]]
+        new_versions = {p: _get_version(new_root, p) for p in changed_packages}
+        old_root = _git_archive(ref=old_ref, path=tempdir / '.old')
+        old_versions = {p: _get_version(old_root, p) for p in changed_packages}
+    changed = [p for p in changed_packages if old_versions[p] != new_versions[p]]
     for p in changed:
-        logging.info('%s: %s -> %s', p, versions_before[p], versions_after[p])
+        logging.info('%s: %s -> %s', p, old_versions[p], new_versions[p])
     return changed
 
 
-def _get_changes(before: str, after: str) -> set[str]:
-    cmd = ['git', 'diff', '--name-only', before, after]
+def _get_changes(old_ref: str, new_ref: str) -> set[str]:
+    cmd = ['git', 'diff', '--name-only', old_ref, new_ref]
     output = subprocess.check_output(cmd, text=True)
     diff = [p.split('/') for p in output.split('\n')]
     return {*(p[0] for p in diff), *('/'.join(p[:2]) for p in diff)}
