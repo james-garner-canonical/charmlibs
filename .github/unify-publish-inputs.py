@@ -23,14 +23,17 @@
 
 from __future__ import annotations
 
+import io
 import json
+import logging
 import os
 import pathlib
 import subprocess
 import sys
-import typing
+import tarfile
+import tempfile
 
-import tomli
+logging.basicConfig(level=logging.DEBUG)
 
 
 def _main() -> None:
@@ -38,7 +41,7 @@ def _main() -> None:
     event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
     if event_name == 'push':
         _output({
-            'packages': json.dumps(_packages(event['before'], os.environ['GITHUB_SHA'])),
+            'packages': json.dumps(_get_bumped_packages(event['before'], os.environ['GITHUB_SHA'])),
             'skip-juju': 'false',
             'repository-url': 'https://upload.pypi.org/legacy/',
         })
@@ -53,68 +56,60 @@ def _main() -> None:
         sys.exit(1)
 
 
-def _packages(before: str, after: str) -> list[str]:
-    packages = _get_changed_packages(before, after)
-    _git_checkout(before)
-    versions_before = {p: _get_version(p) for p in packages}
-    _git_checkout(after)
-    versions_after = {p: _get_version(p) for p in packages}
-    return [p for p in packages if versions_before[p] != versions_after[p]]
+def _get_bumped_packages(ref_before: str, ref_after: str) -> list[str]:
+    changes = _get_changes(ref_before, ref_after)
+    with tempfile.TemporaryDirectory() as tempdirname:
+        tempdir = pathlib.Path(tempdirname)
+        root_before = _git_archive(ref=ref_before, path=tempdir / '.before')
+        root_after = _git_archive(ref=ref_after, path=tempdir / '.after')
+        all_packages_raw = (
+            *_get_all_packages(root_after, exclude='interfaces'),
+            *_get_all_packages(root_after / 'interfaces'),
+        )
+        all_packages = [str(pathlib.Path(p).relative_to(root_after)) for p in all_packages_raw]
+        changed_packages = sorted(changes.intersection(all_packages))
+        versions_after = {p: _get_version(root_after, p) for p in changed_packages}
+        versions_before = {p: _get_version(root_before, p) for p in changed_packages}
+    changed = [p for p in changed_packages if versions_before[p] != versions_after[p]]
+    for p in changed:
+        logging.info('%s: %s -> %s', p, versions_before[p], versions_after[p])
+    return changed
 
 
-def _get_changed_packages(before: str, after: str) -> list[str]:
-    all_packages = [*_get_packages('.', exclude='interfaces'), *_get_packages('interfaces')]
+def _get_changes(before: str, after: str) -> set[str]:
     cmd = ['git', 'diff', '--name-only', before, after]
     output = subprocess.check_output(cmd, text=True)
     diff = [p.split('/') for p in output.split('\n')]
-    changes = {*(p[0] for p in diff), *('/'.join(p[:2]) for p in diff)}
-    return sorted(changes.intersection(all_packages))
+    return {*(p[0] for p in diff), *('/'.join(p[:2]) for p in diff)}
 
 
-def _get_packages(root: pathlib.Path | str, exclude: str | None = None) -> list[str]:
+def _get_all_packages(root: pathlib.Path | str, exclude: str | None = None) -> list[str]:
     root = pathlib.Path(root)
     paths = [root / '.package', *root.glob(r'[a-z]*')]
     return sorted(str(path) for path in paths if path.is_dir() and path.name != exclude)
 
 
-def _git_checkout(ref: str) -> None:
-    cmd = ['git', 'checkout', ref]
-    subprocess.check_output(cmd)
+def _git_archive(ref: str, path: pathlib.Path) -> pathlib.Path:
+    path.mkdir()
+    git = subprocess.run(['git', 'archive', ref], stdout=subprocess.PIPE, check=True)
+    stream = io.BytesIO(git.stdout)
+    with tarfile.open(fileobj=stream) as tar:
+        tar.extractall(path=path)  # noqa: S202
+    return path
 
 
-def _get_version(package: str) -> str | None:
-    pyproject = pathlib.Path(package) / 'pyproject.toml'
-    if not pyproject.exists():
+def _get_version(root: pathlib.Path, package: str) -> str | None:
+    if not (root / package).exists():
         return None
-    text = pyproject.read_text()
-    toml = tomli.loads(text)
-    proj = toml['project']
-    if (version := proj.get('version')) is not None:
-        return version
-    assert 'dynamic' in proj
-    assert 'version' in proj['dynamic']
-    build = toml['build-system']
-    backend = build['build-backend']
-    if 'hatch' in backend:
-        return _get_version_from_hatch(package, toml)
-    if 'setuptools' in backend:
-        return _get_version_from_setuptools(package, toml)
-    raise NotImplementedError(f'Unsupported build backend: {backend!r}')
-
-
-def _get_version_from_hatch(package: str, toml: dict[str, typing.Any]) -> str:
-    output = subprocess.check_output(['uvx', 'hatch', 'version'], cwd=package, text=True)
-    assert output
-    return output.strip()
-
-
-def _get_version_from_setuptools(package: str, toml: dict[str, typing.Any]) -> str:
-    dynamic = toml['tools']['setuptools']['dynamic']['version']
-    if (path := dynamic.get('file')) is not None:
-        return (pathlib.Path(package) / path).read_text()
-    if (path := dynamic.get('attr')) is not None:
-        raise NotImplementedError('Support for `attr` is not yet implemented.')
-    raise ValueError(f'Unknown dynamic version specification: {dynamic}')
+    logging.debug('Computing version for %s', package)
+    dist_name = (
+        'charmlibs' if package == '.package'
+        else 'charmlibs-interfaces' if package == 'interfaces/.package'
+        else 'charmlibs.' + package.replace('/', '-')
+    )
+    script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
+    cmd = ['uv', 'run', '--no-project', '--with', f'./{package}', 'python', '-c', script]
+    return subprocess.check_output(cmd, cwd=root, text=True).strip()
 
 
 def _output(di: dict[str, str]) -> None:
