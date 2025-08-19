@@ -27,6 +27,8 @@ import tarfile
 import tempfile
 
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(pathlib.Path().absolute())))
+logger.setLevel(logging.DEBUG)
 
 
 def _main() -> None:
@@ -51,21 +53,25 @@ def _main() -> None:
 
 def _get_bumped_packages(old_ref: str, new_ref: str) -> list[str]:
     changes = _get_changes(old_ref, new_ref)
-    with tempfile.TemporaryDirectory() as tempdirname:
-        tempdir = pathlib.Path(tempdirname)
-        new_root = _git_archive(ref=new_ref, path=tempdir / '.new')
-        all_packages_raw = (
-            *_get_all_packages(new_root, exclude='interfaces'),
-            *_get_all_packages(new_root / 'interfaces'),
-        )
-        all_packages = [str(pathlib.Path(p).relative_to(new_root)) for p in all_packages_raw]
+    with tempfile.TemporaryDirectory() as td1:
+        new_root = pathlib.Path(td1)
+        _git_archive(ref=new_ref, directory=new_root)
+        all_packages = [
+            str(pathlib.Path(p).relative_to(new_root))
+            for p in (
+                *_get_all_packages(new_root, exclude='interfaces'),
+                *_get_all_packages(new_root / 'interfaces'),
+            )
+        ]
         changed_packages = sorted(changes.intersection(all_packages))
         new_versions = {p: _get_version(new_root, p) for p in changed_packages}
-        old_root = _git_archive(ref=old_ref, path=tempdir / '.old')
+    with tempfile.TemporaryDirectory() as td2:
+        old_root = pathlib.Path(td2)
+        _git_archive(ref=old_ref, directory=old_root)
         old_versions = {p: _get_version(old_root, p) for p in changed_packages}
     changed = [p for p in changed_packages if old_versions[p] != new_versions[p]]
     for p in changed:
-        logging.info('%s: %s -> %s', p, old_versions[p], new_versions[p])
+        logger.info('%s: %s -> %s', p, old_versions[p], new_versions[p])
     return changed
 
 
@@ -82,19 +88,17 @@ def _get_all_packages(root: pathlib.Path | str, exclude: str | None = None) -> l
     return sorted(str(path) for path in paths if path.is_dir() and path.name != exclude)
 
 
-def _git_archive(ref: str, path: pathlib.Path) -> pathlib.Path:
-    path.mkdir()
+def _git_archive(ref: str, directory: pathlib.Path) -> None:
     git = subprocess.run(['git', 'archive', ref], stdout=subprocess.PIPE, check=True)
     stream = io.BytesIO(git.stdout)
     with tarfile.open(fileobj=stream) as tar:
-        tar.extractall(path=path)  # noqa: S202
-    return path
+        tar.extractall(path=directory)  # noqa: S202
 
 
 def _get_version(root: pathlib.Path, package: str) -> str | None:
     if not (root / package).exists():
         return None
-    logging.debug('Computing version for %s', package)
+    logger.debug('Computing version for %s', package)
     dist_name = (
         'charmlibs' if package == '.package'
         else 'charmlibs-interfaces' if package == 'interfaces/.package'
