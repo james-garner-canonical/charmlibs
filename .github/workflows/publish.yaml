@@ -34,6 +34,7 @@ jobs:
   tests:
     needs: unify-inputs
     strategy:
+      fail-fast: true
       matrix:
         package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
     uses: ./.github/workflows/tests.yaml
