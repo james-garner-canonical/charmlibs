@@ -34,7 +34,7 @@ jobs:
   tests:
     needs: unify-inputs
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
     uses: ./.github/workflows/tests.yaml
@@ -45,6 +45,7 @@ jobs:
   build-n-publish:
     needs: [unify-inputs,tests]
     strategy:
+      fail-fast: false
       matrix:
         package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
     name: Build and publish ${{ matrix.package }}
