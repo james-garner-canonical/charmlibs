@@ -33,6 +33,7 @@ jobs:
 
   tests:
     needs: unify-inputs
+    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -44,6 +45,7 @@ jobs:
 
   build-n-publish:
     needs: [unify-inputs,tests]
+    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
     strategy:
       fail-fast: false
       matrix:
