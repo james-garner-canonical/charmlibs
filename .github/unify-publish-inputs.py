@@ -55,7 +55,7 @@ def _get_packages(old_ref: str, new_ref: str) -> list[str]:
     changes = _get_changes(old_ref, new_ref)
     with tempfile.TemporaryDirectory() as td1:
         new_root = pathlib.Path(td1)
-        _git_archive(ref=new_ref, directory=new_root)
+        _snapshot_repo(ref=new_ref, directory=new_root)
         all_packages = [
             str(pathlib.Path(p).relative_to(new_root))
             for p in (
@@ -67,7 +67,7 @@ def _get_packages(old_ref: str, new_ref: str) -> list[str]:
         new_versions = {p: _get_version(new_root, p) for p in changed_packages}
     with tempfile.TemporaryDirectory() as td2:
         old_root = pathlib.Path(td2)
-        _git_archive(ref=old_ref, directory=old_root)
+        _snapshot_repo(ref=old_ref, directory=old_root)
         old_versions = {p: _get_version(old_root, p) for p in changed_packages}
     changed = [p for p in changed_packages if old_versions[p] != new_versions[p]]
     for p in changed:
@@ -76,10 +76,18 @@ def _get_packages(old_ref: str, new_ref: str) -> list[str]:
 
 
 def _get_changes(old_ref: str, new_ref: str) -> set[str]:
+    """Return the first and first two parts of the changed paths as a set.
+
+    e.g. If the file 'foo/bar/baz' has changed, return {'foo', 'foo/bar'}.
+    """
     cmd = ['git', 'diff', '--name-only', old_ref, new_ref]
     output = subprocess.check_output(cmd, text=True)
-    diff = [p.split('/') for p in output.split('\n')]
-    return {*(p[0] for p in diff), *('/'.join(p[:2]) for p in diff)}
+    changes: set[str] = set()
+    for line in output.split('\n'):
+        parts = pathlib.Path(line).parts
+        changes.add(parts[0])
+        changes.add(str(pathlib.Path(*parts[:2])))
+    return changes
 
 
 def _get_all_packages(root: pathlib.Path | str, exclude: str | None = None) -> list[str]:
@@ -88,7 +96,7 @@ def _get_all_packages(root: pathlib.Path | str, exclude: str | None = None) -> l
     return sorted(str(path) for path in paths if path.is_dir() and path.name != exclude)
 
 
-def _git_archive(ref: str, directory: pathlib.Path) -> None:
+def _snapshot_repo(ref: str, directory: pathlib.Path) -> None:
     git = subprocess.run(['git', 'archive', ref], stdout=subprocess.PIPE, check=True)
     stream = io.BytesIO(git.stdout)
     with tarfile.open(fileobj=stream) as tar:
