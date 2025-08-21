@@ -12,29 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Output the package, PyPI repository-url and whether to skip Juju tests when publishing."""
+"""Output the packages to publish, the PyPI repository-url and whether to skip Juju tests."""
 
 from __future__ import annotations
 
+import io
 import json
+import logging
 import os
 import pathlib
-import re
+import subprocess
 import sys
+import tarfile
+import tempfile
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(pathlib.Path().absolute())))
+logger.setLevel(logging.DEBUG)
 
 
 def _main() -> None:
     event_name = os.environ['GITHUB_EVENT_NAME']
+    event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
     if event_name == 'push':
         _output({
-            'package': _parse_tag(os.environ['GITHUB_REF']),
+            'packages': json.dumps(_get_packages(event['before'], os.environ['GITHUB_SHA'])),
             'skip-juju': 'false',
             'repository-url': 'https://upload.pypi.org/legacy/',
         })
     elif event_name == 'workflow_dispatch':
-        event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
         _output({
-            'package': event['inputs']['package'],
+            'packages': json.dumps([event['inputs']['package']]),
             'skip-juju': event['inputs']['skip-juju'],
             'repository-url': 'https://test.pypi.org/legacy/',
         })
@@ -43,24 +51,72 @@ def _main() -> None:
         sys.exit(1)
 
 
-def _parse_tag(ref: str) -> str:
-    tag_prefix = 'refs/tags/'
-    if not ref.startswith(tag_prefix):
-        print(f'Unexpected ref: {ref}')
-        sys.exit(1)
-    tag = ref[len(tag_prefix) :]
-    match = re.match(r'^(.*)-v[0-9]+.*$', tag)
-    if match is None:
-        print(f'Malformed tag: {tag}')
-        sys.exit(1)
-    package = match.group(1)
-    if package == 'charmlibs':
-        return '.package'
-    if package == 'interfaces':
-        return 'interfaces/.package'
-    if package.startswith('interfaces-'):
-        return package.replace('-', '/', 1)  # interfaces-foo-bar -> interfaces/foo-bar
-    return package
+def _get_packages(old_ref: str, new_ref: str) -> list[str]:
+    changes = _get_changes(old_ref, new_ref)
+    with tempfile.TemporaryDirectory() as td1:
+        new_root = pathlib.Path(td1)
+        _snapshot_repo(ref=new_ref, directory=new_root)
+        all_packages = [
+            str(pathlib.Path(p).relative_to(new_root))
+            for p in (
+                *_get_all_packages(new_root, exclude='interfaces'),
+                *_get_all_packages(new_root / 'interfaces'),
+            )
+        ]
+        changed_packages = sorted(changes.intersection(all_packages))
+        new_versions = {p: _get_version(new_root, p) for p in changed_packages}
+    with tempfile.TemporaryDirectory() as td2:
+        old_root = pathlib.Path(td2)
+        _snapshot_repo(ref=old_ref, directory=old_root)
+        old_versions = {p: _get_version(old_root, p) for p in changed_packages}
+    changed = [p for p in changed_packages if old_versions[p] != new_versions[p]]
+    for p in changed:
+        logger.info('%s: %s -> %s', p, old_versions[p], new_versions[p])
+    return changed
+
+
+def _get_changes(old_ref: str, new_ref: str) -> set[str]:
+    """Return the first and first two parts of the changed paths as a set.
+
+    e.g. If the file 'foo/bar/baz' has changed, return {'foo', 'foo/bar'}.
+    """
+    cmd = ['git', 'diff', '--name-only', old_ref, new_ref]
+    output = subprocess.check_output(cmd, text=True)
+    changes: set[str] = set()
+    for line in output.split('\n'):
+        parts = pathlib.Path(line).parts
+        changes.add(parts[0])
+        changes.add(str(pathlib.Path(*parts[:2])))
+    return changes
+
+
+def _get_all_packages(root: pathlib.Path | str, exclude: str | None = None) -> list[str]:
+    root = pathlib.Path(root)
+    paths = [root / '.package', *root.glob(r'[a-z]*')]
+    return sorted(str(path) for path in paths if path.is_dir() and path.name != exclude)
+
+
+def _snapshot_repo(ref: str, directory: pathlib.Path) -> None:
+    git = subprocess.run(['git', 'archive', ref], stdout=subprocess.PIPE, check=True)
+    stream = io.BytesIO(git.stdout)
+    with tarfile.open(fileobj=stream) as tar:
+        tar.extractall(path=directory)  # noqa: S202
+
+
+def _get_version(root: pathlib.Path, package: str) -> str | None:
+    if not (root / package).exists():
+        return None
+    logger.debug('Computing version for %s', package)
+    dist_name = (
+        'charmlibs'
+        if package == '.package'
+        else 'charmlibs-interfaces'
+        if package == 'interfaces/.package'
+        else 'charmlibs.' + package.replace('/', '-')
+    )
+    script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
+    cmd = ['uv', 'run', '--no-project', '--with', f'./{package}', 'python', '-c', script]
+    return subprocess.check_output(cmd, cwd=root, text=True).strip()
 
 
 def _output(di: dict[str, str]) -> None:
