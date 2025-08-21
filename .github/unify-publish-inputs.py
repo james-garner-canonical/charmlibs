@@ -83,7 +83,7 @@ def _get_changes(old_ref: str, new_ref: str) -> set[str]:
     cmd = ['git', 'diff', '--name-only', old_ref, new_ref]
     output = subprocess.check_output(cmd, text=True)
     changes: set[str] = set()
-    for line in output.split('\n'):
+    for line in output.strip().split('\n'):
         parts = pathlib.Path(line).parts
         changes.add(parts[0])
         changes.add(str(pathlib.Path(*parts[:2])))
