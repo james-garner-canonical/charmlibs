@@ -1,0 +1,29 @@
+[project]
+name = "charmlibs"
+description = "The charmlibs namespace. This package should not be installed."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    {name="The Charm Tech team at Canonical Ltd."},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Development Status :: 5 - Production/Stable",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Repository" = "https://github.com/canonical/charmtech-charmlibs"
+"Issues" = "https://github.com/canonical/charmtech-charmlibs/issues"
+
+[build-system]
+requires = [
+    "setuptools>=60",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "charmlibs.__version__"}

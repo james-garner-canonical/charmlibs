@@ -1,0 +1,40 @@
+name: machine
+type: charm
+summary: A small machine charm for use in integration tests.
+description: A small machine charm for use in integration tests.
+
+bases:
+  - name: ubuntu
+    channel: '20.04'
+    architectures:
+      - amd64
+
+parts:
+  test-charm:
+    source: .
+    plugin: uv
+    build-snaps: [astral-uv]
+
+actions:
+  ensure-contents:
+    params:
+      path:
+        type: string
+      contents:
+        type: string
+  iterdir:
+    params:
+      n-temp-files:
+        type: integer
+        description: The number of files to create in a tempdir before calling iterdir on it.
+  chown:
+    params:
+      method:
+        type: string
+      user:
+        type: string
+      group:
+        type: string
+      already-exists:
+        type: boolean
+        default: false
