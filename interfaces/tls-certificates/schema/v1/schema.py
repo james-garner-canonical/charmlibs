@@ -29,7 +29,7 @@ Examples:
                 }
             ]
         }
-        app:  <empty>    
+        app:  <empty>
 """
 
 from typing import List, Optional

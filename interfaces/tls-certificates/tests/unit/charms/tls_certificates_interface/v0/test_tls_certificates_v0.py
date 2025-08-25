@@ -37,7 +37,7 @@ class NonLeaderUnitMock:
 
 
 def _load_relation_data(raw_relation_data: dict) -> dict:
-    certificate_data = dict()
+    certificate_data = {}
     for key in raw_relation_data:
         try:
             certificate_data[key] = json.loads(raw_relation_data[key])
@@ -176,7 +176,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         self,
     ):
         class Relation:
-            data: dict = {self.provider_unit: dict(), self.requirer_unit: dict()}
+            data: dict = {self.provider_unit: {}, self.requirer_unit: {}}
 
         common_name = "whatever common name"
         cert = "whatever certificate"
@@ -204,7 +204,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         self,
     ):
         class Relation:
-            data: dict = {self.provider_unit: dict(), self.requirer_unit: dict()}
+            data: dict = {self.provider_unit: {}, self.requirer_unit: {}}
 
         common_name = "whatever common name"
         cert = "whatever certificate"
@@ -252,7 +252,7 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         self,
     ):
         class Relation:
-            data: dict = {self.provider_unit: dict(), self.requirer_unit: dict()}
+            data: dict = {self.provider_unit: {}, self.requirer_unit: {}}
 
         common_name = "whatever common name"
         relation = Relation()
