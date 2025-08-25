@@ -7,7 +7,8 @@ import unittest
 from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
-from charms.tls_certificates_interface.v0.tls_certificates import (
+
+from charmlibs.interfaces.tls_certificates.v0 import (
     Cert,
     TLSCertificatesProvides,
     TLSCertificatesRequires,

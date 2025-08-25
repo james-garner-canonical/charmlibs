@@ -9,15 +9,13 @@ import pytest
 import scenario
 import yaml
 
-from tests.unit.charms.tls_certificates_interface.v4.certificates import (
+from certificates import (
     generate_ca,
     generate_certificate,
     generate_csr,
     generate_private_key,
 )
-from tests.unit.charms.tls_certificates_interface.v4.dummy_provider_charm.src.charm import (
-    DummyTLSCertificatesProviderCharm,
-)
+from provider_charm import DummyTLSCertificatesProviderCharm
 
 METADATA = yaml.safe_load(
     Path(

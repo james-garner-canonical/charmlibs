@@ -40,6 +40,7 @@ markers = [
 # Linting tools configuration
 [tool.ruff]
 line-length = 99
+src = ["src", "tests/unit/v1"]  # correctly sort local imports in tests
 
 [tool.ruff.lint]
 select = [
