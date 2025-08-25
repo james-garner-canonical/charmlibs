@@ -1,5 +1,4 @@
-"""
-This file defines the schemas for the provider and requirer sides of the `tls_certificates` interface.
+"""This file defines the schemas for the provider and requirer sides of the `tls_certificates` interface.
 
 It exposes two interfaces.schema_base.DataBagSchema subclasses called:
 - ProviderSchema
@@ -34,8 +33,9 @@ Examples:
 """
 
 from typing import List, Optional
-from pydantic import BaseModel, Field, Json
+
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field, Json
 
 
 class Certificate(BaseModel):

@@ -11,7 +11,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, pkcs12
-
 from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     Certificate,
     CertificateRequestAttributes,
@@ -24,6 +23,7 @@ from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     generate_csr,
     generate_private_key,
 )
+
 from tests.unit import certificate_validation
 from tests.unit.charms.tls_certificates_interface.v4.certificates import (
     generate_private_key as generate_private_key_helper,

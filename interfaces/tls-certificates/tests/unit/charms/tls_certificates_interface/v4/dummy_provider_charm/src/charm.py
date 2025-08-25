@@ -5,16 +5,15 @@ import base64
 import re
 from typing import Any, List
 
-from ops.charm import ActionEvent, CharmBase
-from ops.framework import EventBase
-from ops.main import main
-
 from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     Certificate,
     CertificateSigningRequest,
     ProviderCertificate,
     TLSCertificatesProvidesV4,
 )
+from ops.charm import ActionEvent, CharmBase
+from ops.framework import EventBase
+from ops.main import main
 
 
 def parse_ca_chain(ca_chain_pem: str) -> List[str]:

@@ -3,9 +3,6 @@
 
 from typing import Any, FrozenSet, List, Optional, cast
 
-from ops.charm import ActionEvent, CharmBase
-from ops.main import main
-
 from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     CertificateAvailableEvent,
     CertificateRequestAttributes,
@@ -14,6 +11,8 @@ from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     TLSCertificatesError,
     TLSCertificatesRequiresV4,
 )
+from ops.charm import ActionEvent, CharmBase
+from ops.main import main
 
 
 class DummyTLSCertificatesRequirerCharm(CharmBase):

@@ -2,6 +2,9 @@
 
 from typing import Iterable, List, Union
 
+from lib.charms.tls_certificates_interface.v4.tls_certificates import (
+    Certificate,
+)
 from pkilint import loader
 from pkilint.pkix import certificate as certificate_lint
 from pkilint.pkix import extension, name
@@ -9,10 +12,6 @@ from pkilint.validation import (
     ValidationFindingDescription,
     ValidationFindingSeverity,
     ValidationResult,
-)
-
-from lib.charms.tls_certificates_interface.v4.tls_certificates import (
-    Certificate,
 )
 
 SEVERITY_THRESHOLD = ValidationFindingSeverity.WARNING

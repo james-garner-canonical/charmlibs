@@ -11,9 +11,6 @@ import pytest
 import scenario
 import yaml
 from cryptography.hazmat.primitives import hashes
-from ops import testing
-from ops.testing import ActionFailed, Secret
-
 from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     Certificate,
     CertificateAvailableEvent,
@@ -22,6 +19,9 @@ from lib.charms.tls_certificates_interface.v4.tls_certificates import (
     PrivateKey,
     TLSCertificatesError,
 )
+from ops import testing
+from ops.testing import ActionFailed, Secret
+
 from tests.unit.charms.tls_certificates_interface.v4.certificates import (
     generate_ca,
     generate_certificate,
