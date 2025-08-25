@@ -8,16 +8,16 @@ from typing import Any, Optional, Tuple
 from ops import EventBase, main
 from ops.charm import CharmBase, CollectStatusEvent
 from ops.model import ActiveStatus, BlockedStatus, SecretNotFoundError, WaitingStatus
+from self_signed_certificates import (
+    generate_ca,
+    generate_certificate,
+    generate_private_key,
+)
 
 from charmlibs.interfaces.tls_certificates.v1 import (
     Certificate,
     ProviderCertificate,
     TLSCertificatesProvidesV4,
-)
-from self_signed_certificates import (
-    generate_ca,
-    generate_certificate,
-    generate_private_key,
 )
 
 CERTIFICATE_VALIDITY = 0.003  # Around 4 minutes
