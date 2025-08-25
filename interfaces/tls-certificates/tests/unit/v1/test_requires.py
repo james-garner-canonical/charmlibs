@@ -32,8 +32,8 @@ from requirer_charm import (
     DummyTLSCertificatesRequirerCharm,
 )
 
-BASE_CHARM_DIR = "tests.unit.charms.tls_certificates_interface.v4.dummy_requirer_charm.src.charm.DummyTLSCertificatesRequirerCharm"  # noqa: E501
-LIB_DIR = "lib.charms.tls_certificates_interface.v4.tls_certificates"
+BASE_CHARM_DIR = "requirer_charm.DummyTLSCertificatesRequirerCharm"
+LIB_DIR = "charmlibs.interfaces.tls_certificates.v1"
 LIBID = "afd8c2bccf834997afce12c2706d2ede"
 
 METADATA = yaml.safe_load(
