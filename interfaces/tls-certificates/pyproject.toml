@@ -12,20 +12,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-test = [
-    "coverage[toml]",
+unit = [
+    "ops[testing]",
+]
+integration = [
     "jubilant==1.0.1",
     "juju>3",
-    "ops[testing]",
+    "pkilint",
     "pytest-operator",
     "pytest-asyncio==0.21.2",
-    "pytest",
-]
-dev = [
-    "codespell",
-    "pyright",
-    "ruff",
-    "pkilint",
 ]
 
 # Testing tools configuration
@@ -92,6 +87,6 @@ max-complexity = 10
 skip = "build,venv,icon.svg,.tox,.git,.mypy_cache,.ruff_cache,.coverage"
 
 [tool.pyright]
-include = ["src/**", "lib/**"]
-pythonVersion = "3.8"
-reportMissingParameterType = true
+extend = "../../pyproject.toml"
+include = ["src", "tests"]
+pythonVersion = "3.10"
