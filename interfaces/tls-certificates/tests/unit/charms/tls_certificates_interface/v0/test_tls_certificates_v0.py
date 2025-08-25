@@ -263,7 +263,7 @@ class TestTLSCertificatesRequires(unittest.TestCase):
             common_name=common_name,
         )
 
-        self.assertIn("client_cert_requests", relation.data[self.requirer_unit])
+        assert "client_cert_requests" in relation.data[self.requirer_unit]
         client_cert_requests = json.loads(
             relation.data[self.requirer_unit]["client_cert_requests"]
         )
