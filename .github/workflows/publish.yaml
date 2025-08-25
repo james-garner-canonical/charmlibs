@@ -1,0 +1,75 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to be published to test.pypi.org
+        required: true
+        type: string
+      skip-juju:
+        description: Skip Juju integration tests
+        required: false
+        type: boolean
+
+jobs:
+  unify-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.main.outputs.packages }}
+      skip-juju:  ${{ steps.main.outputs.skip-juju }}
+      repository-url:  ${{ steps.main.outputs.repository-url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - id: main
+        run: uv run --no-project --script .github/unify-publish-inputs.py
+
+  tests:
+    needs: unify-inputs
+    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
+    uses: ./.github/workflows/tests.yaml
+    with:
+      package: ${{ matrix.package }}
+      skip-juju: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
+
+  build-n-publish:
+    needs: [unify-inputs,tests]
+    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
+    name: Build and publish ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build
+        run: uv build
+        working-directory: ./${{ matrix.package }}
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2.4.0
+        with:
+          subject-path: '${{ matrix.package }}/dist/*'
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ./${{ matrix.package }}/dist/
+          repository-url: ${{ needs.unify-inputs.outputs.repository-url }}
+          verbose: true
