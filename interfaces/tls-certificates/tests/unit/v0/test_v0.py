@@ -16,7 +16,7 @@ from charmlibs.interfaces.tls_certificates.v0 import (
 
 PROVIDER_UNIT_NAME = "whatever provider unit name"
 REQUIRER_UNIT_NAME = "whatever requirer unit name"
-CHARM_LIB_PATH = "charms.tls_certificates_interface.v0.tls_certificates"
+CHARM_LIB_PATH = "charmlibs.interfaces.tls_certificates.v0"
 
 
 class LeaderUnitMock:
