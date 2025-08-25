@@ -32,7 +32,10 @@ lint package *pyright_args: fast-lint (static package pyright_args)
 
 [doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
 static package *pyright_args: (_venv package 'lint' 'unit' 'functional' 'integration')
-    uv run pyright --pythonversion='{{python}}' {{pyright_args}} '{{package}}'
+    #!/usr/bin/env -S bash -xueo pipefail
+    source .venv/bin/activate
+    cd '{{package}}'
+    uv run --active pyright --pythonversion='{{python}}' {{pyright_args}}
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
 unit package +flags='-rA': (_venv package 'unit') (_coverage package 'unit' flags)
