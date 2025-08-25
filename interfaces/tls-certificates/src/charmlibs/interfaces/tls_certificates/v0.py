@@ -311,7 +311,7 @@ class TLSCertificatesProvides(Object):
         relation_data[certificate["common_name"]] = json.dumps(certificate_dict)
 
     def _on_relation_changed(self, event) -> None:
-        """Handler triggerred on relation changed event.
+        """Handler triggered on relation changed event.
 
         Looks at cert_requests and client_cert_requests fields in relation data and emit
         certificate request events for each entry.
@@ -451,7 +451,7 @@ class TLSCertificatesRequires(Object):
         return certificates
 
     def _on_relation_changed(self, event) -> None:
-        """Handler triggerred on relation changed events.
+        """Handler triggered on relation changed events.
 
         Args:
             event: Juju event
