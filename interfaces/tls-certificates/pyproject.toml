@@ -77,7 +77,13 @@ extend-ignore = [
     "D107",
     "E501",  # Rely on formatter for enforcing line length where appropriate
 ]
-per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104"]}
+
+[tool.ruff.lint.per-file-ignores]
+"./tests/*" = ["D100","D101","D102","D103","D104"]
+"./src/charmlibs/interfaces/tls_certificates/v0.py" = [
+    # Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+    "E721",
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
