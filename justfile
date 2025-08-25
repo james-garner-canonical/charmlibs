@@ -3,7 +3,7 @@ mod docs  # load docs module to expose docs subcommands
 set ignore-comments  # don't print comment lines in recipes
 
 # set on the commandline as needed, e.g. `just package=pathops python=3.8 unit`
-python := '3.12'
+python := '3.10'
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
 [doc('Describe usage and list the available recipes.')]
@@ -32,7 +32,10 @@ lint package *pyright_args: fast-lint (static package pyright_args)
 
 [doc('Run package specific static analysis only, e.g. `just python=3.8 static pathops`.')]
 static package *pyright_args: (_venv package 'lint' 'unit' 'functional' 'integration')
-    uv run pyright --pythonversion='{{python}}' {{pyright_args}} '{{package}}'
+    #!/usr/bin/env -S bash -xueo pipefail
+    source .venv/bin/activate
+    cd '{{package}}'
+    uv run --active pyright --pythonversion='{{python}}' {{pyright_args}}
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
 unit package +flags='-rA': (_venv package 'unit') (_coverage package 'unit' flags)
