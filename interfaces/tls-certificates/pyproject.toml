@@ -14,11 +14,11 @@ dependencies = [
 [dependency-groups]
 unit = [
     "ops[testing]",
+    "pkilint",
 ]
 integration = [
     "jubilant==1.0.1",
     "juju>3",
-    "pkilint",
     "pytest-operator",
     "pytest-asyncio==0.21.2",
 ]
