@@ -21,13 +21,8 @@ TEST_DIR = pathlib.Path(__file__).parent
 PACKAGE_ROOT = TEST_DIR.parent.parent  # $package_root / tests / $test_dir
 BUILD_DIR = TEST_DIR / ".build"
 PKG_FILENAME = "package.tar.gz"
-REQ_FILENAME = "requirements.txt"
 REQUIRER_CHARM_DIR = TEST_DIR / "requirer_charm"
 PROVIDER_CHARM_DIR = TEST_DIR / "provider_charm"
-REQUIREMENTS = {
-    REQUIRER_CHARM_DIR: ["ops"],
-    PROVIDER_CHARM_DIR: ["ops", "cryptography"],
-}
 TLS_CERTIFICATES_PROVIDER_APP_NAME = "tls-certificates-provider"
 TLS_CERTIFICATES_REQUIRER_APP_NAME = "tls-certificates-requirer"
 
@@ -45,9 +40,8 @@ def cleanup():
     if BUILD_DIR.is_dir():
         shutil.rmtree(BUILD_DIR)
     for charm_dir in REQUIRER_CHARM_DIR, PROVIDER_CHARM_DIR:
-        for filename in PKG_FILENAME, REQ_FILENAME:
-            if (path := charm_dir / filename).exists():
-                path.unlink()
+        if (path := charm_dir / PKG_FILENAME).exists():
+            path.unlink()
 
 
 def copy_lib_content() -> None:
@@ -59,7 +53,7 @@ def copy_lib_content() -> None:
     built_pkg = next(BUILD_DIR.glob("*.tar.gz"))
     for dst in REQUIRER_CHARM_DIR, PROVIDER_CHARM_DIR:
         shutil.copyfile(src=built_pkg, dst=f"{dst}/{PKG_FILENAME}")
-        (dst / REQ_FILENAME).write_text("\n".join([*REQUIREMENTS[dst], f"./{PKG_FILENAME}"]))
+        subprocess.check_call(["uv", "lock"], cwd=dst)
 
 
 def remove_existing_lib_and_fetch_latest() -> None:

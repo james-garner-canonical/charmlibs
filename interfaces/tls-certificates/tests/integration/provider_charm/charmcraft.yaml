@@ -19,14 +19,7 @@ bases:
         channel: "22.04"
 
 parts:
-  charm:
-    build-packages:
-      - cargo
-      - libffi-dev
-      - libssl-dev
-      - pkg-config
-      - rustc
-
-charm-libs:
-  - lib: tls-certificates-interface.tls_certificates
-    version: "4"
+  test-charm:
+    source: .
+    plugin: uv
+    build-snaps: [astral-uv]
