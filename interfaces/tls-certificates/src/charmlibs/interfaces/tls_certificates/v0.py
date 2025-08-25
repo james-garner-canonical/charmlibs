@@ -81,6 +81,7 @@ class ExampleRequirerCharm(CharmBase):
 ```
 
 """
+
 import json
 import logging
 from typing import List, Literal, Optional, TypedDict

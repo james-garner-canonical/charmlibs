@@ -222,26 +222,22 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": csr,
-                                    "ca": False,
-                                }
-                            ]
-                        )
-                    },
-                ),
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr,
+                            "ca": False,
+                        }
+                    ])
+                },
+            ),
+        })
 
     @patch(LIB_DIR + ".CertificateRequestAttributes.generate_csr")
     @patch(BASE_CHARM_DIR + "._app_or_unit", MagicMock(return_value=Mode.APP))
@@ -276,26 +272,22 @@ class TestTLSCertificatesRequiresV4:
         )
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
-        assert state_out.relations == frozenset(
-            {
-                scenario.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_app_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": csr,
-                                    "ca": False,
-                                }
-                            ]
-                        )
-                    },
-                ),
-            }
-        )
+        assert state_out.relations == frozenset({
+            scenario.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_app_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr,
+                            "ca": False,
+                        }
+                    ])
+                },
+            ),
+        })
 
     @patch(LIB_DIR + ".CertificateRequestAttributes.generate_csr")
     def test_given_ca_certificate_requested_when_relation_joined_then_certificate_request_is_added_to_databag(  # noqa: E501
@@ -329,26 +321,22 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": csr,
-                                    "ca": True,
-                                }
-                            ]
-                        )
-                    },
-                ),
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr,
+                            "ca": True,
+                        }
+                    ])
+                },
+            ),
+        })
 
     def test_given_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
         self,
@@ -373,25 +361,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -440,25 +424,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": True,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": True,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -509,14 +489,12 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -542,14 +520,12 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
         )
 
@@ -560,17 +536,15 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={},
-                ),
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={},
+            ),
+        })
 
     @patch(LIB_DIR + ".CertificateRequestAttributes.generate_csr")
     def test_given_private_key_does_not_match_with_certificate_requests_when_relation_changed_then_certificate_request_is_replaced_in_databag(  # noqa: E501
@@ -587,14 +561,12 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
         )
 
@@ -620,26 +592,22 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": new_csr,
-                                    "ca": False,
-                                }
-                            ]
-                        )
-                    },
-                ),
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": new_csr,
+                            "ca": False,
+                        }
+                    ])
+                },
+            ),
+        })
 
     @patch(LIB_DIR + ".CertificateRequestAttributes.generate_csr")
     def test_given_certificate_request_changed_when_relation_changed_then_new_certificate_is_requested(  # noqa: E501
@@ -660,14 +628,12 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_in_relation_data,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_in_relation_data,
+                        "ca": False,
+                    }
+                ])
             },
         )
 
@@ -685,26 +651,22 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": new_csr,
-                                    "ca": False,
-                                }
-                            ]
-                        )
-                    },
-                ),
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": new_csr,
+                            "ca": False,
+                        }
+                    ])
+                },
+            ),
+        })
 
     def test_given_revoked_certificate_when_relation_changed_then_certificate_secret_is_removed(
         self,
@@ -729,26 +691,22 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                            "revoked": True,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                        "revoked": True,
+                    }
+                ]),
             },
         )
 
@@ -777,11 +735,9 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
-        assert state_out.secrets == frozenset(
-            {
-                private_key_secret,
-            }
-        )
+        assert state_out.secrets == frozenset({
+            private_key_secret,
+        })
 
     def test_given_private_key_generated_by_library_is_used_when_regenerate_private_key_then_new_private_key_is_generated(  # noqa: E501
         self,
@@ -892,25 +848,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
         private_key_secret = Secret(
@@ -962,25 +914,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": bad_certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": bad_certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1028,25 +976,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1112,25 +1056,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": new_certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": new_certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1181,25 +1121,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1267,34 +1203,30 @@ class TestTLSCertificatesRequiresV4:
             endpoint="certificates",
             interface="tls-certificates",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": False,
-                        },
-                        {
-                            "certificate_signing_request": csr_2,
-                            "ca": False,
-                        },
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": False,
+                    },
+                    {
+                        "certificate_signing_request": csr_2,
+                        "ca": False,
+                    },
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
         )
 
@@ -1383,25 +1315,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1424,37 +1352,31 @@ class TestTLSCertificatesRequiresV4:
             self.ctx.on.secret_expired(certificate_secret, revision=1), state_in
         )
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": new_csr,
-                                    "ca": False,
-                                }
-                            ]
-                        )
-                    },
-                    remote_app_data={
-                        "certificates": json.dumps(
-                            [
-                                {
-                                    "certificate": certificate,
-                                    "certificate_signing_request": csr,
-                                    "ca": provider_ca_certificate,
-                                }
-                            ]
-                        ),
-                    },
-                )
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": new_csr,
+                            "ca": False,
+                        }
+                    ])
+                },
+                remote_app_data={
+                    "certificates": json.dumps([
+                        {
+                            "certificate": certificate,
+                            "certificate_signing_request": csr,
+                            "ca": provider_ca_certificate,
+                        }
+                    ]),
+                },
+            )
+        })
 
     @patch(LIB_DIR + ".CertificateRequestAttributes.generate_csr")
     def test_given_certificate_when_renew_certificate_then_new_certificate_is_requested(
@@ -1500,25 +1422,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1539,37 +1457,31 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.action("renew-certificates"), state_in)
 
-        assert state_out.relations == frozenset(
-            {
-                testing.Relation(
-                    id=certificates_relation.id,
-                    endpoint="certificates",
-                    interface="tls-certificates",
-                    remote_app_name="certificate-requirer",
-                    local_unit_data={
-                        "certificate_signing_requests": json.dumps(
-                            [
-                                {
-                                    "certificate_signing_request": new_csr,
-                                    "ca": False,
-                                }
-                            ]
-                        )
-                    },
-                    remote_app_data={
-                        "certificates": json.dumps(
-                            [
-                                {
-                                    "certificate": certificate,
-                                    "certificate_signing_request": csr,
-                                    "ca": provider_ca_certificate,
-                                }
-                            ]
-                        ),
-                    },
-                )
-            }
-        )
+        assert state_out.relations == frozenset({
+            testing.Relation(
+                id=certificates_relation.id,
+                endpoint="certificates",
+                interface="tls-certificates",
+                remote_app_name="certificate-requirer",
+                local_unit_data={
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": new_csr,
+                            "ca": False,
+                        }
+                    ])
+                },
+                remote_app_data={
+                    "certificates": json.dumps([
+                        {
+                            "certificate": certificate,
+                            "certificate_signing_request": csr,
+                            "ca": provider_ca_certificate,
+                        }
+                    ]),
+                },
+            )
+        })
 
     @patch(LIB_DIR + ".CertificateRequestAttributes.generate_csr")
     def test_given_new_certificate_request_when_sync_then_new_certificate_is_requested(
@@ -1615,25 +1527,21 @@ class TestTLSCertificatesRequiresV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_unit_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr,
-                            "ca": False,
-                        }
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr,
+                        "ca": False,
+                    }
+                ])
             },
             remote_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate,
-                            "certificate_signing_request": csr,
-                            "ca": provider_ca_certificate,
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate,
+                        "certificate_signing_request": csr,
+                        "ca": provider_ca_certificate,
+                    }
+                ]),
             },
         )
 
@@ -1656,34 +1564,28 @@ class TestTLSCertificatesRequiresV4:
             manager.charm.certificates.sync()
             state_out = manager.run()
 
-            assert state_out.relations == frozenset(
-                {
-                    testing.Relation(
-                        id=certificates_relation.id,
-                        endpoint="certificates",
-                        interface="tls-certificates",
-                        remote_app_name="certificate-requirer",
-                        local_unit_data={
-                            "certificate_signing_requests": json.dumps(
-                                [
-                                    {
-                                        "certificate_signing_request": new_csr,
-                                        "ca": False,
-                                    }
-                                ]
-                            )
-                        },
-                        remote_app_data={
-                            "certificates": json.dumps(
-                                [
-                                    {
-                                        "certificate": certificate,
-                                        "certificate_signing_request": csr,
-                                        "ca": provider_ca_certificate,
-                                    }
-                                ]
-                            ),
-                        },
-                    )
-                }
-            )
+            assert state_out.relations == frozenset({
+                testing.Relation(
+                    id=certificates_relation.id,
+                    endpoint="certificates",
+                    interface="tls-certificates",
+                    remote_app_name="certificate-requirer",
+                    local_unit_data={
+                        "certificate_signing_requests": json.dumps([
+                            {
+                                "certificate_signing_request": new_csr,
+                                "ca": False,
+                            }
+                        ])
+                    },
+                    remote_app_data={
+                        "certificates": json.dumps([
+                            {
+                                "certificate": certificate,
+                                "certificate_signing_request": csr,
+                                "ca": provider_ca_certificate,
+                            }
+                        ]),
+                    },
+                )
+            })

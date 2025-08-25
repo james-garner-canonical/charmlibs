@@ -40,41 +40,28 @@ from pydantic import BaseModel, Field, Json
 
 class Certificate(BaseModel):
     """Certificate model."""
-    ca: str = Field(
-        description="The signing certificate authority."
-    )
-    certificate_signing_request: str = Field(
-        description="Certificate signing request."
-    )
-    certificate: str = Field(
-        description="Certificate."
-    )
-    chain: Optional[List[str]] = Field(
-        description="List of certificates in the chain."
-    )
+
+    ca: str = Field(description="The signing certificate authority.")
+    certificate_signing_request: str = Field(description="Certificate signing request.")
+    certificate: str = Field(description="Certificate.")
+    chain: Optional[List[str]] = Field(description="List of certificates in the chain.")
     recommended_expiry_notification_time: Optional[int] = Field(
         description="Recommended expiry notification time in seconds."
     )
-    revoked: Optional[bool] = Field(
-        description="Whether the certificate is revoked."
-    )
+    revoked: Optional[bool] = Field(description="Whether the certificate is revoked.")
 
 
 class CertificateSigningRequest(BaseModel):
     """Certificate signing request model."""
-    certificate_signing_request: str = Field(
-        description="Certificate signing request."
-    )
-    ca: Optional[bool] = Field(
-        description="Whether the certificate is a CA."
-    )
+
+    certificate_signing_request: str = Field(description="Certificate signing request.")
+    ca: Optional[bool] = Field(description="Whether the certificate is a CA.")
 
 
 class ProviderApplicationData(BaseModel):
     """Provider application data model."""
-    certificates: Json[List[Certificate]] = Field(
-        description="List of certificates."
-    )
+
+    certificates: Json[List[Certificate]] = Field(description="List of certificates.")
 
 
 class RequirerData(BaseModel):

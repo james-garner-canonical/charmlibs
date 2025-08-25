@@ -112,12 +112,10 @@ def generate_ca(
     private_key_object = serialization.load_pem_private_key(
         private_key, password=private_key_password
     )
-    subject_name = issuer = x509.Name(
-        [
-            x509.NameAttribute(x509.NameOID.COUNTRY_NAME, country),
-            x509.NameAttribute(x509.NameOID.COMMON_NAME, subject),
-        ]
-    )
+    subject_name = issuer = x509.Name([
+        x509.NameAttribute(x509.NameOID.COUNTRY_NAME, country),
+        x509.NameAttribute(x509.NameOID.COMMON_NAME, subject),
+    ])
     subject_identifier_object = x509.SubjectKeyIdentifier.from_public_key(
         private_key_object.public_key()  # type: ignore[arg-type]
     )

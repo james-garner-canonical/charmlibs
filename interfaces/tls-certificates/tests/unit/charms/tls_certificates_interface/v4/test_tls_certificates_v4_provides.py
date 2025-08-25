@@ -68,18 +68,16 @@ class TestTLSCertificatesProvidesV4:
             remote_app_name="certificate-requirer",
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_1,
-                                "ca": "false",
-                            },
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_1,
+                            "ca": "false",
+                        },
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -110,18 +108,16 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        },
-                        {
-                            "certificate_signing_request": csr_2,
-                            "ca": "false",
-                        },
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    },
+                    {
+                        "certificate_signing_request": csr_2,
+                        "ca": "false",
+                    },
+                ])
             },
         )
 
@@ -185,41 +181,35 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -264,30 +254,26 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
         )
         state_in = scenario.State(
@@ -348,41 +334,35 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -423,36 +403,30 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -496,20 +470,18 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
         )
 
@@ -556,37 +528,31 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                            "chain": [provider_ca_certificate],
-                        }
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                        "chain": [provider_ca_certificate],
+                    }
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -654,43 +620,37 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                            "chain": [provider_ca_certificate],
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                            "chain": [provider_ca_certificate],
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                        "chain": [provider_ca_certificate],
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                        "chain": [provider_ca_certificate],
+                    },
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -764,43 +724,37 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                            "chain": [provider_ca_certificate],
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                            "chain": [provider_ca_certificate],
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                        "chain": [provider_ca_certificate],
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                        "chain": [provider_ca_certificate],
+                    },
+                ]),
             },
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        }
-                    ]
-                ),
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    }
+                ]),
             },
             remote_units_data={
                 0: {
-                    "certificate_signing_requests": json.dumps(
-                        [
-                            {
-                                "certificate_signing_request": csr_2,
-                                "ca": "false",
-                            },
-                        ]
-                    )
+                    "certificate_signing_requests": json.dumps([
+                        {
+                            "certificate_signing_request": csr_2,
+                            "ca": "false",
+                        },
+                    ])
                 }
             },
         )
@@ -865,20 +819,18 @@ class TestTLSCertificatesProvidesV4:
             interface="tls-certificates",
             remote_app_name="certificate-requirer",
             local_app_data={
-                "certificates": json.dumps(
-                    [
-                        {
-                            "certificate": certificate_1,
-                            "certificate_signing_request": csr_1,
-                            "ca": provider_ca_certificate,
-                        },
-                        {
-                            "certificate": certificate_2,
-                            "certificate_signing_request": csr_2,
-                            "ca": provider_ca_certificate,
-                        },
-                    ]
-                ),
+                "certificates": json.dumps([
+                    {
+                        "certificate": certificate_1,
+                        "certificate_signing_request": csr_1,
+                        "ca": provider_ca_certificate,
+                    },
+                    {
+                        "certificate": certificate_2,
+                        "certificate_signing_request": csr_2,
+                        "ca": provider_ca_certificate,
+                    },
+                ]),
             },
         )
         state_in = scenario.State(
@@ -918,20 +870,18 @@ class TestTLSCertificatesProvidesV4:
             ca=provider_ca_certificate,
         )
         local_app_data = {
-            "certificates": json.dumps(
-                [
-                    {
-                        "certificate": certificate_1,
-                        "certificate_signing_request": csr_1,
-                        "ca": provider_ca_certificate,
-                    },
-                    {
-                        "certificate": certificate_2,
-                        "certificate_signing_request": csr_2,
-                        "ca": provider_ca_certificate,
-                    },
-                ]
-            ),
+            "certificates": json.dumps([
+                {
+                    "certificate": certificate_1,
+                    "certificate_signing_request": csr_1,
+                    "ca": provider_ca_certificate,
+                },
+                {
+                    "certificate": certificate_2,
+                    "certificate_signing_request": csr_2,
+                    "ca": provider_ca_certificate,
+                },
+            ]),
         }
         certificates_relation = scenario.Relation(
             endpoint="certificates",
@@ -939,18 +889,16 @@ class TestTLSCertificatesProvidesV4:
             remote_app_name="certificate-requirer",
             local_app_data=local_app_data,
             remote_app_data={
-                "certificate_signing_requests": json.dumps(
-                    [
-                        {
-                            "certificate_signing_request": csr_1,
-                            "ca": "false",
-                        },
-                        {
-                            "certificate_signing_request": csr_2,
-                            "ca": "true",
-                        },
-                    ]
-                )
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": csr_1,
+                        "ca": "false",
+                    },
+                    {
+                        "certificate_signing_request": csr_2,
+                        "ca": "true",
+                    },
+                ])
             },
         )
         state_in = scenario.State(

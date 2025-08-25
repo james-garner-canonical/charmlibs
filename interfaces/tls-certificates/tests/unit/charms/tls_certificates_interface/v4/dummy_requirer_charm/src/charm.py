@@ -82,13 +82,11 @@ class DummyTLSCertificatesRequirerCharm(CharmBase):
         if not certificate:
             event.fail("Certificate not available")
             return
-        event.set_results(
-            {
-                "certificate": str(certificate.certificate),
-                "ca": str(certificate.ca),
-                "csr": str(certificate.certificate_signing_request),
-            }
-        )
+        event.set_results({
+            "certificate": str(certificate.certificate),
+            "ca": str(certificate.ca),
+            "csr": str(certificate.certificate_signing_request),
+        })
 
     def _on_renew_certificates_action(self, event: ActionEvent) -> None:
         certificate, _ = self.certificates.get_assigned_certificate(

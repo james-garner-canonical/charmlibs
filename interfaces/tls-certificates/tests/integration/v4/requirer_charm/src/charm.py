@@ -57,13 +57,11 @@ class DummyTLSCertificatesRequirerCharm(CharmBase):
         if not certificate:
             event.fail("Certificate not available")
             return
-        event.set_results(
-            {
-                "certificate": str(certificate.certificate),
-                "ca": str(certificate.ca),
-                "chain": str(certificate.chain),
-            }
-        )
+        event.set_results({
+            "certificate": str(certificate.certificate),
+            "ca": str(certificate.ca),
+            "chain": str(certificate.chain),
+        })
 
     def _relation_created(self, relation_name: str) -> bool:
         try:

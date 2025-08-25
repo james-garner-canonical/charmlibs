@@ -77,46 +77,38 @@ class DummyTLSCertificatesProviderCharm(CharmBase):
         requirer_csrs = self.certificates.get_certificate_requests()
         csrs = []
         for requirer_csr in requirer_csrs:
-            csrs.append(
-                {
-                    "csr": str(requirer_csr.certificate_signing_request),
-                    "is_ca": requirer_csr.is_ca,
-                }
-            )
+            csrs.append({
+                "csr": str(requirer_csr.certificate_signing_request),
+                "is_ca": requirer_csr.is_ca,
+            })
         event.set_results(results={"csrs": csrs})
 
     def _on_get_unsolicited_certificates_action(self, event: ActionEvent) -> None:
         unsolicited_certificates = self.certificates.get_unsolicited_certificates()
         certificates = []
         for unsolicited_certificate in unsolicited_certificates:
-            certificates.append(
-                {
-                    "certificate": str(unsolicited_certificate.certificate),
-                }
-            )
+            certificates.append({
+                "certificate": str(unsolicited_certificate.certificate),
+            })
         event.set_results(results={"certificates": certificates})
 
     def _on_get_outstanding_certificate_requests_action(self, event: ActionEvent) -> None:
         outstanding_certificate_requests = self.certificates.get_outstanding_certificate_requests()
         certificate_requests = []
         for outstanding_certificate_request in outstanding_certificate_requests:
-            certificate_requests.append(
-                {
-                    "csr": str(outstanding_certificate_request.certificate_signing_request),
-                    "is_ca": outstanding_certificate_request.is_ca,
-                }
-            )
+            certificate_requests.append({
+                "csr": str(outstanding_certificate_request.certificate_signing_request),
+                "is_ca": outstanding_certificate_request.is_ca,
+            })
         event.set_results(results={"csrs": certificate_requests})
 
     def _on_get_issued_certificates_action(self, event: ActionEvent) -> None:
         issued_certificates = self.certificates.get_issued_certificates()
         certificates = []
         for issued_certificate in issued_certificates:
-            certificates.append(
-                {
-                    "certificate": str(issued_certificate.certificate),
-                }
-            )
+            certificates.append({
+                "certificate": str(issued_certificate.certificate),
+            })
         event.set_results(results={"certificates": certificates})
 
     def _on_set_certificate_action(self, event: ActionEvent) -> None:

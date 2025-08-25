@@ -482,9 +482,9 @@ class CertificateSigningRequest:
             sans = csr_object.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
             sans_dns = frozenset(sans.get_values_for_type(x509.DNSName))
             sans_ip = frozenset([str(san) for san in sans.get_values_for_type(x509.IPAddress)])
-            sans_oid = frozenset(
-                [san.dotted_string for san in sans.get_values_for_type(x509.RegisteredID)]
-            )
+            sans_oid = frozenset([
+                san.dotted_string for san in sans.get_values_for_type(x509.RegisteredID)
+            ])
         except x509.ExtensionNotFound:
             sans = frozenset()
             sans_dns = frozenset()
@@ -650,15 +650,13 @@ class ProviderCertificate:
         Returns:
             str: JSON representation of the object
         """
-        return json.dumps(
-            {
-                "csr": str(self.certificate_signing_request),
-                "certificate": str(self.certificate),
-                "ca": str(self.ca),
-                "chain": [str(cert) for cert in self.chain],
-                "revoked": self.revoked,
-            }
-        )
+        return json.dumps({
+            "csr": str(self.certificate_signing_request),
+            "certificate": str(self.certificate),
+            "ca": str(self.ca),
+            "chain": [str(cert) for cert in self.chain],
+            "revoked": self.revoked,
+        })
 
 
 @dataclass(frozen=True)
@@ -1114,24 +1112,20 @@ def _generate_subject_alternative_name_extension(
     sans: List[x509.GeneralName] = []
     try:
         loaded_san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-        sans.extend(
-            [x509.DNSName(name) for name in loaded_san_ext.value.get_values_for_type(x509.DNSName)]
-        )
-        sans.extend(
-            [x509.IPAddress(ip) for ip in loaded_san_ext.value.get_values_for_type(x509.IPAddress)]
-        )
-        sans.extend(
-            [
-                x509.RegisteredID(oid)
-                for oid in loaded_san_ext.value.get_values_for_type(x509.RegisteredID)
-            ]
-        )
-        sans.extend(
-            [
-                x509.RFC822Name(name)
-                for name in loaded_san_ext.value.get_values_for_type(x509.RFC822Name)
-            ]
-        )
+        sans.extend([
+            x509.DNSName(name) for name in loaded_san_ext.value.get_values_for_type(x509.DNSName)
+        ])
+        sans.extend([
+            x509.IPAddress(ip) for ip in loaded_san_ext.value.get_values_for_type(x509.IPAddress)
+        ])
+        sans.extend([
+            x509.RegisteredID(oid)
+            for oid in loaded_san_ext.value.get_values_for_type(x509.RegisteredID)
+        ])
+        sans.extend([
+            x509.RFC822Name(name)
+            for name in loaded_san_ext.value.get_values_for_type(x509.RFC822Name)
+        ])
     except x509.ExtensionNotFound:
         pass
     # If email is present in the CSR Subject, make sure it is also in the SANS

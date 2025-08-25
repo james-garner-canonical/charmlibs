@@ -90,11 +90,9 @@ def generate_certificate(
     csr_common_name = csr_subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
     issuer = x509.load_pem_x509_certificate(ca.encode()).issuer
     private_key = serialization.load_pem_private_key(ca_key.encode(), password=None)
-    subject = x509.Name(
-        [
-            x509.NameAttribute(x509.NameOID.COMMON_NAME, csr_common_name),
-        ]
-    )
+    subject = x509.Name([
+        x509.NameAttribute(x509.NameOID.COMMON_NAME, csr_common_name),
+    ])
 
     if validity > timedelta(0):
         not_valid_before = datetime.now(timezone.utc)
@@ -141,11 +139,9 @@ def generate_ca(
         str: CA Certificate
     """
     private_key_object = serialization.load_pem_private_key(private_key.encode(), password=None)
-    subject = issuer = x509.Name(
-        [
-            x509.NameAttribute(x509.NameOID.COMMON_NAME, common_name),
-        ]
-    )
+    subject = issuer = x509.Name([
+        x509.NameAttribute(x509.NameOID.COMMON_NAME, common_name),
+    ])
     subject_identifier_object = x509.SubjectKeyIdentifier.from_public_key(
         private_key_object.public_key()  # type: ignore[arg-type]
     )
