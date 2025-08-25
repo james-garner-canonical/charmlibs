@@ -4,14 +4,15 @@
 
 from typing import Any, FrozenSet, Optional, cast
 
-from charms.tls_certificates_interface.v4.tls_certificates import (
+from ops import main
+from ops.charm import ActionEvent, CharmBase, CollectStatusEvent
+from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
+
+from charmlibs.interfaces.tls_certificates.v1 import (
     CertificateRequestAttributes,
     Mode,
     TLSCertificatesRequiresV4,
 )
-from ops import main
-from ops.charm import ActionEvent, CharmBase, CollectStatusEvent
-from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
 
 
 class DummyTLSCertificatesRequirerCharm(CharmBase):

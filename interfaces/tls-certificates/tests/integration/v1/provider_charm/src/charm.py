@@ -5,14 +5,15 @@
 import logging
 from typing import Any, Optional, Tuple
 
-from charms.tls_certificates_interface.v4.tls_certificates import (
+from ops import EventBase, main
+from ops.charm import CharmBase, CollectStatusEvent
+from ops.model import ActiveStatus, BlockedStatus, SecretNotFoundError, WaitingStatus
+
+from charmlibs.interfaces.tls_certificates.v1 import (
     Certificate,
     ProviderCertificate,
     TLSCertificatesProvidesV4,
 )
-from ops import EventBase, main
-from ops.charm import CharmBase, CollectStatusEvent
-from ops.model import ActiveStatus, BlockedStatus, SecretNotFoundError, WaitingStatus
 from self_signed_certificates import (
     generate_ca,
     generate_certificate,
