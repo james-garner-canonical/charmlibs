@@ -37,18 +37,12 @@ LIB_DIR = "lib.charms.tls_certificates_interface.v4.tls_certificates"
 LIBID = "afd8c2bccf834997afce12c2706d2ede"
 
 METADATA = yaml.safe_load(
-    Path(
-        "tests/unit/charms/tls_certificates_interface/v4/dummy_requirer_charm/charmcraft.yaml"  # noqa: E501
-    ).read_text()
+    (Path(__file__).parent / "dummy_requirer_charm" / "charmcraft.yaml").read_text()
 )
 
 
 def get_private_string_key_from_file() -> str:
-    with open(
-        "tests/unit/charms/tls_certificates_interface/v4/dummy_requirer_charm/private_key.pem",
-        "r",
-    ) as f:
-        return f.read()
+    return (Path(__file__).parent / "dummy_requirer_charm" / "private_key.pem").read_text()
 
 
 def get_private_key_from_file() -> PrivateKey:
@@ -109,13 +103,9 @@ class TestTLSCertificatesRequiresV4:
             label=f"{LIBID}-private-key-0-{certificates_relation.endpoint}"
         )
         assert secret.latest_content is not None
-        with open(
-            "tests/unit/charms/tls_certificates_interface/v4/dummy_requirer_charm/private_key.pem",
-            "r",
-        ) as f:
-            private_key = f.read()
-            assert private_key
-            assert private_key != secret.latest_content["private-key"]
+        private_key = get_private_string_key_from_file()
+        assert private_key
+        assert private_key != secret.latest_content["private-key"]
 
     def test_given_private_key_passed_from_charm_when_certificates_relation_created_then_private_key_is_not_stored(  # noqa: E501
         self,

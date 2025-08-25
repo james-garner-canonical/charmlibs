@@ -18,9 +18,7 @@ from certificates import (
 from provider_charm import DummyTLSCertificatesProviderCharm
 
 METADATA = yaml.safe_load(
-    Path(
-        "tests/unit/charms/tls_certificates_interface/v4/dummy_provider_charm/charmcraft.yaml"  # noqa: E501
-    ).read_text()
+    (Path(__file__).parent / "dummy_provider_charm" / "charmcraft.yaml").read_text()
 )
 
 
