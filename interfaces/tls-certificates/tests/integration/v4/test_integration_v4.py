@@ -10,8 +10,9 @@ import subprocess
 import time
 
 import pytest
-from certificates import Certificate
 from pytest_operator.plugin import OpsTest
+
+from certificates import Certificate
 
 logger = logging.getLogger(__name__)
 
