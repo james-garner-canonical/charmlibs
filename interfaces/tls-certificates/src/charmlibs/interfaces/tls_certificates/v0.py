@@ -84,9 +84,10 @@ class ExampleRequirerCharm(CharmBase):
 
 import json
 import logging
-from typing import List, Literal, Optional, TypedDict
+from typing import Any, List, Literal, Mapping, Optional, TypedDict
 
-from jsonschema import exceptions, validate  # type: ignore[import-untyped]
+import ops
+from jsonschema import exceptions, validate
 from ops.charm import CharmBase, CharmEvents
 from ops.framework import EventBase, EventSource, Object
 
@@ -182,15 +183,17 @@ class Cert(TypedDict):
 class CertificateAvailableEvent(EventBase):
     """Charm Event triggered when a TLS certificate is available."""
 
-    def __init__(self, handle, certificate_data: Cert):
+    certificate_data: Cert
+
+    def __init__(self, handle: ops.Handle, certificate_data: Cert):
         super().__init__(handle)
         self.certificate_data = certificate_data
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, Cert]:
         """Return snapshot."""
         return {"certificate_data": self.certificate_data}
 
-    def restore(self, snapshot: dict):
+    def restore(self, snapshot: dict[str, Cert]):
         """Restore snapshot."""
         self.certificate_data = snapshot["certificate_data"]
 
@@ -198,14 +201,16 @@ class CertificateAvailableEvent(EventBase):
 class CertificateRequestEvent(EventBase):
     """Charm Event triggered when a TLS certificate is required."""
 
-    def __init__(self, handle, common_name: str, sans: str, cert_type: str, relation_id: int):
+    def __init__(
+        self, handle: ops.Handle, common_name: str, sans: str, cert_type: str, relation_id: int
+    ):
         super().__init__(handle)
         self.common_name = common_name
         self.sans = sans
         self.cert_type = cert_type
         self.relation_id = relation_id
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, Any]:
         """Return snapshot."""
         return {
             "common_name": self.common_name,
@@ -214,7 +219,7 @@ class CertificateRequestEvent(EventBase):
             "relation_id": self.relation_id,
         }
 
-    def restore(self, snapshot: dict):
+    def restore(self, snapshot: dict[str, Any]):
         """Restores snapshot."""
         self.common_name = snapshot["common_name"]
         self.sans = snapshot["sans"]
@@ -222,7 +227,7 @@ class CertificateRequestEvent(EventBase):
         self.relation_id = snapshot["relation_id"]
 
 
-def _load_relation_data(raw_relation_data: dict) -> dict:
+def _load_relation_data(raw_relation_data: Mapping[str, str]) -> dict[str, Any]:
     """Load relation data from the relation data bag.
 
     Json loads all data.
@@ -233,7 +238,7 @@ def _load_relation_data(raw_relation_data: dict) -> dict:
     Returns:
         dict: Relation data in dict format.
     """
-    certificate_data = {}
+    certificate_data: dict[str, Any] = {}
     for key in raw_relation_data:
         try:
             certificate_data[key] = json.loads(raw_relation_data[key])
@@ -257,7 +262,7 @@ class CertificatesRequirerCharmEvents(CharmEvents):
 class TLSCertificatesProvides(Object):
     """TLS certificates provider class to be instantiated by TLS certificates providers."""
 
-    on = CertificatesProviderCharmEvents()
+    on = CertificatesProviderCharmEvents()  # type: ignore
 
     def __init__(self, charm: CharmBase, relationship_name: str):
         super().__init__(charm, relationship_name)
@@ -268,7 +273,7 @@ class TLSCertificatesProvides(Object):
         self.relationship_name = relationship_name
 
     @staticmethod
-    def _relation_data_is_valid(certificates_data: dict) -> bool:
+    def _relation_data_is_valid(certificates_data: dict[str, Any]) -> bool:
         """Use JSON schema validator to validate relation data content.
 
         Args:
@@ -310,7 +315,7 @@ class TLSCertificatesProvides(Object):
         certificate_dict = {"key": certificate["key"], "cert": certificate["cert"]}
         relation_data[certificate["common_name"]] = json.dumps(certificate_dict)
 
-    def _on_relation_changed(self, event) -> None:
+    def _on_relation_changed(self, event: ops.RelationChangedEvent) -> None:
         """Handle on relation changed event.
 
         Looks at cert_requests and client_cert_requests fields in relation data and emit
@@ -322,6 +327,7 @@ class TLSCertificatesProvides(Object):
         Returns:
             None
         """
+        assert event.unit is not None
         relation_data = _load_relation_data(event.relation.data[event.unit])
         if not relation_data:
             logger.info("No relation data")
@@ -348,14 +354,14 @@ class TLSCertificatesProvides(Object):
 class TLSCertificatesRequires(Object):
     """TLS certificates requirer class to be instantiated by TLS certificates requirers."""
 
-    on = CertificatesRequirerCharmEvents()
+    on = CertificatesRequirerCharmEvents()  # type: ignore
 
     def __init__(
         self,
         charm: CharmBase,
         relationship_name: str,
         common_name: Optional[str] = None,
-        sans: Optional[list] = None,
+        sans: Optional[list[str]] = None,
     ):
         super().__init__(charm, relationship_name)
         self.framework.observe(
@@ -370,7 +376,7 @@ class TLSCertificatesRequires(Object):
         self,
         cert_type: Literal["client", "server"],
         common_name: str,
-        sans: Optional[list] = None,
+        sans: Optional[list[str]] = None,
     ) -> None:
         """Request TLS certificate to provider charm.
 
@@ -412,7 +418,7 @@ class TLSCertificatesRequires(Object):
         logger.info("Certificate request sent to provider")
 
     @staticmethod
-    def _relation_data_is_valid(certificates_data: dict) -> bool:
+    def _relation_data_is_valid(certificates_data: dict[str, Any]) -> bool:
         """Check whether relation data is valid based on json schema.
 
         Args:
@@ -428,7 +434,7 @@ class TLSCertificatesRequires(Object):
             return False
 
     @staticmethod
-    def _parse_certificates_from_relation_data(relation_data: dict) -> List[Cert]:
+    def _parse_certificates_from_relation_data(relation_data: dict[str, Any]) -> List[Cert]:
         """Loops over all relation data and returns list of Cert objects.
 
         Args:
@@ -437,7 +443,7 @@ class TLSCertificatesRequires(Object):
         Returns:
             list: List of certificates
         """
-        certificates = []
+        certificates: List[Cert] = []
         ca = relation_data.pop("ca")
         relation_data.pop("chain")
         for key in relation_data:
@@ -450,7 +456,7 @@ class TLSCertificatesRequires(Object):
                     )
         return certificates
 
-    def _on_relation_changed(self, event) -> None:
+    def _on_relation_changed(self, event: ops.RelationChangedEvent) -> None:
         """Handle relation changed events.
 
         Args:
@@ -459,6 +465,7 @@ class TLSCertificatesRequires(Object):
         Returns:
             None
         """
+        assert event.unit is not None
         relation_data = _load_relation_data(event.relation.data[event.unit])
         if not relation_data:
             logger.info("No relation data")
