@@ -187,11 +187,11 @@ class CertificateAvailableEvent(EventBase):
         self.certificate_data = certificate_data
 
     def snapshot(self) -> dict:
-        """Returns snapshot."""
+        """Return snapshot."""
         return {"certificate_data": self.certificate_data}
 
     def restore(self, snapshot: dict):
-        """Restores snapshot."""
+        """Restore snapshot."""
         self.certificate_data = snapshot["certificate_data"]
 
 
@@ -206,7 +206,7 @@ class CertificateRequestEvent(EventBase):
         self.relation_id = relation_id
 
     def snapshot(self) -> dict:
-        """Returns snapshot."""
+        """Return snapshot."""
         return {
             "common_name": self.common_name,
             "sans": self.sans,
@@ -223,7 +223,7 @@ class CertificateRequestEvent(EventBase):
 
 
 def _load_relation_data(raw_relation_data: dict) -> dict:
-    """Loads relation data from the relation data bag.
+    """Load relation data from the relation data bag.
 
     Json loads all data.
 
@@ -269,7 +269,7 @@ class TLSCertificatesProvides(Object):
 
     @staticmethod
     def _relation_data_is_valid(certificates_data: dict) -> bool:
-        """Uses JSON schema validator to validate relation data content.
+        """Use JSON schema validator to validate relation data content.
 
         Args:
             certificates_data (dict): Certificate data dictionary as retrieved from relation data.
@@ -284,7 +284,7 @@ class TLSCertificatesProvides(Object):
             return False
 
     def set_relation_certificate(self, certificate: Cert, relation_id: int) -> None:
-        """Adds certificates to relation data.
+        """Add certificates to relation data.
 
         Args:
             certificate (Cert): Certificate object
@@ -311,7 +311,7 @@ class TLSCertificatesProvides(Object):
         relation_data[certificate["common_name"]] = json.dumps(certificate_dict)
 
     def _on_relation_changed(self, event) -> None:
-        """Handler triggered on relation changed event.
+        """Handle on relation changed event.
 
         Looks at cert_requests and client_cert_requests fields in relation data and emit
         certificate request events for each entry.
@@ -413,7 +413,7 @@ class TLSCertificatesRequires(Object):
 
     @staticmethod
     def _relation_data_is_valid(certificates_data: dict) -> bool:
-        """Checks whether relation data is valid based on json schema.
+        """Check whether relation data is valid based on json schema.
 
         Args:
             certificates_data: Certificate data in dict format.
@@ -451,7 +451,7 @@ class TLSCertificatesRequires(Object):
         return certificates
 
     def _on_relation_changed(self, event) -> None:
-        """Handler triggered on relation changed events.
+        """Handle relation changed events.
 
         Args:
             event: Juju event
