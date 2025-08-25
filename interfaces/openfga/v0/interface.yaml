@@ -1,8 +1,0 @@
-name: openfga
-version: 0
-status: retired
-
-providers: []
-requirers: []
-
-maintainer: identity

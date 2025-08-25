@@ -1,4 +1,0 @@
-options:
-  external_hostname:
-    type: string
-    default: "foo.com"

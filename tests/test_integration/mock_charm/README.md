@@ -1,1 +1,0 @@
-This is a tester charm for the charm-relation-interfaces pytest plugin.

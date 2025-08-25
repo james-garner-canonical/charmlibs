@@ -1,8 +1,0 @@
-name: database_backup
-version: 0
-status: draft
-
-providers: []
-requirers: []
-
-maintainer: data-platform
