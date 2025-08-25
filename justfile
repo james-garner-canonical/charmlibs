@@ -3,7 +3,7 @@ mod docs  # load docs module to expose docs subcommands
 set ignore-comments  # don't print comment lines in recipes
 
 # set on the commandline as needed, e.g. `just package=pathops python=3.10 unit`
-python := '3.12'
+python := '3.10'
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
 [doc('Describe usage and list the available recipes.')]
