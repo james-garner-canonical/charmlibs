@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "BaseModel": {
+      "properties": {},
+      "title": "BaseModel",
+      "type": "object"
+    },
+    "OpenFGAProviderData": {
+      "properties": {
+        "address": {
+          "description": "The address of the OpenFGA service.",
+          "examples": [
+            "10.10.4.1"
+          ],
+          "format": "ipvanyaddress",
+          "title": "OpenFGA address",
+          "type": "string"
+        },
+        "port": {
+          "description": "Port on which the OpenFGA service is listening (HTTP).",
+          "examples": [
+            8080
+          ],
+          "title": "OpenFGA port",
+          "type": "integer"
+        },
+        "scheme": {
+          "description": "Scheme to be used to connect to the OpenFGA service.",
+          "examples": [
+            "http",
+            "https"
+          ],
+          "title": "OpenFGA scheme",
+          "type": "string"
+        },
+        "token_secret_id": {
+          "description": "Secret ID of the preshared token to be used to connect to the OpenFGA service.",
+          "title": "Secret ID of the OpenFGA token",
+          "type": "string"
+        },
+        "store_id": {
+          "description": "ID of the authentication stored that was created.",
+          "examples": [
+            "01GK13VYZK62Q1T0X55Q2BHYD6"
+          ],
+          "title": "OpenFGA store ID",
+          "type": "string"
+        }
+      },
+      "required": [
+        "address",
+        "port",
+        "scheme",
+        "token_secret_id",
+        "store_id"
+      ],
+      "title": "OpenFGAProviderData",
+      "type": "object"
+    }
+  },
+  "description": "Provider schema for OpenFGA.",
+  "properties": {
+    "unit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BaseModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "app": {
+      "$ref": "#/$defs/OpenFGAProviderData"
+    }
+  },
+  "required": [
+    "app"
+  ],
+  "title": "ProviderSchema",
+  "type": "object"
+}

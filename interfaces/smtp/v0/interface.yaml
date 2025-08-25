@@ -1,0 +1,13 @@
+name: smtp
+
+version: 0
+status: published
+
+providers:
+  - name: smtp-integrator
+    url: https://github.com/canonical/smtp-integrator-operator
+
+requirers:
+  []
+
+maintainer: is-charms

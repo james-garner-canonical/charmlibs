@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "BaseModel": {
+      "properties": {},
+      "title": "BaseModel",
+      "type": "object"
+    },
+    "LdapProviderData": {
+      "properties": {
+        "urls": {
+          "description": "List of LDAP URLs",
+          "example": [
+            "ldap://ldap.canonical.com:3893",
+            "ldap://ldap.ubuntu.com:3893"
+          ],
+          "items": {
+            "format": "uri",
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "LDAP URLs",
+          "type": "array"
+        },
+        "base_dn": {
+          "description": "The base entry as the starting point for LDAP search operation",
+          "example": "dc=canonical,dc=com",
+          "title": "Base DN",
+          "type": "string"
+        },
+        "bind_dn": {
+          "description": "The distinguished name (DN) of the bind account",
+          "example": "cn=admin,ou=engineering,dc=canonical,dc=com",
+          "title": "Bind DN",
+          "type": "string"
+        },
+        "bind_password_secret": {
+          "description": "The juju secret ID of the bind account's password",
+          "example": "secret://59060ecc-0495-4a80-8006-5f1fc13fd783/cjqub6vubg2s77p3nio0",
+          "title": "Bind Password Secret",
+          "type": "string"
+        },
+        "auth_method": {
+          "description": "The LDAP authentication method",
+          "example": "simple",
+          "title": "Authentication Method",
+          "type": "string"
+        },
+        "starttls": {
+          "description": "The indicator of StartTLS operation enabled or not",
+          "example": true,
+          "title": "StartTLS",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "urls",
+        "base_dn",
+        "bind_dn",
+        "bind_password_secret",
+        "auth_method",
+        "starttls"
+      ],
+      "title": "LdapProviderData",
+      "type": "object"
+    }
+  },
+  "description": "The schema for the provider side of the ldap interface.",
+  "properties": {
+    "unit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BaseModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "app": {
+      "$ref": "#/$defs/LdapProviderData"
+    }
+  },
+  "required": [
+    "app"
+  ],
+  "title": "ProviderSchema",
+  "type": "object"
+}

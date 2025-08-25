@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "IngressRequirerAppData": {
+      "properties": {
+        "model": {
+          "contentMediaType": "application/json",
+          "contentSchema": {
+            "type": "string"
+          },
+          "description": "The model the application is in.",
+          "title": "Model",
+          "type": "string"
+        },
+        "port": {
+          "contentMediaType": "application/json",
+          "contentSchema": {
+            "type": "integer"
+          },
+          "description": "The port the unit wishes to be exposed. Stringified int.",
+          "title": "Port",
+          "type": "string"
+        },
+        "name": {
+          "contentMediaType": "application/json",
+          "contentSchema": {
+            "type": "string"
+          },
+          "description": "The name of the application requesting ingress.",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "model",
+        "port",
+        "name"
+      ],
+      "title": "IngressRequirerAppData",
+      "type": "object"
+    },
+    "IngressRequirerUnitData": {
+      "properties": {
+        "host": {
+          "contentMediaType": "application/json",
+          "contentSchema": {
+            "type": "string"
+          },
+          "description": "Unit hostname to be exposed.",
+          "title": "Host",
+          "type": "string"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "title": "IngressRequirerUnitData",
+      "type": "object"
+    }
+  },
+  "description": "Requirer schema for Ingress.",
+  "properties": {
+    "unit": {
+      "$ref": "#/$defs/IngressRequirerUnitData"
+    },
+    "app": {
+      "$ref": "#/$defs/IngressRequirerAppData"
+    }
+  },
+  "required": [
+    "unit",
+    "app"
+  ],
+  "title": "RequirerSchema",
+  "type": "object"
+}

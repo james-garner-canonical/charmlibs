@@ -1,0 +1,93 @@
+{
+  "$defs": {
+    "BaseModel": {
+      "properties": {},
+      "title": "BaseModel",
+      "type": "object"
+    },
+    "OpenFGAProviderData": {
+      "properties": {
+        "grpc_api_url": {
+          "description": "The URL of the gRPC API.",
+          "title": "gRPC URL",
+          "type": "string"
+        },
+        "http_api_url": {
+          "description": "The URL of the HTTP API.",
+          "title": "HTTP URL",
+          "type": "string"
+        },
+        "token_secret_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Secret ID of the preshared token to be used to connect to the OpenFGA service.",
+          "title": "Secret ID of the OpenFGA token"
+        },
+        "token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The preshared token to be used to connect to the OpenFGA service, to be used when juju secrets are not available.",
+          "title": "The OpenFGA token"
+        },
+        "store_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ID of the authentication store that was created.",
+          "examples": [
+            "01GK13VYZK62Q1T0X55Q2BHYD6"
+          ],
+          "title": "OpenFGA store ID"
+        }
+      },
+      "required": [
+        "grpc_api_url",
+        "http_api_url"
+      ],
+      "title": "OpenFGAProviderData",
+      "type": "object"
+    }
+  },
+  "description": "Provider schema for OpenFGA.",
+  "properties": {
+    "unit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BaseModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "app": {
+      "$ref": "#/$defs/OpenFGAProviderData"
+    }
+  },
+  "required": [
+    "app"
+  ],
+  "title": "ProviderSchema",
+  "type": "object"
+}

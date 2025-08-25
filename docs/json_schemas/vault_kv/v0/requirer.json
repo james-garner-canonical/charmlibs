@@ -1,0 +1,66 @@
+{
+  "$defs": {
+    "AppVaultKvRequirerSchema": {
+      "properties": {
+        "mount_suffix": {
+          "description": "Suffix to append to the mount name to get the KV mount.",
+          "title": "Mount Suffix",
+          "type": "string"
+        },
+        "wrap_ttl": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to request approle secret_id as a response-wrapping token with a certain TTL. If not set, no wrapping will be made to secret_id. Otherwise, wrap_ttl specifies the duration of seconds before the expiration of the response-wrapping token.",
+          "title": "Wrap TTL"
+        }
+      },
+      "required": [
+        "mount_suffix"
+      ],
+      "title": "AppVaultKvRequirerSchema",
+      "type": "object"
+    },
+    "UnitVaultKvRequirerSchema": {
+      "properties": {
+        "egress_subnet": {
+          "description": "A string of egress subnets separated by commas, in CIDR notation.",
+          "title": "Egress Subnet",
+          "type": "string"
+        },
+        "nonce": {
+          "description": "Uniquely identifying value for this unit. `secrets.token_hex(16)` is recommended.",
+          "title": "Nonce",
+          "type": "string"
+        }
+      },
+      "required": [
+        "egress_subnet",
+        "nonce"
+      ],
+      "title": "UnitVaultKvRequirerSchema",
+      "type": "object"
+    }
+  },
+  "description": "The schema for the requirer side of this interface.",
+  "properties": {
+    "unit": {
+      "$ref": "#/$defs/UnitVaultKvRequirerSchema"
+    },
+    "app": {
+      "$ref": "#/$defs/AppVaultKvRequirerSchema"
+    }
+  },
+  "required": [
+    "unit",
+    "app"
+  ],
+  "title": "RequirerSchema",
+  "type": "object"
+}

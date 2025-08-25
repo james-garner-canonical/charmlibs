@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "BaseModel": {
+      "properties": {},
+      "title": "BaseModel",
+      "type": "object"
+    },
+    "IPNetwork": {
+      "properties": {
+        "network": {
+          "format": "ipvanynetwork",
+          "title": "Network",
+          "type": "string"
+        },
+        "gateway": {
+          "format": "ipvanyaddress",
+          "title": "Gateway",
+          "type": "string"
+        },
+        "routes": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Route"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Routes"
+        }
+      },
+      "required": [
+        "network",
+        "gateway",
+        "routes"
+      ],
+      "title": "IPNetwork",
+      "type": "object"
+    },
+    "IPRouterProviderAppData": {
+      "properties": {
+        "networks": {
+          "items": {
+            "$ref": "#/$defs/IPNetwork"
+          },
+          "title": "Networks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "networks"
+      ],
+      "title": "IPRouterProviderAppData",
+      "type": "object"
+    },
+    "Route": {
+      "properties": {
+        "destination": {
+          "format": "ipvanyaddress",
+          "title": "Destination",
+          "type": "string"
+        },
+        "gateway": {
+          "format": "ipvanyaddress",
+          "title": "Gateway",
+          "type": "string"
+        }
+      },
+      "required": [
+        "destination",
+        "gateway"
+      ],
+      "title": "Route",
+      "type": "object"
+    }
+  },
+  "description": "Provider schema for ip_router.",
+  "properties": {
+    "unit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BaseModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "app": {
+      "$ref": "#/$defs/IPRouterProviderAppData"
+    }
+  },
+  "required": [
+    "app"
+  ],
+  "title": "ProviderSchema",
+  "type": "object"
+}
