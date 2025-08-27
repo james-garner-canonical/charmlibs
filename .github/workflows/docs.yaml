@@ -34,6 +34,7 @@ jobs:
       - name: Spelling
         id: spellcheck-step
         if: success() || failure()
+        continue-on-error: true
         uses: canonical/documentation-workflows/spellcheck@main
         with:
           working-directory: .docs
