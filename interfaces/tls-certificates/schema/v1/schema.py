@@ -1,4 +1,7 @@
-"""This file defines the schemas for the provider and requirer sides of the `tls_certificates` interface.
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+"""Schema for the ``tls_certificates`` interface.
 
 It exposes two interfaces.schema_base.DataBagSchema subclasses called:
 - ProviderSchema
