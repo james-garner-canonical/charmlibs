@@ -79,16 +79,6 @@ if TYPE_CHECKING:
 
     import ops
 
-# The unique Charmhub library identifier, never change it
-LIBID = 'afd8c2bccf834997afce12c2706d2ede'
-
-# Increment this major API version when introducing breaking changes
-LIBAPI = 0
-
-# Increment this PATCH version before using `charmcraft publish-lib` or reset
-# to 0 if you are raising the major API version
-LIBPATCH = 27
-
 REQUIRER_JSON_SCHEMA = {
     '$schema': 'http://json-schema.org/draft-04/schema#',
     'type': 'object',

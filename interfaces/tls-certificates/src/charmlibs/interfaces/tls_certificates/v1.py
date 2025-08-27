@@ -42,21 +42,6 @@ from ops.model import (
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
-# The unique Charmhub library identifier, never change it
-LIBID = 'afd8c2bccf834997afce12c2706d2ede'
-
-# Increment this major API version when introducing breaking changes
-LIBAPI = 4
-
-# Increment this PATCH version before using `charmcraft publish-lib` or reset
-# to 0 if you are raising the major API version
-LIBPATCH = 21
-
-PYDEPS = [
-    'cryptography>=43.0.0',
-    'pydantic',
-]
-
 logger = logging.getLogger(__name__)
 
 
