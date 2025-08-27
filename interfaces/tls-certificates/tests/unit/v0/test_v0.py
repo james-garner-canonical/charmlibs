@@ -68,7 +68,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         f'{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request',
         new_callable=PropertyMock,
     )
-    def test_given_common_name_is_missing_from_relation_data_when_relation_changed_then_no_certificate_request_is_made(  # noqa: E501
+    def test_given_common_name_is_missing_from_relation_data_when_relation_changed_then_no_certificate_request_is_made(
         self, patch_emit
     ):
         certificate_requests = [
@@ -91,7 +91,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         f'{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request',
         new_callable=PropertyMock,
     )
-    def test_given_invalid_cert_requests_in_relation_data_when_relation_changed_then_no_certificate_request_is_made(  # noqa: E501
+    def test_given_invalid_cert_requests_in_relation_data_when_relation_changed_then_no_certificate_request_is_made(
         self, patch_emit
     ):
         invalid_cert_request_content = 'invalid format'
@@ -113,7 +113,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         f'{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request',
         new_callable=PropertyMock,
     )
-    def test_given_cert_requests_in_relation_data_when_relation_changed_then_certificate_request_event_is_emitted_for_each_request(  # noqa: E501
+    def test_given_cert_requests_in_relation_data_when_relation_changed_then_certificate_request_event_is_emitted_for_each_request(
         self, patch_emit
     ):
         blou = Mock()
@@ -249,7 +249,7 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         self.requirer_unit = NonLeaderUnitMock(name=REQUIRER_UNIT_NAME)
         self.charm.framework.model.unit = self.requirer_unit
 
-    def test_given_client_when_request_certificate_then_client_cert_request_is_added_to_relation_data(  # noqa: E501
+    def test_given_client_when_request_certificate_then_client_cert_request_is_added_to_relation_data(
         self,
     ):
         class Relation:
@@ -305,7 +305,7 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         f'{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available',
         new_callable=PropertyMock,
     )
-    def test_given_valid_relation_data_and_unit_is_not_leader_when_on_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
+    def test_given_valid_relation_data_and_unit_is_not_leader_when_on_relation_changed_then_certificate_available_event_is_emitted(
         self, patch_emit
     ):
         event = Mock()
@@ -339,7 +339,7 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         f'{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available',
         new_callable=PropertyMock,
     )
-    def test_given_valid_relation_data_and_unit_is_leader_when_on_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
+    def test_given_valid_relation_data_and_unit_is_leader_when_on_relation_changed_then_certificate_available_event_is_emitted(
         self, patch_emit
     ):
         event = Mock()

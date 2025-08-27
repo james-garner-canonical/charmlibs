@@ -82,7 +82,7 @@ src = ["src", "tests/unit/v1", "tests/integration/juju/v1"]  # correctly sort lo
     # Missing copyright notice at top of file
     "CPY001",
 ]
-"./tests/unit/v0/test.py" = [
+"./tests/unit/v0/test_v0.py" = [
     # Line too long
     "E501",
 
