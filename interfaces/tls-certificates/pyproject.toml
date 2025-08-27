@@ -92,6 +92,10 @@ src = ["src", "tests/unit/v1", "tests/integration/juju/v1"]  # correctly sort lo
     # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF012",
 ]
+"./tests/unit/v1/test_v1.py" = [
+    # Line too long
+    "E501",
+]
 
 [tool.pyright]
 extend = "../../pyproject.toml"

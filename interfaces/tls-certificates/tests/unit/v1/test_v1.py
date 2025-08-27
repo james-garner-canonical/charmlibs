@@ -93,7 +93,7 @@ def test_given_key_size_provided_when_generate_private_key_then_private_key_is_g
 # Generate CSR
 
 
-def test_given_subject_and_private_key_when_generate_csr_then_csr_is_generated_with_provided_subject():  # noqa: E501
+def test_given_subject_and_private_key_when_generate_csr_then_csr_is_generated_with_provided_subject():
     common_name = 'whatever'
     private_key = PrivateKey(raw=generate_private_key_helper())
 
@@ -286,7 +286,7 @@ def test_given_ca_certificate_attributes_when_generate_ca_then_ca_is_generated_c
 # Generate Certificate
 
 
-def test_given_csr_when_generate_certificate_then_certificate_generated_with_requested_attributes():  # noqa: E501
+def test_given_csr_when_generate_certificate_then_certificate_generated_with_requested_attributes():
     private_key = generate_private_key()
     csr = generate_csr(
         private_key=private_key,
@@ -327,7 +327,7 @@ def test_given_csr_when_generate_certificate_then_certificate_generated_with_req
     assert not certificate_validation.get_violations(certificate)
 
 
-def test_given_csr_for_ca_when_generate_certificate_then_certificate_generated_with_requested_attributes():  # noqa: E501
+def test_given_csr_for_ca_when_generate_certificate_then_certificate_generated_with_requested_attributes():
     private_key = generate_private_key()
     csr = generate_csr(
         private_key=private_key,
