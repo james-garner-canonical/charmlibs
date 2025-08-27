@@ -5,8 +5,8 @@ description = "Test requirer charm for integration tests"
 requires-python = ">=3.10"
 dependencies = [
     "ops",
-    "tls-certificates-interface",
+    "charmlibs-interfaces-tls_certificates",
 ]
 
 [tool.uv.sources]
-tls-certificates-interface = { path = "package.tar.gz" }
+charmlibs-interfaces-tls_certificates = { path = "package.tar.gz" }
