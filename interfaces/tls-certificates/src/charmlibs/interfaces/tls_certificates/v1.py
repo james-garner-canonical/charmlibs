@@ -1,19 +1,12 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Charm library for managing TLS certificates (V4).
+"""Manage TLS certificates using the ``tls_certificates`` interface v1.
 
-This library contains the Requires and Provides classes for handling the tls-certificates
-interface.
-
-Pre-requisites:
-  - Juju >= 3.0
-  - cryptography >= 43.0.0
-  - pydantic >= 1.0
+This is a port of ``tls_certificates_interface.tls_certificates`` v4.21.
 
 Learn more on how-to use the TLS Certificates interface library by reading the documentation:
 - https://charmhub.io/tls-certificates-interface/
-
 """
 
 from __future__ import annotations

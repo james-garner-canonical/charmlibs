@@ -1,7 +1,9 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Module for the ``tls_certificates`` interface v0.
+"""Manage TLS certificates using the ``tls_certificates`` interface v0.
+
+This is a port of ``tls_certificates_interface.tls_certificates`` v0.27.
 
 Example provider charm::
 

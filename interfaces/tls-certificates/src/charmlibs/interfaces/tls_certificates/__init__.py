@@ -19,11 +19,6 @@ Support for current versions of the interface is available under:
 * ``charmlibs.interfaces.tls_certificates.v0``
 * ``charmlibs.interfaces.tls_certificates.v1``
 
-Currently these are using the source code of:
-
-* ``tls_certificates_interface.v0.tls_certificates`` (v0.24)
-* ``tls_certificates_interface.v4.tls_certificates`` (v4.21)
-
 tls_certificates.v0
 -------------------
 .. automodule:: tls_certificates.v0
