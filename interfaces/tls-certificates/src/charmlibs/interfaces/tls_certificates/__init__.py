@@ -36,7 +36,7 @@ tls_certificates.v1
 from . import v0, v1
 
 __all__ = [
-    "v0",
-    "v1",
+    'v0',
+    'v1',
 ]
-__version__ = "1.0.0"
+__version__ = '1.0.0'

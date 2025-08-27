@@ -5,7 +5,6 @@
 """Methods used to generate self-signed certificates."""
 
 import datetime
-from typing import Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -13,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 def generate_private_key(
-    password: Optional[bytes] = None,
+    password: bytes | None = None,
     key_size: int = 2048,
     public_exponent: int = 65537,
 ) -> bytes:
@@ -47,9 +46,9 @@ def generate_certificate(
     csr: bytes,
     ca: bytes,
     ca_key: bytes,
-    ca_key_password: Optional[bytes] = None,
+    ca_key_password: bytes | None = None,
     validity: int = 365,
-    alt_names: Optional[list] = None,
+    alt_names: list | None = None,
 ) -> bytes:
     """Generate a certificate based on CSR.
 
@@ -93,9 +92,9 @@ def generate_certificate(
 def generate_ca(
     private_key: bytes,
     subject: str,
-    private_key_password: Optional[bytes] = None,
+    private_key_password: bytes | None = None,
     validity: int = 365,
-    country: str = "US",
+    country: str = 'US',
 ) -> bytes:
     """Generate a CA certificate.
 

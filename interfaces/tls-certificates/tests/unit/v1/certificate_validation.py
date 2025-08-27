@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Iterable, List, Union
+from collections.abc import Iterable
 
 from pkilint import loader
 from pkilint.pkix import certificate as certificate_lint
@@ -31,7 +31,7 @@ validator = certificate_lint.create_pkix_certificate_validator_container(
 
 def _get_violations_from_results(
     results: Iterable[ValidationResult],
-) -> List[ValidationFindingDescription]:
+) -> list[ValidationFindingDescription]:
     violations = []
     for result in results:
         for finding in result.finding_descriptions:
@@ -42,8 +42,8 @@ def _get_violations_from_results(
 
 
 def get_violations(
-    certificate: Union[str, Certificate],
-) -> List[ValidationFindingDescription]:
+    certificate: str | Certificate,
+) -> list[ValidationFindingDescription]:
     """Get violations for the provided certificate.
 
     Returns a list of RFC5280 violations found in the certificate, including

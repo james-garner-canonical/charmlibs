@@ -14,9 +14,9 @@ from charmlibs.interfaces.tls_certificates.v0 import (
     TLSCertificatesRequires,
 )
 
-PROVIDER_UNIT_NAME = "whatever provider unit name"
-REQUIRER_UNIT_NAME = "whatever requirer unit name"
-CHARM_LIB_PATH = "charmlibs.interfaces.tls_certificates.v0"
+PROVIDER_UNIT_NAME = 'whatever provider unit name'
+REQUIRER_UNIT_NAME = 'whatever requirer unit name'
+CHARM_LIB_PATH = 'charmlibs.interfaces.tls_certificates.v0'
 
 
 class LeaderUnitMock:
@@ -53,9 +53,9 @@ class TestTLSCertificatesProvides(unittest.TestCase):
             def relation_changed(self):
                 pass
 
-        relationship_name = "certificates"
+        relationship_name = 'certificates'
         charm = Mock()
-        charm.on = {"certificates": MockRelation()}
+        charm.on = {'certificates': MockRelation()}
         self.tls_relation_provides = TLSCertificatesProvides(
             charm=charm, relationship_name=relationship_name
         )
@@ -65,7 +65,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         self.charm.framework.model.unit = self.provider_unit
 
     @patch(
-        f"{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request",
+        f'{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request',
         new_callable=PropertyMock,
     )
     def test_given_common_name_is_missing_from_relation_data_when_relation_changed_then_no_certificate_request_is_made(  # noqa: E501
@@ -73,12 +73,12 @@ class TestTLSCertificatesProvides(unittest.TestCase):
     ):
         certificate_requests = [
             {
-                "sans": json.dumps(["whatever sans"]),
+                'sans': json.dumps(['whatever sans']),
             }
         ]
         event = Mock()
         event.relation.data = {
-            self.requirer_unit: {"cert_requests": json.dumps(certificate_requests)},
+            self.requirer_unit: {'cert_requests': json.dumps(certificate_requests)},
             self.provider_unit: {},
         }
         event.unit = self.requirer_unit
@@ -88,18 +88,18 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         patch_emit.assert_not_called()
 
     @patch(
-        f"{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request",
+        f'{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request',
         new_callable=PropertyMock,
     )
     def test_given_invalid_cert_requests_in_relation_data_when_relation_changed_then_no_certificate_request_is_made(  # noqa: E501
         self, patch_emit
     ):
-        invalid_cert_request_content = "invalid format"
+        invalid_cert_request_content = 'invalid format'
         event = Mock()
         event.relation.data = {
             self.requirer_unit: {
-                "common_name": "whatever common name",
-                "cert_requests": invalid_cert_request_content,
+                'common_name': 'whatever common name',
+                'cert_requests': invalid_cert_request_content,
             },
             self.provider_unit: {},
         }
@@ -110,7 +110,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         patch_emit.assert_not_called()
 
     @patch(
-        f"{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request",
+        f'{CHARM_LIB_PATH}.CertificatesProviderCharmEvents.certificate_request',
         new_callable=PropertyMock,
     )
     def test_given_cert_requests_in_relation_data_when_relation_changed_then_certificate_request_event_is_emitted_for_each_request(  # noqa: E501
@@ -119,23 +119,23 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         blou = Mock()
         patch_emit.emit = blou
         relation_id = 1
-        cert_request_1_common_name = "cert request 1 common name"
-        cert_request_2_common_name = "cert request 2 common name"
-        client_cert_request_1_common_name = "client cert request 1 common name"
-        client_cert_request_2_common_name = "client cert request 2 common name"
+        cert_request_1_common_name = 'cert request 1 common name'
+        cert_request_2_common_name = 'cert request 2 common name'
+        client_cert_request_1_common_name = 'client cert request 1 common name'
+        client_cert_request_2_common_name = 'client cert request 2 common name'
         cert_requests = [
-            {"common_name": cert_request_1_common_name},
-            {"common_name": cert_request_2_common_name},
+            {'common_name': cert_request_1_common_name},
+            {'common_name': cert_request_2_common_name},
         ]
         client_cert_requests = [
-            {"common_name": client_cert_request_1_common_name},
-            {"common_name": client_cert_request_2_common_name},
+            {'common_name': client_cert_request_1_common_name},
+            {'common_name': client_cert_request_2_common_name},
         ]
         event = Mock()
         event.relation.data = {
             self.requirer_unit: {
-                "cert_requests": json.dumps(cert_requests),
-                "client_cert_requests": json.dumps(client_cert_requests),
+                'cert_requests': json.dumps(cert_requests),
+                'client_cert_requests': json.dumps(client_cert_requests),
             },
             self.provider_unit: {},
         }
@@ -148,25 +148,25 @@ class TestTLSCertificatesProvides(unittest.TestCase):
             call().emit(
                 common_name=cert_request_1_common_name,
                 sans=None,
-                cert_type="server",
+                cert_type='server',
                 relation_id=relation_id,
             ),
             call().emit(
                 common_name=cert_request_2_common_name,
                 sans=None,
-                cert_type="server",
+                cert_type='server',
                 relation_id=relation_id,
             ),
             call().emit(
                 common_name=client_cert_request_1_common_name,
                 sans=None,
-                cert_type="client",
+                cert_type='client',
                 relation_id=relation_id,
             ),
             call().emit(
                 common_name=client_cert_request_2_common_name,
                 sans=None,
-                cert_type="client",
+                cert_type='client',
                 relation_id=relation_id,
             ),
         ]
@@ -179,13 +179,13 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         class Relation:
             data: dict = {self.provider_unit: {}, self.requirer_unit: {}}
 
-        common_name = "whatever common name"
-        cert = "whatever certificate"
-        private_key = "whatever private key"
+        common_name = 'whatever common name'
+        cert = 'whatever certificate'
+        private_key = 'whatever private key'
         certificate = Cert(
             cert=cert,
             key=private_key,
-            ca="whatever ca",
+            ca='whatever ca',
             common_name=common_name,
         )
         relation_id = 1
@@ -198,7 +198,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
 
         relation_data = _load_relation_data(relation.data[self.provider_unit])
 
-        expected_relation_data = {"cert": cert, "key": private_key}
+        expected_relation_data = {'cert': cert, 'key': private_key}
         self.assertEqual(expected_relation_data, relation_data[common_name])
 
     def test_given_certificate_when_set_relation_certificate_then_ca_is_added_to_relation_data(
@@ -207,13 +207,13 @@ class TestTLSCertificatesProvides(unittest.TestCase):
         class Relation:
             data: dict = {self.provider_unit: {}, self.requirer_unit: {}}
 
-        common_name = "whatever common name"
-        cert = "whatever certificate"
-        private_key = "whatever private key"
+        common_name = 'whatever common name'
+        cert = 'whatever certificate'
+        private_key = 'whatever private key'
         certificate = Cert(
             cert=cert,
             key=private_key,
-            ca="whatever ca",
+            ca='whatever ca',
             common_name=common_name,
         )
         relation_id = 1
@@ -226,7 +226,7 @@ class TestTLSCertificatesProvides(unittest.TestCase):
 
         relation_data = _load_relation_data(relation.data[self.provider_unit])
 
-        self.assertEqual(certificate["ca"], relation_data["ca"])
+        self.assertEqual(certificate['ca'], relation_data['ca'])
 
 
 class TestTLSCertificatesRequires(unittest.TestCase):
@@ -240,7 +240,7 @@ class TestTLSCertificatesRequires(unittest.TestCase):
 
         charm = Mock()
         charm.on = CharmOnMock()
-        relationship_name = "certificates"
+        relationship_name = 'certificates'
         self.tls_certificate_requires = TLSCertificatesRequires(
             charm=charm, relationship_name=relationship_name
         )
@@ -255,20 +255,20 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         class Relation:
             data: dict = {self.provider_unit: {}, self.requirer_unit: {}}
 
-        common_name = "whatever common name"
+        common_name = 'whatever common name'
         relation = Relation()
         self.charm.framework.model.get_relation.return_value = relation
 
         self.tls_certificate_requires.request_certificate(
-            cert_type="client",
+            cert_type='client',
             common_name=common_name,
         )
 
-        assert "client_cert_requests" in relation.data[self.requirer_unit]
+        assert 'client_cert_requests' in relation.data[self.requirer_unit]
         client_cert_requests = json.loads(
-            relation.data[self.requirer_unit]["client_cert_requests"]
+            relation.data[self.requirer_unit]['client_cert_requests']
         )
-        expected_client_cert_requests = [{"common_name": common_name, "sans": []}]
+        expected_client_cert_requests = [{'common_name': common_name, 'sans': []}]
         self.assertEqual(expected_client_cert_requests, client_cert_requests)
 
     def test_given_no_relation_when_request_certificate_then_runtime_error_is_raised(self):
@@ -276,11 +276,11 @@ class TestTLSCertificatesRequires(unittest.TestCase):
 
         with pytest.raises(RuntimeError):
             self.tls_certificate_requires.request_certificate(
-                cert_type="client", common_name="whatever common name"
+                cert_type='client', common_name='whatever common name'
             )
 
     @patch(
-        f"{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available",
+        f'{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available',
         new_callable=PropertyMock,
     )
     def test_given_non_valid_relation_data_when_on_relation_changed_then_certificate_available_event_is_not_emitted(
@@ -289,12 +289,12 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         event = Mock()
         bad_relation_data = [
             {
-                "common_name": "aaa",  # key, cert and ca are missing
+                'common_name': 'aaa',  # key, cert and ca are missing
             }
         ]
         event.relation.data = {
             self.requirer_unit: {},
-            self.provider_unit: {"certificates": json.dumps(bad_relation_data)},
+            self.provider_unit: {'certificates': json.dumps(bad_relation_data)},
         }
         event.unit = self.provider_unit
         self.tls_certificate_requires._on_relation_changed(event)
@@ -302,23 +302,23 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         patch_emit.assert_not_called()
 
     @patch(
-        f"{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available",
+        f'{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available',
         new_callable=PropertyMock,
     )
     def test_given_valid_relation_data_and_unit_is_not_leader_when_on_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
         self, patch_emit
     ):
         event = Mock()
-        ca = "whatever ca"
-        cert = "whatever cert"
-        private_key = "whatever private key"
-        common_name = "whatever.com"
+        ca = 'whatever ca'
+        cert = 'whatever cert'
+        private_key = 'whatever private key'
+        common_name = 'whatever.com'
         relation_data = {
-            "ca": ca,
-            "chain": ca,
-            common_name: json.dumps({"cert": cert, "key": private_key}),
-            "whatever key": "whatever value",
-            "unit_name": "whatever unit name",
+            'ca': ca,
+            'chain': ca,
+            common_name: json.dumps({'cert': cert, 'key': private_key}),
+            'whatever key': 'whatever value',
+            'unit_name': 'whatever unit name',
         }
         event.unit = self.provider_unit
         event.relation.data = {
@@ -336,23 +336,23 @@ class TestTLSCertificatesRequires(unittest.TestCase):
         patch_emit.assert_has_calls(calls, any_order=True)
 
     @patch(
-        f"{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available",
+        f'{CHARM_LIB_PATH}.CertificatesRequirerCharmEvents.certificate_available',
         new_callable=PropertyMock,
     )
     def test_given_valid_relation_data_and_unit_is_leader_when_on_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
         self, patch_emit
     ):
         event = Mock()
-        ca = "whatever ca"
-        cert = "whatever cert"
-        private_key = "whatever private key"
-        common_name = "whatever.com"
+        ca = 'whatever ca'
+        cert = 'whatever cert'
+        private_key = 'whatever private key'
+        common_name = 'whatever.com'
         relation_data = {
-            "ca": ca,
-            "chain": ca,
-            common_name: json.dumps({"cert": cert, "key": private_key}),
-            "whatever key": "whatever value",
-            "unit_name": "whatever unit name",
+            'ca': ca,
+            'chain': ca,
+            common_name: json.dumps({'cert': cert, 'key': private_key}),
+            'whatever key': 'whatever value',
+            'unit_name': 'whatever unit name',
         }
         event.unit = self.provider_unit
         event.relation.data = {

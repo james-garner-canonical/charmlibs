@@ -3,7 +3,6 @@
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -39,7 +38,7 @@ def generate_private_key(
 def generate_csr(
     private_key: str,
     common_name: str,
-    sans: Optional[List[str]] = None,
+    sans: list[str] | None = None,
 ) -> str:
     """Generate a CSR using private key and subject.
 
