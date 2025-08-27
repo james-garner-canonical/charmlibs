@@ -4,10 +4,10 @@
 """Schema for the ``tls_certificates`` interface.
 
 It exposes two interfaces.schema_base.DataBagSchema subclasses called:
-- ProviderSchema
-- RequirerSchema
+* ProviderSchema
+* RequirerSchema
 
-Examples:
+Examples::
     ProviderSchema:
         unit: <empty>
         app: {
