@@ -255,7 +255,7 @@ class TLSCertificatesProvides(Object):
         """Use JSON schema validator to validate relation data content.
 
         Args:
-            certificates_data (dict): Certificate data dictionary as retrieved from relation data.
+            certificates_data: Certificate data dictionary as retrieved from relation data.
 
         Returns:
             bool: True/False depending on whether the relation data follows the json schema.
@@ -270,8 +270,8 @@ class TLSCertificatesProvides(Object):
         """Add certificates to relation data.
 
         Args:
-            certificate (Cert): Certificate object
-            relation_id (int): Juju relation ID
+            certificate: Certificate object
+            relation_id: Juju relation ID
 
         Returns:
             None
@@ -359,11 +359,11 @@ class TLSCertificatesRequires(Object):
         """Request TLS certificate to provider charm.
 
         Args:
-            cert_type (str): Certificate type: "client" or "server".
+            cert_type: Certificate type: "client" or "server".
                 Specifies if certificates are flagged for server or client authentication use.
                 See RFC 5280 Section 4.2.1.12 for information about the Extended Key Usage field.
-            common_name (str): The requested CN for the certificate.
-            sans (list): Subject Alternative Name
+            common_name: The requested Common Name for the certificate.
+            sans: Subject Alternative Name
 
         Returns:
             None
