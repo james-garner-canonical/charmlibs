@@ -15,11 +15,10 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "cryptography",
+    "cryptography>=43.0.0",
     "jsonschema",
     "ops",
     "pydantic",
-    "rpds-py==0.25.1"
 ]
 
 [project.urls]
