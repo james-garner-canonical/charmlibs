@@ -16,11 +16,11 @@ import ipaddress
 import json
 import logging
 import uuid
-from collections.abc import MutableMapping
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import pydantic
 from cryptography import x509
@@ -38,6 +38,9 @@ from ops.model import (
     SecretNotFoundError,
     Unit,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
 
 # The unique Charmhub library identifier, never change it
 LIBID = 'afd8c2bccf834997afce12c2706d2ede'
@@ -209,7 +212,7 @@ class _Certificate(pydantic.BaseModel):
     chain: list[str] | None = None
     revoked: bool | None = None
 
-    def to_provider_certificate(self, relation_id: int) -> 'ProviderCertificate':
+    def to_provider_certificate(self, relation_id: int) -> ProviderCertificate:
         """Convert to a ProviderCertificate."""
         return ProviderCertificate(
             relation_id=relation_id,
@@ -273,7 +276,7 @@ class PrivateKey:
         return self.raw
 
     @classmethod
-    def from_string(cls, private_key: str) -> 'PrivateKey':
+    def from_string(cls, private_key: str) -> PrivateKey:
         """Create a PrivateKey object from a private key."""
         return cls(raw=private_key.strip())
 
@@ -323,7 +326,7 @@ class Certificate:
         return self.raw
 
     @classmethod
-    def from_string(cls, certificate: str) -> 'Certificate':
+    def from_string(cls, certificate: str) -> Certificate:
         """Create a Certificate object from a certificate."""
         try:
             certificate_object = x509.load_pem_x509_certificate(data=certificate.encode())
@@ -452,7 +455,7 @@ class CertificateSigningRequest:
         return self.raw
 
     @classmethod
-    def from_string(cls, csr: str) -> 'CertificateSigningRequest':
+    def from_string(cls, csr: str) -> CertificateSigningRequest:
         """Create a CertificateSigningRequest object from a CSR."""
         try:
             csr_object = x509.load_pem_x509_csr(csr.encode())

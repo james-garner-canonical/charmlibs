@@ -68,13 +68,16 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Mapping
-from typing import Any, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypedDict
 
-import ops
 from jsonschema import exceptions, validate
 from ops.charm import CharmBase, CharmEvents
 from ops.framework import EventBase, EventSource, Object
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    import ops
 
 # The unique Charmhub library identifier, never change it
 LIBID = 'afd8c2bccf834997afce12c2706d2ede'
