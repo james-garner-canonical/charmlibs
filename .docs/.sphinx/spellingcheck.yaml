@@ -41,3 +41,4 @@ matrix:
             - a.reference[title^="pathops."]
             - a[href*="#pathops"]
             - .no-spellcheck
+            - a.reference.internal[title]
