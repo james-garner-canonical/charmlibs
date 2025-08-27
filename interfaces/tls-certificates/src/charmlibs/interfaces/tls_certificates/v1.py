@@ -42,6 +42,9 @@ from ops.model import (
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
+# legacy Charmhub-hosted lib ID, used at runtime in this lib for labels
+LIBID = 'afd8c2bccf834997afce12c2706d2ede'
+
 logger = logging.getLogger(__name__)
 
 
