@@ -602,7 +602,7 @@ class CertificateRequestAttributes:
 
     @classmethod
     def from_csr(cls, csr: CertificateSigningRequest, is_ca: bool):
-        """Create a CertificateRequestAttributes object from a CSR."""
+        """Create a ``CertificateRequestAttributes`` object from a CSR."""
         return cls(
             common_name=csr.common_name,
             sans_dns=csr.sans_dns,
