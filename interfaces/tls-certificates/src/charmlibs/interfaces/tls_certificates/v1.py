@@ -16,6 +16,8 @@ Learn more on how-to use the TLS Certificates interface library by reading the d
 
 """
 
+from __future__ import annotations
+
 import copy
 import ipaddress
 import json
