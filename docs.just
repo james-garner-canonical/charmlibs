@@ -30,12 +30,16 @@ html:
         print(cmd)
         subprocess.check_call(cmd)
 
+    # Any directory (or subdirectory of interfaces) starting with a-z is assumed to be a package.
     packages = [
         *sorted(p.name for p in ROOT.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
         *sorted(f'interfaces/{p.name}' for p in (ROOT / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
     ]
+    # Suppress ref warnings on all but last package as refs can't all resolve.
     for package in packages[: -1]:
         build(package, suppress_warnings=True)
+    # Run with the usual warnings for the last package.
+    # Or run just once with package=None if there were no packages.
     for package in packages[-1 :] or [None]:
         build(package)
 
