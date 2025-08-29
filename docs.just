@@ -2,7 +2,14 @@ set working-directory := '.docs'
 
 build_dir := env('READTHEDOCS_OUTPUT', '_build')
 
-[doc('Build the docs, generating reference docs for all packages, or just those specified. e.g. `just docs html interfaces/foo`.')]
+# this is the first recipe in the file, so it will run if just is called without a recipe
+[doc("""
+Build the docs, generating reference docs for all packages, or just those specified.
+
+`just docs` is an alias for `just docs html`. To specify packages, you must use the full recipe, e.g.
+`just docs html interfaces/foo`.
+Run `just docs clean` first to generate reference docs from scratch if you run into import errors.
+""")]
 html *packages:
     #!/usr/bin/env -S uv run --script --no-project
     import pathlib, subprocess
@@ -42,6 +49,10 @@ html *packages:
     # Or run just once with package=None if there were no packages.
     for package in packages[-1 :] or [None]:
         build(package)
+
+[doc('Show help for the docs recipes.')]
+help:
+    @just --list docs --unsorted
 
 [doc('Watch, build, and serve the docs.')]
 run:
