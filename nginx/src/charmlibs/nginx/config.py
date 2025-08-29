@@ -236,7 +236,7 @@ class NginxConfig:
         self._dns_IP_address = self._get_dns_ip_address()
         self._ipv6_enabled = is_ipv6_enabled()
         self._supported_tls_versions = supported_tls_versions or DEFAULT_TLS_VERSIONS
-        self._ssl_ciphers = ssl_ciphers or ['HIGH:!aNULL:!MD5']
+        self._ssl_ciphers = ssl_ciphers or ['HIGH:!aNULL:!MD5']  # codespell:ignore anull
         self._worker_processes = worker_processes
         self._worker_connections = worker_connections
         self._proxy_read_timeout = proxy_read_timeout

@@ -5,12 +5,16 @@
 Class that manages the TLS configuration for a sidecar container.
 """
 
+from __future__ import annotations
+
+import typing
 from dataclasses import dataclass
 from pathlib import Path
 
-import ops
-
 from charmlibs.nginx.tracer import tracer
+
+if typing.TYPE_CHECKING:
+    import ops
 
 KEY_PATH = '/etc/nginx/certs/server.key'
 CERT_PATH = '/etc/nginx/certs/server.cert'
@@ -37,7 +41,7 @@ class TLSConfigManager:
         self._container = container
         self._update_ca_certificates_on_restart = update_ca_certificates_on_restart
 
-    def reconcile(self, tls_config: TLSConfig):
+    def reconcile(self, tls_config: TLSConfig | None):
         """Reconcile container state."""
         if tls_config:
             self._sync_certificates(tls_config)
