@@ -407,32 +407,30 @@ class NginxConfig:
             # don't add an upstream block if there are no addresses
             if addresses:
                 upstream_config_name = upstream_config.name
-                nginx_upstreams.append(
-                    {
-                        'directive': 'upstream',
-                        'args': [upstream_config_name],
-                        'block': [
-                            # enable dynamic DNS resolution for upstream servers.
-                            # since K8s pods IPs are dynamic, we need this config to allow
-                            # nginx to re-resolve the DNS name without requiring a config reload.
-                            # cfr. https://www.f5.com/company/blog/nginx/dns-service-discovery-nginx-plus#:~:text=second%20method
+                nginx_upstreams.append({
+                    'directive': 'upstream',
+                    'args': [upstream_config_name],
+                    'block': [
+                        # enable dynamic DNS resolution for upstream servers.
+                        # since K8s pods IPs are dynamic, we need this config to allow
+                        # nginx to re-resolve the DNS name without requiring a config reload.
+                        # cfr. https://www.f5.com/company/blog/nginx/dns-service-discovery-nginx-plus#:~:text=second%20method
+                        {
+                            'directive': 'zone',
+                            'args': [f'{upstream_config_name}_zone', '64k'],
+                        },
+                        *[
                             {
-                                'directive': 'zone',
-                                'args': [f'{upstream_config_name}_zone', '64k'],
-                            },
-                            *[
-                                {
-                                    'directive': 'server',
-                                    'args': [
-                                        f'{addr}:{upstream_config.port}',
-                                        'resolve',
-                                    ],
-                                }
-                                for addr in addresses
-                            ],
+                                'directive': 'server',
+                                'args': [
+                                    f'{addr}:{upstream_config.port}',
+                                    'resolve',
+                                ],
+                            }
+                            for addr in addresses
                         ],
-                    }
-                )
+                    ],
+                })
 
         return nginx_upstreams
 
@@ -548,47 +546,45 @@ class NginxConfig:
                 tls = location.upstream_tls if location.upstream_tls is not None else listen_tls
                 s = 's' if tls else ''
                 protocol = f'grpc{s}' if grpc else f'http{s}'
-                nginx_locations.append(
-                    {
-                        'directive': 'location',
-                        'args': (
-                            [location.path]
-                            if location.modifier == ''
-                            else [location.modifier, location.path]
+                nginx_locations.append({
+                    'directive': 'location',
+                    'args': (
+                        [location.path]
+                        if location.modifier == ''
+                        else [location.modifier, location.path]
+                    ),
+                    'block': [
+                        {
+                            'directive': 'set',
+                            'args': [
+                                '$backend',
+                                f'{protocol}://{location.backend}{location.backend_url}',
+                            ],
+                        },
+                        {
+                            'directive': 'grpc_pass' if grpc else 'proxy_pass',
+                            'args': ['$backend'],
+                        },
+                        # if a server is down, no need to wait for a long time to pass on the
+                        #  request to the next available server
+                        {
+                            'directive': 'proxy_connect_timeout',
+                            'args': [self._proxy_connect_timeout],
+                        },
+                        # add headers if any
+                        *(
+                            [
+                                {
+                                    'directive': 'proxy_set_header',
+                                    'args': [key, val],
+                                }
+                                for key, val in location.headers.items()
+                            ]
+                            if location.headers
+                            else []
                         ),
-                        'block': [
-                            {
-                                'directive': 'set',
-                                'args': [
-                                    '$backend',
-                                    f'{protocol}://{location.backend}{location.backend_url}',
-                                ],
-                            },
-                            {
-                                'directive': 'grpc_pass' if grpc else 'proxy_pass',
-                                'args': ['$backend'],
-                            },
-                            # if a server is down, no need to wait for a long time to pass on the
-                            #  request to the next available server
-                            {
-                                'directive': 'proxy_connect_timeout',
-                                'args': [self._proxy_connect_timeout],
-                            },
-                            # add headers if any
-                            *(
-                                [
-                                    {
-                                        'directive': 'proxy_set_header',
-                                        'args': [key, val],
-                                    }
-                                    for key, val in location.headers.items()
-                                ]
-                                if location.headers
-                                else []
-                            ),
-                        ],
-                    }
-                )
+                    ],
+                })
 
         return nginx_locations
 
@@ -607,12 +603,10 @@ class NginxConfig:
         directives: List[Dict[str, Any]] = []
         directives.append({'directive': 'listen', 'args': self._listen_args(port, False, ssl)})
         if self._ipv6_enabled:
-            directives.append(
-                {
-                    'directive': 'listen',
-                    'args': self._listen_args(port, True, ssl),
-                }
-            )
+            directives.append({
+                'directive': 'listen',
+                'args': self._listen_args(port, True, ssl),
+            })
         if http2:
             directives.append({'directive': 'http2', 'args': ['on']})
         return directives
