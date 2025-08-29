@@ -3,9 +3,43 @@ set working-directory := '.docs'
 build_dir := env('READTHEDOCS_OUTPUT', '_build')
 
 [doc('Build the docs.')]
-html:
-    uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-build -T -W --keep-going -b dirhtml -d _build/doctrees -D language=en . '{{build_dir}}/html'
+html *packages='__all__':
+    #!/usr/bin/env -S uv run --script --no-project
+    import pathlib, subprocess
+    root = pathlib.Path('{{justfile_directory()}}')
+    packages = '{{packages}}'.split()
+    if '__all__' in packages:
+        packages = [
+            *sorted(p.name for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
+            *sorted(f'interfaces/{p.name}' for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
+        ]
+    uvx = [
+        'uvx',
+        '--from', 'sphinx',
+        '--with-requirements', '.sphinx/requirements.txt',
+    ]
+    sphinx = [
+        'sphinx-build',
+        '-T', '-W', '--keep-going',
+        '-b', 'dirhtml',
+        '-d', '_build/doctrees',
+        '-D', 'language=en',
+    ]
+    targets = ['.', '{{build_dir}}/html']
+    for package in packages:
+        cmd = [
+            *uvx,
+            '--with', f'../{package}',
+            *sphinx,
+            '-D', f'package={package}',
+            '-D', 'suppress_warnings=ref.ref,ref.doc,myst.xref_missing',
+            *targets,
+        ]
+        print(cmd)
+        subprocess.check_call(cmd)
+    cmd = [*uvx, *sphinx, '-D', 'package=__combine__', *targets]
+    print(cmd)
+    subprocess.check_call(cmd)
 
 [doc('Watch, build, and serve the docs.')]
 run:
