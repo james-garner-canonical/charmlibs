@@ -22,17 +22,25 @@ import pytest
 def null_state() -> ops.testing.State:
     update_cacerts_mock = ops.testing.Exec(('update-ca-certificates', '--fresh'))
     nginx_reload_mock = ops.testing.Exec(('nginx', '-s', 'reload'))
-    return ops.testing.State(containers={
-        ops.testing.Container("nginx", can_connect=True, execs={update_cacerts_mock, nginx_reload_mock}),
-        ops.testing.Container("nginx-pexp", can_connect=True, execs={update_cacerts_mock}),
-    })
+    return ops.testing.State(
+        containers={
+            ops.testing.Container(
+                'nginx', can_connect=True, execs={update_cacerts_mock, nginx_reload_mock}
+            ),
+            ops.testing.Container('nginx-pexp', can_connect=True, execs={update_cacerts_mock}),
+        }
+    )
+
 
 @pytest.fixture
 def ctx() -> ops.testing.Context:
-    return  ops.testing.Context(ops.CharmBase,
-                                meta={"name": "tony",
-                                                     "containers": {
-                                                         "nginx": {},
-                                                         "nginx-pexp": {},
-                                                        },})
-
+    return ops.testing.Context(
+        ops.CharmBase,
+        meta={
+            'name': 'tony',
+            'containers': {
+                'nginx': {},
+                'nginx-pexp': {},
+            },
+        },
+    )
