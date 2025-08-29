@@ -33,4 +33,4 @@ resources:
 
 actions:
   inspect:
-    params:
+    params: {}

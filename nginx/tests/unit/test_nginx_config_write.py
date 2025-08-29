@@ -19,3 +19,4 @@ def test_nginx_config_written(ctx, null_state):
     container_out = state_out.get_container("nginx")
     nginx_config = container_out.get_filesystem(ctx) / NGINX_CONFIG[1:]
     assert nginx_config.exists()
+

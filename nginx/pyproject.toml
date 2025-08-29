@@ -28,6 +28,7 @@ unit = [
 ]
 integration = [
     "jubilant",
+    "pytest-jubilant"
 ]
 
 [project.urls]

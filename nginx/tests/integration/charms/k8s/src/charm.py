@@ -50,6 +50,7 @@ class Charm(ops.CharmBase):
             },
         )
         self.nginx = nginx.Nginx(container=self.nginx_container, nginx_config=self.nginx_config)
+        self.nginx_pexp = nginx.NginxPrometheusExporter(container=self.nginx_pexp_container)
 
         for evt in (
             self.on[NGINX_CONTAINER].pebble_ready,
@@ -63,6 +64,7 @@ class Charm(ops.CharmBase):
 
     def _reconcile(self, _event):
         self.nginx.reconcile(upstreams_to_addresses={}, tls_config=None)
+        self.nginx_pexp.reconcile()
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent):
         event.add_status(ops.ActiveStatus())

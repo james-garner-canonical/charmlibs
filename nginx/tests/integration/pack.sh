@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# usage: pack.sh <substrate> <base>
-# e.g. pack.sh machine 24.04
+# usage: CHARMLIBS_SUBSTRATE=k8s CHARMLIBS_BASE=24.04 ./pack.sh
 set -xueo pipefail
 cd charms
 
@@ -13,9 +12,9 @@ rm -rf "$TMPDIR"
 cp --recursive "$CHARMDIR" "$TMPDIR"
 mv "$TMPDIR"/"$BASE"-charmcraft.yaml "$TMPDIR"/charmcraft.yaml
 
-mkdir "$TMPDIR/pathops"
-cp -r ../../../pyproject.toml "$TMPDIR/pathops/"
-cp -r ../../../src "$TMPDIR/pathops/"
+mkdir "$TMPDIR/nginx"
+cp -r ../../../pyproject.toml "$TMPDIR/nginx/"
+cp -r ../../../src "$TMPDIR/nginx/"
 
 cd "$TMPDIR"
 uv lock  # required by uv charm plugin
@@ -25,3 +24,4 @@ cd -
 mkdir -p .packed
 mv "$TMPDIR"/*.charm ".packed/$CHARMDIR.charm"
 rm -rf "$TMPDIR"
+echo "juju deploy ./.packed/$CHARMDIR.charm"

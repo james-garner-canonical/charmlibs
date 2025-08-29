@@ -245,19 +245,21 @@ class NginxConfig:
         # downstream. Do not exceed system ulimit.
         self._worker_rlimit_nofile = worker_connections * 2
 
-    def get_config(self, upstreams_to_addresses: Dict[str, Set[str]], listen_tls: bool) -> str:
+    def get_config(self, upstreams_to_addresses: Dict[str, Set[str]], listen_tls: bool,
+                   root_path: Optional[str] = None) -> str:
         """Render the Nginx configuration as a string.
 
         Args:
             upstreams_to_addresses: A dictionary mapping each upstream name to a set of addresses
               associated with that upstream.
             listen_tls: Whether Nginx should listen for incoming traffic over TLS.
+            root_path: If provided, it is used as a location where static files will be served.
         """
-        full_config = self._prepare_config(upstreams_to_addresses, listen_tls)
+        full_config = self._prepare_config(upstreams_to_addresses, listen_tls, root_path)
         return crossplane.build(full_config)  # type: ignore
 
     def _prepare_config(
-        self, upstreams_to_addresses: Dict[str, Set[str]], listen_tls: bool
+        self, upstreams_to_addresses: Dict[str, Set[str]], listen_tls: bool, root_path: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         upstreams = self._upstreams(upstreams_to_addresses)
         # extract the upstream name
@@ -335,7 +337,7 @@ class NginxConfig:
                         'args': [str(self._proxy_read_timeout)],
                     },
                     # server block
-                    *self._build_servers_config(backends, listen_tls),
+                    *self._build_servers_config(backends, listen_tls, root_path),
                 ],
             },
         ]
@@ -425,7 +427,7 @@ class NginxConfig:
         return nginx_upstreams
 
     def _build_servers_config(
-        self, backends: List[str], listen_tls: bool = False
+        self, backends: List[str], listen_tls: bool = False, root_path: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         servers: List[Dict[str, Any]] = []
         for port, locations in self._server_ports_to_locations.items():
@@ -434,6 +436,7 @@ class NginxConfig:
                 locations,
                 backends,
                 listen_tls,
+                root_path
             )
             if server_config:
                 servers.append(server_config)
@@ -445,6 +448,7 @@ class NginxConfig:
         locations: List[NginxLocationConfig],
         backends: List[str],
         listen_tls: bool = False,
+        root_path: Optional[str] = None
     ) -> Dict[str, Any]:
         auth_enabled = False
         is_grpc = any(loc.is_grpc for loc in locations)
@@ -456,6 +460,7 @@ class NginxConfig:
                 'args': [],
                 'block': [
                     *self._listen(port, ssl=listen_tls, http2=is_grpc),
+                    *self._root_path(root_path),
                     *self._basic_auth(auth_enabled),
                     {
                         'directive': 'proxy_set_header',
@@ -483,6 +488,11 @@ class NginxConfig:
             }
 
         return server_config
+
+    def _root_path(self, root_path: Optional[str] = None) -> List[Optional[Dict[str, Any]]]:
+        if root_path:
+            return [{"directive": "root", "args": [root_path]}]
+        return []
 
     def _locations(
         self,

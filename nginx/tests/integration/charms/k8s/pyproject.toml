@@ -5,8 +5,8 @@ description = "Test charm for integration tests"
 requires-python = ">=3.8"
 dependencies = [
     "ops==2.*",
-    "charmlibs-pathops",
+    "charmlibs-nginx",
 ]
 
 [tool.uv.sources]
-charmlibs-pathops = { path = "pathops" }
+charmlibs-nginx = { path = "nginx" }
