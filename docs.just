@@ -2,8 +2,8 @@ set working-directory := '.docs'
 
 build_dir := env('READTHEDOCS_OUTPUT', '_build')
 
-[doc('Build the docs.')]
-html:
+[doc('Build the docs, generating reference docs for all packages, or just those specified. e.g. `just docs html interfaces/foo`.')]
+html *packages:
     #!/usr/bin/env -S uv run --script --no-project
     import pathlib, subprocess
     ROOT = pathlib.Path('{{justfile_directory()}}')
@@ -31,7 +31,7 @@ html:
         subprocess.check_call(cmd)
 
     # Any directory (or subdirectory of interfaces) starting with a-z is assumed to be a package.
-    packages = [
+    packages = '{{packages}}'.split() or [
         *sorted(p.name for p in ROOT.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
         *sorted(f'interfaces/{p.name}' for p in (ROOT / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
     ]
