@@ -3,16 +3,14 @@ set working-directory := '.docs'
 build_dir := env('READTHEDOCS_OUTPUT', '_build')
 
 [doc('Build the docs.')]
-html *packages='__all__':
+html:
     #!/usr/bin/env -S uv run --script --no-project
     import pathlib, subprocess
     root = pathlib.Path('{{justfile_directory()}}')
-    packages = '{{packages}}'.split()
-    if '__all__' in packages:
-        packages = [
-            *sorted(p.name for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
-            *sorted(f'interfaces/{p.name}' for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
-        ]
+    *packages, last = [
+        *sorted(p.name for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
+        *sorted(f'interfaces/{p.name}' for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
+    ]
     uvx = [
         'uvx',
         '--from', 'sphinx',
@@ -37,7 +35,14 @@ html *packages='__all__':
         ]
         print(cmd)
         subprocess.check_call(cmd)
-    cmd = [*uvx, *sphinx, '-D', 'package=__combine__', *targets]
+    package = last
+    cmd = [
+        *uvx,
+        '--with', f'../{package}',
+        *sphinx,
+        '-D', f'package={package}',
+        *targets,
+    ]
     print(cmd)
     subprocess.check_call(cmd)
 
