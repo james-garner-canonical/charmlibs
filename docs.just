@@ -6,45 +6,38 @@ build_dir := env('READTHEDOCS_OUTPUT', '_build')
 html:
     #!/usr/bin/env -S uv run --script --no-project
     import pathlib, subprocess
-    root = pathlib.Path('{{justfile_directory()}}')
-    *packages, last = [
-        *sorted(p.name for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
-        *sorted(f'interfaces/{p.name}' for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
-    ]
-    uvx = [
-        'uvx',
-        '--from', 'sphinx',
-        '--with-requirements', '.sphinx/requirements.txt',
-    ]
-    sphinx = [
-        'sphinx-build',
-        '-T', '-W', '--keep-going',
-        '-b', 'dirhtml',
-        '-d', '_build/doctrees',
-        '-D', 'language=en',
-    ]
-    targets = ['.', '{{build_dir}}/html']
-    for package in packages:
+    ROOT = pathlib.Path('{{justfile_directory()}}')
+
+    def build(package: str | None, suppress_warnings: bool = False) -> None:
         cmd = [
-            *uvx,
-            '--with', f'../{package}',
-            *sphinx,
-            '-D', f'package={package}',
-            '-D', 'suppress_warnings=ref.ref,ref.doc,myst.xref_missing',
-            *targets,
+            'uvx',
+            '--from', 'sphinx',
+            '--with-requirements', '.sphinx/requirements.txt',
+            *(['--with', str(ROOT / package)] if package else []),
+            'sphinx-build',
+            '-T', '-W', '--keep-going',
+            '-b', 'dirhtml',
+            '-d', '_build/doctrees',
+            '-D', 'language=en',
+            *(['-D', f'package={package}'] if package else []),
+            *(
+                ['-D', 'suppress_warnings=ref.ref,ref.doc,myst.xref_missing']
+                if suppress_warnings
+                else []
+            ),
+            '.', '{{build_dir}}/html',
         ]
         print(cmd)
         subprocess.check_call(cmd)
-    package = last
-    cmd = [
-        *uvx,
-        '--with', f'../{package}',
-        *sphinx,
-        '-D', f'package={package}',
-        *targets,
+
+    packages = [
+        *sorted(p.name for p in ROOT.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
+        *sorted(f'interfaces/{p.name}' for p in (ROOT / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
     ]
-    print(cmd)
-    subprocess.check_call(cmd)
+    for package in packages[: -1]:
+        build(package, suppress_warnings=True)
+    for package in packages[-1 :] or [None]:
+        build(package)
 
 [doc('Watch, build, and serve the docs.')]
 run:
