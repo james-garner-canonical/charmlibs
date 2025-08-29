@@ -35,7 +35,9 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _builder_inited(app: sphinx.application.Sphinx) -> None:
-    _package_docs_rst(docs_dir=pathlib.Path(app.confdir), package=app.config.package)
+    package = app.config.package
+    if package is not None:
+        _package_docs_rst(docs_dir=pathlib.Path(app.confdir), package=package)
 
 
 ########################
@@ -58,7 +60,7 @@ PACKAGE_DOCS_TEMPLATE = """
 """.strip()
 
 
-def _package_docs_rst(docs_dir: pathlib.Path, package: str | None) -> None:
+def _package_docs_rst(docs_dir: pathlib.Path, package: str) -> None:
     subdir, _, package_dir_name = package.rpartition('/')
     subdir = subdir or '.'
     generated_dir = docs_dir / 'reference' / 'charmlibs' / subdir
