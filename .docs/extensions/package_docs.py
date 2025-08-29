@@ -29,22 +29,22 @@ if typing.TYPE_CHECKING:
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Entrypoint for Sphinx extensions, connects generation code to Sphinx event."""
-    app.connect('builder-inited', _builder_inited)
+    app.connect('builder-inited', _package_docs)
     app.add_config_value('package', default=None, rebuild='')
     return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
 
 
-def _builder_inited(app: sphinx.application.Sphinx) -> None:
+def _package_docs(app: sphinx.application.Sphinx) -> None:
     package = app.config.package
     if package is not None:
-        _package_docs_rst(docs_dir=pathlib.Path(app.confdir), package=package)
+        _main(docs_dir=pathlib.Path(app.confdir), package=package)
 
 
-########################
-# rst generation logic #
-########################
+####################
+# generation logic #
+####################
 
-PACKAGE_DOCS_TEMPLATE = """
+AUTOMODULE_TEMPLATE = """
 .. raw:: html
 
    <style>
@@ -60,7 +60,7 @@ PACKAGE_DOCS_TEMPLATE = """
 """.strip()
 
 
-def _package_docs_rst(docs_dir: pathlib.Path, package: str) -> None:
+def _main(docs_dir: pathlib.Path, package: str) -> None:
     subdir, _, package_dir_name = package.rpartition('/')
     subdir = subdir or '.'
     generated_dir = docs_dir / 'reference' / 'charmlibs' / subdir
@@ -69,7 +69,7 @@ def _package_docs_rst(docs_dir: pathlib.Path, package: str) -> None:
     assert (root / subdir / package_dir_name).is_dir()
     prefix = 'charmlibs.' if subdir == '.' else f'charmlibs.{subdir}.'
     module = package_dir_name.replace('-', '_')
-    content = PACKAGE_DOCS_TEMPLATE.format(
+    content = AUTOMODULE_TEMPLATE.format(
         prefix=prefix, package=module, underline='=' * len(package)
     )
     _write_if_needed(path=generated_dir / f'{package}.rst', content=content)
