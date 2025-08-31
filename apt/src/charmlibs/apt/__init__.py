@@ -109,9 +109,10 @@ import os
 import re
 import subprocess
 import typing
+from collections.abc import Iterable, Iterator, Mapping
 from enum import Enum
 from subprocess import PIPE, CalledProcessError, check_output
-from typing import Any, Iterable, Iterator, Literal, Mapping
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import opentelemetry.trace
