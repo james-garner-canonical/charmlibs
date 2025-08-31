@@ -116,7 +116,7 @@ from urllib.parse import urlparse
 
 import opentelemetry.trace
 
-__version__ = '0.0.0.dev0'
+__version__ = '1.0.0'
 
 logger = logging.getLogger(__name__)
 tracer = opentelemetry.trace.get_tracer(__name__)
