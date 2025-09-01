@@ -113,16 +113,16 @@ pack-k8s package base='24.04': (_pack package 'k8s' base)
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
 pack-machine package base='24.04': (_pack package 'machine' base)
 
-[doc("Execute the pack script for the given package and substrate.")]
-_pack package substrate base:
+[doc("Execute the pack script for the given package, setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG.")]
+_pack package substrate tag:
     #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}/tests/integration'
-    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_BASE={{base}} ./pack.sh
+    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG={{tag}} ./pack.sh
 
-[doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
+[doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and selecting 'not machine_only'.")]
 integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_only' flags)
 
-[doc("Run juju integration tests for packed Kubernetes charm(s). Requires `juju`.")]
+[doc("Run juju integration tests for packed machine charm(s), setting CHARMLIBS_SUBSTRATE and selecting 'not k8s_only'.")]
 integration-machine package +flags='-rA': (_integration package 'machine' 'not k8s_only' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
