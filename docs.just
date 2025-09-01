@@ -24,7 +24,7 @@ html *packages: _clean-charmlibs-reference-docs
             'sphinx-build',
             '-T', '-W', '--keep-going',
             '-b', 'dirhtml',
-            '-d', '_build/doctrees',
+            '-d', '.sphinx/.doctrees',
             '-D', 'language=en',
             *(['-D', f'package={package}'] if package else []),
             *(
