@@ -47,5 +47,5 @@ jobs:
     steps:
       - if: ${{ needs.test.result != 'success' && needs.test.result != 'skipped' }}
         run: |
-          echo '${{ needs.test.result }}'
+          echo '${{ toJSON(needs) }}'
           exit 1
