@@ -39,7 +39,7 @@ jobs:
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ matrix.package }}
-  
+
   tests-passed:
     needs: [tests]
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
