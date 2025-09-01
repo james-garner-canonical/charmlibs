@@ -157,7 +157,6 @@ jobs:
     env:
       CHARMLIBS_BASE: ${{ matrix.base }}
     steps:
-      - run: exit 1
       - uses: actions/checkout@v4
 
       - name: Install concierge
