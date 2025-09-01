@@ -108,26 +108,26 @@ combine-coverage package:
     uv run coverage report --data-file="$DATA_FILE"
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
-pack-k8s package base='24.04': (_pack package 'k8s' base)
+pack-k8s package tag=env('CHARMLIBS_TAG', '') *args: (_pack package 'k8s' tag args)
 
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
-pack-machine package base='24.04': (_pack package 'machine' base)
+pack-machine package tag=env('CHARMLIBS_TAG', '') *args: (_pack package 'machine' tag args)
 
 [doc("Execute the pack script for the given package, setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG.")]
-_pack package substrate tag:
+_pack package substrate tag *args:
     #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}/tests/integration'
-    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG={{tag}} ./pack.sh
+    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' ./pack.sh {{args}}
 
-[doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and selecting 'not machine_only'.")]
-integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_only' flags)
+[doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not machine_only'.")]
+integration-k8s package tag=env('CHARMLIBS_TAG', '') +flags='-rA': (_integration package 'k8s' 'not machine_only' tag flags)
 
-[doc("Run juju integration tests for packed machine charm(s), setting CHARMLIBS_SUBSTRATE and selecting 'not k8s_only'.")]
-integration-machine package +flags='-rA': (_integration package 'machine' 'not k8s_only' flags)
+[doc("Run juju integration tests for packed machine charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not k8s_only'.")]
+integration-machine package tag=env('CHARMLIBS_TAG', '') +flags='-rA': (_integration package 'machine' 'not k8s_only' tag flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-_integration package substrate label +flags: (_venv package 'integration')
+_integration package substrate label tag +flags: (_venv package 'integration')
     #!/usr/bin/env -S bash -xueo pipefail
     source .venv/bin/activate
     cd '{{package}}'
-    CHARMLIBS_SUBSTRATE={{substrate}} uv run pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
+    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' uv run pytest --tb=native -vv -m '{{label}}' tests/integration {{flags}}
