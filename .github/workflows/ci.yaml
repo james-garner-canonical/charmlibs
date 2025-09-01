@@ -45,12 +45,7 @@ jobs:
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{ needs.test.result }}
-      - run: echo ${{ needs.test }}
-      - run: echo ${{ needs }}
-      - if: ${{ needs.tests.result == 'success' }}
-        run: echo 'Tests succeeded :D'
-      - if: ${{ needs.tests.result == 'skipped' }}
-        run: echo 'No tests needed :)'
-      - if: ${{ needs.tests.result == 'failure' }}
-        run: echo 'Tests failed :(' && exit 1
+      - if: ${{ needs.test.result != 'success' && needs.test.result != 'skipped' }}
+        run: |
+          echo '${{ needs.test.result }}'
+          exit 1
