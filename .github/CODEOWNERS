@@ -1,0 +1,29 @@
+# default
+. @canonical/charm-tech
+/interfaces/ @canonical/charm-tech
+
+# codeowners
+/.github/CODEOWNERS @canonical/charm-tech
+
+# infra
+/.github/ @canonical/charm-tech
+/docs.just @canonical/charm-tech
+/justfile @canonical/charm-tech
+/LICENSE @canonical/charm-tech
+/pyproject.toml @canonical/charm-tech
+/SECURITY.md @canonical/charm-tech
+
+# docs
+/.docs/ @canonical/charm-tech
+/interfaces/README.md @canonical/charm-tech
+/README.md @canonical/charm-tech
+
+# namespace reservation
+/.package/ @canonical/charm-tech
+/interfaces/.package/ @canonical/charm-tech
+
+# charmlibs packages (alphabetical)
+/apt/ @canonical/charm-tech
+/pathops/ @canonical/charm-tech
+
+# charmlibs.interfaces packages (alphabetical)
