@@ -86,6 +86,8 @@ jobs:
       matrix:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
+      - run: exit 0
+
       - uses: actions/checkout@v4
 
       - name: Install uv
@@ -103,6 +105,8 @@ jobs:
       matrix:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
+      - run: exit 1
+
       - uses: actions/checkout@v4
 
       - name: Install uv
@@ -121,6 +125,8 @@ jobs:
     env:
       RECIPE_SUFFIX: ${{ matrix.pebble != 'no-pebble' && '-pebble' || '' }}
     steps:
+      - run: exit 1
+
       - uses: actions/checkout@v4
 
       - name: Set up Go
@@ -157,6 +163,8 @@ jobs:
     env:
       CHARMLIBS_BASE: ${{ matrix.base }}
     steps:
+      - run: exit $(python -c 'import random; print(random.choice([0, 1]), end="")')
+
       - uses: actions/checkout@v4
 
       - name: Install concierge
