@@ -11,14 +11,20 @@ _help:
     @echo 'All recipes require {{CYAN}}`uv`{{NORMAL}} to be available.'
     @just --list --unsorted --list-submodules
 
+[doc('Run `uv add` for package, respecting the global test dependency constraints.')]
+add package +args:
+    #!/usr/bin/env -S bash -xueo pipefail
+    cd '{{package}}'
+    uv add {{args}} --constraints=<( cd '{{justfile_directory()}}' && uv export --group=test )
+
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]
 fast-lint:
     #!/usr/bin/env -S bash -xueo pipefail
     FAILURES=0
-    uv run ruff check --preview || ((FAILURES+=1))
-    uv run ruff check --preview --diff || ((FAILURES+=1))
-    uv run ruff format --preview --diff || ((FAILURES+=1))
-    uv run codespell --toml=pyproject.toml || ((FAILURES+=1))
+    uv run --only-group=fast-lint ruff check --preview || ((FAILURES+=1))
+    uv run --only-group=fast-lint ruff check --preview --diff || ((FAILURES+=1))
+    uv run --only-group=fast-lint ruff format --preview --diff || ((FAILURES+=1))
+    uv run --only-group=fast-lint codespell --toml=pyproject.toml || ((FAILURES+=1))
     : "$FAILURES command(s) failed."
     exit $FAILURES
 
@@ -33,9 +39,8 @@ lint package *pyright_args: fast-lint (static package pyright_args)
 [doc('Run package specific static analysis only, e.g. `just python=3.8 static pathops`.')]
 static package *pyright_args: (_venv package 'lint' 'unit' 'functional' 'integration')
     #!/usr/bin/env -S bash -xueo pipefail
-    source .venv/bin/activate
     cd '{{package}}'
-    uv run --active pyright --pythonversion='{{python}}' {{pyright_args}}
+    uv run pyright --pythonversion='{{python}}' {{pyright_args}}
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
 unit package +flags='-rA': (_venv package 'unit') (_coverage package 'unit' flags)
@@ -43,13 +48,14 @@ unit package +flags='-rA': (_venv package 'unit') (_coverage package 'unit' flag
 [doc("Run functional tests with `coverage`, e.g. `just python=3.8 functional pathops`.")]
 functional package +flags='-rA': (_venv package 'functional') (_coverage package 'functional' flags)
 
-[doc("Set up virtual environment for tests, installing `package` with `groups` if specified.")]
+[doc("Install package's specified groups to its venv, along with global test deps.")]
 _venv package *groups:
     #!/usr/bin/env -S bash -x
-    GROUP_OPTS=$(just --justfile='{{justfile()}}' python='{{python}}' _groups {{package}} {{groups}})
+    export GROUP_OPTS=$(just --justfile='{{justfile()}}' python='{{python}}' _groups {{package}} {{groups}})
     set -xeuo pipefail  # -e and -u will early exit if just _groups has no output
-    uv sync  # ensure venv exists before uv pip install
-    uv pip install --editable './{{package}}' $GROUP_OPTS
+    cd '{{package}}'
+    uv venv --allow-existing || { : 'Remove "{{package}}/.venv" and try again?'; exit 1; }
+    uv pip install -r <( uv export $GROUP_OPTS ) -r <( cd '{{justfile_directory()}}' && uv export --group=test )
 
 [doc("Print --group flags for specified `groups` if they're in `package`'s dependency-groups.")]
 _groups package *groups:
@@ -59,7 +65,7 @@ _groups package *groups:
     # ///
     import pathlib, tomllib
     table = tomllib.loads(pathlib.Path('./{{package}}/pyproject.toml').read_text()).get('dependency-groups', {})
-    print(' '.join(f'--group=./{{package}}/pyproject.toml:{group}' for group in '{{groups}}'.split() if group in table), end='')
+    print(' '.join(f'--group={group}' for group in '{{groups}}'.split() if group in table), end='')
 
 [doc("Run functional tests with `coverage` and a live `pebble` running. Requires `pebble`.")]
 functional-pebble package +flags='-rA':
@@ -78,31 +84,31 @@ functional-pebble package +flags='-rA':
 [doc("Use uv to install and run coverage for the specified package's tests.")]
 _coverage package test_subdir +flags:
     #!/usr/bin/env -S bash -xueo pipefail
-    source .venv/bin/activate
     cd '{{package}}'
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
     DATA_FILE=".report/coverage-$(basename {{test_subdir}})-{{python}}.db"
-    uv run --active coverage run --data-file="$DATA_FILE" --source='src' \
+    uv run coverage run --data-file="$DATA_FILE" --source='src' \
         -m pytest --tb=native -vv {{flags}} 'tests/{{test_subdir}}'
-    uv run --active coverage report --data-file="$DATA_FILE"
+    uv run coverage report --data-file="$DATA_FILE"
 
 [doc("Combine `coverage` reports, e.g. `just python=3.8 combine-coverage pathops`.")]
 combine-coverage package:
     #!/usr/bin/env -S bash -xueo pipefail
     : 'Collect the coverage data files that exist for this package.'
+    cd '{{package}}'
     data_files=()
     for test_id in unit functional juju; do
-        data_file="{{package}}/.report/coverage-$test_id-{{python}}.db"
+        data_file=".report/coverage-$test_id-{{python}}.db"
         if [ -e "$data_file" ]; then
             data_files+=("$data_file")
         fi
     done
     : 'Combine coverage.'
-    export COVERAGE_RCFILE=pyproject.toml
-    DATA_FILE='{{package}}/.report/coverage-all-{{python}}.db'
-    HTML_DIR='{{package}}/.report/htmlcov-all-{{python}}'
+    export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
+    DATA_FILE='.report/coverage-all-{{python}}.db'
+    HTML_DIR='.report/htmlcov-all-{{python}}'
     uv run coverage combine --keep --data-file="$DATA_FILE" "${data_files[@]}"
-    uv run coverage xml --data-file="$DATA_FILE" -o '{{package}}/.report/coverage-all-{{python}}.xml'
+    uv run coverage xml --data-file="$DATA_FILE" -o '.report/coverage-all-{{python}}.xml'
     rm -rf "$HTML_DIR"  # let coverage create html directory from scratch
     uv run coverage html --data-file="$DATA_FILE" --show-contexts --directory="$HTML_DIR"
     uv run coverage report --data-file="$DATA_FILE"
@@ -128,6 +134,5 @@ integration-machine package tag=env('CHARMLIBS_TAG', '') +flags='-rA': (_integra
 [doc("Run juju integration tests. Requires `juju`.")]
 _integration package substrate label tag +flags: (_venv package 'integration')
     #!/usr/bin/env -S bash -xueo pipefail
-    source .venv/bin/activate
     cd '{{package}}'
     CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' uv run pytest --tb=native -vv -m '{{label}}' tests/integration {{flags}}
