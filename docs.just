@@ -10,7 +10,7 @@ Build the docs, generating reference docs for all packages, or just those specif
 `just docs html interfaces/foo`.
 Run `just docs clean` first to generate reference docs from scratch if you run into import errors.
 """)]
-html *packages:
+html *packages: _clean-charmlibs-reference-docs
     #!/usr/bin/env -S uv run --script --no-project
     import pathlib, subprocess
     ROOT = pathlib.Path('{{justfile_directory()}}')
@@ -69,14 +69,17 @@ spelling: html
     uvx pyspelling -c .sphinx/spellingcheck.yaml -j $(nproc)
 
 [doc('Remove files created by building the docs.')]
-clean:
+clean: _clean-charmlibs-reference-docs
     git clean -fx '{{build_dir}}'
     rm -rf .sphinx/.doctrees
     rm -rf .sphinx/node_modules/
     rm -rf .sphinx/styles
     rm -rf .sphinx/vale.ini
-    rm -rf reference/charmlibs
     rm -rf reference/generated
+
+[doc('Remove .rst automodule files generated when building docs.')]
+_clean-charmlibs-reference-docs:
+    rm -rf reference/charmlibs
 
 [doc('Run `pyright` for local sphinx extensions.')]
 ext-static *pyrightargs:
