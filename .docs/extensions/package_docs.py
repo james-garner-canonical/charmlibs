@@ -36,6 +36,9 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 def _package_docs(app: sphinx.application.Sphinx) -> None:
     package = app.config.package
+    # generate reference docs for the current package
+    # package is None if not set explicitly
+    # e.g. when running `just docs run` or `just docs linkcheck`
     if package is not None:
         _main(docs_dir=pathlib.Path(app.confdir), package=package)
 
