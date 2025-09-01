@@ -54,13 +54,13 @@ html *packages: _clean-charmlibs-reference-docs
 help:
     @just --list docs --unsorted
 
-[doc('Watch, build, and serve the docs.')]
-run:
+[doc('Watch, build, and serve the docs -- does not include package reference docs.')]
+run: _clean-charmlibs-reference-docs
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
         sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{build_dir}}/html'
 
-[doc('Check links.')]
-linkcheck:
+[doc('Check links -- does not include package reference docs.')]
+linkcheck: _clean-charmlibs-reference-docs
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
         sphinx-build -b linkcheck . '{{build_dir}}'
 
