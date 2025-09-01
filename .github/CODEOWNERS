@@ -1,29 +1,29 @@
 # default
-. @canonical/charm-tech
-/interfaces/ @canonical/charm-tech
+. @canonical/charmlibs-maintainers
+/interfaces/ @canonical/charmlibs-maintainers
 
 # codeowners
-/.github/CODEOWNERS @canonical/charm-tech
+/.github/CODEOWNERS @canonical/charmlibs-maintainers
 
 # infra
-/.github/ @canonical/charm-tech
-/docs.just @canonical/charm-tech
-/justfile @canonical/charm-tech
-/LICENSE @canonical/charm-tech
-/pyproject.toml @canonical/charm-tech
-/SECURITY.md @canonical/charm-tech
+/.github/ @canonical/charmlibs-maintainers
+/docs.just @canonical/charmlibs-maintainers
+/justfile @canonical/charmlibs-maintainers
+/LICENSE @canonical/charmlibs-maintainers
+/pyproject.toml @canonical/charmlibs-maintainers
+/SECURITY.md @canonical/charmlibs-maintainers
 
 # docs
-/.docs/ @canonical/charm-tech
-/interfaces/README.md @canonical/charm-tech
-/README.md @canonical/charm-tech
+/.docs/ @canonical/charmlibs-maintainers
+/interfaces/README.md @canonical/charmlibs-maintainers
+/README.md @canonical/charmlibs-maintainers
 
 # namespace reservation
-/.package/ @canonical/charm-tech
-/interfaces/.package/ @canonical/charm-tech
+/.package/ @canonical/charmlibs-maintainers
+/interfaces/.package/ @canonical/charmlibs-maintainers
 
 # charmlibs packages (alphabetical)
-/apt/ @canonical/charm-tech
-/pathops/ @canonical/charm-tech
+/apt/ @canonical/charmlibs-maintainers
+/pathops/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
