@@ -22,10 +22,13 @@ fast-lint:
     : "$FAILURES command(s) failed."
     exit $FAILURES
 
-[doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
-format:
-    uv run ruff check --preview --fix
-    uv run ruff format --preview
+[doc('Run `ruff check --preview --fix`, passing any extra args, and modifying files in place.')]
+fix *args:
+    uv run ruff check --preview --fix {{args}}
+
+[doc('Run `ruff --format --preview`, passing any extra args, and modifying files in place.')]
+format *args:
+    uv run ruff format --preview {{args}}
 
 [doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.8 lint pathops`.')]
 lint package *pyright_args: fast-lint (static package pyright_args)
