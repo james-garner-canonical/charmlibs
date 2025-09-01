@@ -39,3 +39,13 @@ jobs:
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ matrix.package }}
+
+  tests-passed:
+    needs: [tests]
+    if: ${{ !cancelled() }}  # run even if tests are skipped or failed
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
+        run: |
+          echo '${{ toJSON(needs) }}'
+          exit 1
