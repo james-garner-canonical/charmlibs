@@ -30,8 +30,8 @@ fast-lint:
 
 [doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
 format:
-    uv run ruff check --preview --fix
     uv run ruff format --preview
+    uv run ruff check --preview --fix
 
 [doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.8 lint pathops`.')]
 lint package *pyright_args: fast-lint (static package pyright_args)
