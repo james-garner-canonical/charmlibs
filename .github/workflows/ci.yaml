@@ -43,6 +43,7 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJson(needs.get-packages.outputs.packages) }}
+      fail-fast: false
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ matrix.package }}
