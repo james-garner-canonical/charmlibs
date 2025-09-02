@@ -73,7 +73,7 @@ def _get_packages(old_ref: str, new_ref: str) -> list[str]:
     for p in changed_packages:
         old = old_versions[p]
         new = new_versions[p]
-        if '.dev' not in new and old != new:
+        if new is not None and '.dev' not in new and old != new:
             packages_to_release.append(p)
             logger.info('%s: %s -> %s', p, old, new)
     return packages_to_release
