@@ -24,6 +24,7 @@
 
 # charmlibs packages (alphabetical)
 /apt/ @canonical/charmlibs-maintainers
+/nginx/ @canonical/observability
 /pathops/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
