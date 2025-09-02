@@ -1,88 +1,58 @@
-# charmlibs-pathops
+# nginx
 
-`pathops` provides a `pathlib`-like interface for local filesystem and workload container paths for Juju Charms.
+`nginx` provides abstractions for Juju Charms to run a sidecar Nginx container and a corresponding Prometheus exporter.
+The supported Nginx configuration is not meant to fully cover all Nginx features, but a minimal subset sufficient to cover our immediate use cases. 
 
-To install, add `charmlibs-pathops` to your requirements. Then in your Python code, import as:
+To install, add `charmlibs-nginx` to your requirements. Then in your Python code, import as:
 
 ```py
-from charmlibs import pathops
+from charmlibs import nginx
 ```
 
 Check out the reference docs on the [charmlibs docsite](https://canonical-charmlibs.readthedocs-hosted.com/reference/charmlibs/pathops/).
 
 # Getting started
 
-To get started, you can create an attribute `self.root` with the root directory for the local or remote paths you'll be working with.
+To get started, you can add two sidecar containers to your charm's `charmcraft.yaml` and in `charm.py`, 
+instantiate the `Nginx` and `NginxPrometheusExporter` classes in your initializer and call their `.reconcile()` methods whenever you wish to synchronize the configuration files.
 
 ```py
 import ops
-from charmlibs import pathops
 
-class KubernetesCharm(ops.CharmBase):
+from charmlibs import nginx
+
+
+class MyCharm(ops.CharmBase):
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        container = self.unit.get_container('container-name')
-        self.root = pathops.ContainerPath('/', container=container)
-
-# or
-
-class MachineCharm(ops.CharmBase):
-    def __init__(self, framework: ops.Framework):
-        super().__init__(framework)
-        self.root = pathops.LocalPath('/')
-```
-
-You can then write code that could be used by either charm, using the `pathops.PathProtocol` type, which describes the operations supported by both local and container paths.
-
-```py
-CONFIG_FILE_LOCATION = '/foo/bar'
-CONFIG_FILE_CONTENTS = '...'
-
-def write_config_file(root: pathops.PathProtocol) -> None:
-    path = root / CONFIG_FILE_LOCATION
-    path.write_text(CONFIG_FILE_CONTENTS)
-```
-
-For a Kubernetes charm, this also allows you to use the same API to work with paths in the charm container or the workload container.
-
-```py
-import ops
-from charmlibs import pathops
-
-class KubernetesCharm(ops.CharmBase):
-    def __init__(self, framework: ops.Framework):
-        super().__init__(framework)
-        self.charm_root = pathops.LocalPath('/')
-        container = self.unit.get_container('container-name')
-        self.workload_root = pathops.ContainerPath('/', container=container)
-        ...
-
-    def copy_config(self):
-        source = self.charm_root / 'foo/bar'
-        dest = self.workload_root / 'foo/bar/baz'
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(source.read_bytes())
-```
-
-`pathops` also provides a helper function for ensuring that a file is present with specified content, which returns whether changes were made.
-
-```py
-import ops
-from charmlibs import pathops
-
-class KubernetesCharm(ops.CharmBase):
-    ...
-
-    def copy_config(self):
-        changed = pathops.ensure_contents(
-            path=self.workload_root / 'foo/bar/baz',
-            source=(self.charm_root / 'foo/bar').read_bytes(),
+        self._nginx = nginx.Nginx(
+            self.unit.get_container('nginx-container'),
+            nginx_config=nginx.NginxConfig(
+                server_name="foo",
+                upstream_configs=[
+                    nginx.NginxUpstream(name="foo", port=4040, worker_role="backend"),
+                    nginx.NginxUpstream(name="bar", port=4041, worker_role="frontend")
+                ],
+                server_ports_to_locations={8080: [
+                    nginx.NginxLocationConfig(path='/', backend='foo', backend_url="/api/v1", headers={'a': 'b'},
+                                              modifier="=",
+                                              is_grpc=True, upstream_tls=True),
+                ]}
+            )
         )
-        if changed:
-            # make the workload reload its configuration
-            ...
+        self._nginx_pexp = nginx.NginxPrometheusExporter(
+            self.unit.get_container('nginx-pexp-container')
+        )
+
+        self.framework.observe(self.on.nginx_container_pebble_ready, self._on_reconcile)
+        self.framework.observe(self.on.nginx_pexp_container_pebble_ready, self._on_reconcile)
+
+    def _on_reconcile(self, _):
+        self._nginx.reconcile(
+            upstreams_to_addresses={
+                "foo": {"http://example.com"},
+                "bar": {"http://example.io"},
+            }
+        )
+        self._nginx_pexp.reconcile()
 ```
-
-`pathops.PathProtocol` provides a subset of the `pathlib.Path` API. `PathProtocol` doesn't support relative paths, `open`, or manipulating hardlinks and symlinks.
-
-`pathops` doesn't provide a separate `chmod` method, as Pebble doesn't currently support this. Instead, `mkdir`, `write_bytes`, and `write_text` have arguments `mode`, `user`, and `group` to set directory or file permissions and ownership. `ensure_contents` also has these arguments.
