@@ -10,6 +10,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  # push, use sha (run to completion for each push to main)
+  # pull_request, use ref (run once for each PR, canceling and starting a new run on each push)
+  # workflow_dispatch, use run_id (always run to completion)
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.event_name == 'pull_request' && github.ref || github.event_name == 'workflow_dispatch' && github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   fast-lint:
     uses: ./.github/workflows/fast-lint.yaml
