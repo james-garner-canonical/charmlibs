@@ -91,7 +91,7 @@ Any charm can instantiate `NginxConfig` to generate its own Nginx configuration 
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Final, List, Literal, Optional, Set, cast
+from typing import Any, Final, Literal, cast
 
 import crossplane
 
@@ -101,7 +101,7 @@ from .utils import is_ipv6_enabled
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TLS_VERSIONS: Final[List[str]] = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']
+DEFAULT_TLS_VERSIONS: Final[list[str]] = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']
 
 
 # Define valid Nginx `location` block modifiers.
@@ -138,13 +138,13 @@ class NginxLocationConfig:
     """The name of the upstream service to route requests to (e.g. an `upstream` block)."""
     backend_url: str = ''
     """An optional URL path to append when forwarding to the upstream (e.g., '/v1')."""
-    headers: Dict[str, str] = field(default_factory=lambda: cast('Dict[str, str]', {}))
+    headers: dict[str, str] = field(default_factory=lambda: cast('dict[str, str]', {}))
     """Custom headers to include in the proxied request."""
     modifier: NginxLocationModifier = ''
     """The Nginx location modifier."""
     is_grpc: bool = False
     """Whether to use gRPC proxying (i.e. `grpc_pass` instead of `proxy_pass`)."""
-    upstream_tls: Optional[bool] = None
+    upstream_tls: bool | None = None
     """Whether to connect to the upstream over TLS (e.g., https:// or grpcs://)
     If None, it will inherit the TLS setting from the server block that the location is part of.
     """
@@ -181,12 +181,12 @@ class NginxConfig:
     def __init__(
         self,
         server_name: str,
-        upstream_configs: List[NginxUpstream],
-        server_ports_to_locations: Dict[int, List[NginxLocationConfig]],
+        upstream_configs: list[NginxUpstream],
+        server_ports_to_locations: dict[int, list[NginxLocationConfig]],
         enable_health_check: bool = False,
         enable_status_page: bool = False,
-        supported_tls_versions: Optional[List[str]] = None,
-        ssl_ciphers: Optional[List[str]] = None,
+        supported_tls_versions: list[str] | None = None,
+        ssl_ciphers: list[str] | None = None,
         worker_processes: int = 5,
         worker_connections: int = 4096,
         proxy_read_timeout: int = 300,
@@ -248,9 +248,9 @@ class NginxConfig:
 
     def get_config(
         self,
-        upstreams_to_addresses: Dict[str, Set[str]],
+        upstreams_to_addresses: dict[str, set[str]],
         listen_tls: bool,
-        root_path: Optional[str] = None,
+        root_path: str | None = None,
     ) -> str:
         """Render the Nginx configuration as a string.
 
@@ -265,10 +265,10 @@ class NginxConfig:
 
     def _prepare_config(
         self,
-        upstreams_to_addresses: Dict[str, Set[str]],
+        upstreams_to_addresses: dict[str, set[str]],
         listen_tls: bool,
-        root_path: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        root_path: str | None = None,
+    ) -> list[dict[str, Any]]:
         upstreams = self._upstreams(upstreams_to_addresses)
         # extract the upstream name
         backends = [upstream['args'][0] for upstream in upstreams]
@@ -351,7 +351,7 @@ class NginxConfig:
         ]
         return full_config
 
-    def _log_verbose(self, verbose: bool = True) -> List[Dict[str, Any]]:
+    def _log_verbose(self, verbose: bool = True) -> list[dict[str, Any]]:
         if verbose:
             return [{'directive': 'access_log', 'args': ['/dev/stderr', 'main']}]
         return [
@@ -368,8 +368,8 @@ class NginxConfig:
 
     def _resolver(
         self,
-        custom_resolver: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        custom_resolver: str | None = None,
+    ) -> list[dict[str, Any]]:
         # pass a custom resolver, such as kube-dns.kube-system.svc.cluster.local.
         if custom_resolver:
             return [{'directive': 'resolver', 'args': [custom_resolver]}]
@@ -392,13 +392,13 @@ class NginxConfig:
                 return line.split()[1].strip()
         raise RuntimeError('cannot find nameserver in /etc/resolv.conf')
 
-    def _upstreams(self, upstreams_to_addresses: Dict[str, Set[str]]) -> List[Any]:
-        nginx_upstreams: List[Any] = []
+    def _upstreams(self, upstreams_to_addresses: dict[str, set[str]]) -> list[Any]:
+        nginx_upstreams: list[Any] = []
 
         for upstream_config in self._upstream_configs:
             if upstream_config.ignore_worker_role:
                 # include all available addresses
-                addresses: Optional[Set[str]] = set()
+                addresses: set[str] | None = set()
                 for address_set in upstreams_to_addresses.values():
                     addresses.update(address_set)
             else:
@@ -435,9 +435,9 @@ class NginxConfig:
         return nginx_upstreams
 
     def _build_servers_config(
-        self, backends: List[str], listen_tls: bool = False, root_path: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        servers: List[Dict[str, Any]] = []
+        self, backends: list[str], listen_tls: bool = False, root_path: str | None = None
+    ) -> list[dict[str, Any]]:
+        servers: list[dict[str, Any]] = []
         for port, locations in self._server_ports_to_locations.items():
             server_config = self._build_server_config(
                 port, locations, backends, listen_tls, root_path
@@ -449,11 +449,11 @@ class NginxConfig:
     def _build_server_config(
         self,
         port: int,
-        locations: List[NginxLocationConfig],
-        backends: List[str],
+        locations: list[NginxLocationConfig],
+        backends: list[str],
         listen_tls: bool = False,
-        root_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        root_path: str | None = None,
+    ) -> dict[str, Any]:
         auth_enabled = False
         is_grpc = any(loc.is_grpc for loc in locations)
         nginx_locations = self._locations(locations, is_grpc, backends, listen_tls)
@@ -493,19 +493,19 @@ class NginxConfig:
 
         return server_config
 
-    def _root_path(self, root_path: Optional[str] = None) -> List[Optional[Dict[str, Any]]]:
+    def _root_path(self, root_path: str | None = None) -> list[dict[str, Any] | None]:
         if root_path:
             return [{'directive': 'root', 'args': [root_path]}]
         return []
 
     def _locations(
         self,
-        locations: List[NginxLocationConfig],
+        locations: list[NginxLocationConfig],
         grpc: bool,
-        backends: List[str],
+        backends: list[str],
         listen_tls: bool,
-    ) -> List[Dict[str, Any]]:
-        nginx_locations: List[Dict[str, Any]] = []
+    ) -> list[dict[str, Any]]:
+        nginx_locations: list[dict[str, Any]] = []
 
         if self._enable_health_check:
             nginx_locations.append(
@@ -588,7 +588,7 @@ class NginxConfig:
 
         return nginx_locations
 
-    def _basic_auth(self, enabled: bool) -> List[Optional[Dict[str, Any]]]:
+    def _basic_auth(self, enabled: bool) -> list[dict[str, Any] | None]:
         if enabled:
             return [
                 {'directive': 'auth_basic', 'args': ['"workload"']},
@@ -599,8 +599,8 @@ class NginxConfig:
             ]
         return []
 
-    def _listen(self, port: int, ssl: bool, http2: bool) -> List[Dict[str, Any]]:
-        directives: List[Dict[str, Any]] = []
+    def _listen(self, port: int, ssl: bool, http2: bool) -> list[dict[str, Any]]:
+        directives: list[dict[str, Any]] = []
         directives.append({'directive': 'listen', 'args': self._listen_args(port, False, ssl)})
         if self._ipv6_enabled:
             directives.append({
@@ -611,8 +611,8 @@ class NginxConfig:
             directives.append({'directive': 'http2', 'args': ['on']})
         return directives
 
-    def _listen_args(self, port: int, ipv6: bool, ssl: bool) -> List[str]:
-        args: List[str] = []
+    def _listen_args(self, port: int, ipv6: bool, ssl: bool) -> list[str]:
+        args: list[str] = []
         if ipv6:
             args.append(f'[::]:{port}')
         else:

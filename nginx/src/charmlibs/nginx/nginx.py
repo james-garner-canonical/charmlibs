@@ -17,7 +17,6 @@ It also manages the TLS configuration on disk.
 """
 
 import logging
-from typing import Dict, Optional, Set
 
 import ops
 from ops import pebble
@@ -48,14 +47,14 @@ class Nginx:
 
     def reconcile(
         self,
-        upstreams_to_addresses: Dict[str, Set[str]],
-        tls_config: Optional[TLSConfig] = None,
+        upstreams_to_addresses: dict[str, set[str]],
+        tls_config: TLSConfig | None = None,
     ):
         """Configure pebble layer and restart if necessary."""
         self._tls_config_mgr.reconcile(tls_config)
         self._reconcile_nginx_config(upstreams_to_addresses=upstreams_to_addresses)
 
-    def _reconcile_nginx_config(self, upstreams_to_addresses: Dict[str, Set[str]]):
+    def _reconcile_nginx_config(self, upstreams_to_addresses: dict[str, set[str]]):
         if not self._container.can_connect():
             logger.debug('cannot connect to container; skipping nginx config reconcile')
             return
