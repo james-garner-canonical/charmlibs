@@ -50,6 +50,19 @@ class PathProtocol(typing.Protocol):
     not the case, then equality is ``False`` and other comparisons are :class:`NotImplemented`.
 
     Protocol implementers are hashable.
+
+    .. warning::
+        User implementations of ``PathProtocol`` are not covered by this package's semantic
+        versioning promise.
+
+        The semantic versioning of this package reflects the runtime use of :class:`ContainerPath`
+        and :class:`LocalPath`. ``PathProtocol`` is always updated to reflect the latest changes to
+        :class:`ContainerPath` and :class:`LocalPath`.
+
+        ``PathProtocol`` will always be a valid type annotation for :class:`ContainerPath`,
+        :class:`LocalPath`, and :class:`pathlib.PosixPath` objects. However, user implementations
+        of ``PathProtocol`` may experience type checking breakage on minor version bumps of this
+        package.
     """
 
     #############################
