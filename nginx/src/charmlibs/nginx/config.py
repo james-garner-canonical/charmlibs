@@ -119,11 +119,20 @@ NginxLocationModifier = Literal[
 class NginxLocationConfig:
     """Represents a `location` block in an Nginx configuration.
 
-    For example,
-    ``NginxLocationConfig('/', 'foo', backend_url="/api/v1" headers={'a': 'b'},
-      modifier=EXACT, is_grpc=True, use_tls=True)``
+    For example::
 
-    would result in the nginx config:
+        NginxLocationConfig(
+            '/',
+            'foo',
+            backend_url="/api/v1"
+            headers={'a': 'b'},
+            modifier=EXACT,
+            is_grpc=True,
+            use_tls=True,
+        )
+
+    would result in the nginx config::
+
         location = / {
             set $backend grpcs://foo/api/v1;
             grpc_pass $backend;
