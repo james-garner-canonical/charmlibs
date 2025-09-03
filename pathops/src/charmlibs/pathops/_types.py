@@ -367,11 +367,11 @@ class PathProtocol(typing.Protocol):
         """
         ...
 
-    def unlink(self) -> None:
+    def unlink(self, missing_ok: bool = False) -> None:
         """Remove this path if it is not a directory.
 
         Raises:
-            FileNotFoundError: if the path does not exist.
+            FileNotFoundError: if the path does not exist and ``missing_ok`` is false.
             IsADirectoryError: if the path exists but is a directory.
             PermissionError: if the local or remote user does not have the appropriate permissions.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
