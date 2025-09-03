@@ -12,6 +12,7 @@ from conftest import deploy
 
 pytestmark = pytest.mark.k8s_only
 
+
 @pytest.mark.setup
 def test_deployment(juju: jubilant.Juju, charm: str):
     deploy(juju, charm)

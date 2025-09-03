@@ -18,7 +18,12 @@ from __future__ import annotations
 
 import pathlib
 
+import pytest
+
 BASES = ['20.04', '24.04']
+
+
+pytestmark = pytest.mark.k8s_only
 
 
 def test_bases():
