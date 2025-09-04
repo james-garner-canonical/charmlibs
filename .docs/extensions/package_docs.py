@@ -40,8 +40,7 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _package_docs(app: sphinx.application.Sphinx) -> None:
-    package = app.config.package
-    _main(docs_dir=pathlib.Path(app.confdir), package=package)
+    _main(docs_dir=pathlib.Path(app.confdir), package=app.config.package)
 
 
 def _load_on_doctree_read(app: sphinx.application.Sphinx, doctree: docutils.nodes.document):
@@ -65,7 +64,8 @@ def _save_on_doctree_resolved(
 ):
     """Dump doctree to pickle file named after docname."""
     package = app.config.package
-    # only save the package reference docs we generate with autodoc
+    # only save when building docs for a specific package
+    # only save package reference docs
     if package is None or docname != f'reference/charmlibs/{package}':
         return
     objects = app.env.domains['py'].data['objects']
@@ -98,10 +98,10 @@ AUTOMODULE_TEMPLATE = """
 
 
 def _main(docs_dir: pathlib.Path, package: str) -> None:
+    """Write automodule file for package and placeholders rst files for all other packages."""
     root = docs_dir.parent
     ref_dir = docs_dir / 'reference'
-    gen_dir = ref_dir / 'charmlibs' / 'interfaces'
-    gen_dir.mkdir(parents=True, exist_ok=True)
+    (ref_dir / 'charmlibs' / 'interfaces').mkdir(parents=True, exist_ok=True)
     for subdir, p in (
         *(('', p.name) for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
         *(('interfaces', p.name) for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
