@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import pathlib
+import pickle  # noqa: S403
 import typing
 
 ####################
@@ -24,30 +25,58 @@ import typing
 ####################
 
 if typing.TYPE_CHECKING:
+    import docutils.nodes
     import sphinx.application
 
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Entrypoint for Sphinx extensions, connects generation code to Sphinx event."""
     app.connect('builder-inited', _package_docs)
+    app.connect('doctree-resolved', _save_or_load_doctrees)
     app.add_config_value('package', default=None, rebuild='')
     return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
 
 
 def _package_docs(app: sphinx.application.Sphinx) -> None:
     package = app.config.package
-    # generate reference docs for the current package
-    # package is None if not set explicitly
-    # e.g. when running `just docs run` or `just docs linkcheck`
+    _main(docs_dir=pathlib.Path(app.confdir), package=package)
+
+
+def _save_or_load_doctrees(
+    app: sphinx.application.Sphinx, doctree: docutils.nodes.document, docname: str
+):
+    """Save package docs if package is set, otherwise load them if saved docs exist."""
+    package = app.config.package
     if package is not None:
-        _main(docs_dir=pathlib.Path(app.confdir), package=package)
+        if docname == f'reference/charmlibs/{package}':
+            _save_doctree(doctree, docname)
+    elif docname.startswith('reference/charmlibs'):
+        _load_doctree(doctree, docname)
+
+
+def _save_doctree(doctree, docname):
+    """Dump doctree to pickle file named after docname."""
+    target = pathlib.Path('.save', docname)
+    target.parent.mkdir(exist_ok=True, parents=True)
+    target.write_bytes(pickle.dumps(doctree))
+
+
+def _load_doctree(doctree, docname):
+    """Load pickle file named after docname if it exists, and replace doctree contents in-place."""
+    source = pathlib.Path('.save', docname)
+    if not source.exists():
+        return
+    saved = pickle.loads(source.read_bytes())  # noqa: S301
+    doctree.clear()
+    for node in saved.children:
+        doctree.append(node)
 
 
 ####################
 # generation logic #
 ####################
 
-AUTOMODULE_TEMPLATE = """
+RST_TEMPLATE = """
 .. raw:: html
 
    <style>
@@ -58,24 +87,31 @@ AUTOMODULE_TEMPLATE = """
 
 {package}
 {underline}
+""".strip()
+AUTOMODULE_TEMPLATE = """
 
 .. automodule:: {package}
-""".strip()
+""".rstrip()
 
 
 def _main(docs_dir: pathlib.Path, package: str) -> None:
-    subdir, _, package_dir_name = package.rpartition('/')
-    subdir = subdir or '.'
-    generated_dir = docs_dir / 'reference' / 'charmlibs' / subdir
-    generated_dir.mkdir(parents=True, exist_ok=True)
     root = docs_dir.parent
-    assert (root / subdir / package_dir_name).is_dir()
-    prefix = 'charmlibs.' if subdir == '.' else f'charmlibs.{subdir}.'
-    module = package_dir_name.replace('-', '_')
-    content = AUTOMODULE_TEMPLATE.format(
-        prefix=prefix, package=module, underline='=' * len(package)
-    )
-    _write_if_needed(path=generated_dir / f'{package}.rst', content=content)
+    ref_dir = docs_dir / 'reference'
+    gen_dir = ref_dir / 'charmlibs' / 'interfaces'
+    gen_dir.mkdir(parents=True, exist_ok=True)
+    for subdir, p in (
+        *(('', p.name) for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
+        *(('interfaces', p.name) for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
+    ):
+        module = p.replace('-', '_')
+        content = RST_TEMPLATE.format(
+            prefix=f'charmlibs.{subdir}.' if subdir else 'charmlibs.',
+            package=module,
+            underline='=' * len(module),
+        )
+        if package is not None and package == str(pathlib.Path(subdir, p)):
+            content += AUTOMODULE_TEMPLATE.format(package=module)
+        _write_if_needed(path=ref_dir / 'charmlibs' / subdir / f'{p}.rst', content=content)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
