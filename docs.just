@@ -72,8 +72,8 @@ clean:
 
 [doc('Run `pyright` for local sphinx extensions.')]
 ext-static *pyrightargs:
-    uvx --with-requirements=.sphinx/requirements.txt --with=pytest \
-        pyright {{pyrightargs}} extensions
+    cd extensions && uvx --with-requirements=../.sphinx/requirements.txt --with=pytest \
+        pyright {{pyrightargs}}
 
 [doc('Run unit tests with `coverage` for local sphinx extensions.')]
 ext-unit +flags='-rA':
