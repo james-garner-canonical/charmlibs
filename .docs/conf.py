@@ -137,6 +137,8 @@ extensions = [
     "sphinx_sitemap",
     *local_extensions,
 ]
+suppress_warnings = ['myst.xref_missing']
+
 
 # Custom MyST syntax extensions; see
 # https://myst-parser.readthedocs.io/en/latest/syntax/optional.html
