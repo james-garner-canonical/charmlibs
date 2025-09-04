@@ -97,7 +97,7 @@ AUTOMODULE_TEMPLATE = """
 """.rstrip()
 
 
-def _main(docs_dir: pathlib.Path, package: str) -> None:
+def _main(docs_dir: pathlib.Path, package: str | None) -> None:
     """Write automodule file for package and placeholders rst files for all other packages."""
     root = docs_dir.parent
     ref_dir = docs_dir / 'reference'
