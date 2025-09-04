@@ -77,6 +77,7 @@ clean: _clean-charmlibs-reference-docs
 [doc('Remove .rst automodule files generated when building docs.')]
 _clean-charmlibs-reference-docs:
     rm -rf reference/charmlibs
+    rm -rf .save
 
 [doc('Run `pyright` for local sphinx extensions.')]
 ext-static *pyrightargs:
