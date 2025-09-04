@@ -33,9 +33,7 @@ if typing.TYPE_CHECKING:
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Entrypoint for Sphinx extensions, connects generation code to Sphinx event."""
     app.connect('builder-inited', _package_docs)
-    app.connect('env-before-read-docs', _process_docs_on_env_before_read_docs)
     app.connect('doctree-read', _load_on_doctree_read)
-    app.connect('missing-reference', _fix_on_missing_reference)
     app.connect('doctree-resolved', _save_on_doctree_resolved)
     app.add_config_value('package', default=None, rebuild='')
     return {'version': '1.0.0', 'parallel_read_safe': False, 'parallel_write_safe': False}
@@ -44,26 +42,6 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 def _package_docs(app: sphinx.application.Sphinx) -> None:
     package = app.config.package
     _main(docs_dir=pathlib.Path(app.confdir), package=package)
-
-
-def _process_docs_on_env_before_read_docs(
-    app: sphinx.application.Sphinx, env: sphinx.environment.BuildEnvironment, docnames: list[str]
-):
-    docnames[:] = sorted(env.found_docs)
-    return
-    save_dir = pathlib.Path('.save')
-    sources = [str(p.relative_to(save_dir)) for p in save_dir.rglob('*') if p.is_file()]
-    for docname in sources:
-        assert docname in env.found_docs
-        doctree = pickle.loads((save_dir / docname).read_bytes())  # noqa: S301
-        doctree.settings.env = env
-        doctree['source'] = env.doc2path(docname)
-        for domain in env.domains.values():
-            domain.process_doc(env, docname, doctree)
-        print(doctree)
-        print(docname)
-        print(list(env.domains['py'].objects.keys()))
-        input()
 
 
 _LOADED = set()
@@ -85,33 +63,9 @@ def _load_on_doctree_read(app: sphinx.application.Sphinx, doctree: docutils.node
     doctree.clear()
     for node in saved.children:
         doctree.append(node)
-    print(app.config.package)
-    print(list(env.domains['py'].objects.keys()))
-    print(list(env.domains['py'].modules.keys()))
     env.domains['py'].data['objects'].update(objects)
     env.domains['py'].data['modules'].update(modules)
-    print(list(env.domains['py'].objects.keys()))
-    print(list(env.domains['py'].modules.keys()))
     app.emit('doctree-read', doctree)
-    return
-    doctree.settings.env = env
-    doctree['source'] = env.doc2path(docname)
-    print(list(env.domains['py'].objects.keys()))
-    for domain in env.domains.values():
-        domain.process_doc(env, docname, doctree)
-    print(app.config.package)
-    print(docname)
-    print(list(env.domains['py'].objects.keys()))
-    input()
-
-
-def _fix_on_missing_reference(
-    app: sphinx.application.Sphinx,
-    env: sphinx.environment.BuildEnvironment,
-    node: docutils.node,
-    contnode: docutils.node,
-) -> docutils.node | None:
-    pass
 
 
 def _save_on_doctree_resolved(
