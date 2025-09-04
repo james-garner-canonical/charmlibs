@@ -51,20 +51,19 @@ def _load_on_doctree_read(app: sphinx.application.Sphinx, doctree: docutils.node
     """Load pickle file named after docname if it exists, and replace doctree contents in-place."""
     env = app.env
     docname = env.docname
-    if not docname.startswith('reference/charmlibs/'):
-        return
     source = pathlib.Path('.save', docname)
-    if not source.exists():
+    if not docname.startswith('reference/charmlibs/') or not source.exists() or docname in _LOADED:
         return
-    if docname in _LOADED:
-        return
-    _LOADED.add(docname)
     saved, objects, modules = pickle.loads(source.read_bytes())  # noqa: S301
+    # load saved doctree
     doctree.clear()
     for node in saved.children:
         doctree.append(node)
+    # restore objects and modules to domain data
     env.domains['py'].data['objects'].update(objects)
     env.domains['py'].data['modules'].update(modules)
+    # re-emit event, avoiding recursive processing
+    _LOADED.add(docname)
     app.emit('doctree-read', doctree)
 
 
