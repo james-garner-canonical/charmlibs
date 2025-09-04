@@ -69,7 +69,7 @@ jobs:
           substrates=()
           for substrate in k8s machine; do
             set +e  # don't abort if the next process has a non-zero exit code
-            uvx --from rust-just just integration-$substrate ${{ inputs.package }} '' --collect-only -q
+            uvx --from rust-just just integration-$substrate ${{ inputs.package }} --collect-only -q
             case $? in
                 0) substrates+=($substrate);;
                 5) echo "No tests for $substrate";;
@@ -190,7 +190,7 @@ jobs:
 
       - name: Pack charms
         if: ${{ hashFiles(format('{0}/tests/integration/pack.sh', inputs.package)) != '' }}
-        run: uvx --from rust-just just pack-${{ matrix.substrate }} ${{ inputs.package }} '${{ matrix.tag }}'
+        run: uvx --from rust-just just tag='${{ matrix.tag }}' pack-${{ matrix.substrate }} ${{ inputs.package }}
 
       - name: Run Juju integration tests
-        run: uvx --from rust-just just integration-${{ matrix.substrate }} ${{ inputs.package }} '${{ matrix.tag }}'
+        run: uvx --from rust-just just tag='${{ matrix.tag }}' integration-${{ matrix.substrate }} ${{ inputs.package }}
