@@ -46,6 +46,8 @@ def _package_docs(app: sphinx.application.Sphinx) -> None:
 
 def _load_on_doctree_read(app: sphinx.application.Sphinx, doctree: docutils.nodes.document):
     """Load pickle file named after docname if it exists, and replace doctree contents in-place."""
+    if app.config.package is not None:  # only load when not building docs for a specific package
+        return
     if not (source := pathlib.Path('.save', app.env.docname)).exists():
         return
     saved, objects, modules = pickle.loads(source.read_bytes())  # noqa: S301
@@ -63,6 +65,7 @@ def _save_on_doctree_resolved(
 ):
     """Dump doctree to pickle file named after docname."""
     package = app.config.package
+    # only save the package reference docs we generate with autodoc
     if package is None or docname != f'reference/charmlibs/{package}':
         return
     objects = app.env.domains['py'].data['objects']
