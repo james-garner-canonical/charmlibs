@@ -27,7 +27,6 @@ import typing
 if typing.TYPE_CHECKING:
     import docutils.nodes
     import sphinx.application
-    import sphinx.environment
 
 
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
