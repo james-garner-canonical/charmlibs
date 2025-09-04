@@ -46,19 +46,16 @@ def _package_docs(app: sphinx.application.Sphinx) -> None:
 
 def _load_on_doctree_read(app: sphinx.application.Sphinx, doctree: docutils.nodes.document):
     """Load pickle file named after docname if it exists, and replace doctree contents in-place."""
-    env = app.env
-    docname = env.docname
-    source = pathlib.Path('.save', docname)
-    if not docname.startswith('reference/charmlibs/') or not source.exists():
+    if not (source := pathlib.Path('.save', app.env.docname)).exists():
         return
     saved, objects, modules = pickle.loads(source.read_bytes())  # noqa: S301
-    # load saved doctree
+    # restore saved doctree
     doctree.clear()
     for node in saved.children:
         doctree.append(node)
     # restore domain inventory for cross-refs
-    env.domains['py'].data['objects'].update(objects)
-    env.domains['py'].data['modules'].update(modules)
+    app.env.domains['py'].data['objects'].update(objects)
+    app.env.domains['py'].data['modules'].update(modules)
 
 
 def _save_on_doctree_resolved(
