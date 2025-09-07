@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generate automodule files and table of contents for packages."""
+"""Handle generation, saving, and restoration of package reference docs.
+
+Packages are not guaranteed to have compatible dependencies, so we generate their reference docs
+in separate invocations of ``sphinx-build``. If the ``package`` config option is set, we write
+an ``audodoc`` ``automodule`` directive for that package, and then save the resulting doctree and
+index information for that package. If the ``package`` config option is not set, we restore any
+saved information when doctrees are resolved.
+"""
 
 from __future__ import annotations
 
@@ -101,6 +108,7 @@ def _main(docs_dir: pathlib.Path, package: str | None) -> None:
     root = docs_dir.parent
     ref_dir = docs_dir / 'reference'
     (ref_dir / 'charmlibs' / 'interfaces').mkdir(parents=True, exist_ok=True)
+    # Any directory (or subdirectory of interfaces/) starting with a-z is assumed to be a package.
     for subdir, p in (
         *(('', p.name) for p in root.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
         *(('interfaces', p.name) for p in (root / 'interfaces').glob(r'[a-z]*') if p.is_dir()),

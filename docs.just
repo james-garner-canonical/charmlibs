@@ -13,6 +13,12 @@ html *packages: (_packages packages)
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
         sphinx-build -b dirhtml -T -W --keep-going -d .sphinx/.doctrees -D language=en . '{{build_dir}}/html'
 
+[doc("""
+Run html builder once per package, with its deps installed, setting the package argument and suppressing reference warnings.
+
+This allows us to generate the reference docs for that package with autodoc, saving the doctrees and reference information
+to be combined into the final docs in a separate pass.
+""")]
 _packages *packages:
     #!/usr/bin/env -S uv run --script --no-project
     import pathlib, subprocess
