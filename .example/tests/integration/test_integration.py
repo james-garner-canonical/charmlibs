@@ -27,10 +27,5 @@ def test_deploy(juju: jubilant.Juju, charm: str):
 
 
 def test_exec(juju: jubilant.Juju, charm: str):
-    code = """
-result = []
-for val in 1, 'two', self.package_version:
-    result.append(val)
-"""
-    result = juju.run(f'{charm}/0', 'exec', params={'code': code})
-    assert json.loads(result.results['result']) == [1, 'two', example.__version__]
+    result = juju.run(f'{charm}/0', 'lib_version')
+    assert json.loads(result.results['lib_version']) == example.__verson__

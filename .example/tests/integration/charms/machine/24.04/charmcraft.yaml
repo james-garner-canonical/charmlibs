@@ -1,0 +1,14 @@
+name: machine
+type: charm
+summary: A small machine charm for use in integration tests.
+description: A small machine charm for use in integration tests.
+
+base: ubuntu@24.04
+platforms:
+  amd64:
+
+parts:
+  test-charm:
+    source: .
+    plugin: uv
+    build-snaps: [astral-uv]
