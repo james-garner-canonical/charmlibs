@@ -2,7 +2,7 @@ mod docs  # load docs module to expose docs subcommands
 
 set ignore-comments  # don't print comment lines in recipes
 
-# set on the commandline as needed, e.g. `just package=pathops python=3.8 unit`
+# set on the commandline as needed, e.g. `just package=pathops python=3.10 unit`
 python := '3.10'
 # for integration tests, e.g. `just tag=24.04 pack-k8s` `just tag=foo integration-machine`
 tag := env('CHARMLIBS_TAG', '')
@@ -34,10 +34,10 @@ format:
     uv run ruff format --preview
     uv run ruff check --preview --fix
 
-[doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.8 lint pathops`.')]
+[doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.10 lint pathops`.')]
 lint package *pyright_args: fast-lint (static package pyright_args)
 
-[doc('Run package specific static analysis only, e.g. `just python=3.8 static pathops`.')]
+[doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
 static package *args:
     #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}'
@@ -45,10 +45,10 @@ static package *args:
         --group lint --group unit --group functional --group integration \
         pyright --pythonversion='{{python}}' {{args}}
 
-[doc("Run unit tests with `coverage`, e.g. `just python=3.8 unit pathops`.")]
+[doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
 unit package +flags='-rA': (_coverage package 'unit' flags)
 
-[doc("Run functional tests with `coverage`, e.g. `just python=3.8 functional pathops`.")]
+[doc("Run functional tests with `coverage`, e.g. `just python=3.10 functional pathops`.")]
 functional package +flags='-rA': (_coverage package 'functional' flags)
 
 [doc("Run functional tests with `coverage` and a live `pebble` running. Requires `pebble`.")]
@@ -77,7 +77,7 @@ _coverage package test_suite +flags:
     uv run {{_with_test_deps}} --group {{test_suite}} \
         coverage report --data-file="$DATA_FILE"
 
-[doc("Combine `coverage` reports, e.g. `just python=3.8 combine-coverage pathops`.")]
+[doc("Combine `coverage` reports, e.g. `just python=3.10 combine-coverage pathops`.")]
 combine-coverage package:
     #!/usr/bin/env -S bash -xueo pipefail
     : 'Collect the coverage data files that exist for this package.'
