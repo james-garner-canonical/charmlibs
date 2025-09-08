@@ -59,6 +59,8 @@ jobs:
           uvx --from rust-just just new --no-input
           rm -rf .example
           mv example .example
+          # check if tracked files changed, or any new files were added
+          # (git diff --exit-code isn't effected by new files)
           STATUS=$(git status --porcelain)
           echo "$STATUS"
           test -z "$STATUS"
