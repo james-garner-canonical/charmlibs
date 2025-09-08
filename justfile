@@ -13,7 +13,11 @@ _help:
 
 [doc('Create the files for a new charmlibs package interactively.')]
 new *args:
+    #!/usr/bin/env -S bash -xueo pipefail
+    export TEMPFILE=/tmp/cookiecutter-symlinks-tmp-$(date +%Y%m%d_%H%M%S).json
+    uv run --script --no-project .template/pre_run.py
     uvx cookiecutter .template {{args}}
+    rm $TEMPFILE
 
 [doc('Run `uv add` for package, respecting the global test dependency constraints.')]
 add package +args:
