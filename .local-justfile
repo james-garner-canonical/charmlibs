@@ -1,24 +1,24 @@
-root := shell('git rev-parse --show-toplevel')
-package := file_name(justfile_directory())
+_root := shell('git rev-parse --show-toplevel')
+_package := shell('realpath --relative-to=' + _root + ' ' + justfile_directory())
 
 help:
-    @echo 'Local justfile for {{CYAN}}{{package}}/{{NORMAL}}.'
+    @echo 'Local justfile for {{CYAN}}{{_package}}/{{NORMAL}}.'
     @echo 'All these recipes from the global justfile are available:'
-    @cd {{root}} && just --list --unsorted --list-heading=''
-    @echo 'However, the package argument must be omitted from these recipes:'
+    @cd {{_root}} && just --list --unsorted --list-heading=''
+    @echo 'However, the {{CYAN}}package{{NORMAL}} argument must be omitted from these recipes:'
     @just --list --unsorted --list-heading=''
 
-_package recipe +args:
-    cd '{{root}}' && just {{recipe}} {{package}} {{args}}
+_run recipe *args:
+    cd '{{_root}}' && just {{recipe}} {{_package}} {{args}}
 
-add *args: (_package 'add' args)
-lint *args: (_package 'lint' args)
-static *args: (_package 'static' args)
-unit *args: (_package 'unit' args)
-functional *args: (_package 'functional' args)
-functional-pebble *args: (_package 'functional-pebble' args)
-combine-coverage *args: (_package 'combine-coverage' args)
-pack-k8s *args: (_package 'pack-k8s' args)
-pack-machine *args: (_package 'pack-machine' args)
-integration-k8s *args: (_package 'integration-k8s' args)
-integration-machine *args: (_package 'integration-machine' args)
+add *args: (_run 'add' args)
+lint *args: (_run 'lint' args)
+static *args: (_run 'static' args)
+unit *args: (_run 'unit' args)
+functional *args: (_run 'functional' args)
+functional-pebble *args: (_run 'functional-pebble' args)
+combine-coverage *args: (_run 'combine-coverage' args)
+pack-k8s *args: (_run 'pack-k8s' args)
+pack-machine *args: (_run 'pack-machine' args)
+integration-k8s *args: (_run 'integration-k8s' args)
+integration-machine *args: (_run 'integration-machine' args)
