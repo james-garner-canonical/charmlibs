@@ -8,6 +8,9 @@ help:
     @echo 'However, the {{CYAN}}package{{NORMAL}} argument must be omitted from these recipes:'
     @just --list --unsorted --list-heading=''
 
+docs *args:
+    cd '{{_root}}' && just docs {{args}}
+
 _run recipe *args:
     cd '{{_root}}' && just {{recipe}} {{_package}} {{args}}
 
