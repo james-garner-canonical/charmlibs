@@ -15,7 +15,6 @@ docs *args:
 _run recipe *args:
     cd '{{_root}}' && just {{recipe}} {{_package}} {{args}}
 
-add *args: (_run 'add' args)
 lint *args: (_run 'lint' args)
 static *args: (_run 'static' args)
 unit *args: (_run 'unit' args)
