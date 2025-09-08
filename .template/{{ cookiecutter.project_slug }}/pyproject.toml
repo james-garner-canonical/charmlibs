@@ -19,15 +19,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed in addition to unit, functional, and integration for just lint {{ cookiecutter.project_slug }}
+lint = [  # installed in addition to unit, functional, and integration for `just lint {{ cookiecutter.project_slug }}`
     # "typing_extensions",
 ]
-unit = [  # installed for just unit {{ cookiecutter.project_slug }}
+unit = [  # installed for `just unit {{ cookiecutter.project_slug }}`
     "ops[testing]",
 ]
-functional = [  # installed for just functional {{ cookiecutter.project_slug }}
+functional = [  # installed for `just functional {{ cookiecutter.project_slug }}`
 ]
-integration = [  # installed for just integration {{ cookiecutter.project_slug }}
+integration = [  # installed for `just integration {{ cookiecutter.project_slug }}`
     "jubilant",
 ]
 
@@ -60,4 +60,5 @@ pebble = []  # pebble versions to run functional tests with, e.g. "v1.0.0", "mas
 sudo = false  # whether to run functional tests with sudo (defaults to false)
 
 [tool.charmlibs.integration]
-tags = []  # tags to run integration tests with, e.g. "22.04", "24.04" (defaults to running once with no tag)
+# tags to run integration tests with (defaults to running once with no tag)
+tags = ["22.04", "24.04"]  # Update tests/integration/pack.sh and test charm files if needed when changing these!

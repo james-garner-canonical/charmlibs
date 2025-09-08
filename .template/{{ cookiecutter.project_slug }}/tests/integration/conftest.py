@@ -65,4 +65,4 @@ def _deploy(juju: jubilant.Juju, charm: str) -> None:
 
 
 def _get_packed_charm_path(charm: str) -> pathlib.Path:
-    return pathlib.Path(__file__).parent / '.packed' / f'{charm}.charm'
+    return pathlib.Path(__file__).parent / '.packed' / f'{charm}.charm'  # determined by pack.sh

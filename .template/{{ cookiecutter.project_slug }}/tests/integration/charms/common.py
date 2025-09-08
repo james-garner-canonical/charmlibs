@@ -29,14 +29,10 @@ class Charm(ops.CharmBase):
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        framework.observe(self.on['exec'].action, self._on_exec)
-        self.package_version = {{ cookiecutter.project_slug }}.__version__
+        framework.observe(self.on['lib_version'].action, self._on_lib_version)
 
-    def _on_exec(self, event: ops.ActionEvent):
-        logger.info('action [exec] params: %s', event.params)
-        globals_dict = globals().copy()
-        locals_dict = locals().copy()
-        exec(event.params['code'], globals_dict, locals_dict)  # noqa: S102 (exec)
-        result = locals_dict.get('result')
-        logger.info('action [exec] result: %s', result)
-        event.set_results({'result': json.dumps(result)})
+    def _on_lib_version(self, event: ops.ActionEvent):
+        logger.info('action [lib_version] called with params: %s', event.params)
+        results = {'lib_version': json.dumps({{ cookiecutter.project_slug }}.__version__)}
+        event.set_results(results)
+        logger.info('action [lib_version] set_results: %s', results)
