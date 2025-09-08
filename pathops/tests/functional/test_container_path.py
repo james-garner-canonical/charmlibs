@@ -415,6 +415,13 @@ class TestUnlink:
         with pytest.raises(FileNotFoundError):
             container_path.unlink()
 
+    def test_doesnt_exist_and_missing_ok(self, container: ops.Container, tmp_path: pathlib.Path):
+        path = tmp_path / 'file'
+        assert not path.exists()
+        path.unlink(missing_ok=True)
+        container_path = ContainerPath(path, container=container)
+        container_path.unlink(missing_ok=True)
+
     def test_directory(self, container: ops.Container, tmp_path: pathlib.Path):
         path = tmp_path / 'directory'
         path.mkdir()

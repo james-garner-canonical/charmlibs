@@ -22,6 +22,8 @@ dependencies = [
 lint = [
     "typing_extensions",
 ]
+unit = []
+functional = []
 integration = [
     "jubilant",
 ]
@@ -51,3 +53,6 @@ pythonVersion = "3.10"
 [tool.charmlibs.functional]
 pebble = ["v1.1.1","master"]
 ubuntu = ["22.04", "latest"]
+
+[tool.charmlibs.integration]
+tags = ["20.04", "24.04"]

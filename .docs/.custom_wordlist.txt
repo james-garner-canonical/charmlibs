@@ -8,7 +8,9 @@ databag
 databags
 dev
 discoverability
+DNS
 filesystem
+FQDN
 GPG
 hashable
 HPC
@@ -20,12 +22,16 @@ libs
 monorepo
 namespacing
 OCI
+OID
+PEM
 posix
 pythonic
 radix
 reimplemented
 repo
 requirer
+requirers
+RSA
 stateful
 subclasses
 subdirectory

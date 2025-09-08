@@ -69,10 +69,14 @@ def _get_packages(old_ref: str, new_ref: str) -> list[str]:
         old_root = pathlib.Path(td2)
         _snapshot_repo(ref=old_ref, directory=old_root)
         old_versions = {p: _get_version(old_root, p) for p in changed_packages}
-    changed = [p for p in changed_packages if old_versions[p] != new_versions[p]]
-    for p in changed:
-        logger.info('%s: %s -> %s', p, old_versions[p], new_versions[p])
-    return changed
+    packages_to_release: list[str] = []
+    for p in changed_packages:
+        old = old_versions[p]
+        new = new_versions[p]
+        if new is not None and '.dev' not in new and old != new:
+            packages_to_release.append(p)
+            logger.info('%s: %s -> %s', p, old, new)
+    return packages_to_release
 
 
 def _get_changes(old_ref: str, new_ref: str) -> set[str]:
