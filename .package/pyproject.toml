@@ -22,8 +22,9 @@ functional = []
 integration = []
 
 [project.urls]
-"Repository" = "https://github.com/canonical/charmtech-charmlibs"
-"Issues" = "https://github.com/canonical/charmtech-charmlibs/issues"
+"Documentation" = "https://documentation.ubuntu.com/charmlibs"
+"Repository" = "https://github.com/canonical/charmlibs"
+"Issues" = "https://github.com/canonical/charmlibs/issues"
 
 [build-system]
 requires = [

@@ -22,6 +22,7 @@ functional = []
 integration = []
 
 [project.urls]
+"Documentation" = "https://documentation.ubuntu.com/charmlibs"
 "Repository" = "https://github.com/canonical/charmlibs"
 "Issues" = "https://github.com/canonical/charmlibs/issues"
 
