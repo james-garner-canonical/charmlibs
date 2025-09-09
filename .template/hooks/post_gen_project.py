@@ -14,25 +14,32 @@
 
 """Run by cookicutter after project generation to turn resolved symlinks back into symlinks."""
 
-import json
 import os
 import pathlib
 import sys
 import warnings
 
-TEMPFILE_VAR = 'TEMPFILE'
-if TEMPFILE_VAR not in os.environ:
-    warnings.warn(
-        f'{TEMPFILE_VAR} not defined in environment! Make sure you run `cookiecutter` via `just`.',
-        stacklevel=2,
-    )
+
+# abort if CHARMLIBS_TEMPLATE environment  variable is not set
+ABORT_MSG = """
+CHARMLIBS_TEMPLATE is not set, did you run cookiecutter via `just new`?
+Aborting `post_gen_project` hook without restoring symlinks ...
+""".strip()
+TEMPLATE_DIR = os.environ.get('CHARMLIBS_TEMPLATE')
+if not TEMPLATE_DIR:
+    warnings.warn(ABORT_MSG, stacklevel=2)
     sys.exit()
-tempfile_path = pathlib.Path(os.environ[TEMPFILE_VAR])
-if not tempfile_path.is_file():
-    warnings.warn(f'{TEMPFILE_VAR}={tempfile_path} is not a file!', stacklevel=2)
-    sys.exit()
-di = json.loads(tempfile_path.read_text())
-for path, target in di.items():
-    path = pathlib.Path(path)
-    path.unlink()
-    path.symlink_to(target)
+
+# get the relative path to every symlink in the template, and its target as a string
+# we use % raw % to preserve the templated dir name as cookiecutter passes this file through jinja
+TEMPLATE_PROJECT_ROOT = pathlib.Path(TEMPLATE_DIR, '{% raw %}{{ cookiecutter.project_slug }}{% endraw %}')
+RELATIVE_SYMLINK_PATHS = {
+    path.relative_to(TEMPLATE_PROJECT_ROOT): str(path.readlink())
+    for path in TEMPLATE_PROJECT_ROOT.rglob('*')
+    if path.is_symlink()
+}
+
+# iterate over relative paths and relink them in current working directory (generated project)
+for symlink_path, target in RELATIVE_SYMLINK_PATHS.items():
+    symlink_path.unlink()  # remove resolved copy of symlink target created by cookiecutter
+    symlink_path.symlink_to(target)
