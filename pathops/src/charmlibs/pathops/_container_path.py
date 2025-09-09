@@ -28,9 +28,10 @@ from . import _constants, _errors, _fileinfo
 
 if typing.TYPE_CHECKING:
     import os
-    from typing import Generator, Literal
+    from collections.abc import Generator
+    from typing import Literal, TypeGuard
 
-    from typing_extensions import Self, TypeGuard
+    from typing_extensions import Self
 
 
 class RelativePathError(ValueError):
@@ -514,16 +515,21 @@ class ContainerPath:
             _errors.raise_not_a_directory(repr(self))
         self._remove_path()
 
-    def unlink(self) -> None:
+    def unlink(self, missing_ok: bool = False) -> None:
         """Remove this path if it is not a directory.
 
         Raises:
-            FileNotFoundError: if the path does not exist.
+            FileNotFoundError: if the path does not exist and ``missing_ok`` is false.
             IsADirectoryError: if the path exists but is a directory.
             PermissionError: if the Pebble user does not have permissions for the operation.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
         """
-        info = _fileinfo.from_container_path(self, follow_symlinks=False)
+        try:
+            info = _fileinfo.from_container_path(self, follow_symlinks=False)
+        except FileNotFoundError:
+            if missing_ok:
+                return
+            raise
         if info.type == pebble.FileType.DIRECTORY:
             _errors.raise_is_a_directory(repr(self))
         self._remove_path()

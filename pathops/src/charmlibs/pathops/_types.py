@@ -22,7 +22,7 @@ from . import _constants
 
 if typing.TYPE_CHECKING:
     import os
-    from typing import Generator, Sequence
+    from collections.abc import Generator, Sequence
 
     from typing_extensions import Self
 
@@ -50,6 +50,19 @@ class PathProtocol(typing.Protocol):
     not the case, then equality is ``False`` and other comparisons are :class:`NotImplemented`.
 
     Protocol implementers are hashable.
+
+    .. warning::
+        User implementations of ``PathProtocol`` are not covered by this package's semantic
+        versioning promise.
+
+        The semantic versioning of this package reflects the runtime use of :class:`ContainerPath`
+        and :class:`LocalPath`. ``PathProtocol`` is always updated to reflect the latest changes to
+        :class:`ContainerPath` and :class:`LocalPath`.
+
+        ``PathProtocol`` will always be a valid type annotation for :class:`ContainerPath`,
+        :class:`LocalPath`, and :class:`pathlib.PosixPath` objects. However, user implementations
+        of ``PathProtocol`` may experience type checking breakage on minor version bumps of this
+        package.
     """
 
     #############################
@@ -367,11 +380,11 @@ class PathProtocol(typing.Protocol):
         """
         ...
 
-    def unlink(self) -> None:
+    def unlink(self, missing_ok: bool = False) -> None:
         """Remove this path if it is not a directory.
 
         Raises:
-            FileNotFoundError: if the path does not exist.
+            FileNotFoundError: if the path does not exist and ``missing_ok`` is false.
             IsADirectoryError: if the path exists but is a directory.
             PermissionError: if the local or remote user does not have the appropriate permissions.
             PebbleConnectionError: if the remote Pebble client cannot be reached.
