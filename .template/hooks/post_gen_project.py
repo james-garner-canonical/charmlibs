@@ -19,7 +19,6 @@ import pathlib
 import sys
 import warnings
 
-
 # abort if CHARMLIBS_TEMPLATE environment  variable is not set
 ABORT_MSG = """
 CHARMLIBS_TEMPLATE is not set, did you run cookiecutter via `just new`?
@@ -31,8 +30,11 @@ if not TEMPLATE_DIR:
     sys.exit()
 
 # get the relative path to every symlink in the template, and its target as a string
-# we use % raw % to preserve the templated dir name as cookiecutter passes this file through jinja
-TEMPLATE_PROJECT_ROOT = pathlib.Path(TEMPLATE_DIR, '{% raw %}{{ cookiecutter.project_slug }}{% endraw %}')
+TEMPLATE_PROJECT_ROOT = pathlib.Path(
+    TEMPLATE_DIR,
+    # we use raw to preserve the templated dir name as cookiecutter runs this script through jinja
+    '{% raw %}{{ cookiecutter.project_slug }}{% endraw %}',
+)
 RELATIVE_SYMLINK_PATHS = {
     path.relative_to(TEMPLATE_PROJECT_ROOT): str(path.readlink())
     for path in TEMPLATE_PROJECT_ROOT.rglob('*')
