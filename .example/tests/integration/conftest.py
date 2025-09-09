@@ -46,7 +46,7 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
     keep_models = typing.cast('bool', request.config.getoption('--keep-models'))
     with jubilant.temp_model(keep=keep_models) as juju:
         juju.model_config({'logging-config': '<root>=INFO;unit=DEBUG'})
-        _deploy(juju, charm)
+        _deploy(juju)
         juju.wait(jubilant.all_active)
         yield juju
         if request.session.testsfailed:
