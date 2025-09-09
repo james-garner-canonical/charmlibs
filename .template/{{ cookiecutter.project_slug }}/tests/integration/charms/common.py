@@ -29,10 +29,10 @@ class Charm(ops.CharmBase):
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        framework.observe(self.on['lib_version'].action, self._on_lib_version)
+        framework.observe(self.on['lib-version'].action, self._on_lib_version)
 
     def _on_lib_version(self, event: ops.ActionEvent):
-        logger.info('action [lib_version] called with params: %s', event.params)
-        results = {'lib_version': json.dumps({{ cookiecutter.project_slug }}.__version__)}
+        logger.info('action [lib-version] called with params: %s', event.params)
+        results = {'result': json.dumps({{ cookiecutter.project_slug }}.__version__)}
         event.set_results(results)
-        logger.info('action [lib_version] set_results: %s', results)
+        logger.info('action [lib-version] set_results: %s', results)

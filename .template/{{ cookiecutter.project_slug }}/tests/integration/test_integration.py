@@ -26,6 +26,6 @@ def test_deploy(juju: jubilant.Juju, charm: str):
     assert charm in juju.status().apps
 
 
-def test_exec(juju: jubilant.Juju, charm: str):
-    result = juju.run(f'{charm}/0', 'lib_version')
-    assert json.loads(result.results['lib_version']) == {{ cookiecutter.project_slug }}.__version__
+def test_lib_version(juju: jubilant.Juju, charm: str):
+    result = juju.run(f'{charm}/0', 'lib-version')
+    assert json.loads(result.results['result']) == {{ cookiecutter.project_slug }}.__version__
