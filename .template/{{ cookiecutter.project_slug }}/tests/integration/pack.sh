@@ -8,9 +8,9 @@
 #
 # Environment variables:
 # $CHARMLIBS_SUBSTRATE will have the value 'k8s' or 'machine' (set by pack-k8s or pack-machine)
-# in CI, $CHARMLIBS_TAG is set based on pyproject.toml:tools.charmlibs.integration.tags
-#     set $CHARMLIBS_TAG locally for testing, or use the tag variable
-#     e.g. just tag=24.04 pack-k8s some extra args
+# In CI, $CHARMLIBS_TAG is set based on pyproject.toml:tool.charmlibs.integration.tags
+# For local testing, set $CHARMLIBS_TAG directly or use the tag variable. For example:
+# just tag=24.04 pack-k8s some extra args
 set -xueo pipefail
 
 : copy charm files to temporary directory
