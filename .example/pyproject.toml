@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed in addition to unit, functional, and integration for `just lint example`
+lint = [  # installed for `just lint example` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
 unit = [  # installed for `just unit example`

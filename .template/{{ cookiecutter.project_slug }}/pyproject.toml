@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed in addition to unit, functional, and integration for `just lint {{ cookiecutter.project_slug }}`
+lint = [  # installed for `just lint {{ cookiecutter.project_slug }}` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
 unit = [  # installed for `just unit {{ cookiecutter.project_slug }}`
