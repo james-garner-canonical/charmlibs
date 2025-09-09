@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # This script is executed in this directory via `just pack-k8s` or `just pack-machine`.
 # Extra args are passed to this script, e.g. `just pack-k8s foo` -> $1 is 'foo'.
-# These commands are invoked in CI:
-#     - if this file exists and `just integration-<substrate>` would execute any tests
-#     - before running integration tests
-#     - with no additional arguments
+# In CI, the `just pack-<substrate>` commands are invoked:
+#     - If this file exists and `just integration-<substrate>` would execute any tests
+#     - Before running integration tests
+#     - With no additional arguments
 #
 # Environment variables:
 # $CHARMLIBS_SUBSTRATE will have the value 'k8s' or 'machine' (set by pack-k8s or pack-machine)
