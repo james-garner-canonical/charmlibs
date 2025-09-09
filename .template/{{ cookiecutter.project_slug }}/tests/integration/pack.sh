@@ -20,8 +20,7 @@ cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/$CHARMLIBS_TAG/" "$TMP
 
 : copy library code to temporary directory
 mkdir "$TMPDIR/package"
-cp -r ../../pyproject.toml "$TMPDIR/package/"
-cp -r ../../src "$TMPDIR/package/"
+cp --recursive --target-directory="$TMPDIR/package/" ../../src ../../pyproject.toml ../../README.md
 
 : pack charm
 cd "$TMPDIR"
