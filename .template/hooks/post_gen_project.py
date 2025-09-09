@@ -6,7 +6,7 @@ import warnings
 
 
 TEMPFILE_VAR = 'TEMPFILE'
-if not TEMPFILE_VAR in os.environ:
+if TEMPFILE_VAR not in os.environ:
     warnings.warn(
         f'{TEMPFILE_VAR} not defined in environment! Make sure you run `cookiecutter` via `just`.'
     )
