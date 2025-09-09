@@ -59,7 +59,6 @@ def _deploy(juju: jubilant.Juju) -> None:
     tag = os.environ.get('CHARMLIBS_TAG', '')
     path = pathlib.Path(__file__).parent / '.packed' / f'{substrate}-{tag}.charm'  # set by pack.sh
     if substrate == 'k8s':
-        juju.deploy(charm_path, resources={'workload': 'ubuntu:latest'})
+        juju.deploy(path, resources={'workload': 'ubuntu:latest'})
     else:
-        juju.deploy(charm_path)
-
+        juju.deploy(path)
