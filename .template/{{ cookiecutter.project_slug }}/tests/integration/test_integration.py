@@ -28,4 +28,4 @@ def test_deploy(juju: jubilant.Juju, charm: str):
 
 def test_exec(juju: jubilant.Juju, charm: str):
     result = juju.run(f'{charm}/0', 'lib_version')
-    assert json.loads(result.results['lib_version']) == {{ cookiecutter.project_slug }}.__verson__
+    assert json.loads(result.results['lib_version']) == {{ cookiecutter.project_slug }}.__version__
