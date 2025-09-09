@@ -34,9 +34,7 @@ def pytest_addoption(parser: pytest.OptionGroup):
 
 @pytest.fixture(scope='session')
 def charm() -> str:
-    substrate = os.environ['CHARMLIBS_SUBSTRATE']
-    tag = os.environ.get('CHARMLIBS_TAG')
-    return f'{substrate}-{tag}' if tag else substrate
+    return os.environ['CHARMLIBS_SUBSTRATE']  # determined by test charms' charmcraft.yaml
 
 
 @pytest.fixture(scope='module')
@@ -56,13 +54,12 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
             print(log, end='')
 
 
-def _deploy(juju: jubilant.Juju, charm: str) -> None:
-    charm_path = _get_packed_charm_path(charm)
-    if charm.startswith('k8s'):
+def _deploy(juju: jubilant.Juju) -> None:
+    substrate = os.environ['CHARMLIBS_SUBSTRATE']
+    tag = os.environ.get('CHARMLIBS_TAG', '')
+    path = pathlib.Path(__file__).parent / '.packed' / f'{substrate}-{tag}.charm'  # set by pack.sh
+    if substrate == 'k8s':
         juju.deploy(charm_path, resources={'workload': 'ubuntu:latest'})
     else:
         juju.deploy(charm_path)
 
-
-def _get_packed_charm_path(charm: str) -> pathlib.Path:
-    return pathlib.Path(__file__).parent / '.packed' / f'{charm}.charm'  # determined by pack.sh
