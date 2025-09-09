@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""State-transition tests using Scenario (via ops.testing)."""
+"""Light weight state-transition tests of the library in a charming context."""
 
 import ops
 import ops.testing
