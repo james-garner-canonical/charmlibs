@@ -1,4 +1,4 @@
-name: k8s
+name: k8s-22.04
 type: charm
 summary: A small K8s charm for use in integration tests.
 description: A small K8s charm for use in integration tests.

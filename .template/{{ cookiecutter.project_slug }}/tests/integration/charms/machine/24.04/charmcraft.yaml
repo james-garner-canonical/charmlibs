@@ -1,4 +1,4 @@
-name: machine
+name: machine-24.04
 type: charm
 summary: A small machine charm for use in integration tests.
 description: A small machine charm for use in integration tests.
