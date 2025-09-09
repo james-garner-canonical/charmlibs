@@ -14,13 +14,18 @@
 
 """Fixtures for Juju integration tests."""
 
+import logging
 import os
 import pathlib
+import sys
+import time
 import typing
 from collections.abc import Iterator
 
 import jubilant
 import pytest
+
+logger = logging.getLogger(__name__)
 
 
 def pytest_addoption(parser: pytest.OptionGroup):
@@ -50,8 +55,10 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
         juju.wait(jubilant.all_active)
         yield juju
         if request.session.testsfailed:
+            logger.info('Collecting Juju logs ...')
+            time.sleep(0.5)  # Wait for Juju to process logs.
             log = juju.debug_log(limit=1000)
-            print(log, end='')
+            print(log, end='', file=sys.stderr)
 
 
 def _deploy(juju: jubilant.Juju) -> None:
