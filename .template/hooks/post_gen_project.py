@@ -4,7 +4,6 @@ import pathlib
 import sys
 import warnings
 
-
 TEMPFILE_VAR = 'TEMPFILE'
 if TEMPFILE_VAR not in os.environ:
     warnings.warn(
