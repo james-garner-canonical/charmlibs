@@ -31,4 +31,4 @@ cd -
 : place packed charm in expected location
 PACKED_DIR=".packed"
 mkdir "$PACKED_DIR"
-mv "$TMPDIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE.charm"  # read in conftest.py
+mv "$TMPDIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE-$CHARMLIBS_TAG.charm"  # read in conftest.py
