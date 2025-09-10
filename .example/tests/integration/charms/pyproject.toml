@@ -11,4 +11,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-"charmlibs-example" = { path = "package" }
+"charmlibs-example" = { path = "package", editable = true }

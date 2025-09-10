@@ -18,10 +18,6 @@ TMPDIR=".tmp"
 rm -rf "$TMPDIR"
 cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/" "$TMPDIR"
 
-: copy library code to temporary directory
-mkdir "$TMPDIR/package"
-cp --recursive --target-directory="$TMPDIR/package/" ../../src ../../pyproject.toml ../../README.md
-
 : pack charm
 cd "$TMPDIR"
 uv lock  # required by uv charm plugin
