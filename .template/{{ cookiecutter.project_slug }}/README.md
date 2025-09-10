@@ -8,4 +8,4 @@ To install, add `charmlibs-{{ cookiecutter.project_slug }}` to your Python depen
 from charmlibs import {{ cookiecutter.project_slug }}
 ```
 
-See the [reference documentation](https://documentation.ubuntu.com/charmlibs/reference/charmlibs/{{ cookiecutter.project_slug}}).
+See the [reference documentation](https://documentation.ubuntu.com/charmlibs/reference/charmlibs/{{ cookiecutter.project_slug}}) for more.
