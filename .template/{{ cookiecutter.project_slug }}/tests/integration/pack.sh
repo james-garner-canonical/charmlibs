@@ -13,7 +13,7 @@
 # just tag=24.04 pack-k8s some extra args
 set -xueo pipefail
 
-: copy charm files to temporary directory
+: copy charm files to temporary directory for packing, dereferencing symlinks
 TMPDIR=".tmp"
 rm -rf "$TMPDIR"
 cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/" "$TMPDIR"
@@ -30,5 +30,5 @@ cd -
 
 : place packed charm in expected location
 PACKED_DIR=".packed"
-mkdir "$PACKED_DIR"
+mkdir -p "$PACKED_DIR"
 mv "$TMPDIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE.charm"  # read in conftest.py
