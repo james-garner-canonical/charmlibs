@@ -13,18 +13,19 @@
 # just tag=24.04 pack-k8s some extra args
 set -xueo pipefail
 
+TMP_DIR=".tmp"  # clean temporary directory where charms will be packed
+PACKED_DIR=".packed"  # where packed charms will be placed with name expected in conftest.py
+
 : copy charm files to temporary directory for packing, dereferencing symlinks
-TMPDIR=".tmp"
-rm -rf "$TMPDIR"
-cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/" "$TMPDIR"
+rm -rf "$TMP_DIR"
+cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/" "$TMP_DIR"
 
 : pack charm
-cd "$TMPDIR"
+cd "$TMP_DIR"
 uv lock  # required by uv charm plugin
 charmcraft pack
 cd -
 
 : place packed charm in expected location
-PACKED_DIR=".packed"
-mkdir -p "$PACKED_DIR"
-mv "$TMPDIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE.charm"  # read in conftest.py
+mkdir -p "$PACKED_DIR"  # -p means create parents and don't complain if dir already exists
+mv "$TMP_DIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE.charm"  # read by conftest.py
