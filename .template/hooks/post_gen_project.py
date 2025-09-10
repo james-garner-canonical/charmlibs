@@ -16,6 +16,7 @@
 
 import os
 import pathlib
+import shutil
 import sys
 import warnings
 
@@ -43,5 +44,9 @@ RELATIVE_SYMLINK_PATHS = {
 
 # iterate over relative paths and relink them in current working directory (generated project)
 for symlink_path, target in RELATIVE_SYMLINK_PATHS.items():
-    symlink_path.unlink()  # remove resolved copy of symlink target created by cookiecutter
+    # remove resolved copy of symlink target created by cookiecutter
+    if symlink_path.is_dir():
+        shutil.rmtree(symlink_path)
+    else:
+        symlink_path.unlink()
     symlink_path.symlink_to(target)
