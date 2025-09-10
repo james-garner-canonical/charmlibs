@@ -1,3 +1,5 @@
+# common pyproject.toml file symlinked by these charms
+
 [project]
 name = "integration-test-charm"
 version = "0.0.0.dev0"

@@ -39,7 +39,8 @@ def pytest_addoption(parser: pytest.OptionGroup):
 
 @pytest.fixture(scope='session')
 def charm() -> str:
-    return os.environ['CHARMLIBS_SUBSTRATE']  # determined by test charms' charmcraft.yaml
+    """Return the charm name."""
+    return 'test'  # determined by test charms' charmcraft.yaml
 
 
 @pytest.fixture(scope='module')
@@ -63,9 +64,9 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
 
 def _deploy(juju: jubilant.Juju) -> None:
     substrate = os.environ['CHARMLIBS_SUBSTRATE']
-    tag = os.environ.get('CHARMLIBS_TAG', '')
-    path = pathlib.Path(__file__).parent / '.packed' / f'{substrate}-{tag}.charm'  # set by pack.sh
+    # tag = os.environ.get('CHARMLIBS_TAG', '')  # get the tag if needed
+    path = pathlib.Path(__file__).parent / '.packed' / f'{substrate}.charm'  # set by pack.sh
     if substrate == 'k8s':
-        juju.deploy(path, resources={'workload': 'ubuntu:latest'})
+        juju.deploy(path, resources={'workload': 'ubuntu:latest'})  # name set in metadata.yaml
     else:
         juju.deploy(path)

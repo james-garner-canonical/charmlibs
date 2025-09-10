@@ -16,7 +16,7 @@ set -xueo pipefail
 : copy charm files to temporary directory
 TMPDIR=".tmp"
 rm -rf "$TMPDIR"
-cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/$CHARMLIBS_TAG/" "$TMPDIR"
+cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/" "$TMPDIR"
 
 : copy library code to temporary directory
 mkdir "$TMPDIR/package"
@@ -31,4 +31,4 @@ cd -
 : place packed charm in expected location
 PACKED_DIR=".packed"
 mkdir "$PACKED_DIR"
-mv "$TMPDIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE-$CHARMLIBS_TAG.charm"  # read in conftest.py
+mv "$TMPDIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE.charm"  # read in conftest.py

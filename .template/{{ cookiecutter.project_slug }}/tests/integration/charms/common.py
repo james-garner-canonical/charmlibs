@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Common charm code for integration tests."""
+"""Common charm code for integration test charms.
+
+This file is symlinked alongside src/charm.py by these charms.
+"""
 
 import json
 import logging
