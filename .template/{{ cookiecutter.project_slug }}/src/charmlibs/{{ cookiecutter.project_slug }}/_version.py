@@ -12,6 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.{{ cookiecutter.project_slug }} package."""
-
-from ._version import __version__ as __version__
+__version__ = '0.0.0.dev0'

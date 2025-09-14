@@ -43,7 +43,7 @@ build-backend = "hatchling.build"
 packages = ["src/charmlibs"]
 
 [tool.hatch.version]
-path = "src/charmlibs/{{ cookiecutter.project_slug }}/__init__.py"
+path = "src/charmlibs/{{ cookiecutter.project_slug }}/_version.py"
 
 [tool.ruff]
 extend = "../pyproject.toml"

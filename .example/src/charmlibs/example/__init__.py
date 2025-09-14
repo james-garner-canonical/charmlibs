@@ -14,4 +14,4 @@
 
 """The charmlibs.example package."""
 
-__version__ = '0.0.0.dev0'
+from ._version import __version__ as __version__
