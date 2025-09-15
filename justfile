@@ -73,16 +73,14 @@ functional-pebble package +flags='-rA':
     exit $EXITCODE
 
 [doc("Use uv to install and run coverage for the specified package's tests.")]
-[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 _coverage package test_suite +flags:
     #!/usr/bin/env -S bash -xueo pipefail
-    shift 2  # drop $1 (package) and $2 (test_suite) from $@ so it's just +flags
     cd '{{package}}'
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
     DATA_FILE=".report/coverage-$(basename {{test_suite}})-{{python}}.db"
     {{_uv_run_with_test_requirements}} --group {{test_suite}} \
         coverage run --data-file="$DATA_FILE" --source='src' \
-        -m pytest --tb=native -vv 'tests/{{test_suite}}' "${@}"
+        -m pytest --tb=native -vv {{flags}} 'tests/{{test_suite}}'
     {{_uv_run_with_test_requirements}} --group {{test_suite}} \
         coverage report --data-file="$DATA_FILE"
 
@@ -115,12 +113,10 @@ pack-k8s package *args: (_pack package 'k8s' args)
 pack-machine package *args: (_pack package 'machine' args)
 
 [doc("Execute the pack script for the given package, setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG.")]
-[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 _pack package substrate *args:
     #!/usr/bin/env -S bash -xueo pipefail
-    shift 2  # drop $1 (package) and $2 (substrate) from $@ so it's just *args
     cd '{{package}}/tests/integration'
-    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' ./pack.sh "${@}"
+    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' ./pack.sh {{args}}
 
 [doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not machine_only'.")]
 integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_only' flags)
@@ -129,10 +125,8 @@ integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_o
 integration-machine package +flags='-rA': (_integration package 'machine' 'not k8s_only' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
-[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 _integration package substrate label +flags:
     #!/usr/bin/env -S bash -xueo pipefail
-    shift 3  # drop $1 (package), $2 (substrate), and $3 (label) from $@ so it's just +flags
     cd '{{package}}'
     CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG='{{tag}}' {{_uv_run_with_test_requirements}} --group integration \
-        pytest --tb=native -vv -m '{{label}}' tests/integration  "${@}"
+        pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
