@@ -15,3 +15,8 @@
 """The charmlibs.{{ cookiecutter.project_slug }} package."""
 
 from ._version import __version__ as __version__
+
+__all__ = [
+    # only the names listed in __all__ are imported when executing:
+    # from charmlibs.{{ cookiecutter.project_slug }} import *
+]
