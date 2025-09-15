@@ -17,7 +17,6 @@
 This file is symlinked alongside src/charm.py by these charms.
 """
 
-import json
 import logging
 
 import ops
@@ -36,6 +35,6 @@ class Charm(ops.CharmBase):
 
     def _on_lib_version(self, event: ops.ActionEvent):
         logger.info('action [lib-version] called with params: %s', event.params)
-        results = {'result': json.dumps({{ cookiecutter.project_slug }}.__version__)}
+        results = {'version': {{ cookiecutter.project_slug }}.__version__}
         event.set_results(results)
         logger.info('action [lib-version] set_results: %s', results)

@@ -14,8 +14,6 @@
 
 """Integration tests using real Juju and pre-packed charm(s)."""
 
-import json
-
 import jubilant
 
 from charmlibs import {{ cookiecutter.project_slug }}
@@ -28,4 +26,4 @@ def test_deploy(juju: jubilant.Juju, charm: str):
 
 def test_lib_version(juju: jubilant.Juju, charm: str):
     result = juju.run(f'{charm}/0', 'lib-version')
-    assert json.loads(result.results['result']) == {{ cookiecutter.project_slug }}.__version__
+    assert result.results['version'] == {{ cookiecutter.project_slug }}.__version__
