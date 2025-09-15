@@ -19,7 +19,7 @@ _help:
     @just --list --unsorted --list-submodules
 
 [doc('Create the files for a new charmlibs package interactively.')]
-new *args:
+init *args:
     env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter .template {{args}}
 
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]

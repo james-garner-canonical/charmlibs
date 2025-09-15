@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: |
-          uvx --from rust-just just new --no-input
+          uvx --from rust-just just init --no-input
           rm -rf .example
           mv example .example
           # check if tracked files changed, or any new files were added
