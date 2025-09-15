@@ -32,21 +32,25 @@ format:
     uv run --only-group=fast-lint ruff check --preview --fix
 
 [doc("Run `uv add` for package, respecting repo-level version constraints, e.g. `just add pathops 'pydantic>=2'`.")]
+[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 add package +args:
     #!/usr/bin/env -S bash -xueo pipefail
+    shift 1  # drop $1 (package) from $@ it's just +args
     cd '{{package}}'
-    uv add --constraints {{quote(join(justfile_dir(), 'test-requirements.txt'))}} {{args}}
+    uv add --constraints {{quote(join(justfile_dir(), 'test-requirements.txt'))}} "${@}"
 
 [doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.10 lint pathops`.')]
 lint package *pyright_args: fast-lint (static package pyright_args)
 
 [doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
+[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 static package *args:
     #!/usr/bin/env -S bash -xueo pipefail
+    shift 1  # drop $1 (package) from $@ it's just *args
     cd '{{package}}'
     {{_uv_run_with_test_requirements}} \
         --group lint --group unit --group functional --group integration \
-        pyright --pythonversion='{{python}}' {{args}}
+        pyright --pythonversion='{{python}}' "${@}"
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
 unit package +flags='-rA': (_coverage package 'unit' flags)
@@ -69,14 +73,16 @@ functional-pebble package +flags='-rA':
     exit $EXITCODE
 
 [doc("Use uv to install and run coverage for the specified package's tests.")]
+[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 _coverage package test_suite +flags:
     #!/usr/bin/env -S bash -xueo pipefail
+    shift 2  # drop $1 (package) and $2 (test_suite) from $@ so it's just +flags
     cd '{{package}}'
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
     DATA_FILE=".report/coverage-$(basename {{test_suite}})-{{python}}.db"
     {{_uv_run_with_test_requirements}} --group {{test_suite}} \
         coverage run --data-file="$DATA_FILE" --source='src' \
-        -m pytest --tb=native -vv {{flags}} 'tests/{{test_suite}}'
+        -m pytest --tb=native -vv 'tests/{{test_suite}}' "${@}"
     {{_uv_run_with_test_requirements}} --group {{test_suite}} \
         coverage report --data-file="$DATA_FILE"
 
@@ -109,10 +115,12 @@ pack-k8s package *args: (_pack package 'k8s' args)
 pack-machine package *args: (_pack package 'machine' args)
 
 [doc("Execute the pack script for the given package, setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG.")]
+[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 _pack package substrate *args:
     #!/usr/bin/env -S bash -xueo pipefail
+    shift 2  # drop $1 (package) and $2 (substrate) from $@ so it's just *args
     cd '{{package}}/tests/integration'
-    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' ./pack.sh {{args}}
+    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' ./pack.sh "${@}"
 
 [doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not machine_only'.")]
 integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_only' flags)
@@ -121,8 +129,10 @@ integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_o
 integration-machine package +flags='-rA': (_integration package 'machine' 'not k8s_only' flags)
 
 [doc("Run juju integration tests. Requires `juju`.")]
+[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
 _integration package substrate label +flags:
     #!/usr/bin/env -S bash -xueo pipefail
+    shift 3  # drop $1 (package), $2 (substrate), and $3 (label) from $@ so it's just +flags
     cd '{{package}}'
     CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG='{{tag}}' {{_uv_run_with_test_requirements}} --group integration \
-        pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
+        pytest --tb=native -vv -m '{{label}}' tests/integration  "${@}"
