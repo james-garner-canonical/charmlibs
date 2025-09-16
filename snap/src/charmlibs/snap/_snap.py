@@ -384,7 +384,7 @@ class Snap:
         # return a string
         return self._snap('get', [key]).strip()
 
-    def set(self, config: dict[str, JSONAble], *, typed: bool = False) -> None:
+    def set(self, config: Mapping[str, JSONAble], *, typed: bool = False) -> None:
         """Set a snap configuration value.
 
         Args:
@@ -822,8 +822,8 @@ class SnapClient:
         self,
         method: str,
         path: str,
-        query: dict[str, str] | None = None,
-        body: dict[str, JSONAble] | None = None,
+        query: Mapping[str, str] | None = None,
+        body: Mapping[str, JSONAble] | None = None,
     ) -> JSONType | None:
         """Make a JSON request to the Snapd server with the given HTTP method and path.
 
@@ -872,7 +872,7 @@ class SnapClient:
         self,
         method: str,
         path: str,
-        query: dict[str, str] | None = None,
+        query: Mapping[str, str] | None = None,
         headers: dict[str, str] | None = None,
         data: bytes | None = None,
     ) -> http.client.HTTPResponse:
@@ -920,7 +920,7 @@ class SnapClient:
             span.set_attribute('name', name)
             return self._request('GET', 'apps', {'names': name, 'select': 'service'})  # type: ignore
 
-    def _put_snap_conf(self, name: str, conf: dict[str, JSONAble]) -> None:
+    def _put_snap_conf(self, name: str, conf: Mapping[str, JSONAble]) -> None:
         """Set the configuration details for an installed snap."""
         self._request('PUT', f'snaps/{name}/conf', body=conf)
 
