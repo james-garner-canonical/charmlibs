@@ -643,7 +643,7 @@ class Snap:
                 )
                 self._install(channel, cohort, revision)
                 logger.info('The snap installation completed successfully')
-            elif revision is None or revision != self._revision:
+            elif revision != self._revision:
                 # The snap is installed, but we are changing it (e.g., switching channels).
                 logger.info(
                     'Refreshing snap %s, revision %s, tracking %s', self._name, revision, channel
@@ -1310,9 +1310,9 @@ def hold_refresh(days: int = 90, forever: bool = False) -> None:
         days: number of days to hold system refreshes for. Maximum 90. Set to zero to remove hold.
         forever: if True, will set a hold forever.
     """
-    if not isinstance(forever, bool):
+    if not isinstance(forever, bool):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError('forever must be a bool')
-    if not isinstance(days, int):
+    if not isinstance(days, int):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError('days must be an int')
     if forever:
         _system_set('refresh.hold', 'forever')
