@@ -14,6 +14,8 @@
 
 """Fake (partial) Snap server to allow testing the HTTP-over-Unix-socket protocol."""
 
+from __future__ import annotations
+
 import http.server
 import json
 import os
@@ -21,24 +23,36 @@ import re
 import socketserver
 import tempfile
 import threading
+import typing
 import urllib.parse
+
+if typing.TYPE_CHECKING:
+    import socket
+    from collections.abc import Callable
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
-    def __init__(self, request, client_address, server):
-        self.routes = [
+    def __init__(
+        self,
+        request: socket.socket,
+        client_address: tuple[str, int],
+        server: socketserver.BaseServer,
+    ):
+        self.routes: list[
+            tuple[str, re.Pattern[str], Callable[[object, object, object], None]]
+        ] = [
             ('GET', re.compile(r'^/sections$'), self.get_sections),
         ]
         super().__init__(request, ('unix-socket', 80), server)
 
-    def respond(self, resp, status=200):
+    def respond(self, resp: object, status: int = 200):
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         resp_json = json.dumps(resp, indent=4, sort_keys=True)
         self.wfile.write(resp_json.encode('utf-8'))
 
-    def bad_request(self, message):
+    def bad_request(self, message: str):
         d = {
             'result': {
                 'message': message,
@@ -67,7 +81,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         }
         self.respond(d, 405)
 
-    def internal_server_error(self, msg):
+    def internal_server_error(self, msg: object):
         d = {
             'result': {
                 'message': f'internal server error: {msg}',
@@ -84,7 +98,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):  # noqa: N802
         self.do_request('POST')
 
-    def do_request(self, request_method):
+    def do_request(self, request_method: str):
         path, _, query = self.path.partition('?')
         path = urllib.parse.unquote(path)
         query = dict(urllib.parse.parse_qsl(query))
@@ -94,7 +108,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         path = path[3:]
 
-        allowed = []
+        allowed: list[str] = []
         for method, regex, func in self.routes:
             match = regex.match(path)
             if match:
@@ -122,25 +136,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not content_len:
             return None
         body = self.rfile.read(content_len)
-        if isinstance(body, bytes):
+        if isinstance(body, bytes):  # pyright: ignore[reportUnnecessaryIsInstance]
             body = body.decode('utf-8')
         return json.loads(body)
 
-    def get_sections(self, match, query, data):
+    def get_sections(self, match: object, query: object, data: object):
         self.respond({
             'type': 'sync',
             'status-code': 200,
             'status': 'OK',
-            'result': {
-                [
-                    'featured',
-                    'database',
-                    'ops',
-                    'messaging',
-                    'media',
-                    'internet-of-things',
-                ]
-            },
+            'result': [
+                'featured',
+                'database',
+                'ops',
+                'messaging',
+                'media',
+                'internet-of-things',
+            ],
         })
 
 
