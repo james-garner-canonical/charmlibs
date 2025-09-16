@@ -8,6 +8,7 @@ from __future__ import annotations
 import datetime
 import io
 import json
+import pathlib
 import subprocess
 import time
 import typing
@@ -27,179 +28,12 @@ if typing.TYPE_CHECKING:
 
 patch('charmlibs.snap._snap._cache_init', lambda x: x).start()
 
-snap_information_response = r"""
-{
-  "type": "sync",
-  "status-code": 200,
-  "status": "OK",
-  "result": [
-    {
-      "id": "jFJhGxzO7zh4xPun3oLzsYPesPvyGblh",
-      "title": "curl",
-      "summary": "CLI tool for transferring data with URL syntax (HTTP, HTTPS, etc)",
-      "description": "A command line tool and library for transferring data with URL syntax, \nsupporting HTTP, HTTPS, FTP, FTPS, GOPHER, TFTP, SCP, SFTP, SMB, TELNET, \nDICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3, RTSP and RTMP. \ncurl offers a myriad of powerful features",
-      "download-size": 6524928,
-      "name": "curl",
-      "publisher": {
-        "id": "trElzADL6BSHUJX2R38cUoXIElh2BYRZ",
-        "username": "woutervb",
-        "display-name": "Wouter van Bommel",
-        "validation": "unproven"
-      },
-      "store-url": "https://snapcraft.io/curl",
-      "developer": "woutervb",
-      "status": "available",
-      "type": "app",
-      "base": "core20",
-      "version": "7.78.0",
-      "channel": "stable",
-      "ignore-validation": false,
-      "revision": "233",
-      "confinement": "strict",
-      "private": false,
-      "devmode": false,
-      "jailmode": false,
-      "contact": "https://github.com/woutervb/snap-curl",
-      "license": "curl",
-      "website": "https://github.com/woutervb/snap-curl",
-      "channels": {
-        "latest/edge": {
-          "revision": "275",
-          "confinement": "strict",
-          "version": "7.78.0",
-          "channel": "latest/edge",
-          "epoch": {
-            "read": [
-              0
-            ],
-            "write": [
-              0
-            ]
-          },
-          "size": 6524928,
-          "released-at": "2021-08-19T06:15:44.601272Z"
-        },
-        "latest/stable": {
-          "revision": "233",
-          "confinement": "strict",
-          "version": "7.78.0",
-          "channel": "latest/stable",
-          "epoch": {
-            "read": [
-              0
-            ],
-            "write": [
-              0
-            ]
-          },
-          "size": 6524928,
-          "released-at": "2021-07-29T23:20:37.945102Z"
-        }
-      },
-      "tracks": [
-        "latest"
-      ]
-    }
-  ],
-  "sources": [
-    "store"
-  ],
-  "suggested-currency": "USD"
-}
-"""
-
-installed_snaps_response = r"""
-{
-  "type": "sync",
-  "status-code": 200,
-  "status": "OK",
-  "result": [
-    {
-      "id": "gcqfpVCOUvmDuYT0Dh5PjdeGypSEzNdV",
-      "title": "charmcraft",
-      "summary": "The charming tool",
-      "description": "Charmcraft enables charm creators to build, publish, and manage charmed operators for Kubernetes, metal and virtual machines.",
-      "icon": "https://dashboard.snapcraft.io/site_media/appmedia/2021/06/image-juju-256.svg.png",
-      "installed-size": 55361536,
-      "name": "charmcraft",
-      "publisher": {
-        "id": "canonical",
-        "username": "canonical",
-        "display-name": "Canonical",
-        "validation": "verified"
-      },
-      "developer": "canonical",
-      "status": "active",
-      "type": "app",
-      "base": "core20",
-      "version": "1.2.1",
-      "channel": "latest/stable",
-      "tracking-channel": "latest/stable",
-      "ignore-validation": false,
-      "revision": "603",
-      "confinement": "classic",
-      "private": false,
-      "devmode": false,
-      "jailmode": false,
-      "apps": [
-        {
-          "snap": "charmcraft",
-          "name": "charmcraft"
-        },
-        {
-          "snap": "charmcraft",
-          "name": "foo_service",
-          "daemon": "simple",
-          "enabled": true
-        }
-      ],
-      "contact": "",
-      "license": "Apache-2.0",
-      "mounted-from": "/var/lib/snapd/snaps/charmcraft_603.snap",
-      "website": "https://github.com/canonical/charmcraft/",
-      "media": [
-        {
-          "type": "icon",
-          "url": "https://dashboard.snapcraft.io/site_media/appmedia/2021/06/image-juju-256.svg.png",
-          "width": 256,
-          "height": 256
-        }
-      ],
-      "install-date": "2021-08-20T00:10:20.074917847Z"
-    },
-    {
-      "id": "99T7MUlRhtI3U0QFgl5mXXESAiSwt776",
-      "title": "core",
-      "summary": "snapd runtime environment",
-      "description": "The core runtime environment for snapd",
-      "installed-size": 104210432,
-      "name": "core",
-      "publisher": {
-        "id": "canonical",
-        "username": "canonical",
-        "display-name": "Canonical",
-        "validation": "verified"
-      },
-      "developer": "canonical",
-      "status": "active",
-      "type": "os",
-      "version": "16-2.51.3",
-      "channel": "latest/stable",
-      "tracking-channel": "latest/stable",
-      "ignore-validation": false,
-      "revision": "11420",
-      "confinement": "strict",
-      "private": false,
-      "devmode": false,
-      "jailmode": false,
-      "contact": "mailto:snaps@canonical.com",
-      "mounted-from": "/var/lib/snapd/snaps/core_11420.snap",
-      "install-date": "2021-07-27T13:24:00.522211469Z"
-    }
-  ]
-}
-"""
-
+snap_information_response = json.loads(
+    (pathlib.Path(__file__).parent / 'snap_information_response.json').read_text()
+)
+installed_snaps_response = json.loads(
+    (pathlib.Path(__file__).parent / 'installed_snaps_response.json').read_text()
+)
 installed_snap_apps_response = {
     'type': 'sync',
     'result': [
@@ -284,9 +118,7 @@ class TestSnapCache(unittest.TestCase):
         m.return_value.__next__ = lambda self: next(iter(self.readline, ''))
         mock_exists.return_value = True
         s = SnapCacheTester()
-        s._snap_client.get_snap_information.return_value = json.loads(snap_information_response)[
-            'result'
-        ][0]
+        s._snap_client.get_snap_information.return_value = snap_information_response['result'][0]
         s._load_available_snaps()
         self.assertIn('curl', s._snap_map)
 
@@ -302,9 +134,7 @@ class TestSnapCache(unittest.TestCase):
     def test_can_load_installed_snap_info(self, mock_exists):
         mock_exists.return_value = True
         s = SnapCacheTester()
-        s._snap_client.get_installed_snaps.return_value = json.loads(installed_snaps_response)[
-            'result'
-        ]
+        s._snap_client.get_installed_snaps.return_value = installed_snaps_response['result']
 
         s._load_installed_snaps()
 
@@ -641,24 +471,20 @@ class TestSnapCache(unittest.TestCase):
     @patch('charmlibs.snap._snap.SnapClient.get_installed_snap_apps')
     def test_apps_property(self, patched):
         s = SnapCacheTester()
-        s._snap_client.get_installed_snaps.return_value = json.loads(installed_snaps_response)[
-            'result'
-        ]
+        s._snap_client.get_installed_snaps.return_value = installed_snaps_response['result']
         s._load_installed_snaps()
 
-        patched.return_value = json.loads(installed_snaps_response)['result'][0]['apps']
+        patched.return_value = installed_snaps_response['result'][0]['apps']
         self.assertEqual(len(s['charmcraft'].apps), 2)
         self.assertIn({'snap': 'charmcraft', 'name': 'charmcraft'}, s['charmcraft'].apps)
 
     @patch('charmlibs.snap._snap.SnapClient.get_installed_snap_apps')
     def test_services_property(self, patched):
         s = SnapCacheTester()
-        s._snap_client.get_installed_snaps.return_value = json.loads(installed_snaps_response)[
-            'result'
-        ]
+        s._snap_client.get_installed_snaps.return_value = installed_snaps_response['result']
         s._load_installed_snaps()
 
-        patched.return_value = json.loads(installed_snaps_response)['result'][0]['apps']
+        patched.return_value = installed_snaps_response['result'][0]['apps']
         self.assertEqual(len(s['charmcraft'].services), 1)
         self.assertDictEqual(
             s['charmcraft'].services,
@@ -955,12 +781,12 @@ class TestSnapBareMethods(unittest.TestCase):
         m.return_value.__next__ = lambda self: next(iter(self.readline, ''))
         mock_exists.return_value = True
         _snap._Cache.cache = SnapCacheTester()
-        _snap._Cache.cache._snap_client.get_installed_snaps.return_value = json.loads(
-            installed_snaps_response
-        )['result']
-        _snap._Cache.cache._snap_client.get_snap_information.return_value = json.loads(
-            snap_information_response
-        )['result'][0]
+        _snap._Cache.cache._snap_client.get_installed_snaps.return_value = (
+            installed_snaps_response['result']
+        )
+        _snap._Cache.cache._snap_client.get_snap_information.return_value = (
+            snap_information_response['result'][0]
+        )
         _snap._Cache.cache._load_installed_snaps()
         _snap._Cache.cache._load_available_snaps()
 
@@ -1383,7 +1209,7 @@ def snap_client():
 
 
 def test_get_installed_snaps(snap_client: snap.SnapClient, fake_request: MagicMock):
-    fake_request.return_value = json.loads(installed_snaps_response)['result']
+    fake_request.return_value = installed_snaps_response['result']
     rv = snap_client.get_installed_snaps()
     charmcraft = next(snap for snap in rv if snap['name'] == 'charmcraft')
     assert charmcraft['version'] == '1.2.1'
@@ -1404,6 +1230,6 @@ def test_get_installed_snap_apps(snap_client: snap.SnapClient, fake_request: Mag
 
 
 def test_get_snap_information(snap_client: snap.SnapClient, fake_request: MagicMock):
-    fake_request.return_value = json.loads(snap_information_response)['result']
+    fake_request.return_value = snap_information_response['result']
     rv = snap_client.get_snap_information('curl')
     assert rv['version'] == '7.78.0'
