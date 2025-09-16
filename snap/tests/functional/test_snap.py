@@ -46,7 +46,7 @@ def test_snap_remove():
     cache = snap.SnapCache()
     charmcraft = cache['charmcraft']
     if not charmcraft.present:
-        charmcraft.ensure(snap.SnapState.Latest, classic='True', channel='candidate')
+        charmcraft.ensure(snap.SnapState.Latest, classic=True, channel='candidate')
 
     assert get_command_path('charmcraft') == '/snap/bin/charmcraft'
 
