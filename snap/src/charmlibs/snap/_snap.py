@@ -594,7 +594,7 @@ class Snap:
         devmode: bool = False,
         channel: str | None = None,
         cohort: str | None = None,
-        revision: int | str | None = None,
+        revision: str | None = None,
     ):
         """Ensure that a snap is in a given state.
 
@@ -614,7 +614,7 @@ class Snap:
         """
         channel = channel or ''
         cohort = cohort or ''
-        revision = str(revision) if revision is not None else ''
+        revision = revision or ''
 
         if classic and devmode:
             raise ValueError('Cannot set both classic and devmode confinement')
