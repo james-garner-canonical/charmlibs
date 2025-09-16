@@ -27,69 +27,69 @@ import urllib.parse
 class Handler(http.server.BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
         self.routes = [
-            ("GET", re.compile(r"^/sections$"), self.get_sections),
+            ('GET', re.compile(r'^/sections$'), self.get_sections),
         ]
-        super().__init__(request, ("unix-socket", 80), server)
+        super().__init__(request, ('unix-socket', 80), server)
 
     def respond(self, resp, status=200):
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header('Content-Type', 'application/json')
         self.end_headers()
         resp_json = json.dumps(resp, indent=4, sort_keys=True)
-        self.wfile.write(resp_json.encode("utf-8"))
+        self.wfile.write(resp_json.encode('utf-8'))
 
     def bad_request(self, message):
         d = {
-            "result": {
-                "message": message,
+            'result': {
+                'message': message,
             },
-            "status": "Bad Request",
-            "status-code": 400,
-            "type": "error",
+            'status': 'Bad Request',
+            'status-code': 400,
+            'type': 'error',
         }
         self.respond(d, 400)
 
     def not_found(self):
         d = {
-            "result": {"message": "invalid API endpoint requested"},
-            "status": "Not Found",
-            "status-code": 404,
-            "type": "error",
+            'result': {'message': 'invalid API endpoint requested'},
+            'status': 'Not Found',
+            'status-code': 404,
+            'type': 'error',
         }
         self.respond(d, 404)
 
     def method_not_allowed(self):
         d = {
-            "result": {"message": 'method "PUT" not allowed'},
-            "status": "Method Not Allowed",
-            "status-code": 405,
-            "type": "error",
+            'result': {'message': 'method "PUT" not allowed'},
+            'status': 'Method Not Allowed',
+            'status-code': 405,
+            'type': 'error',
         }
         self.respond(d, 405)
 
     def internal_server_error(self, msg):
         d = {
-            "result": {
-                "message": "internal server error: {}".format(msg),
+            'result': {
+                'message': f'internal server error: {msg}',
             },
-            "status": "Internal Server Error",
-            "status-code": 500,
-            "type": "error",
+            'status': 'Internal Server Error',
+            'status-code': 500,
+            'type': 'error',
         }
         self.respond(d, 500)
 
     def do_GET(self):  # noqa: N802
-        self.do_request("GET")
+        self.do_request('GET')
 
     def do_POST(self):  # noqa: N802
-        self.do_request("POST")
+        self.do_request('POST')
 
     def do_request(self, request_method):
-        path, _, query = self.path.partition("?")
+        path, _, query = self.path.partition('?')
         path = urllib.parse.unquote(path)
         query = dict(urllib.parse.parse_qsl(query))
 
-        if not path.startswith("/v1/"):
+        if not path.startswith('/v1/'):
             self.not_found()
             return
         path = path[3:]
@@ -116,37 +116,37 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def read_body_json(self):
         try:
-            content_len = int(self.headers.get("Content-Length", ""))
+            content_len = int(self.headers.get('Content-Length', ''))
         except ValueError:
             content_len = 0
         if not content_len:
             return None
         body = self.rfile.read(content_len)
         if isinstance(body, bytes):
-            body = body.decode("utf-8")
+            body = body.decode('utf-8')
         return json.loads(body)
 
     def get_sections(self, match, query, data):
         self.respond({
-            "type": "sync",
-            "status-code": 200,
-            "status": "OK",
-            "result": {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': {
                 [
-                    "featured",
-                    "database",
-                    "ops",
-                    "messaging",
-                    "media",
-                    "internet-of-things",
+                    'featured',
+                    'database',
+                    'ops',
+                    'messaging',
+                    'media',
+                    'internet-of-things',
                 ]
             },
         })
 
 
 def start_server():
-    socket_dir = tempfile.mkdtemp(prefix="test-ops.snap")
-    socket_path = os.path.join(socket_dir, "test.socket")
+    socket_dir = tempfile.mkdtemp(prefix='test-ops.snap')
+    socket_path = os.path.join(socket_dir, 'test.socket')
 
     server = socketserver.UnixStreamServer(socket_path, Handler)
     thread = threading.Thread(target=server.serve_forever)
@@ -162,11 +162,11 @@ def start_server():
     return (shutdown, socket_path)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import time
 
     shutdown, socket_path = start_server()
-    print("Serving HTTP over socket", socket_path)
+    print('Serving HTTP over socket', socket_path)
 
     # Wait forever (or till Ctrl-C pressed)
     try:
