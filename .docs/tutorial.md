@@ -43,7 +43,7 @@ uv tool install rust-just
 Now you can run `just` from anywhere in the repository to see help on the available commands.
 These commands can also be run from anywhere in the repository, as they're always executed in the repository root -- specifically, in the directory where the `justfile` is found.
 
-Get started by running `just new <YOUR LIBRARY NAME>`, and provide the requested information interactively:
+Get started by running `just init <YOUR LIBRARY NAME>`, and provide the requested information interactively:
 - the name of your library (without the `charmlibs-` prefix)
 - the minimum Python version you'll support (e.g. `3.10` or `3.12`)
 - the author information to display on PyPI (e.g. `The <YOUR TEAM NAME> team at Canonical`).
@@ -127,7 +127,9 @@ __all__ = [
 ```
 
 You can try out your new function in an interactive shell like we did before.
-In the next sections, we'll add tests to verify its behaviour more rigorously.
+You can also test out your library in your charms by adding it as a [git dependency](python-package-distribution-git).
+
+In the next sections, we'll add tests to the library to verify it works as intended.
 
 ## Test your library
 
@@ -270,13 +272,12 @@ Open `tests/integraton/charms/common.py` and add an observer for this action to 
 def _on_fancy_lib_version(self, event: ops.ActionEvent):
     logger.info('action [fancy-lib-version] called with params: %s', event.params)
     fancy_version = <YOUR LIBRARY NAME>.version()
-    di = {
+    version_info = {
         attr: getattr(fancy_version, attr)
         for attr in dir(fancy_version)
         if not attr.startswith('_')
     }
-    results = {'result': json.dumps(di)}
-    event.set_results(results)
+    event.set_results({'version': json.dumps(version_info)})
     logger.info('action [fancy-lib-version] set_results: %s', results)
 ```
 
@@ -284,8 +285,8 @@ Finally, we'll need a test to exercise this code. Open `tests/integration/test_v
 ```python
 def test_fancy_lib_version(juju: jubilant.Juju, charm: str):
     result = juju.run(f'{charm}/0', 'fancy-lib-version')
-    di = json.loads(result.results['result'])
-    assert di['is_devrelease']== <YOUR LIBRARY NAME>.version().is_devrelease
+    version_info = json.loads(result.results['version'])
+    assert version_info['is_devrelease']== <YOUR LIBRARY NAME>.version().is_devrelease
 ```
 
 You can test this locally by running `just pack-k8s <YOUR LIBRARY NAME>` and `just pack-machine <YOUR LIBRARY NAME>` to pack your K8s and machine charms, and then running `just integration-k8s <YOUR LIBRARY NAME>` and `just integration-machine <YOUR LIBRARY NAME>` to deploy the charms on your local Juju K8s and machine clouds and test them.
@@ -300,27 +301,31 @@ Ownership means they can approve PRs that change the files in your library direc
 The `canonical/charmlibs-maintainers` team has owner permissions for the whole repo, so they need to approve the initial PR adding the `CODEOWNERS` entry, and they can always approve changes.
 
 Now you can open a PR.
-The title should be `feat: add <YOUR LIBRARY NAME> library`.
+The title should be `feat: add <YOUR LIBRARY NAME> lib`.
+
 Review will automatically be requested from `canonical/charmlibs-maintainers`.
 Review of this PR will cover whether the name and purpose of the library is appropriate (for example, not redundant with an existing library), as well as the library's design and general code review.
 This type of review will be repeated for major version bumps of your library, while all other releases will only require `CODEOWNERS` approval.
 
 ## Release your library
 
-You'll probably want to initially add your library with a major version of 0.
-In semantic versioning, this communicates that the API design is still in progress, so even when the library is released, you're free to make well-considered breaking changes before your 1.0 release.
-You'll also probably want to start with a dev version -- a version number with a `devX` suffix, e.g. `0.1.2.dev3`.
-Dev versions are excluded from the `charmlibs` monorepo's release CI, so they won't be released to PyPI.
-This means you can make your initial PR and perhaps a few follow ups before your initial release.
-
 To make a release, you'll first need to [set up trusted publishing on PyPI for your library](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
 Remember that the package name should be `charmlibs-<YOUR LIBRARY NAME>`.
 The repository owner is `canonical`, the repository name is `charmlibs`, and the workflow name is `publish.yaml`.
 You should also set this up on [test.pypi.org](https://test.pypi.org).
-You can run the `publish` job manually to release to `test.pypi.org` before your real release.
+
+You'll probably want to initially add your library with a major version of 0.
+In semantic versioning, this communicates that the API design is still in progress, so even when the library is released, you're free to make well-considered breaking changes before your 1.0 release.
+However, if you're porting an existing Charmhub-hosted library, then it's better to start with a major version of 1, to communicate that you won't break the existing API without a major version bump.
+
+You may want to make your initial PR with a dev version -- a version number with a `devX` suffix, e.g. `0.1.2.dev3`.
+Dev versions are excluded from the `charmlibs` monorepo's release CI, so they won't be released to PyPI.
+This means you can make follow ups to your initial PR before your initial release.
+You can also test your release setup on [test.pypi.org](https://test.pypi.org) by manually running the `publish` job for your library -- this will include dev versions.
 
 When you're ready to make a release, make a PR that bumps your library's version to a non-dev version.
-This will automatically trigger a release on merge.
+All version bumps (to non-dev versions) will automatically trigger a release on merge.
+
 Every release should be accompanied by an entry in your library's `CHANGELOG.md` with the following format:
 ```markdown
 # A.B.C - N Month 20XX
