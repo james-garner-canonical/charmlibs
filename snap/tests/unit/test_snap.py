@@ -12,7 +12,6 @@ import subprocess
 import time
 import typing
 import unittest
-from collections.abc import Iterable
 from subprocess import CalledProcessError
 from typing import Any
 from unittest.mock import ANY, MagicMock, mock_open, patch
@@ -22,6 +21,9 @@ import pytest
 import fake_snapd
 from charmlibs import snap
 from charmlibs.snap import _snap
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterable
 
 patch('charmlibs.snap._snap._cache_init', lambda x: x).start()
 
@@ -796,9 +798,9 @@ class TestSocketClient(unittest.TestCase):
         def _request_raw(
             method: str,
             path: str,
-            query: dict = None,
-            headers: dict = None,
-            data: bytes = None,
+            query: dict | None = None,
+            headers: dict | None = None,
+            data: bytes | None = None,
         ) -> typing.IO[bytes]:
             nonlocal change_finished
             nonlocal change_started
@@ -907,9 +909,9 @@ class TestSocketClient(unittest.TestCase):
         def _request_raw(
             method: str,
             path: str,
-            query: dict = None,
-            headers: dict = None,
-            data: bytes = None,
+            query: dict | None = None,
+            headers: dict | None = None,
+            data: bytes | None = None,
         ) -> typing.IO[bytes]:
             if method == 'PUT' and path == 'snaps/test/conf':
                 return io.BytesIO(
@@ -1290,7 +1292,7 @@ class TestSnapBareMethods(unittest.TestCase):
         ]:
             snap.install_local('./curl.snap', **kwargs)
             mock_subprocess.assert_called_with(
-                ['snap', 'install', './curl.snap'] + cmd_args,
+                ['snap', 'install', './curl.snap', *cmd_args],
                 text=True,
                 stderr=subprocess.PIPE,
             )
