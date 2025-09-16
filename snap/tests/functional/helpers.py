@@ -10,7 +10,8 @@ from datetime import datetime, timedelta
 from subprocess import CalledProcessError, check_output, run
 
 import pytest
-from charms.operator_libs_linux.v2 import snap
+
+from charmlibs import snap
 from helpers import get_command_path
 
 logger = logging.getLogger(__name__)
