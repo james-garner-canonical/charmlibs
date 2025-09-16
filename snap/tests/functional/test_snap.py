@@ -12,9 +12,15 @@ from subprocess import CalledProcessError, check_output, run
 import pytest
 
 from charmlibs import snap
-from helpers import get_command_path
 
 logger = logging.getLogger(__name__)
+
+
+def get_command_path(command: str) -> str:
+    try:
+        return check_output(['which', command]).decode().strip()
+    except CalledProcessError:
+        return ''
 
 
 def test_snap_install():
