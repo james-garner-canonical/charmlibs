@@ -12,53 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Representations of the system's Snaps, and abstractions around managing them.
+"""Source code of operator_libs_linux.v2.snap, with minimal exclusions.
 
-The `snap` module provides convenience methods for listing, installing, refreshing, and removing
-Snap packages, in addition to setting and getting configuration options for them.
-
-In the `snap` module, `SnapCache` creates a dict-like mapping of `Snap` objects at when
-instantiated. Installed snaps are fully populated, and available snaps are lazily-loaded upon
-request. This module relies on an installed and running `snapd` daemon to perform operations over
-the `snapd` HTTP API.
-
-`SnapCache` objects can be used to install or modify Snap packages by name in a manner similar to
-using the `snap` command from the commandline.
-
-An example of adding Juju to the system with `SnapCache` and setting a config value:
-
-```python
-try:
-    cache = snap.SnapCache()
-    juju = cache["juju"]
-
-    if not juju.present:
-        juju.ensure(snap.SnapState.Latest, channel="beta")
-        juju.set({"some.key": "value", "some.key2": "value2"})
-except snap.SnapError as e:
-    logger.error("An exception occurred when installing charmcraft. Reason: %s", e.message)
-```
-
-In addition, the `snap` module provides "bare" methods which can act on Snap packages as
-simple function calls. :meth:`add`, :meth:`remove`, and :meth:`ensure` are provided, as
-well as :meth:`add_local` for installing directly from a local `.snap` file. These return
-`Snap` objects.
-
-As an example of installing several Snaps and checking details:
-
-```python
-try:
-    nextcloud, charmcraft = snap.add(["nextcloud", "charmcraft"])
-    if nextcloud.get("mode") != "production":
-        nextcloud.set({"mode": "production"})
-except snap.SnapError as e:
-    logger.error("An exception occurred when installing snaps. Reason: %s" % e.message)
-```
-
-Dependencies:
-Note that this module requires `opentelemetry-api`, which is already included into
-your charm's virtual environment via `ops >= 2.21`.
+Snapshot of version 2.14. Charmhub-hosted lib specific metadata has been removed,
+and the docstring has been moved to the package docstring.
 """
+
 
 from __future__ import annotations
 
@@ -100,19 +59,6 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 tracer = opentelemetry.trace.get_tracer(__name__)
-
-# The unique Charmhub library identifier, never change it
-LIBID = "05394e5893f94f2d90feb7cbe6b633cd"
-
-# Increment this major API version when introducing breaking changes
-LIBAPI = 2
-
-# Increment this PATCH version before using `charmcraft publish-lib` or reset
-# to 0 if you are raising the major API version
-LIBPATCH = 14
-
-PYDEPS = ["opentelemetry-api"]
-
 
 # Regex to locate 7-bit C1 ANSI sequences
 ansi_filter = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
