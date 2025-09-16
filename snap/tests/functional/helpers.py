@@ -25,7 +25,7 @@ def test_snap_install():
         if not juju.present:
             juju.ensure(snap.SnapState.Latest, channel='stable')
     except snap.SnapError as e:
-        logger.error(f'An exception occurred when installing Juju. Reason: {e.message}')
+        logger.error('An exception occurred when installing Juju. Reason: %s', e.message)
 
     assert get_command_path('juju') == '/snap/bin/juju'
 
