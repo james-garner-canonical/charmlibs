@@ -298,7 +298,7 @@ class TestSnapCache(unittest.TestCase):
             ['snap', 'remove', 'foo'], text=True, stderr=subprocess.PIPE
         )
 
-        foo.ensure(snap.SnapState.Latest, revision=123)
+        foo.ensure(snap.SnapState.Latest, revision='123')
         mock_check_output.assert_called_with(
             ['snap', 'install', 'foo', '--devmode', '--revision="123"'],
             text=True,
@@ -812,7 +812,7 @@ class TestSnapBareMethods(unittest.TestCase):
         with pytest.raises(TypeError):  # cover error path
             snap.remove(snap_names=[])
 
-        baz = snap.add('curl', classic=True, revision=123)
+        baz = snap.add('curl', classic=True, revision='123')
         mock_subprocess.assert_called_with(
             ['snap', 'install', 'curl', '--classic', '--revision="123"'],
             text=True,
@@ -866,7 +866,7 @@ class TestSnapBareMethods(unittest.TestCase):
 
         mock_check_output.reset_mock()
         # Ensure that calling refresh with the same revision doesn't subprocess out.
-        snap.ensure('curl', 'latest', classic=True, revision='233', cohort='+')
+        snap.ensure('curl', 'latest', classic=True, revision=233, cohort='+')
         mock_check_output.assert_not_called()
 
     @patch('charmlibs.snap._snap.subprocess.check_output')
