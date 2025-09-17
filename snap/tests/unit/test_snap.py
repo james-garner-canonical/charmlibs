@@ -1087,10 +1087,11 @@ class TestSnapBareMethods(unittest.TestCase):
 
     def test_ansi_filter(self):
         assert (
-            snap.ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Khello-world-gtk') == 'hello-world-gtk'
+            _snap._ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Khello-world-gtk')
+            == 'hello-world-gtk'
         )
-        assert snap.ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Kpypi-server') == 'pypi-server'
-        assert snap.ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Kparca') == 'parca'
+        assert _snap._ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Kpypi-server') == 'pypi-server'
+        assert _snap._ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Kparca') == 'parca'
 
     @patch('charmlibs.snap._snap.subprocess.check_output')
     def test_install_local(self, mock_subprocess: MagicMock):
