@@ -26,9 +26,9 @@ Head to your local copy of your fork of the `charmlibs` monorepo and ensure it's
 - Clone it with `git clone <YOUR SSH URL>`
     - You'll also want to [ensure you've set up your Github account with your SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 
-In your local clone of your fork, create a new feature branch to add your library, for example:
+In your local clone of your fork, create a new feature branch to add your library. In this tutorial, we'll add a library named `uptime`:
 ```bash
-git checkout -b feat/add-<YOUR LIBRARY NAME>-lib
+git checkout -b feat/add-uptime-lib
 ```
 
 From this point on, we'll need [uv](https://github.com/astral-sh/uv) for all our developer commands.
@@ -43,12 +43,12 @@ uv tool install rust-just
 Now you can run `just` from anywhere in the repository to see help on the available commands.
 These commands can also be run from anywhere in the repository, as they're always executed in the repository root -- specifically, in the directory where the `justfile` is found.
 
-Get started by running `just init <YOUR LIBRARY NAME>`, and provide the requested information interactively:
-- the name of your library (without the `charmlibs-` prefix)
-- the minimum Python version you'll support (e.g. `3.10` or `3.12`)
+Get started by running `just init`, and provide the requested information interactively:
+- the name of your library (without the `charmlibs-` prefix) -- in this case, `uptime`.
+- the minimum Python version you'll support (e.g. `3.10` or `3.12`) -- the default of `3.10` is perfectly fine here.
 - the author information to display on PyPI (e.g. `The <YOUR TEAM NAME> team at Canonical`).
 
-The author and minimum Python version information are easy to change in the generated `pyproject.toml` later, but if you change your library name you'll need to change it in a few other locations too, like the directory names (`<YOUR LIBRARY NAME>/src/charmlibs/<YOUR LIBRARY NAME>`) and the imports in your tests and test charms.
+The author and minimum Python version information are easy to change in the generated `pyproject.toml` later, but if you change your library name you'll need to change it in a few other locations too, like the directory names (`uptime/src/charmlibs/uptime`) and the imports in your tests and test charms.
 
 This will create a new directory for your library named accordingly.
 The library itself just sets `__version__` to `0.0.0.dev0`, and the tests just check the version.
@@ -56,20 +56,20 @@ The library itself just sets `__version__` to `0.0.0.dev0`, and the tests just c
 ## Verifying the basics
 
 Let's verify that your library has been scaffolded correctly.
-Start by running `just lint <YOUR LIBRARY NAME>` from anywhere in the repository.
+Start by running `just lint uptime` from anywhere in the repository.
 (`just` commands execute from the `justfile` directory, regardless of where they're run.)
 This will run `ruff`, `codespell`, and `pyright` on your library, all of which should pass.
 This will also create a `uv.lock` file in your library's directory, which should be included in version control.
 
-Then run `just unit <YOUR LIBRARY NAME>` to verify that your unit tests pass, and `just functional <YOUR LIBRARY NAME>` to check the functional tests.
+Then run `just unit uptime` to verify that your unit tests pass, and `just functional uptime` to check the functional tests.
 We'll talk more about Juju integration tests later.
 
 You can also verify that everything looks right in an interactive session.
-Run `uvx --with=path/to/<YOUR LIBRARY NAME> ipython --pdb` to start an interactive Python shell with your library installed, and then import it with:
+Run `uvx --with=./uptime ipython --pdb` in the repository root to start an interactive Python shell with your library installed, and then import your library with:
 ```python
-from charmlibs import <YOUR LIBRARY NAME>
+from charmlibs import uptime
 ```
-You can then run `<YOUR LIBRARY NAME>.__version__` to see the initial `0.0.0.dev0` version string.
+You can then run `uptime.__version__` to see the initial `0.0.0.dev0` version string.
 
 Assuming everything is working as expected, consider using `git add` with the newly created files and `git commit` them to have a clean starting point for future comparisons.
 This should include the `uv.lock` file that was created by running `just` in this section.
@@ -78,51 +78,52 @@ This should include the `uv.lock` file that was created by running `just` in thi
 
 If you have already started prototyping your library, or are porting some existing code, this is a perfect time to add it to the library.
 It's a good idea to start small, so you can verify that the basics are all working as expected.
-In this tutorial, we'll add a function to return the library's version as a `packaging.version.Version` object, but feel free to follow along with your own code.
+In this tutorial, we'll add a function to return the uptime of the system the charm is running on, using `psutil.boot_time` and `datetime.now`, but feel free to follow along with your own code instead.
 
-We'll start by adding the `packaging` dependency. From anywhere in the repository, run:
+We'll start by adding the `psutil` dependency. From anywhere in the repository, run:
 ```bash
-just add <YOUR LIBRARY NAME> packaging
+just add uptime psutil
 ```
 If you committed the generated files previously, then a `git diff --stat` should now show that your `pyproject.toml` and `uv.lock` files have been updated.
 
 Now we can add the code itself.
-Under `src/charmlibs/<YOUR LIBRARY NAME>/__init__.py`, you'll find an `__init__.py` file.
-This is the file that's executed when your library is imported.
+`src/charmlibs/uptime/__init__.py` is the file that's executed when your library is imported.
 In principle we can put all our library code here, but it's good practice to use separate files (modules) instead, so we can be more intentional about the public interface of our library.
 
 In Python, names prefixed with a single underscore are private.
 This isn't enforced technically (a user who knows your library layout can import private symbols), but semantically there are no stability guarantees when using private variables.
 `charmlibs` follow semantic verisoning, so if we expose something publicly, we're promising to support it until at least our next major verson.
-Let's add a private module where our feature implementation will live -- create the file `src/charmlibs/<YOUR LIBRRARY NAME>/_fancy_version.py`.
+Let's add a private module where our feature implementation will live -- create the file `src/charmlibs/uptime/_uptime.py`.
 
-Copy the copyright header from your `__init__.py` file to your new module, and import our `packaging` dependency:
+Copy the copyright header from your `__init__.py` file to your new module, and add the following code:
 ```python
-import packaging.version
-```
-We'll also add a relative import for our package version:
-```python
-from . import _version
-```
-And finally add this function:
-```python
-def version():
-    return packaging.version.Version(_version.__version__)
-```
-Consider running `just format` to make sure you have everything formatted correctly
-You can confirm this with `just lint <YOUR LIBRARY NAME>`.
+"""Private module defining the core logic of the uptime package."""
 
-Currently, the `version` function isn't part of our package's public interface.
+import datetime
+
+import psutil
+
+
+def uptime() -> datetime.timedelta:
+    """Get the uptime for the system where the charm is running."""
+    utc_now = datatime.datetime.now(tz=datetime.timezone.utc)
+    utc_boot_time = datetime.datetime.fromtimestamp(psutil.boot_time(), tz=datetime.timezone.utc)
+    return utc_now - utc_boot_time
+```
+Consider running `just format` to make sure you have everything formatted correctly.
+You can confirm this with `just lint uptime`, which will also run static type checking for your package.
+
+Currently, the `uptime` function isn't part of our package's public interface.
 It *is* a public function, but it's hidden away from our users in a private module.
-If it was intended to be private, it would be a good idea to name it `_version` instead, but in this case we want it to be public.
+If it was intended to be private, it would be a good idea to name it `_uptime` instead, but in this case we want it to be public.
 We'll expose it by adding a relative import in our `__init__.py`:
 ```python
-from ._fancy_version import version
+from ._uptime import uptime
 ```
-And adding `version` to `__all__`:
+And adding `uptime` to `__all__`:
 ```python
 __all__ = [
-    'version',
+    'uptime',
 ]
 ```
 
@@ -151,35 +152,46 @@ Running `just unit <YOUR LIBRARY>` uses `pytest` to collect and run any tests de
 We'll add a test for our fancy version function to the existing `tests/unit/test_version.py` file.
 If you're following along with your own library functionality, it would be better to make a new `test_<something>.py` module for your feature, or rename `test_version.py`.
 
-We'll use `pytest.monkeypatch` to for our unit tests, so we need to add the `pytest` import for our type annotations among other things:
+We don't really need to mock out `psutil.boot_time`, as it should work perfectly cross-platform, but let's do it anyway for didactic purposes.
+Let's assume we always want to mock it out in our unit tests, like we would for some expensive or dangerous external process, so we'll use an `autouse` fixture, which will run automatically before every test.
+We'll do this in `tests/unit/conftest.py` -- add the following:
 ```python
+import datetime
+
+import psutil
 import pytest
 
-from charmlibs import <YOUR LIBRARY>
+
+@pytest.fixture(autouse=True)
+def mock_boot_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(psutil, 'boot_time', lambda: datetime.datetime(2004, 10, 20).timestamp())
 ```
 
 ```{warning}
 Don't add `pytest` to your `pyproject.toml`.
 
-`just unit <YOUR LIBRARY>` will install and run a specific version of `pytest`, which may clash with the version added in your dependencies.
+`just unit uptime` will install and run a specific version of `pytest`, which may clash with the version added in your dependencies.
 Instead, use `just` to run tests -- any extra arguments will be passed to `pytest`.
-You can point your IDE to `<YOUR LIBRARY>/.venv` after running any of the test commands to have it use the correct virtual environment.
+You can point your IDE to `uptime/.venv` after running any of the test commands to have it use the correct virtual environment.
 ```
 
-Then add a test like this:
+Then rename your `tests/unit/test_version.py` file to `test_uptime.py`, and replace `test_version` with the following:
 ```python
-def test_fancy_version(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(<YOUR LIBRARY>, '__version__', '1.2.3.dev0')
-    fancy_version = <YOUR LIBRARY>.version()
-    assert str(fancy_version) == '1.2.3.dev0'
-    assert fancy_version.major == 1
-    assert fancy_version.minor == 2
-    assert fancy_version.micro == 3
-    assert fancy_version.is_devrelease
+def test_uptime():
+    assert uptime.uptime().total_seconds() > 20 * 365 * 24 * 60 * 60
 ```
 
 You can also use the `ops.testing` framework to write lightweight tests of your library in a charm.
 This is particularly useful if your library observes any events or emits custom events.
+Rename `tests/unit/test_version_in_charm.py` to `test_uptime_in_charm.py`, and replace `test_uptime` with this code:
+```python
+def test_uptime():
+    ctx = ops.testing.Context(Charm, meta={'name': 'charm'})
+    with ctx(ctx.on.start(), ops.testing.State()) as manager:
+        manager.run()
+        assert manager.charm.uptime.total_seconds() > 20 * 365 * 24 * 60 * 60
+```
+
 For more on `ops.testing`, see:
 - [ops.testing reference docs for custom events](ops.testing.CharmEvents.custom)
 - [ops.testing how-to for testing that a custom event is emitted](https://documentation.ubuntu.com/ops/latest/howto/manage-libraries/#test-that-the-custom-event-is-emitted)
@@ -190,19 +202,18 @@ In this repository, functional tests are essentially integration or end-to-end t
 They differ from the tests labeled as integration tests in that they do not interact with a real Juju environment.
 In contrast to unit tests, which typically mock out external concerns, functional tests interact with real systems, external processes, and networks.
 
-A functional test for our fancy version function would look similar to the unit test, but we wouldn't mock out anything:
+A functional test for our `uptime` package looks similar to the unit test, but we won't mock anything out.
+Rename `tests/functional/test_version.py` to `test_uptime.py` and replace `test_version` with this:
 ```python
-def test_fancy_version(monkeypatch: pytest.MonkeyPatch):
-    fancy_version = <YOUR LIBRARY>.version()
-    assert str(fancy_version) == <YOUR LIBRARY>.__version__
+def test_hostname():
+    assert uptime.uptime().total_seconds() > 0.0
 ```
-As you can see, for this function, this might as well be a unit test.
-Our fancy version function is a bad fit for functional tests, as it doesn't need to interact with any external processes.
-In this case, the library's core functionality is well exercised by unit tests alone.
-We'll use full Juju integration tests to ensure everything is working correctly in the charm context, but we'll drop the functional tests by removing the `tests/functional` directory.
-The functional tests will then show as skipped in CI.
 
-You may want to remove functional tests if your library is like our fancy version function.
+Realisticaly, our `uptime` function isn't really a good fit for functional tests, as its interaction with the external world is limited to fast and reliable system calls.
+In this case, the library's core functionality would be well exercised by unit tests alone.
+We should still use full Juju integration tests to ensure everything is working correctly in the charm context, but in this case we could drop the functional tests altogether by removing the `tests/functional` directory.
+The functional tests would then show as skipped in CI.
+
 You may also want to skip functional testing if your library only really makes sense in a charm context, and seems difficult to test outside it.
 On the other hand, if your library does interact with or wrap some external process that can be tested outside a charm context, functional tests may be a good fit.
 For example, `charmlibs-apt` wraps Ubuntu's `apt` command, and its functional tests install and uninstall real packages.
@@ -228,6 +239,8 @@ There are currently three supported variables:
 
 If your library needs another piece of software like `pebble` installed for its functional tests, get in touch with us on [Matrix](https://matrix.to/#/#charmhub-charmdev:ubuntu.com) or open an issue about the option to install it in CI.
 
+In our case, we don't need any extra software, we don't need `sudo`, and we don't expect any differences across Ubuntu versions, so we can just keep the default configuration.
+
 ### Integration tests
 
 Integration tests are the most complicated and most heavyweight part of the library testing story.
@@ -245,7 +258,7 @@ You can use `pytest` marks to declare certain tests to be run only with K8s char
 
 After setting up the test environment with `concierge`, if your library has a `tests/integration/pack.sh` script, it will be executed. The template provides a script that packs a different minimal charm depending on the substrate, using symlinks to share common code and metadata, and resolving these before packing. You can modify this script to pack one or more charms to be deployed in your integration tests. Both `CHARMLIBS_SUBSTRATE` and `CHARMLIBS_TAG` are set when running `pack.sh`, which you can use to change what gets packed.
 
-Let's add an integration test for our fancy version function.
+Let's add an integration test for our `uptime` function.
 
 We'll start by taking a look at the files that will make up our packed charm, under `tests/integration/charms`.
 At the top level are directories for two test charms, with the directory name reflecting the substrate the charm is for: `k8s` and `machine`.
@@ -257,44 +270,48 @@ Under `src/`, you'll see a unique `charm.py` file, and a symlink to `common.py`.
 This structure reflects the logic of `tests/integration/pack.sh`, which finds a directory under charms named `$CHARMLIBS_SUBSTRATE`, copies it to a temporary location for packing, resolving any symlinks, and packs the charm.
 You're free to customise this script as you need to, but hopefully it's a good starting point.
 
-Our fancy version function should work just as well in a K8s charm as in a machine charm, so we'll test on both substrates, and we won't mark any of our tests as `k8s_only` or `machine_only`.
+Our `uptime` function should work just as well in a K8s charm as in a machine charm, so we'll test on both substrates, and we won't mark any of our tests as `k8s_only` or `machine_only`.
 
 We'll communicate with the library in our packed charm via a Juju action.
 Open `tests/integration/charms/actions.yaml` and add a new action:
 ```yaml
-fancy-lib-version:
+charm-uptime:
 ```
 
 We'll also need an observer for this action, which can be the same for both charms.
 It will look a lot like the handler for `lib-version`, `_on_lib_version`, but we'll serialize the fancy version information as a JSON object so it can be passed over the wire to our test code.
-Open `tests/integraton/charms/common.py` and add an observer for this action to the `Charm` class body (`json` is already imported):
+Open `tests/integraton/charms/common.py` and add this import statement:
 ```python
-def _on_fancy_lib_version(self, event: ops.ActionEvent):
-    logger.info('action [fancy-lib-version] called with params: %s', event.params)
-    fancy_version = <YOUR LIBRARY NAME>.version()
-    version_info = {
-        attr: getattr(fancy_version, attr)
-        for attr in dir(fancy_version)
-        if not attr.startswith('_')
-    }
-    event.set_results({'version': json.dumps(version_info)})
-    logger.info('action [fancy-lib-version] set_results: %s', results)
+import json
+```
+Then add an observer for our new action to the `Charm` class body:
+```python
+def _on_charm_uptime(self, event: ops.ActionEvent):
+    logger.info('action [charm-uptime] called with params: %s', event.params)
+    results = {'uptime': json.dumps(uptime.uptime().total_seconds())}
+    event.set_results(results)
+    logger.info('action [charm-uptime] set_results: %s', results)
 ```
 
-Finally, we'll need a test to exercise this code. Open `tests/integration/test_version.py`, and add a new test:
+Finally, we'll need a test to exercise this code. Rename `tests/integration/test_version.py`, to `test_uptime.py`, and add this import:
 ```python
-def test_fancy_lib_version(juju: jubilant.Juju, charm: str):
-    result = juju.run(f'{charm}/0', 'fancy-lib-version')
-    version_info = json.loads(result.results['version'])
-    assert version_info['is_devrelease']== <YOUR LIBRARY NAME>.version().is_devrelease
+import json
+```
+Then replace the `test_version` function with this:
+```python
+def test_charm_uptime(juju: jubilant.Juju, charm: str):
+    result = juju.run(f'{charm}/0', 'charm-uptime')
+    uptime_seconds = json.loads(result.results['uptime'])
+    assert uptime_seconds > 0.0
 ```
 
-You can test this locally by running `just pack-k8s <YOUR LIBRARY NAME>` and `just pack-machine <YOUR LIBRARY NAME>` to pack your K8s and machine charms, and then running `just integration-k8s <YOUR LIBRARY NAME>` and `just integration-machine <YOUR LIBRARY NAME>` to deploy the charms on your local Juju K8s and machine clouds and test them.
+You can test this locally by running `just pack-k8s uptime` and `just pack-machine uptime` to pack your K8s and machine charms, and then running `just integration-k8s uptime` and `just integration-machine uptime` to deploy the charms on your local Juju K8s and machine clouds and test them.
 However, you may find it easier to run them in CI instead, which you can easily do by opening a pull request in the next section.
 
 ## Add your library to the `charmlibs` monorepo
 
-To add your library to the `charmlibs` monorepo, you'll need to make a PR. However, there's one important step we must do first, namely adding an entry to the `CODEOWNERS` file for the new library.
+You don't need to follow this step if you're using the `uptime` example, but if you're following along with your own code, you'll want to make a PR to add your library to the `charmlibs` monorepo.
+However, there's one important step we must do first, namely adding an entry to the `CODEOWNERS` file for the new library.
 Scan through `CODEOWNERS` and find the correct place to enter your library alphabetically.
 Add a new line, starting with `/<YOUR LIBRARY NAME>/`, followed by a space, and then the name of the team or individuals who will own the library.
 Ownership means they can approve PRs that change the files in your library directory -- code, metadata, tests, and so on.
