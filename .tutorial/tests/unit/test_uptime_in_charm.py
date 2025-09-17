@@ -17,7 +17,7 @@
 import ops
 import ops.testing
 
-from charmlibs import myhostname
+from charmlibs import uptime
 
 
 class Charm(ops.CharmBase):
@@ -28,11 +28,11 @@ class Charm(ops.CharmBase):
         framework.observe(self.on.start, self._on_start)
 
     def _on_start(self, event: ops.StartEvent):
-        self.hostname = myhostname.hostname()
+        self.uptime = uptime.uptime()
 
 
-def test_version():
+def test_uptime():
     ctx = ops.testing.Context(Charm, meta={'name': 'charm'})
     with ctx(ctx.on.start(), ops.testing.State()) as manager:
         manager.run()
-        assert manager.charm.hostname is not None
+        assert manager.charm.uptime.total_seconds() > 20 * 365 * 24 * 60 * 60

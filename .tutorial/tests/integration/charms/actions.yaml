@@ -2,4 +2,4 @@
 # consider adding an action for each thing you want to test
 
 lib-version:
-charm-hostname:
+charm-uptime:

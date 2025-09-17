@@ -17,11 +17,12 @@
 This file is symlinked alongside src/charm.py by these charms.
 """
 
+import json
 import logging
 
 import ops
 
-from charmlibs import myhostname
+from charmlibs import uptime
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +33,16 @@ class Charm(ops.CharmBase):
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         framework.observe(self.on['lib-version'].action, self._on_lib_version)
-        framework.observe(self.on['charm-hostname'].action, self._on_charm_hostname)
+        framework.observe(self.on['charm-uptime'].action, self._on_charm_uptime)
 
     def _on_lib_version(self, event: ops.ActionEvent):
         logger.info('action [lib-version] called with params: %s', event.params)
-        results = {'version': myhostname.__version__}
+        results = {'version': uptime.__version__}
         event.set_results(results)
         logger.info('action [lib-version] set_results: %s', results)
 
-    def _on_charm_hostname(self, event: ops.ActionEvent):
-        logger.info('action [charm-hostname] called with params: %s', event.params)
-        results = {'hostname': myhostname.hostname()}
+    def _on_charm_uptime(self, event: ops.ActionEvent):
+        logger.info('action [charm-uptime] called with params: %s', event.params)
+        results = {'uptime': json.dumps(uptime.uptime().total_seconds())}
         event.set_results(results)
-        logger.info('action [charm-hostname] set_results: %s', results)
+        logger.info('action [charm-uptime] set_results: %s', results)

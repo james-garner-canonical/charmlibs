@@ -1,6 +1,6 @@
 [project]
-name = "charmlibs-myhostname"
-description = "The charmlibs.myhostname package."
+name = "charmlibs-uptime"
+description = "The charmlibs.uptime package."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -16,18 +16,19 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     # "ops",
+    "psutil>=7.0.0",
 ]
 
 [dependency-groups]
-lint = [  # installed for `just lint myhostname` (unit, functional, and integration are also installed)
+lint = [  # installed for `just lint uptime` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
-unit = [  # installed for `just unit myhostname`
+unit = [  # installed for `just unit uptime`
     "ops[testing]",
 ]
-functional = [  # installed for `just functional myhostname`
+functional = [  # installed for `just functional uptime`
 ]
-integration = [  # installed for `just integration myhostname`
+integration = [  # installed for `just integration uptime`
     "jubilant",
 ]
 
@@ -43,7 +44,7 @@ build-backend = "hatchling.build"
 packages = ["src/charmlibs"]
 
 [tool.hatch.version]
-path = "src/charmlibs/myhostname/_version.py"
+path = "src/charmlibs/uptime/_version.py"
 
 [tool.ruff]
 extend = "../pyproject.toml"

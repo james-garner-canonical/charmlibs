@@ -7,8 +7,8 @@ description = "Charm for integration tests."
 requires-python = ">=3.10"
 dependencies = [
     "ops==3.*",
-    "charmlibs-myhostname",
+    "charmlibs-uptime",
 ]
 
 [tool.uv.sources]
-"charmlibs-myhostname" = { path = "library", editable = true }
+"charmlibs-uptime" = { path = "library", editable = true }

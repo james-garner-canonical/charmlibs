@@ -12,19 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Integration tests using real Juju and pre-packed charm(s)."""
+"""Unit tests for library code, not involving charm code."""
 
-import json
-
-import jubilant
+from charmlibs import uptime
 
 
-def test_deploy(juju: jubilant.Juju, charm: str):
-    """The deployment takes place in the module scoped `juju` fixture."""
-    assert charm in juju.status().apps
-
-
-def test_charm_hostname(juju: jubilant.Juju, charm: str):
-    result = juju.run(f'{charm}/0', 'charm-hostname')
-    hostname = json.loads(result.results['hostname'])
-    assert hostname is not None
+def test_uptime():
+    assert uptime.uptime().total_seconds() > 20 * 365 * 24 * 60 * 60

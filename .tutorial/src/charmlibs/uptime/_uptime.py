@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Private module defining the core logic of the myhostname package."""
+"""Private module defining the core logic of the uptime package."""
 
-import subprocess
+import datetime
+
+import psutil
 
 
-def hostname() -> str | None:
-    """Get the host name for the system where the charm is running."""
-    try:
-        return subprocess.check_output(['hostname'], text=True).strip()
-    except subprocess.CalledProcessError:
-        return None
+def uptime() -> datetime.timedelta:
+    """Get the uptime for the system where the charm is running."""
+    utc_now = datetime.datetime.now(tz=datetime.timezone.utc)
+    utc_boot_time = datetime.datetime.fromtimestamp(psutil.boot_time(), tz=datetime.timezone.utc)
+    return utc_now - utc_boot_time

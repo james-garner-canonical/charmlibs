@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Functional tests interacting with the real system, but not with Juju."""
+"""The charmlibs.uptime package."""
 
-from charmlibs import myhostname
+from ._uptime import uptime
+from ._version import __version__ as __version__
 
-
-def test_hostname():
-    assert myhostname.hostname() is not None
+__all__ = [
+    # only the names listed in __all__ are imported when executing:
+    # from charmlibs.uptime import *
+    'uptime',
+]

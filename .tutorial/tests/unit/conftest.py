@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unit tests for library code, not involving charm code."""
+"""Fixtures for unit tests."""
 
-from charmlibs import myhostname
+import datetime
+
+import psutil
+import pytest
 
 
-def test_hostname():
-    assert myhostname.hostname() is not None
+@pytest.fixture(autouse=True)
+def mock_boot_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(psutil, 'boot_time', lambda: datetime.datetime(2004, 10, 20).timestamp())
