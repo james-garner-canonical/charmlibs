@@ -14,9 +14,9 @@
 
 """Integration tests using real Juju and pre-packed charm(s)."""
 
-import jubilant
+import json
 
-from charmlibs import myhostname
+import jubilant
 
 
 def test_deploy(juju: jubilant.Juju, charm: str):
@@ -24,6 +24,7 @@ def test_deploy(juju: jubilant.Juju, charm: str):
     assert charm in juju.status().apps
 
 
-def test_lib_version(juju: jubilant.Juju, charm: str):
-    result = juju.run(f'{charm}/0', 'lib-version')
-    assert result.results['version'] == myhostname.__version__
+def test_charm_hostname(juju: jubilant.Juju, charm: str):
+    result = juju.run(f'{charm}/0', 'charm-hostname')
+    hostname = json.loads(result.results['hostname'])
+    assert hostname is not None

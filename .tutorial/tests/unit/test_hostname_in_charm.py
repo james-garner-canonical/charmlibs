@@ -12,10 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unit tests for library code, not involving charm code."""
+"""Light weight state-transition tests of the library in a charming context."""
+
+import ops
+import ops.testing
 
 from charmlibs import myhostname
 
 
+class Charm(ops.CharmBase):
+    package_version: str
+
+    def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        framework.observe(self.on.start, self._on_start)
+
+    def _on_start(self, event: ops.StartEvent):
+        self.hostname = myhostname.hostname()
+
+
 def test_version():
-    assert isinstance(myhostname.__version__, str)
+    ctx = ops.testing.Context(Charm, meta={'name': 'charm'})
+    with ctx(ctx.on.start(), ops.testing.State()) as manager:
+        manager.run()
+        assert manager.charm.hostname is not None

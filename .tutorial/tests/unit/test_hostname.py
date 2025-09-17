@@ -12,4 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fixtures for functional tests, which interact with the real system, but not with Juju."""
+"""Unit tests for library code, not involving charm code."""
+
+from charmlibs import myhostname
+
+
+def test_hostname():
+    assert myhostname.hostname() is not None

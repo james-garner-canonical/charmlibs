@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Functional tests interacting with the real system, but not with Juju."""
+"""Private module defining the core logic of the myhostname package."""
 
-from charmlibs import myhostname
+import subprocess
 
 
-def test_version():
-    assert isinstance(myhostname.__version__, str)
+def hostname() -> str | None:
+    """Get the host name for the system where the charm is running."""
+    try:
+        return subprocess.check_output(['hostname'], text=True).strip()
+    except subprocess.CalledProcessError:
+        return None

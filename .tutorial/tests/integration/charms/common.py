@@ -32,9 +32,16 @@ class Charm(ops.CharmBase):
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         framework.observe(self.on['lib-version'].action, self._on_lib_version)
+        framework.observe(self.on['charm-hostname'].action, self._on_charm_hostname)
 
     def _on_lib_version(self, event: ops.ActionEvent):
         logger.info('action [lib-version] called with params: %s', event.params)
         results = {'version': myhostname.__version__}
         event.set_results(results)
         logger.info('action [lib-version] set_results: %s', results)
+
+    def _on_charm_hostname(self, event: ops.ActionEvent):
+        logger.info('action [charm-hostname] called with params: %s', event.params)
+        results = {'hostname': myhostname.hostname()}
+        event.set_results(results)
+        logger.info('action [charm-hostname] set_results: %s', results)

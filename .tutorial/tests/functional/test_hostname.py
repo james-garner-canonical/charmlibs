@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.myhostname package."""
+"""Functional tests interacting with the real system, but not with Juju."""
 
-from ._hostname import hostname
-from ._version import __version__ as __version__
+from charmlibs import myhostname
 
-__all__ = [
-    # only the names listed in __all__ are imported when executing:
-    # from charmlibs.myhostname import *
-    'hostname',
-]
+
+def test_hostname():
+    assert myhostname.hostname() is not None
