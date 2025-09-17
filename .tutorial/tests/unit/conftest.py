@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fixtures for unit tests."""
+"""Fixtures for unit tests, typically mocking out parts of the external system."""
 
 import datetime
 
