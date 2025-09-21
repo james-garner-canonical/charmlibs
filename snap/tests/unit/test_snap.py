@@ -1093,9 +1093,8 @@ class TestSnapBareMethods(unittest.TestCase):
         assert _snap._ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Kpypi-server') == 'pypi-server'
         assert _snap._ansi_filter.sub('', '\x1b[0m\x1b[?25h\x1b[Kparca') == 'parca'
 
-    @patch('charmlibs.snap._snap.subprocess.check_output')
+    @patch('charmlibs.snap._snap.subprocess.check_output', return_value='curl XXX installed')
     def test_install_local(self, mock_subprocess: MagicMock):
-        mock_subprocess.return_value = 'curl XXX installed'
         snap.install_local('./curl.snap')
         mock_subprocess.assert_called_with(
             ['snap', 'install', './curl.snap'],
@@ -1103,22 +1102,41 @@ class TestSnapBareMethods(unittest.TestCase):
             stderr=subprocess.PIPE,
         )
 
-    @patch('charmlibs.snap._snap.subprocess.check_output')
-    def test_install_local_args(self, mock_subprocess: MagicMock):
-        mock_subprocess.return_value = 'curl XXX installed'
-        for kwargs, cmd_args in [
-            ({'classic': True}, ['--classic']),
-            ({'devmode': True}, ['--devmode']),
-            ({'dangerous': True}, ['--dangerous']),
-            ({'classic': True, 'dangerous': True}, ['--classic', '--dangerous']),
-        ]:
-            snap.install_local('./curl.snap', **kwargs)
-            mock_subprocess.assert_called_with(
-                ['snap', 'install', './curl.snap', *cmd_args],
-                text=True,
-                stderr=subprocess.PIPE,
-            )
-            mock_subprocess.reset_mock()
+    @patch('charmlibs.snap._snap.subprocess.check_output', return_value='curl XXX installed')
+    def test_install_local_classic(self, mock_subprocess: MagicMock):
+        snap.install_local('./curl.snap', classic=True)
+        mock_subprocess.assert_called_with(
+            ['snap', 'install', './curl.snap', '--classic'],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+
+    @patch('charmlibs.snap._snap.subprocess.check_output', return_value='curl XXX installed')
+    def test_install_local_devmode(self, mock_subprocess: MagicMock):
+        snap.install_local('./curl.snap', devmode=True)
+        mock_subprocess.assert_called_with(
+            ['snap', 'install', './curl.snap', '--devmode'],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+
+    @patch('charmlibs.snap._snap.subprocess.check_output', return_value='curl XXX installed')
+    def test_install_local_dangerous(self, mock_subprocess: MagicMock):
+        snap.install_local('./curl.snap', dangerous=True)
+        mock_subprocess.assert_called_with(
+            ['snap', 'install', './curl.snap', '--dangerous'],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+
+    @patch('charmlibs.snap._snap.subprocess.check_output', return_value='curl XXX installed')
+    def test_install_local_classic_dangerous(self, mock_subprocess: MagicMock):
+        snap.install_local('./curl.snap', classic=True, dangerous=True)
+        mock_subprocess.assert_called_with(
+            ['snap', 'install', './curl.snap', '--classic', '--dangerous'],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
 
     @patch('charmlibs.snap._snap.subprocess.check_output')
     def test_install_local_snap_api_error(self, mock_subprocess: MagicMock):
