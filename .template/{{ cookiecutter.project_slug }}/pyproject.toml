@@ -1,5 +1,5 @@
 [project]
-name = "charmlibs-{{ cookiecutter.project_slug }}"
+name = "charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}"
 description = "The charmlibs.{{ cookiecutter.project_slug }} package."
 readme = "README.md"
 requires-python = ">={{ cookiecutter.min_python_version }}"
@@ -43,14 +43,14 @@ build-backend = "hatchling.build"
 packages = ["src/charmlibs"]
 
 [tool.hatch.version]
-path = "src/charmlibs/{{ cookiecutter.project_slug }}/_version.py"
+path = "src/charmlibs{{ '/interfaces' if cookiecutter._interface else '' }}/{{ cookiecutter.project_slug }}/_version.py"
 
 [tool.ruff]
-extend = "../pyproject.toml"
+extend = "{{ '../' if cookiecutter._interface else '' }}../pyproject.toml"
 src = ["src", "tests/unit", "tests/functional", "tests/integration"]  # correctly sort local imports in tests
 
 [tool.pyright]
-extends = "../pyproject.toml"
+extends = "{{ '../' if cookiecutter._interface else '' }}../pyproject.toml"
 include = ["src", "tests"]
 pythonVersion = "{{ cookiecutter.min_python_version }}"  # check no python > {{ cookiecutter.min_python_version }} features are used
 

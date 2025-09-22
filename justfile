@@ -1,3 +1,4 @@
+mod interface  # load interface module to expose interface subcommands
 mod docs  # load docs module to expose docs subcommands
 
 set ignore-comments  # don't print comment lines in recipes
