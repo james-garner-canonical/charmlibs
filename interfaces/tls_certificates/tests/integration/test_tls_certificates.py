@@ -17,86 +17,29 @@ from certificates import Certificate
 
 logger = logging.getLogger(__name__)
 
-TEST_DIR = pathlib.Path(__file__).parent
-PACKAGE_ROOT = TEST_DIR.parent.parent  # $package_root / tests / $test_dir
-BUILD_DIR = TEST_DIR / '.build'
-PKG_FILENAME = 'package.tar.gz'
-REQUIRER_CHARM_DIR = TEST_DIR / 'requirer_charm'
-PROVIDER_CHARM_DIR = TEST_DIR / 'provider_charm'
+
+REQUIRER_LOCAL = '.packed/requirer-local.charm'
+REQUIRER_PUBLISHED = '.packed/requirer-published.charm'
+PROVIDER_LOCAL = '.packed/provider-local.charm'
+PROVIDER_PUBLISHED = '.packed/provider-published.charm'
 TLS_CERTIFICATES_PROVIDER_APP_NAME = 'tls-certificates-provider'
 TLS_CERTIFICATES_REQUIRER_APP_NAME = 'tls-certificates-requirer'
 
 
-@pytest.fixture(scope='session', autouse=True)
-def cleanup_fixture(request: pytest.FixtureRequest):
-    """Cleanup generated files on successful run."""
-    yield
-    if not request.session.testsfailed:
-        cleanup()
-
-
-def cleanup():
-    """Remove files created by integration tests."""
-    if BUILD_DIR.is_dir():
-        shutil.rmtree(BUILD_DIR)
-    for charm_dir in REQUIRER_CHARM_DIR, PROVIDER_CHARM_DIR:
-        if (path := charm_dir / PKG_FILENAME).exists():
-            path.unlink()
-
-
-def copy_lib_content() -> None:
-    """Copy the latest lib content to the requirer and provider charm."""
-    cleanup()
-    BUILD_DIR.mkdir()
-    cmd = ['uv', 'build', '--sdist', '--directory', PACKAGE_ROOT, '--out-dir', BUILD_DIR]
-    subprocess.check_call(cmd)
-    built_pkg = next(BUILD_DIR.glob('*.tar.gz'))
-    for dst in REQUIRER_CHARM_DIR, PROVIDER_CHARM_DIR:
-        shutil.copyfile(src=built_pkg, dst=f'{dst}/{PKG_FILENAME}')
-        subprocess.check_call(['uv', 'lock'], cwd=dst)
-
-
-def remove_existing_lib_and_fetch_latest() -> None:
-    """Remove the existing lib and fetch the latest lib with charmcraft.
-
-    This will be the latest _released_ of the interface library, as opposed
-    to the one that is associated with this version of the code.
-    """
-    with contextlib.suppress(FileNotFoundError):
-        os.remove(
-            f'{REQUIRER_CHARM_DIR}/lib/charms/tls_certificates_interface/v4/tls_certificates.py'
-        )
-        os.remove(
-            f'{PROVIDER_CHARM_DIR}/lib/charms/tls_certificates_interface/v4/tls_certificates.py'
-        )
-    # fetch latest lib with charmcraft
-    subprocess.run(['charmcraft', 'fetch-libs'], cwd=REQUIRER_CHARM_DIR, check=True)
-    subprocess.run(['charmcraft', 'fetch-libs'], cwd=PROVIDER_CHARM_DIR, check=True)
-
-
 class TestIntegration:
-    requirer_charm = None
-    provider_charm = None
-
-    @pytest.mark.skip  # FIXME: test compatibility for charmlibs.interfaces lib?
     @pytest.mark.upgrade
     async def test_given_main_deployed_when_upgraded_then_certs_are_retrieved(
         self, ops_test: OpsTest
     ):
         assert ops_test.model
 
-        # deploy with the latest version of the lib
-        remove_existing_lib_and_fetch_latest()
-        TestIntegration.requirer_charm = await ops_test.build_charm(f'{REQUIRER_CHARM_DIR}/')
-        TestIntegration.provider_charm = await ops_test.build_charm(f'{PROVIDER_CHARM_DIR}/')
-
         await ops_test.model.deploy(
-            TestIntegration.requirer_charm,
+            REQUIRER_PUBLISHED,
             application_name=TLS_CERTIFICATES_REQUIRER_APP_NAME,
             series='jammy',
         )
         await ops_test.model.deploy(
-            TestIntegration.provider_charm,
+            PROVIDER_PUBLISHED,
             application_name=TLS_CERTIFICATES_PROVIDER_APP_NAME,
             series='jammy',
         )
@@ -126,15 +69,12 @@ class TestIntegration:
         assert 'chain' in action_output and action_output['chain'] is not None
 
         # upgrade to the new version of the lib
-        copy_lib_content()
-        TestIntegration.requirer_charm = await ops_test.build_charm(f'{REQUIRER_CHARM_DIR}/')
-        TestIntegration.provider_charm = await ops_test.build_charm(f'{PROVIDER_CHARM_DIR}/')
         await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].refresh(  # pyright: ignore [reportOptionalMemberAccess] for python-libjuju 2.9
-            path=TestIntegration.requirer_charm
+            path=REQUIRER_LOCAL,
         )
 
         await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].refresh(  # pyright: ignore [reportOptionalMemberAccess] for python-libjuju 2.9
-            path=TestIntegration.provider_charm
+            path=PROVIDER_LOCAL,
         )
         await ops_test.model.wait_for_idle(
             apps=[TLS_CERTIFICATES_REQUIRER_APP_NAME, TLS_CERTIFICATES_PROVIDER_APP_NAME],
@@ -175,16 +115,13 @@ class TestIntegration:
         self, ops_test: OpsTest
     ):
         assert ops_test.model
-        copy_lib_content()
-        TestIntegration.requirer_charm = await ops_test.build_charm(f'{REQUIRER_CHARM_DIR}/')
-        TestIntegration.provider_charm = await ops_test.build_charm(f'{PROVIDER_CHARM_DIR}/')
         await ops_test.model.deploy(
-            TestIntegration.requirer_charm,
+            REQUIRER_LOCAL,
             application_name=TLS_CERTIFICATES_REQUIRER_APP_NAME,
             series='jammy',
         )
         await ops_test.model.deploy(
-            TestIntegration.provider_charm,
+            PROVIDER_LOCAL,
             application_name=TLS_CERTIFICATES_PROVIDER_APP_NAME,
             series='jammy',
         )

@@ -16,16 +16,31 @@ set -xueo pipefail
 TMP_DIR=".tmp"  # clean temporary directory where charms will be packed
 PACKED_DIR=".packed"  # where packed charms will be placed with name expected in conftest.py
 
-: copy charm files to temporary directory for packing, dereferencing symlinks
-rm -rf "$TMP_DIR"
-cp --recursive --dereference "charms/$CHARMLIBS_SUBSTRATE/" "$TMP_DIR"
+# mkdir -p means create parents and don't complain if dir already exists
+mkdir -p "$TMP_DIR"
+mkdir -p "$PACKED_DIR"
 
-: pack charm
-cd "$TMP_DIR"
-uv lock  # required by uv charm plugin
-charmcraft pack
-cd -
+for charm in 'provider' 'requirer'; do
+    for source in 'local' 'published'; do
+        # FIXME: remove this guard after publishing
+        if [ "$source" == 'published' ]; then
+            : library is not published yet, skipping this charm
+            continue
+        fi
+ 
+        charm_tmp_dir="$TMP_DIR/$charm-$source"
 
-: place packed charm in expected location
-mkdir -p "$PACKED_DIR"  # -p means create parents and don't complain if dir already exists
-mv "$TMP_DIR"/*.charm "$PACKED_DIR/$CHARMLIBS_SUBSTRATE.charm"  # read by conftest.py
+        : copy charm files to temporary directory for packing, dereferencing symlinks
+        rm -rf "$charm_tmp_dir"
+        cp --recursive --dereference "$charm" "$charm_tmp_dir"
+
+        : pack charm
+        cd "$charm_tmp_dir"
+        uv lock  # required by uv charm plugin
+        charmcraft pack
+        cd -
+
+        : place packed charm in expected location
+        mv "$charm_tmp_dir"/*.charm "$PACKED_DIR/$charm-$source.charm"  # read by integration tests
+    done
+done
