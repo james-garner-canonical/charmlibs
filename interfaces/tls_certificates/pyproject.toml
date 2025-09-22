@@ -70,6 +70,11 @@ extends = "../../pyproject.toml"
 include = ["src", "tests"]
 pythonVersion = "3.10"  # check no python > 3.10 features are used
 
+[tool.pytest.ini_options]
+markers = [
+    "upgrade: test that refreshes the chamr with the new library version",
+]
+
 [tool.charmlibs.functional]
 ubuntu = []  # ubuntu versions to run functional tests with, e.g. "24.04" (defaults to just "latest")
 pebble = []  # pebble versions to run functional tests with, e.g. "v1.0.0", "master" (defaults to no pebble versions)
