@@ -10,4 +10,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-charmlibs-interfaces-tls_certificates = { path = "package.tar.gz" }
+charmlibs-interfaces-tls_certificates = { path = "library", editable = true }
