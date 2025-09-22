@@ -594,7 +594,7 @@ class Snap:
         devmode: bool = False,
         channel: str | None = None,
         cohort: str | None = None,
-        revision: str | None = None,
+        revision: str | int | None = None,
     ):
         """Ensure that a snap is in a given state.
 
@@ -614,7 +614,7 @@ class Snap:
         """
         channel = channel or ''
         cohort = cohort or ''
-        revision = revision or ''
+        revision = str(revision) if revision is not None else ''
 
         if classic and devmode:
             raise ValueError('Cannot set both classic and devmode confinement')
@@ -1034,7 +1034,7 @@ def add(  # return a single Snap if snap name is given as a string
     classic: bool = False,
     devmode: bool = False,
     cohort: str | None = None,
-    revision: str | None = None,
+    revision: str | int | None = None,
 ) -> Snap: ...
 @typing.overload
 def add(  # may return a single Snap or a list depending if one or more snap names were given
@@ -1044,7 +1044,7 @@ def add(  # may return a single Snap or a list depending if one or more snap nam
     classic: bool = False,
     devmode: bool = False,
     cohort: str | None = None,
-    revision: str | None = None,
+    revision: str | int | None = None,
 ) -> Snap | list[Snap]: ...
 @_cache_init
 def add(
@@ -1054,7 +1054,7 @@ def add(
     classic: bool = False,
     devmode: bool = False,
     cohort: str | None = None,
-    revision: str | None = None,
+    revision: str | int | None = None,
 ) -> Snap | list[Snap]:
     """Add a snap to the system.
 
@@ -1090,7 +1090,7 @@ def add(
         classic=classic,
         devmode=devmode,
         cohort=cohort or '',
-        revision=revision or '',
+        revision=str(revision) if revision is not None else '',
     )
 
 
@@ -1130,7 +1130,7 @@ def ensure(  # return a single Snap if snap name is given as a string
     classic: bool = False,
     devmode: bool = False,
     cohort: str | None = None,
-    revision: int | None = None,
+    revision: str | int | None = None,
 ) -> Snap: ...
 @typing.overload
 def ensure(  # may return a single Snap or a list depending if one or more snap names were given
@@ -1140,7 +1140,7 @@ def ensure(  # may return a single Snap or a list depending if one or more snap 
     classic: bool = False,
     devmode: bool = False,
     cohort: str | None = None,
-    revision: int | None = None,
+    revision: str | int | None = None,
 ) -> Snap | list[Snap]: ...
 @_cache_init
 def ensure(
@@ -1150,7 +1150,7 @@ def ensure(
     classic: bool = False,
     devmode: bool = False,
     cohort: str | None = None,
-    revision: int | None = None,
+    revision: str | int | None = None,
 ) -> Snap | list[Snap]:
     """Ensure specified snaps are in a given state on the system.
 
@@ -1163,7 +1163,7 @@ def ensure(
         devmode: an (Optional) boolean specifying whether it should be added with devmode
             confinement. Default `False`
         cohort: an (Optional) string specifying the snap cohort to use
-        revision: an (Optional) integer specifying the snap revision to use
+        revision: an (Optional) string specifying the snap revision to use
 
     When both channel and revision are specified, the underlying snap install/refresh
     command will determine the precedence (revision at the time of adding this)
@@ -1182,7 +1182,7 @@ def ensure(
             classic=classic,
             devmode=devmode,
             cohort=cohort,
-            revision=str(revision) if revision is not None else None,
+            revision=str(revision) if revision is not None else '',
         )
     else:
         return remove(snap_names)

@@ -210,7 +210,7 @@ class TestSnapCache(unittest.TestCase):
             ['snap', 'remove', 'foo'], text=True, stderr=subprocess.PIPE
         )
 
-        foo.ensure(snap.SnapState.Latest, revision='123')
+        foo.ensure(snap.SnapState.Latest, revision=123)
         mock_subprocess.assert_called_with(
             ['snap', 'install', 'foo', '--classic', '--revision="123"'],
             text=True,
@@ -812,7 +812,7 @@ class TestSnapBareMethods(unittest.TestCase):
         with pytest.raises(TypeError):  # cover error path
             snap.remove(snap_names=[])
 
-        baz = snap.add('curl', classic=True, revision='123')
+        baz = snap.add('curl', classic=True, revision=123)
         mock_subprocess.assert_called_with(
             ['snap', 'install', 'curl', '--classic', '--revision="123"'],
             text=True,
