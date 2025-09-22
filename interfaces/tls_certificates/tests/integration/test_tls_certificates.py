@@ -8,6 +8,7 @@
 # pyright: reportUnknownVariableType=false
 
 import logging
+import pathlib
 import time
 
 import pytest
@@ -18,10 +19,11 @@ from certificates import Certificate
 logger = logging.getLogger(__name__)
 
 
-REQUIRER_LOCAL = '.packed/requirer-local.charm'
-REQUIRER_PUBLISHED = '.packed/requirer-published.charm'
-PROVIDER_LOCAL = '.packed/provider-local.charm'
-PROVIDER_PUBLISHED = '.packed/provider-published.charm'
+PACKED_DIR = pathlib.Path(__file__).parent / '.packed'
+REQUIRER_LOCAL = PACKED_DIR / 'requirer-local.charm'
+REQUIRER_PUBLISHED = PACKED_DIR / 'requirer-published.charm'
+PROVIDER_LOCAL = PACKED_DIR / 'provider-local.charm'
+PROVIDER_PUBLISHED = PACKED_DIR / 'provider-published.charm'
 TLS_CERTIFICATES_PROVIDER_APP_NAME = 'tls-certificates-provider'
 TLS_CERTIFICATES_REQUIRER_APP_NAME = 'tls-certificates-requirer'
 
@@ -115,6 +117,7 @@ class TestIntegration:
         self, ops_test: OpsTest
     ):
         assert ops_test.model
+        print(list(PACKED_DIR.iterdir()))
         await ops_test.model.deploy(
             REQUIRER_LOCAL,
             application_name=TLS_CERTIFICATES_REQUIRER_APP_NAME,

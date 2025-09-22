@@ -44,3 +44,5 @@ for charm in 'provider' 'requirer'; do
         mv "$charm_tmp_dir"/*.charm "$PACKED_DIR/$charm-$variant.charm"  # read by integration tests
     done
 done
+
+ls "$PACKED_DIR"
