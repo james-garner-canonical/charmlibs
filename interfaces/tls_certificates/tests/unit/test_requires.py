@@ -20,7 +20,7 @@ from certificates import (
     generate_csr,
     generate_private_key,
 )
-from charmlibs.interfaces.tls_certificates.v1 import (
+from charmlibs.interfaces.tls_certificates import (
     Certificate,
     CertificateAvailableEvent,
     CertificateSigningRequest,
@@ -33,7 +33,7 @@ from requirer_charm import (
 )
 
 BASE_CHARM_DIR = 'requirer_charm.DummyTLSCertificatesRequirerCharm'
-LIB_DIR = 'charmlibs.interfaces.tls_certificates.v1'
+LIB_DIR = 'charmlibs.interfaces.tls_certificates'
 LIBID = 'afd8c2bccf834997afce12c2706d2ede'
 
 METADATA = yaml.safe_load(

@@ -6,7 +6,7 @@ from typing import Any, cast
 from ops.charm import ActionEvent, CharmBase
 from ops.main import main
 
-from charmlibs.interfaces.tls_certificates.v1 import (
+from charmlibs.interfaces.tls_certificates import (
     CertificateAvailableEvent,
     CertificateRequestAttributes,
     Mode,

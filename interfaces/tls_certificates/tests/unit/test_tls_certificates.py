@@ -16,7 +16,7 @@ import certificate_validation
 from certificates import (
     generate_private_key as generate_private_key_helper,
 )
-from charmlibs.interfaces.tls_certificates.v1 import (
+from charmlibs.interfaces.tls_certificates import (
     Certificate,
     CertificateRequestAttributes,
     CertificateSigningRequest,

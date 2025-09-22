@@ -9,7 +9,7 @@ from ops.charm import ActionEvent, CharmBase
 from ops.framework import EventBase
 from ops.main import main
 
-from charmlibs.interfaces.tls_certificates.v1 import (
+from charmlibs.interfaces.tls_certificates import (
     Certificate,
     CertificateSigningRequest,
     ProviderCertificate,

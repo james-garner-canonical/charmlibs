@@ -13,7 +13,7 @@ from pkilint.validation import (
     ValidationResult,
 )
 
-from charmlibs.interfaces.tls_certificates.v1 import Certificate
+from charmlibs.interfaces.tls_certificates import Certificate
 
 SEVERITY_THRESHOLD = ValidationFindingSeverity.WARNING
 

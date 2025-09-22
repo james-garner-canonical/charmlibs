@@ -14,9 +14,49 @@
 
 """The charmlibs.interfaces.tls_certificates package."""
 
+from ._tls_certificates import (
+    TLSCertificatesError,
+    DataValidationError,
+    Mode,
+    PrivateKey,
+    Certificate,
+    CertificateSigningRequest,
+    CertificateRequestAttributes,
+    ProviderCertificate,
+    RequirerCertificateRequest,
+    CertificateAvailableEvent,
+    generate_private_key,
+    calculate_relative_datetime,
+    chain_has_valid_order,
+    generate_csr,
+    generate_ca,
+    generate_certificate,
+    CertificatesRequirerCharmEvents,
+    TLSCertificatesRequiresV4,
+    TLSCertificatesProvidesV4,
+)
 from ._version import __version__ as __version__
 
 __all__ = [
     # only the names listed in __all__ are imported when executing:
     # from charmlibs.tls_certificates import *
+    'TLSCertificatesError',
+    'DataValidationError',
+    'Mode',
+    'PrivateKey',
+    'Certificate',
+    'CertificateSigningRequest',
+    'CertificateRequestAttributes',
+    'ProviderCertificate',
+    'RequirerCertificateRequest',
+    'CertificateAvailableEvent',
+    'generate_private_key',
+    'calculate_relative_datetime',
+    'chain_has_valid_order',
+    'generate_csr',
+    'generate_ca',
+    'generate_certificate',
+    'CertificatesRequirerCharmEvents',
+    'TLSCertificatesRequiresV4',
+    'TLSCertificatesProvidesV4',
 ]

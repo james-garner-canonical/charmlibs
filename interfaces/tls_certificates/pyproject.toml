@@ -15,20 +15,27 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    # "ops",
+    "cryptography>=43.0.0",
+    "jsonschema",
+    "ops",
+    "pydantic",
 ]
 
 [dependency-groups]
 lint = [  # installed for `just lint interfaces/tls_certificates` (unit, functional, and integration are also installed)
-    # "typing_extensions",
+    "typing_extensions",
 ]
 unit = [  # installed for `just unit interfaces/tls_certificates`
     "ops[testing]",
+    "pkilint",
 ]
 functional = [  # installed for `just functional interfaces/tls_certificates`
 ]
 integration = [  # installed for `just integration interfaces/tls_certificates`
-    "jubilant",
+    "jubilant==1.0.1",
+    "juju>3",
+    "pytest-operator",
+    "pytest-asyncio==0.21.2",
 ]
 
 [project.urls]
