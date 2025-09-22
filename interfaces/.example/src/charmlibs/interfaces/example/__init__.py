@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.example package."""
+"""The charmlibs.interfaces.example package."""
 
 from ._version import __version__ as __version__
 

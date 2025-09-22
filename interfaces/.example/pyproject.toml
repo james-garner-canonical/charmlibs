@@ -1,6 +1,6 @@
 [project]
 name = "charmlibs-interfaces-example"
-description = "The charmlibs.example package."
+description = "The charmlibs.interfaces.example package."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -19,15 +19,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed for `just lint example` (unit, functional, and integration are also installed)
+lint = [  # installed for `just lint interfaces/example` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
-unit = [  # installed for `just unit example`
+unit = [  # installed for `just unit interfaces/example`
     "ops[testing]",
 ]
-functional = [  # installed for `just functional example`
+functional = [  # installed for `just functional interfaces/example`
 ]
-integration = [  # installed for `just integration example`
+integration = [  # installed for `just integration interfaces/example`
     "jubilant",
 ]
 
