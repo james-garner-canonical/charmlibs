@@ -1,7 +1,7 @@
 _root := shell('git rev-parse --show-toplevel')
-_package := shell('realpath --relative-to=' + _root + ' ' + justfile_directory())
+_package := shell('realpath --relative-to="$1" "$2"', _root, justfile_directory())
 
-help:
+_help:
     @echo 'Local justfile for {{CYAN}}{{_package}}/{{NORMAL}}.'
     @echo 'All these recipes from the global justfile are available:'
     @cd {{_root}} && just --list --unsorted --list-heading=''
