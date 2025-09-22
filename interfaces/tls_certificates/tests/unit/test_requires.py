@@ -81,7 +81,7 @@ class TestTLSCertificatesRequiresV4:
             actions=METADATA['actions'],
         )
 
-    def test_given_private_key_not_created_and_not_passed_when_certificates_relation_created_then_private_key_is_generated(  # noqa: E501
+    def test_given_private_key_not_created_and_not_passed_when_certificates_relation_created_then_private_key_is_generated(
         self,
     ):
         certificates_relation = testing.Relation(
@@ -107,7 +107,7 @@ class TestTLSCertificatesRequiresV4:
         assert private_key
         assert private_key != secret.latest_content['private-key']
 
-    def test_given_private_key_passed_from_charm_when_certificates_relation_created_then_private_key_is_not_stored(  # noqa: E501
+    def test_given_private_key_passed_from_charm_when_certificates_relation_created_then_private_key_is_not_stored(
         self,
     ):
         certificates_relation = testing.Relation(
@@ -129,7 +129,7 @@ class TestTLSCertificatesRequiresV4:
             state_out.secrets, f'{LIBID}-private-key-0-{certificates_relation.endpoint}'
         )
 
-    def test_given_private_key_passed_from_charm_not_valid_when_certificates_relation_created_then_error_is_raised(  # noqa: E501
+    def test_given_private_key_passed_from_charm_not_valid_when_certificates_relation_created_then_error_is_raised(
         self,
     ):
         certificates_relation = testing.Relation(
@@ -150,7 +150,7 @@ class TestTLSCertificatesRequiresV4:
         with pytest.raises(testing.errors.UncaughtCharmError):
             self.ctx.run(self.ctx.on.relation_created(certificates_relation), state_in)
 
-    def test_given_private_key_generated_then_passed_by_charm_then_generated_private_key_secret_is_removed(  # noqa: E501
+    def test_given_private_key_generated_then_passed_by_charm_then_generated_private_key_secret_is_removed(
         self,
     ):
         private_key = generate_private_key()
@@ -181,7 +181,7 @@ class TestTLSCertificatesRequiresV4:
         )
 
     @patch(LIB_DIR + '.CertificateRequestAttributes.generate_csr')
-    def test_given_certificate_requested_when_relation_joined_then_certificate_request_is_added_to_unit_databag(  # noqa: E501
+    def test_given_certificate_requested_when_relation_joined_then_certificate_request_is_added_to_unit_databag(
         self, mock_generate_csr: MagicMock
     ):
         private_key = generate_private_key()
@@ -231,7 +231,7 @@ class TestTLSCertificatesRequiresV4:
 
     @patch(LIB_DIR + '.CertificateRequestAttributes.generate_csr')
     @patch(BASE_CHARM_DIR + '._app_or_unit', MagicMock(return_value=Mode.APP))
-    def test_given_certificate_requested_in_app_mode_when_relation_joined_then_certificate_request_is_added_to_app_databag(  # noqa: E501
+    def test_given_certificate_requested_in_app_mode_when_relation_joined_then_certificate_request_is_added_to_app_databag(
         self, mock_generate_csr: MagicMock
     ):
         private_key = generate_private_key()
@@ -280,7 +280,7 @@ class TestTLSCertificatesRequiresV4:
         })
 
     @patch(LIB_DIR + '.CertificateRequestAttributes.generate_csr')
-    def test_given_ca_certificate_requested_when_relation_joined_then_certificate_request_is_added_to_databag(  # noqa: E501
+    def test_given_ca_certificate_requested_when_relation_joined_then_certificate_request_is_added_to_databag(
         self, mock_generate_csr: MagicMock
     ):
         private_key = generate_private_key()
@@ -328,7 +328,7 @@ class TestTLSCertificatesRequiresV4:
             ),
         })
 
-    def test_given_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
+    def test_given_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_emitted(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -390,7 +390,7 @@ class TestTLSCertificatesRequiresV4:
             1
         ].certificate_signing_request == CertificateSigningRequest.from_string(csr)
 
-    def test_given_ca_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_emitted(  # noqa: E501
+    def test_given_ca_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_emitted(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -456,7 +456,7 @@ class TestTLSCertificatesRequiresV4:
             1
         ].certificate_signing_request == CertificateSigningRequest.from_string(csr)
 
-    def test_given_no_request_and_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_not_emitted(  # noqa: E501
+    def test_given_no_request_and_certificate_in_provider_relation_data_when_relation_changed_then_certificate_available_event_is_not_emitted(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -497,7 +497,7 @@ class TestTLSCertificatesRequiresV4:
 
         assert len(self.ctx.emitted_events) == 1
 
-    def test_given_certificate_not_requested_when_relation_changed_then_certificate_request_is_removed_from_databag(  # noqa: E501
+    def test_given_certificate_not_requested_when_relation_changed_then_certificate_request_is_removed_from_databag(
         self,
     ):
         private_key = generate_private_key()
@@ -537,7 +537,7 @@ class TestTLSCertificatesRequiresV4:
         })
 
     @patch(LIB_DIR + '.CertificateRequestAttributes.generate_csr')
-    def test_given_private_key_does_not_match_with_certificate_requests_when_relation_changed_then_certificate_request_is_replaced_in_databag(  # noqa: E501
+    def test_given_private_key_does_not_match_with_certificate_requests_when_relation_changed_then_certificate_request_is_replaced_in_databag(
         self, mock_generate_csr: MagicMock
     ):
         initial_private_key = generate_private_key()
@@ -600,7 +600,7 @@ class TestTLSCertificatesRequiresV4:
         })
 
     @patch(LIB_DIR + '.CertificateRequestAttributes.generate_csr')
-    def test_given_certificate_request_changed_when_relation_changed_then_new_certificate_is_requested(  # noqa: E501
+    def test_given_certificate_request_changed_when_relation_changed_then_new_certificate_is_requested(
         self, mock_generate_csr: MagicMock
     ):
         private_key = generate_private_key()
@@ -729,7 +729,7 @@ class TestTLSCertificatesRequiresV4:
             private_key_secret,
         })
 
-    def test_given_private_key_generated_by_library_is_used_when_regenerate_private_key_then_new_private_key_is_generated(  # noqa: E501
+    def test_given_private_key_generated_by_library_is_used_when_regenerate_private_key_then_new_private_key_is_generated(
         self,
     ):
         initial_private_key = 'whatever the initial private key is'
@@ -875,7 +875,7 @@ class TestTLSCertificatesRequiresV4:
             'csr': csr,
         }
 
-    def test_given_provided_certificate_does_not_match_private_key_when_get_certificate_then_certificate_is_not_returned(  # noqa: E501
+    def test_given_provided_certificate_does_not_match_private_key_when_get_certificate_then_certificate_is_not_returned(
         self,
     ):
         private_key = generate_private_key()
@@ -937,7 +937,7 @@ class TestTLSCertificatesRequiresV4:
             self.ctx.run(self.ctx.on.action('get-certificate'), state_in)
 
     @patch(BASE_CHARM_DIR + '._relative_renewal_time')
-    def test_given_certificate_is_provided_when_relation_changed_then_certificate_secret_is_created_and_expiry_is_set_correctly(  # noqa: E501
+    def test_given_certificate_is_provided_when_relation_changed_then_certificate_secret_is_created_and_expiry_is_set_correctly(
         self,
         mock_relative_renewal_time: MagicMock,
     ):
@@ -1013,7 +1013,7 @@ class TestTLSCertificatesRequiresV4:
             < 60
         )
 
-    def test_given_certificate_secret_exists_and_certificate_is_provided_when_relation_changed_then_certificate_secret_is_updated(  # noqa: E501
+    def test_given_certificate_secret_exists_and_certificate_is_provided_when_relation_changed_then_certificate_secret_is_updated(
         self,
     ):
         private_key = generate_private_key()
@@ -1087,7 +1087,7 @@ class TestTLSCertificatesRequiresV4:
             'csr': csr,
         }
 
-    def test_given_certificate_secret_exists_and_certificate_unchanged_when_relation_changed_then_certificate_secret_is_not_updated(  # noqa: E501
+    def test_given_certificate_secret_exists_and_certificate_unchanged_when_relation_changed_then_certificate_secret_is_not_updated(
         self,
     ):
         private_key = generate_private_key()
@@ -1157,7 +1157,7 @@ class TestTLSCertificatesRequiresV4:
 
         assert certificate_secret._latest_revision == 1
 
-    def test_given_multiple_certificates_when_find_available_certificates_then_only_secrets_with_changed_certificates_are_updated(  # noqa: E501
+    def test_given_multiple_certificates_when_find_available_certificates_then_only_secrets_with_changed_certificates_are_updated(
         self,
     ):
         provider_private_key = generate_private_key()

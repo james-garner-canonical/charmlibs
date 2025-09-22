@@ -49,6 +49,16 @@ path = "src/charmlibs/interfaces/tls_certificates/_version.py"
 extend = "../../pyproject.toml"
 src = ["src", "tests/unit", "tests/functional", "tests/integration"]  # correctly sort local imports in tests
 
+[tool.ruff.lint.extend-per-file-ignores]
+"src/charmlibs/interfaces/tls_certificates/_tls_certificates.py" = [
+    "B904",  # FIXME: use raise ... from
+    "B909",  # FIXME: mutation to loop iterable during iteration
+    "PERF203",  # FIXME: ignore inline or refactor
+]
+"tests/*" = [
+    "E501",  # line too long
+]
+
 [tool.pyright]
 extends = "../../pyproject.toml"
 include = ["src", "tests"]

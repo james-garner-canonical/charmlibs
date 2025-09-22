@@ -145,7 +145,7 @@ class TestTLSCertificatesProvidesV4:
 
         assert self.ctx.action_results == {'certificates': []}
 
-    def test_given_all_certificates_are_solicited_when_get_unsolicited_certificates_then_no_certificate_is_returned(  # noqa: E501
+    def test_given_all_certificates_are_solicited_when_get_unsolicited_certificates_then_no_certificate_is_returned(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -218,7 +218,7 @@ class TestTLSCertificatesProvidesV4:
 
         assert self.ctx.action_results == {'certificates': []}
 
-    def test_given_unsolicited_certificates_when_get_unsolicited_certificates_then_certificates_are_returned(  # noqa: E501
+    def test_given_unsolicited_certificates_when_get_unsolicited_certificates_then_certificates_are_returned(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -298,7 +298,7 @@ class TestTLSCertificatesProvidesV4:
 
         assert self.ctx.action_results == {'csrs': []}
 
-    def test_given_certificate_requests_fulfilled_when_get_outstanding_certificate_requests_then_no_csr_is_returned(  # noqa: E501
+    def test_given_certificate_requests_fulfilled_when_get_outstanding_certificate_requests_then_no_csr_is_returned(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -372,7 +372,7 @@ class TestTLSCertificatesProvidesV4:
 
         assert self.ctx.action_results == {'csrs': []}
 
-    def test_given_unfulfilled_certificate_request_when_get_outstanding_certificate_requests_then_csr_is_returned(  # noqa: E501
+    def test_given_unfulfilled_certificate_request_when_get_outstanding_certificate_requests_then_csr_is_returned(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -492,7 +492,7 @@ class TestTLSCertificatesProvidesV4:
             'certificates': [{'certificate': certificate_1}, {'certificate': certificate_2}]
         }
 
-    def test_given_certificate_request_when_set_relation_certificate_then_certificate_added_to_relation_data(  # noqa: E501
+    def test_given_certificate_request_when_set_relation_certificate_then_certificate_added_to_relation_data(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -584,7 +584,7 @@ class TestTLSCertificatesProvidesV4:
             },
         ]
 
-    def test_given_certificate_exists_for_request_when_set_relation_certificate_then_request_is_overwritten(  # noqa: E501
+    def test_given_certificate_exists_for_request_when_set_relation_certificate_then_request_is_overwritten(
         self,
     ):
         requirer_private_key = generate_private_key()
@@ -783,7 +783,7 @@ class TestTLSCertificatesProvidesV4:
             },
         ]
 
-    def test_given_certificates_for_which_no_csr_exists_when_relation_changed_then_certificates_removed(  # noqa: E501
+    def test_given_certificates_for_which_no_csr_exists_when_relation_changed_then_certificates_removed(
         self,
     ):
         requirer_private_key = generate_private_key()

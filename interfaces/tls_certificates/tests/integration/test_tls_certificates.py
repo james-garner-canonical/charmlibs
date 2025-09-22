@@ -227,7 +227,7 @@ class TestIntegration:
         assert 'certificate' in action_output and action_output['certificate'] is not None
         assert 'chain' in action_output and action_output['chain'] is not None
 
-    async def test_given_additional_requirer_charm_deployed_when_relate_then_requirer_received_certs(  # noqa: E501
+    async def test_given_additional_requirer_charm_deployed_when_relate_then_requirer_received_certs(
         self, ops_test: OpsTest
     ):
         assert ops_test.model
@@ -260,7 +260,7 @@ class TestIntegration:
         assert 'certificate' in action_output and action_output['certificate'] is not None
         assert 'chain' in action_output and action_output['chain'] is not None
 
-    async def test_given_4_min_certificate_validity_when_certificate_expires_then_certificate_is_automatically_renewed(  # noqa: E501
+    async def test_given_4_min_certificate_validity_when_certificate_expires_then_certificate_is_automatically_renewed(
         self, ops_test: OpsTest
     ):
         assert ops_test.model
