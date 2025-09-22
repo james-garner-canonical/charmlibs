@@ -173,7 +173,7 @@ class TestIntegration:
         assert ops_test.model
         new_requirer_app_name = 'new-tls-requirer'
         await ops_test.model.deploy(
-            TestIntegration.requirer_charm, application_name=new_requirer_app_name, series='jammy'
+            REQUIRER_LOCAL, application_name=new_requirer_app_name, series='jammy'
         )
         await ops_test.model.add_relation(
             relation1=new_requirer_app_name,
