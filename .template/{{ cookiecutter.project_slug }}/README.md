@@ -1,6 +1,6 @@
-# charmlibs-{{ cookiecutter.project_slug }}
+# charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}
 
-The `{{ cookiecutter.project_slug }}` library.
+The `{{ cookiecutter.project_slug }}` {{ 'interface ' if cookiecutter._interface else '' }}library.
 
 To install, add `charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}` to your Python dependencies. Then in your Python code, import as:
 

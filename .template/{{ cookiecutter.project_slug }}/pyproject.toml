@@ -1,6 +1,6 @@
 [project]
 name = "charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}"
-description = "The charmlibs.{{ cookiecutter.project_slug }} package."
+description = "The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }} package."
 readme = "README.md"
 requires-python = ">={{ cookiecutter.min_python_version }}"
 authors = [
@@ -19,15 +19,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed for `just lint {{ cookiecutter.project_slug }}` (unit, functional, and integration are also installed)
+lint = [  # installed for `just lint {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
-unit = [  # installed for `just unit {{ cookiecutter.project_slug }}`
+unit = [  # installed for `just unit {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}`
     "ops[testing]",
 ]
-functional = [  # installed for `just functional {{ cookiecutter.project_slug }}`
+functional = [  # installed for `just functional {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}`
 ]
-integration = [  # installed for `just integration {{ cookiecutter.project_slug }}`
+integration = [  # installed for `just integration {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}`
     "jubilant",
 ]
 
