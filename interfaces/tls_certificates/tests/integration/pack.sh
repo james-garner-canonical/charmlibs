@@ -21,18 +21,18 @@ mkdir -p "$TMP_DIR"
 mkdir -p "$PACKED_DIR"
 
 for charm in 'provider' 'requirer'; do
-    for source in 'local' 'published'; do
+    for variant in 'local' 'published'; do
         # FIXME: remove this guard after publishing
-        if [ "$source" == 'published' ]; then
+        if [ "$variant" == 'published' ]; then
             : library is not published yet, skipping this charm
             continue
         fi
  
-        charm_tmp_dir="$TMP_DIR/$charm-$source"
+        charm_tmp_dir="$TMP_DIR/$charm-$variant"
 
         : copy charm files to temporary directory for packing, dereferencing symlinks
         rm -rf "$charm_tmp_dir"
-        cp --recursive --dereference "$charm" "$charm_tmp_dir"
+        cp --recursive --dereference "charms/$charm/$variant" "$charm_tmp_dir"
 
         : pack charm
         cd "$charm_tmp_dir"
@@ -41,6 +41,6 @@ for charm in 'provider' 'requirer'; do
         cd -
 
         : place packed charm in expected location
-        mv "$charm_tmp_dir"/*.charm "$PACKED_DIR/$charm-$source.charm"  # read by integration tests
+        mv "$charm_tmp_dir"/*.charm "$PACKED_DIR/$charm-$variant.charm"  # read by integration tests
     done
 done
