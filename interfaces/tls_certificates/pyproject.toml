@@ -32,6 +32,7 @@ unit = [  # installed for `just unit interfaces/tls_certificates`
 functional = [  # installed for `just functional interfaces/tls_certificates`
 ]
 integration = [  # installed for `just integration interfaces/tls_certificates`
+    "jubilant",
     "juju>3",
     "pytest-operator",
     "pytest-asyncio==0.21.2",
