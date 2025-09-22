@@ -2,12 +2,12 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import contextlib
+# pyright: reportAttributeAccessIssue=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownVariableType=false
+
 import logging
-import os
-import pathlib
-import shutil
-import subprocess
 import time
 
 import pytest
@@ -69,11 +69,11 @@ class TestIntegration:
         assert 'chain' in action_output and action_output['chain'] is not None
 
         # upgrade to the new version of the lib
-        await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].refresh(  # pyright: ignore [reportOptionalMemberAccess] for python-libjuju 2.9
+        await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].refresh(
             path=REQUIRER_LOCAL,
         )
 
-        await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].refresh(  # pyright: ignore [reportOptionalMemberAccess] for python-libjuju 2.9
+        await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].refresh(
             path=PROVIDER_LOCAL,
         )
         await ops_test.model.wait_for_idle(
@@ -108,8 +108,8 @@ class TestIntegration:
         assert 'chain' in action_output and action_output['chain'] is not None
 
         # tear down so that the rest of the tests can run as normal
-        await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].remove()  # pyright: ignore [reportOptionalMemberAccess] for python-libjuju 2.9
-        await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].remove()  # pyright: ignore [reportOptionalMemberAccess] for python-libjuju 2.9
+        await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].remove()
+        await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].remove()
 
     async def test_given_charms_packed_when_deploy_charm_then_status_is_blocked(
         self, ops_test: OpsTest

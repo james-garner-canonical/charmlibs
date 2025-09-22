@@ -8,7 +8,7 @@ from ops import main
 from ops.charm import ActionEvent, CharmBase, CollectStatusEvent
 from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
 
-from charmlibs.interfaces.tls_certificates.v1 import (
+from charmlibs.interfaces.tls_certificates import (
     CertificateRequestAttributes,
     Mode,
     TLSCertificatesRequiresV4,

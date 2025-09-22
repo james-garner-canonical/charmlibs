@@ -814,7 +814,7 @@ class TestTLSCertificatesRequiresV4:
 
         with self.ctx(self.ctx.on.update_status(), state_in) as manager:
             with pytest.raises(TLSCertificatesError):
-                charm: DummyTLSCertificatesRequirerCharm = manager.charm  # type: ignore
+                charm: DummyTLSCertificatesRequirerCharm = manager.charm
                 charm.certificates.regenerate_private_key()
 
     def test_given_certificate_is_provided_when_get_certificate_then_certificate_is_returned(self):
