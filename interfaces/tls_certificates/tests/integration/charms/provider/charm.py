@@ -21,7 +21,7 @@ from charmlibs.interfaces.tls_certificates import (
 )
 
 CERTIFICATE_VALIDITY = 0.003  # Around 4 minutes
-CA_COMMON_NAME = 'pizza'
+CA_COMMON_NAME = "pizza"
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class DummyTLSCertificatesProviderCharm(CharmBase):
     def __init__(self, *args: Any):
         super().__init__(*args)
-        self.certificates = TLSCertificatesProvidesV4(self, 'certificates')
+        self.certificates = TLSCertificatesProvidesV4(self, "certificates")
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.on.install, self._configure)
         self.framework.observe(self.on.update_status, self._configure)
@@ -39,18 +39,18 @@ class DummyTLSCertificatesProviderCharm(CharmBase):
         )
 
     def _on_collect_unit_status(self, event: CollectStatusEvent) -> None:
-        if not self._relation_created('certificates'):
-            event.add_status(BlockedStatus('Missing relation to certificates requirer'))
+        if not self._relation_created("certificates"):
+            event.add_status(BlockedStatus("Missing relation to certificates requirer"))
             return
         root_certificate, root_key = self._get_root_certificate()
         if not root_certificate or not root_key:
-            event.add_status(WaitingStatus('Waiting for CA certificate'))
+            event.add_status(WaitingStatus("Waiting for CA certificate"))
             return
         event.add_status(ActiveStatus())
 
     def _configure(self, event: EventBase) -> None:
         if not self.unit.is_leader():
-            logger.info('Not a leader')
+            logger.info("Not a leader")
             return
         root_certificate, root_key = self._get_root_certificate()
         if not root_certificate or not root_key:
@@ -60,9 +60,9 @@ class DummyTLSCertificatesProviderCharm(CharmBase):
     def _sync_certificates(self) -> None:
         root_certificate, root_key = self._get_root_certificate()
         if not root_certificate or not root_key:
-            logger.info('Root certificates are not yet set')
+            logger.info("Root certificates are not yet set")
             return
-        for relation in self.model.relations['certificates']:
+        for relation in self.model.relations["certificates"]:
             certificate_requests = self.certificates.get_outstanding_certificate_requests(
                 relation_id=relation.id
             )
@@ -85,7 +85,7 @@ class DummyTLSCertificatesProviderCharm(CharmBase):
                         ],
                     ),
                 )
-                logger.info('Certificate generated and sent to requirer')
+                logger.info("Certificate generated and sent to requirer")
 
     def _relation_created(self, relation_name: str) -> bool:
         try:
@@ -95,10 +95,10 @@ class DummyTLSCertificatesProviderCharm(CharmBase):
 
     def _get_root_certificate(self) -> tuple[str | None, str | None]:
         try:
-            secret = self.model.get_secret(label='ca-certificate')
+            secret = self.model.get_secret(label="ca-certificate")
             secret_content = secret.get_content(refresh=True)
-            return secret_content.get('ca-certificate', None), secret_content.get(
-                'private-key', None
+            return secret_content.get("ca-certificate", None), secret_content.get(
+                "private-key", None
             )
         except SecretNotFoundError:
             return None, None
@@ -107,11 +107,11 @@ class DummyTLSCertificatesProviderCharm(CharmBase):
         private_key = generate_private_key()
         ca_certificate = generate_ca(private_key=private_key, subject=CA_COMMON_NAME)
         self.unit.add_secret(
-            {'private-key': private_key.decode(), 'ca-certificate': ca_certificate.decode()},
-            label='ca-certificate',
+            {"private-key": private_key.decode(), "ca-certificate": ca_certificate.decode()},
+            label="ca-certificate",
         )
-        logger.info('Root certificates generated and stored.')
+        logger.info("Root certificates generated and stored.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(DummyTLSCertificatesProviderCharm)

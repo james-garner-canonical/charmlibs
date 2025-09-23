@@ -16,7 +16,7 @@ class Certificate:
           certificate_str (str): The certificate in PEM format.
         """
         self.certificate_str = certificate_str
-        self.certificate = x509.load_pem_x509_certificate(self.certificate_str.encode('utf-8'))
+        self.certificate = x509.load_pem_x509_certificate(self.certificate_str.encode("utf-8"))
 
     @property
     def expiry(self) -> datetime.datetime:

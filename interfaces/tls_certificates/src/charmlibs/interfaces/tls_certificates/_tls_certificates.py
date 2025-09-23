@@ -32,9 +32,9 @@ if TYPE_CHECKING:
     from typing import Any
 
 # legacy Charmhub-hosted lib ID, used at runtime in this lib for labels
-LIBID = 'afd8c2bccf834997afce12c2706d2ede'
+LIBID = "afd8c2bccf834997afce12c2706d2ede"
 
-IS_PYDANTIC_V1 = int(pydantic.version.VERSION.split('.')[0]) < 2
+IS_PYDANTIC_V1 = int(pydantic.version.VERSION.split(".")[0]) < 2
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class _DatabagModel(pydantic.BaseModel):
             """Pydantic config."""
 
             # ignore any extra fields in the databag
-            extra = 'ignore'
+            extra = "ignore"
             """Ignore any extra fields in the databag."""
             allow_population_by_field_name = True
             """Allow instantiating this class by field name (instead of forcing alias)."""
@@ -68,7 +68,7 @@ class _DatabagModel(pydantic.BaseModel):
 
     model_config = pydantic.ConfigDict(
         # tolerate additional keys in databag
-        extra='ignore',
+        extra="ignore",
         # Allow instantiating this class by field name (instead of forcing alias).
         populate_by_name=True,
         # Custom config key: whether to nest the whole datastructure (as json)
@@ -82,7 +82,7 @@ class _DatabagModel(pydantic.BaseModel):
         """Load this model from a Juju databag."""
         if IS_PYDANTIC_V1:
             return cls._load_v1(databag)
-        nest_under = cls.model_config.get('_NEST_UNDER')
+        nest_under = cls.model_config.get("_NEST_UNDER")
         if nest_under:
             return cls.model_validate(json.loads(databag[nest_under]))
 
@@ -94,14 +94,14 @@ class _DatabagModel(pydantic.BaseModel):
                 if k in {(f.alias or n) for n, f in cls.model_fields.items()}
             }
         except json.JSONDecodeError as e:
-            msg = f'invalid databag contents: expecting json. {databag}'
+            msg = f"invalid databag contents: expecting json. {databag}"
             logger.error(msg)
             raise DataValidationError(msg) from e
 
         try:
             return cls.model_validate_json(json.dumps(data))
         except pydantic.ValidationError as e:
-            msg = f'failed to validate databag: {databag}'
+            msg = f"failed to validate databag: {databag}"
             logger.debug(msg, exc_info=True)
             raise DataValidationError(msg) from e
 
@@ -119,14 +119,14 @@ class _DatabagModel(pydantic.BaseModel):
                 if k in {f.alias for f in cls.__fields__.values()}  # pyright: ignore[reportDeprecated]
             }
         except json.JSONDecodeError as e:
-            msg = f'invalid databag contents: expecting json. {databag}'
+            msg = f"invalid databag contents: expecting json. {databag}"
             logger.error(msg)
             raise DataValidationError(msg) from e
 
         try:
             return cls.parse_raw(json.dumps(data))  # type: ignore
         except pydantic.ValidationError as e:
-            msg = f'failed to validate databag: {databag}'
+            msg = f"failed to validate databag: {databag}"
             logger.debug(msg, exc_info=True)
             raise DataValidationError(msg) from e
 
@@ -147,7 +147,7 @@ class _DatabagModel(pydantic.BaseModel):
 
         if databag is None:
             databag = {}
-        nest_under = self.model_config.get('_NEST_UNDER')
+        nest_under = self.model_config.get("_NEST_UNDER")
         if nest_under:
             databag[nest_under] = self.model_dump_json(
                 by_alias=True,
@@ -156,7 +156,7 @@ class _DatabagModel(pydantic.BaseModel):
             )
             return databag
 
-        dct = self.model_dump(mode='json', by_alias=True, exclude_defaults=True)
+        dct = self.model_dump(mode="json", by_alias=True, exclude_defaults=True)
         databag.update({k: json.dumps(v) for k, v in dct.items()})
         return databag
 
@@ -266,16 +266,16 @@ class PrivateKey:
             )
 
             if not isinstance(key, rsa.RSAPrivateKey):
-                logger.warning('Private key is not an RSA key')
+                logger.warning("Private key is not an RSA key")
                 return False
 
             if key.key_size < 2048:
-                logger.warning('RSA key size is less than 2048 bits')
+                logger.warning("RSA key size is less than 2048 bits")
                 return False
 
             return True
         except ValueError:
-            logger.warning('Invalid private key format')
+            logger.warning("Invalid private key format")
             return False
 
 
@@ -308,8 +308,8 @@ class Certificate:
         try:
             certificate_object = x509.load_pem_x509_certificate(data=certificate.encode())
         except ValueError as e:
-            logger.error('Could not load certificate: %s', e)
-            raise TLSCertificatesError('Could not load certificate')
+            logger.error("Could not load certificate: %s", e)
+            raise TLSCertificatesError("Could not load certificate")
 
         common_name = certificate_object.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         country_name = certificate_object.subject.get_attributes_for_oid(NameOID.COUNTRY_NAME)
@@ -339,7 +339,7 @@ class Certificate:
                 if isinstance(san, x509.RegisteredID):
                     sans_oid.append(str(san.value))
         except x509.ExtensionNotFound:
-            logger.debug('No SANs found in certificate')
+            logger.debug("No SANs found in certificate")
             sans_dns = []
             sans_ip = []
             sans_oid = []
@@ -391,16 +391,16 @@ class Certificate:
             key_public_key = key_object.public_key()
 
             if not isinstance(cert_public_key, rsa.RSAPublicKey):
-                logger.warning('Certificate does not use RSA public key')
+                logger.warning("Certificate does not use RSA public key")
                 return False
 
             if not isinstance(key_public_key, rsa.RSAPublicKey):
-                logger.warning('Private key is not an RSA key')
+                logger.warning("Private key is not an RSA key")
                 return False
 
             return cert_public_key.public_numbers() == key_public_key.public_numbers()
         except Exception as e:
-            logger.warning('Failed to validate certificate and private key match: %s', e)
+            logger.warning("Failed to validate certificate and private key match: %s", e)
             return False
 
 
@@ -437,8 +437,8 @@ class CertificateSigningRequest:
         try:
             csr_object = x509.load_pem_x509_csr(csr.encode())
         except ValueError as e:
-            logger.error('Could not load CSR: %s', e)
-            raise TLSCertificatesError('Could not load CSR')
+            logger.error("Could not load CSR: %s", e)
+            raise TLSCertificatesError("Could not load CSR")
         common_name = csr_object.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
         country_name = csr_object.subject.get_attributes_for_oid(NameOID.COUNTRY_NAME)
         state_or_province_name = csr_object.subject.get_attributes_for_oid(
@@ -497,26 +497,26 @@ class CertificateSigningRequest:
             bool: True/False depending on whether the CSR matches the private key.
         """
         try:
-            csr_object = x509.load_pem_x509_csr(self.raw.encode('utf-8'))
+            csr_object = x509.load_pem_x509_csr(self.raw.encode("utf-8"))
             key_object = serialization.load_pem_private_key(
-                data=key.raw.encode('utf-8'), password=None
+                data=key.raw.encode("utf-8"), password=None
             )
             key_object_public_key = key_object.public_key()
             csr_object_public_key = csr_object.public_key()
             if not isinstance(key_object_public_key, rsa.RSAPublicKey):
-                logger.warning('Key is not an RSA key')
+                logger.warning("Key is not an RSA key")
                 return False
             if not isinstance(csr_object_public_key, rsa.RSAPublicKey):
-                logger.warning('CSR is not an RSA key')
+                logger.warning("CSR is not an RSA key")
                 return False
             if (
                 csr_object_public_key.public_numbers().n
                 != key_object_public_key.public_numbers().n
             ):
-                logger.warning('Public key numbers between CSR and key do not match')
+                logger.warning("Public key numbers between CSR and key do not match")
                 return False
         except ValueError:
-            logger.warning('Could not load certificate or CSR.')
+            logger.warning("Could not load certificate or CSR.")
             return False
         return True
 
@@ -528,8 +528,8 @@ class CertificateSigningRequest:
         Returns:
             bool: True/False depending on whether the CSR matches the certificate.
         """
-        csr_object = x509.load_pem_x509_csr(self.raw.encode('utf-8'))
-        cert_object = x509.load_pem_x509_certificate(certificate.raw.encode('utf-8'))
+        csr_object = x509.load_pem_x509_csr(self.raw.encode("utf-8"))
+        cert_object = x509.load_pem_x509_certificate(certificate.raw.encode("utf-8"))
         return csr_object.public_key() == cert_object.public_key()
 
     def get_sha256_hex(self) -> str:
@@ -630,11 +630,11 @@ class ProviderCertificate:
             str: JSON representation of the object
         """
         return json.dumps({
-            'csr': str(self.certificate_signing_request),
-            'certificate': str(self.certificate),
-            'ca': str(self.ca),
-            'chain': [str(cert) for cert in self.chain],
-            'revoked': self.revoked,
+            "csr": str(self.certificate_signing_request),
+            "certificate": str(self.certificate),
+            "ca": str(self.ca),
+            "chain": [str(cert) for cert in self.chain],
+            "revoked": self.revoked,
         })
 
 
@@ -667,25 +667,25 @@ class CertificateAvailableEvent(EventBase):
     def snapshot(self) -> dict[str, str]:
         """Return snapshot."""
         return {
-            'certificate': str(self.certificate),
-            'certificate_signing_request': str(self.certificate_signing_request),
-            'ca': str(self.ca),
-            'chain': json.dumps([str(certificate) for certificate in self.chain]),
+            "certificate": str(self.certificate),
+            "certificate_signing_request": str(self.certificate_signing_request),
+            "ca": str(self.ca),
+            "chain": json.dumps([str(certificate) for certificate in self.chain]),
         }
 
     def restore(self, snapshot: dict[str, str]):
         """Restore snapshot."""
-        self.certificate = Certificate.from_string(snapshot['certificate'])
+        self.certificate = Certificate.from_string(snapshot["certificate"])
         self.certificate_signing_request = CertificateSigningRequest.from_string(
-            snapshot['certificate_signing_request']
+            snapshot["certificate_signing_request"]
         )
-        self.ca = Certificate.from_string(snapshot['ca'])
-        chain_strs = json.loads(snapshot['chain'])
+        self.ca = Certificate.from_string(snapshot["ca"])
+        chain_strs = json.loads(snapshot["chain"])
         self.chain = [Certificate.from_string(chain_str) for chain_str in chain_strs]
 
     def chain_as_pem(self) -> str:
         """Return full certificate chain as a PEM string."""
-        return '\n\n'.join([str(cert) for cert in self.chain])
+        return "\n\n".join([str(cert) for cert in self.chain])
 
 
 def generate_private_key(
@@ -702,7 +702,7 @@ def generate_private_key(
         PrivateKey: Private Key
     """
     if key_size < 2048:
-        raise ValueError('Key size must be at least 2048 bits for RSA security')
+        raise ValueError("Key size must be at least 2048 bits for RSA security")
     private_key = rsa.generate_private_key(
         public_exponent=public_exponent,
         key_size=key_size,
@@ -726,7 +726,7 @@ def calculate_relative_datetime(target_time: datetime, fraction: float) -> datet
             and 0.0 means return now.
     """
     if fraction <= 0.0 or fraction > 1.0:
-        raise ValueError('Invalid fraction. Must be between 0.0 and 1.0')
+        raise ValueError("Invalid fraction. Must be between 0.0 and 1.0")
     now = datetime.now(timezone.utc)
     time_until_target = target_time - now
     return now + time_until_target * fraction
@@ -1008,7 +1008,7 @@ def generate_certificate(
                 critical=extension.critical,
             )
         except ValueError as e:
-            logger.warning('Failed to add extension %s: %s', extension.oid, e)
+            logger.warning("Failed to add extension %s: %s", extension.oid, e)
 
     cert = certificate_builder.sign(private_key, hashes.SHA256())  # type: ignore[arg-type]
     cert_bytes = cert.public_bytes(serialization.Encoding.PEM)
@@ -1078,7 +1078,7 @@ def _generate_certificate_request_extensions(
         if extension.oid == ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
             continue
         if extension.oid in existing_oids:
-            logger.warning('Extension %s is managed by the TLS provider, ignoring.', extension.oid)
+            logger.warning("Extension %s is managed by the TLS provider, ignoring.", extension.oid)
             continue
         cert_extensions_list.append(extension)
 
@@ -1182,21 +1182,21 @@ class TLSCertificatesRequiresV4(Object):
             refresh_events = []
         super().__init__(charm, relationship_name)
         if not JujuVersion.from_environ().has_secrets:
-            logger.warning('This version of the TLS library requires Juju secrets (Juju >= 3.0)')
+            logger.warning("This version of the TLS library requires Juju secrets (Juju >= 3.0)")
         if not self._mode_is_valid(mode):
-            raise TLSCertificatesError('Invalid mode. Must be Mode.UNIT or Mode.APP')
+            raise TLSCertificatesError("Invalid mode. Must be Mode.UNIT or Mode.APP")
         for certificate_request in certificate_requests:
             if not certificate_request.is_valid():
-                raise TLSCertificatesError('Invalid certificate request')
+                raise TLSCertificatesError("Invalid certificate request")
         self.charm = charm
         self.relationship_name = relationship_name
         self.certificate_requests = certificate_requests
         self.mode = mode
         if private_key and not private_key.is_valid():
-            raise TLSCertificatesError('Invalid private key')
+            raise TLSCertificatesError("Invalid private key")
         if renewal_relative_time <= 0.5 or renewal_relative_time > 1.0:
             raise TLSCertificatesError(
-                'Invalid renewal relative time. Must be between 0.0 and 1.0'
+                "Invalid renewal relative time. Must be between 0.0 and 1.0"
             )
         self._private_key = private_key
         self.renewal_relative_time = renewal_relative_time
@@ -1216,7 +1216,7 @@ class TLSCertificatesRequiresV4(Object):
         It will find available certificates and emit events.
         """
         if not self._tls_relation_created():
-            logger.debug('TLS relation not created yet.')
+            logger.debug("TLS relation not created yet.")
             return
         self._ensure_private_key()
         self._cleanup_certificate_requests()
@@ -1240,7 +1240,7 @@ class TLSCertificatesRequiresV4(Object):
             event.secret.remove_revision(event.revision)
         except SecretNotFoundError:
             logger.warning(
-                'No such secret %s, nothing to remove',
+                "No such secret %s, nothing to remove",
                 event.secret.label or event.secret.id,
             )
             return
@@ -1250,12 +1250,12 @@ class TLSCertificatesRequiresV4(Object):
 
         Renews certificate requests and removes the expired secret.
         """
-        if not event.secret.label or not event.secret.label.startswith(f'{LIBID}-certificate'):
+        if not event.secret.label or not event.secret.label.startswith(f"{LIBID}-certificate"):
             return
         try:
-            csr_str = event.secret.get_content(refresh=True)['csr']
+            csr_str = event.secret.get_content(refresh=True)["csr"]
         except ModelError:
-            logger.error('Failed to get CSR from secret - Skipping')
+            logger.error("Failed to get CSR from secret - Skipping")
             return
         csr = CertificateSigningRequest.from_string(csr_str)
         self._renew_certificate_request(csr)
@@ -1276,11 +1276,11 @@ class TLSCertificatesRequiresV4(Object):
         try:
             secret = self.model.get_secret(label=secret_label)
         except SecretNotFoundError:
-            logger.warning('No matching secret found - Skipping renewal')
+            logger.warning("No matching secret found - Skipping renewal")
             return
-        current_csr = secret.get_content(refresh=True).get('csr', '')
+        current_csr = secret.get_content(refresh=True).get("csr", "")
         if current_csr != str(certificate_signing_request):
-            logger.warning('No matching CSR found - Skipping renewal')
+            logger.warning("No matching CSR found - Skipping renewal")
             return
         self._renew_certificate_request(certificate_signing_request)
         secret.remove_all_revisions()
@@ -1289,21 +1289,21 @@ class TLSCertificatesRequiresV4(Object):
         """Remove existing CSR from relation data and create a new one."""
         self._remove_requirer_csr_from_relation_data(csr)
         self._send_certificate_requests()
-        logger.info('Renewed certificate request')
+        logger.info("Renewed certificate request")
 
     def _remove_requirer_csr_from_relation_data(self, csr: CertificateSigningRequest) -> None:
         relation = self.model.get_relation(self.relationship_name)
         if not relation:
-            logger.debug('No relation: %s', self.relationship_name)
+            logger.debug("No relation: %s", self.relationship_name)
             return
         if not self.get_csrs_from_requirer_relation_data():
-            logger.info('No CSRs in relation data - Doing nothing')
+            logger.info("No CSRs in relation data - Doing nothing")
             return
         app_or_unit = self._get_app_or_unit()
         try:
             requirer_relation_data = _RequirerData.load(relation.data[app_or_unit])
         except DataValidationError:
-            logger.warning('Invalid relation data - Skipping removal of CSR')
+            logger.warning("Invalid relation data - Skipping removal of CSR")
             return
         new_relation_data = copy.deepcopy(requirer_relation_data.certificate_signing_requests)
         for requirer_csr in new_relation_data:
@@ -1313,9 +1313,9 @@ class TLSCertificatesRequiresV4(Object):
             _RequirerData(certificate_signing_requests=new_relation_data).dump(
                 relation.data[app_or_unit]
             )
-            logger.info('Removed CSR from relation data')
+            logger.info("Removed CSR from relation data")
         except ModelError:
-            logger.warning('Failed to update relation data')
+            logger.warning("Failed to update relation data")
 
     def _get_app_or_unit(self) -> Application | Unit:
         """Return the unit or app object based on the mode."""
@@ -1323,7 +1323,7 @@ class TLSCertificatesRequiresV4(Object):
             return self.model.unit
         elif self.mode == Mode.APP:
             return self.model.app
-        raise TLSCertificatesError('Invalid mode')
+        raise TLSCertificatesError("Invalid mode")
 
     @property
     def private_key(self) -> PrivateKey | None:
@@ -1333,7 +1333,7 @@ class TLSCertificatesRequiresV4(Object):
         if not self._private_key_generated():
             return None
         secret = self.charm.model.get_secret(label=self._get_private_key_secret_label())
-        private_key = secret.get_content(refresh=True)['private-key']
+        private_key = secret.get_content(refresh=True)["private-key"]
         return PrivateKey.from_string(private_key)
 
     def _ensure_private_key(self) -> None:
@@ -1348,7 +1348,7 @@ class TLSCertificatesRequiresV4(Object):
             self._remove_private_key_secret()
             return
         if self._private_key_generated():
-            logger.debug('Private key already generated')
+            logger.debug("Private key already generated")
             return
         self._generate_private_key()
 
@@ -1363,11 +1363,11 @@ class TLSCertificatesRequiresV4(Object):
         """
         if self._private_key:
             raise TLSCertificatesError(
-                'Private key is passed by the charm through the private_key parameter, '
+                "Private key is passed by the charm through the private_key parameter, "
                 "this function can't be used"
             )
         if not self._private_key_generated():
-            logger.warning('No private key to regenerate')
+            logger.warning("No private key to regenerate")
             return
         self._generate_private_key()
         self._cleanup_certificate_requests()
@@ -1380,7 +1380,7 @@ class TLSCertificatesRequiresV4(Object):
             and not passed by the charm using the private_key parameter.
         """
         self._store_private_key_in_secret(generate_private_key())
-        logger.info('Private key generated')
+        logger.info("Private key generated")
 
     def _private_key_generated(self) -> bool:
         """Check if a private key is stored in a secret.
@@ -1399,11 +1399,11 @@ class TLSCertificatesRequiresV4(Object):
     def _store_private_key_in_secret(self, private_key: PrivateKey) -> None:
         try:
             secret = self.charm.model.get_secret(label=self._get_private_key_secret_label())
-            secret.set_content({'private-key': str(private_key)})
+            secret.set_content({"private-key": str(private_key)})
             secret.get_content(refresh=True)
         except SecretNotFoundError:
             self.charm.unit.add_secret(
-                content={'private-key': str(private_key)},
+                content={"private-key": str(private_key)},
                 label=self._get_private_key_secret_label(),
             )
 
@@ -1413,7 +1413,7 @@ class TLSCertificatesRequiresV4(Object):
             secret = self.charm.model.get_secret(label=self._get_private_key_secret_label())
             secret.remove_all_revisions()
         except SecretNotFoundError:
-            logger.warning('Private key secret not found, nothing to remove')
+            logger.warning("Private key secret not found, nothing to remove")
 
     def _csr_matches_certificate_request(
         self, certificate_signing_request: CertificateSigningRequest, is_ca: bool
@@ -1451,17 +1451,17 @@ class TLSCertificatesRequiresV4(Object):
     def get_csrs_from_requirer_relation_data(self) -> list[RequirerCertificateRequest]:
         """Return list of requirer's CSRs from relation data."""
         if self.mode == Mode.APP and not self.model.unit.is_leader():
-            logger.debug('Not a leader unit - Skipping')
+            logger.debug("Not a leader unit - Skipping")
             return []
         relation = self.model.get_relation(self.relationship_name)
         if not relation:
-            logger.debug('No relation: %s', self.relationship_name)
+            logger.debug("No relation: %s", self.relationship_name)
             return []
         app_or_unit = self._get_app_or_unit()
         try:
             requirer_relation_data = _RequirerData.load(relation.data[app_or_unit])
         except DataValidationError:
-            logger.warning('Invalid relation data')
+            logger.warning("Invalid relation data")
             return []
         requirer_csrs = [
             RequirerCertificateRequest(
@@ -1482,15 +1482,15 @@ class TLSCertificatesRequiresV4(Object):
     def _load_provider_certificates(self) -> list[ProviderCertificate]:
         relation = self.model.get_relation(self.relationship_name)
         if not relation:
-            logger.debug('No relation: %s', self.relationship_name)
+            logger.debug("No relation: %s", self.relationship_name)
             return []
         if not relation.app:
-            logger.debug('No remote app in relation: %s', self.relationship_name)
+            logger.debug("No remote app in relation: %s", self.relationship_name)
             return []
         try:
             provider_relation_data = _ProviderApplicationData.load(relation.data[relation.app])
         except DataValidationError:
-            logger.warning('Invalid relation data')
+            logger.warning("Invalid relation data")
             return []
         return [
             certificate.to_provider_certificate(relation_id=relation.id)
@@ -1500,11 +1500,11 @@ class TLSCertificatesRequiresV4(Object):
     def _request_certificate(self, csr: CertificateSigningRequest, is_ca: bool) -> None:
         """Add CSR to relation data."""
         if self.mode == Mode.APP and not self.model.unit.is_leader():
-            logger.debug('Not a leader unit - Skipping')
+            logger.debug("Not a leader unit - Skipping")
             return
         relation = self.model.get_relation(self.relationship_name)
         if not relation:
-            logger.debug('No relation: %s', self.relationship_name)
+            logger.debug("No relation: %s", self.relationship_name)
             return
         new_csr = _CertificateSigningRequest(
             certificate_signing_request=str(csr).strip(), ca=is_ca
@@ -1522,13 +1522,13 @@ class TLSCertificatesRequiresV4(Object):
             _RequirerData(certificate_signing_requests=new_relation_data).dump(
                 relation.data[app_or_unit]
             )
-            logger.info('Certificate signing request added to relation data.')
+            logger.info("Certificate signing request added to relation data.")
         except ModelError:
-            logger.warning('Failed to update relation data')
+            logger.warning("Failed to update relation data")
 
     def _send_certificate_requests(self):
         if not self.private_key:
-            logger.debug('Private key not generated yet.')
+            logger.debug("Private key not generated yet.")
             return
         for certificate_request in self.certificate_requests:
             if not self._certificate_requested(certificate_request):
@@ -1536,7 +1536,7 @@ class TLSCertificatesRequiresV4(Object):
                     private_key=self.private_key,
                 )
                 if not csr:
-                    logger.warning('Failed to generate CSR')
+                    logger.warning("Failed to generate CSR")
                     continue
                 self._request_certificate(csr=csr, is_ca=certificate_request.is_ca)
 
@@ -1572,14 +1572,14 @@ class TLSCertificatesRequiresV4(Object):
         for provider_certificate in self.get_provider_certificates():
             if provider_certificate.certificate_signing_request == csr.certificate_signing_request:
                 if provider_certificate.certificate.is_ca and not csr.is_ca:
-                    logger.warning('Non CA certificate requested, got a CA certificate, ignoring')
+                    logger.warning("Non CA certificate requested, got a CA certificate, ignoring")
                     continue
                 elif not provider_certificate.certificate.is_ca and csr.is_ca:
-                    logger.warning('CA certificate requested, got a non CA certificate, ignoring')
+                    logger.warning("CA certificate requested, got a non CA certificate, ignoring")
                     continue
                 if not provider_certificate.certificate.matches_private_key(self.private_key):
                     logger.warning(
-                        'Certificate does not match the private key. Ignoring invalid certificate.'
+                        "Certificate does not match the private key. Ignoring invalid certificate."
                     )
                     continue
                 return provider_certificate
@@ -1603,7 +1603,7 @@ class TLSCertificatesRequiresV4(Object):
                 if provider_certificate.revoked:
                     with suppress(SecretNotFoundError):
                         logger.debug(
-                            'Removing secret with label %s',
+                            "Removing secret with label %s",
                             secret_label,
                         )
                         secret = self.model.get_secret(label=secret_label)
@@ -1613,23 +1613,23 @@ class TLSCertificatesRequiresV4(Object):
                         certificate_signing_request=provider_certificate.certificate_signing_request,
                         is_ca=provider_certificate.certificate.is_ca,
                     ):
-                        logger.debug('Certificate requested for different attributes - Skipping')
+                        logger.debug("Certificate requested for different attributes - Skipping")
                         continue
                     try:
                         secret = self.model.get_secret(label=secret_label)
-                        logger.debug('Setting secret with label %s', secret_label)
+                        logger.debug("Setting secret with label %s", secret_label)
                         # Juju < 3.6 will create a new revision even if the content is the same
-                        if secret.get_content(refresh=True).get('certificate', '') == str(
+                        if secret.get_content(refresh=True).get("certificate", "") == str(
                             provider_certificate.certificate
                         ):
                             logger.debug(
-                                'Secret %s with correct certificate already exists', secret_label
+                                "Secret %s with correct certificate already exists", secret_label
                             )
                             continue
                         secret.set_content(
                             content={
-                                'certificate': str(provider_certificate.certificate),
-                                'csr': str(provider_certificate.certificate_signing_request),
+                                "certificate": str(provider_certificate.certificate),
+                                "csr": str(provider_certificate.certificate_signing_request),
                             }
                         )
                         secret.set_info(
@@ -1640,11 +1640,11 @@ class TLSCertificatesRequiresV4(Object):
                         )
                         secret.get_content(refresh=True)
                     except SecretNotFoundError:
-                        logger.debug('Creating new secret with label %s', secret_label)
+                        logger.debug("Creating new secret with label %s", secret_label)
                         secret = self.charm.unit.add_secret(
                             content={
-                                'certificate': str(provider_certificate.certificate),
-                                'csr': str(provider_certificate.certificate_signing_request),
+                                "certificate": str(provider_certificate.certificate),
+                                "csr": str(provider_certificate.certificate_signing_request),
                             },
                             label=secret_label,
                             expire=calculate_relative_datetime(
@@ -1676,7 +1676,7 @@ class TLSCertificatesRequiresV4(Object):
                     requirer_csr.certificate_signing_request
                 )
                 logger.info(
-                    'Removed CSR from relation data because it did not match any certificate request'  # noqa: E501
+                    "Removed CSR from relation data because it did not match any certificate request"  # noqa: E501
                 )
             elif (
                 self.private_key
@@ -1688,7 +1688,7 @@ class TLSCertificatesRequiresV4(Object):
                     requirer_csr.certificate_signing_request
                 )
                 logger.info(
-                    'Removed CSR from relation data because it did not match the private key'
+                    "Removed CSR from relation data because it did not match the private key"
                 )
 
     def _tls_relation_created(self) -> bool:
@@ -1699,23 +1699,23 @@ class TLSCertificatesRequiresV4(Object):
 
     def _get_private_key_secret_label(self) -> str:
         if self.mode == Mode.UNIT:
-            return f'{LIBID}-private-key-{self._get_unit_number()}-{self.relationship_name}'
+            return f"{LIBID}-private-key-{self._get_unit_number()}-{self.relationship_name}"
         elif self.mode == Mode.APP:
-            return f'{LIBID}-private-key-{self.relationship_name}'
+            return f"{LIBID}-private-key-{self.relationship_name}"
         else:
-            raise TLSCertificatesError('Invalid mode. Must be Mode.UNIT or Mode.APP.')
+            raise TLSCertificatesError("Invalid mode. Must be Mode.UNIT or Mode.APP.")
 
     def _get_csr_secret_label(self, csr: CertificateSigningRequest) -> str:
         csr_in_sha256_hex = csr.get_sha256_hex()
         if self.mode == Mode.UNIT:
-            return f'{LIBID}-certificate-{self._get_unit_number()}-{csr_in_sha256_hex}'
+            return f"{LIBID}-certificate-{self._get_unit_number()}-{csr_in_sha256_hex}"
         elif self.mode == Mode.APP:
-            return f'{LIBID}-certificate-{csr_in_sha256_hex}'
+            return f"{LIBID}-certificate-{csr_in_sha256_hex}"
         else:
-            raise TLSCertificatesError('Invalid mode. Must be Mode.UNIT or Mode.APP.')
+            raise TLSCertificatesError("Invalid mode. Must be Mode.UNIT or Mode.APP.")
 
     def _get_unit_number(self) -> str:
-        return self.model.unit.name.split('/')[1]
+        return self.model.unit.name.split("/")[1]
 
 
 class TLSCertificatesProvidesV4(Object):
@@ -1784,7 +1784,7 @@ class TLSCertificatesProvidesV4(Object):
         try:
             requirer_relation_data = _RequirerData.load(relation.data.get(unit_or_app, {}))
         except DataValidationError:
-            logger.debug('Invalid requirer relation data for %s', unit_or_app.name)
+            logger.debug("Invalid requirer relation data for %s", unit_or_app.name)
             return []
         return [
             RequirerCertificateRequest(
@@ -1805,12 +1805,12 @@ class TLSCertificatesProvidesV4(Object):
         chain = [str(certificate) for certificate in provider_certificate.chain]
         if chain[0] != str(provider_certificate.certificate):
             logger.warning(
-                'The order of the chain from the TLS Certificates Provider is incorrect. '
-                'The leaf certificate should be the first element of the chain.'
+                "The order of the chain from the TLS Certificates Provider is incorrect. "
+                "The leaf certificate should be the first element of the chain."
             )
         elif not chain_has_valid_order(chain):
             logger.warning(
-                'The order of the chain from the TLS Certificates Provider is partially incorrect.'
+                "The order of the chain from the TLS Certificates Provider is partially incorrect."
             )
         new_certificate = _Certificate(
             certificate=str(provider_certificate.certificate),
@@ -1820,7 +1820,7 @@ class TLSCertificatesProvidesV4(Object):
         )
         provider_certificates = self._load_provider_certificates(relation)
         if new_certificate in provider_certificates:
-            logger.info('Certificate already in relation data - Doing nothing')
+            logger.info("Certificate already in relation data - Doing nothing")
             return
         provider_certificates.append(new_certificate)
         self._dump_provider_certificates(relation=relation, certificates=provider_certificates)
@@ -1829,16 +1829,16 @@ class TLSCertificatesProvidesV4(Object):
         try:
             provider_relation_data = _ProviderApplicationData.load(relation.data[self.charm.app])
         except DataValidationError:
-            logger.debug('Invalid provider relation data')
+            logger.debug("Invalid provider relation data")
             return []
         return copy.deepcopy(provider_relation_data.certificates)
 
     def _dump_provider_certificates(self, relation: Relation, certificates: list[_Certificate]):
         try:
             _ProviderApplicationData(certificates=certificates).dump(relation.data[self.model.app])
-            logger.info('Certificate relation data updated')
+            logger.info("Certificate relation data updated")
         except ModelError:
-            logger.warning('Failed to update relation data')
+            logger.warning("Failed to update relation data")
 
     def _remove_provider_certificate(
         self,
@@ -1865,7 +1865,7 @@ class TLSCertificatesProvidesV4(Object):
         This method is meant to be used when the Root CA has changed.
         """
         if not self.model.unit.is_leader():
-            logger.warning('Unit is not a leader - will not set relation data')
+            logger.warning("Unit is not a leader - will not set relation data")
             return
         relations = self._get_tls_relations()
         for relation in relations:
@@ -1887,13 +1887,13 @@ class TLSCertificatesProvidesV4(Object):
             None
         """
         if not self.model.unit.is_leader():
-            logger.warning('Unit is not a leader - will not set relation data')
+            logger.warning("Unit is not a leader - will not set relation data")
             return
         certificates_relation = self.model.get_relation(
             relation_name=self.relationship_name, relation_id=provider_certificate.relation_id
         )
         if not certificates_relation:
-            raise TLSCertificatesError(f'Relation {self.relationship_name} does not exist')
+            raise TLSCertificatesError(f"Relation {self.relationship_name} does not exist")
         self._remove_provider_certificate(
             relation=certificates_relation,
             certificate_signing_request=provider_certificate.certificate_signing_request,
@@ -1910,7 +1910,7 @@ class TLSCertificatesProvidesV4(Object):
             List: List of ProviderCertificate objects
         """
         if not self.model.unit.is_leader():
-            logger.warning('Unit is not a leader - will not read relation data')
+            logger.warning("Unit is not a leader - will not read relation data")
             return []
         provider_certificates = self.get_provider_certificates(relation_id=relation_id)
         return [certificate for certificate in provider_certificates if not certificate.revoked]
@@ -1923,7 +1923,7 @@ class TLSCertificatesProvidesV4(Object):
         relations = self._get_tls_relations(relation_id)
         for relation in relations:
             if not relation.app:
-                logger.warning('Relation %s does not have an application', relation.id)
+                logger.warning("Relation %s does not have an application", relation.id)
                 continue
             certificates.extend(
                 certificate.to_provider_certificate(relation_id=relation.id)

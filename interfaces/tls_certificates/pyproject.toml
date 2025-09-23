@@ -58,6 +58,9 @@ exclude = [
     "tests/integration/charms/*/published/src/charmlibs",
 ]
 
+[tool.ruff.format]
+quote-style = "double"
+
 [tool.ruff.lint.extend-per-file-ignores]
 "src/charmlibs/interfaces/tls_certificates/_tls_certificates.py" = [
     "B904",  # FIXME: use raise ... from

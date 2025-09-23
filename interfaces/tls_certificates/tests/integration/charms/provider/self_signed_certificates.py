@@ -97,7 +97,7 @@ def generate_ca(
     subject: str,
     private_key_password: bytes | None = None,
     validity: int = 365,
-    country: str = 'US',
+    country: str = "US",
 ) -> bytes:
     """Generate a CA certificate.
 
