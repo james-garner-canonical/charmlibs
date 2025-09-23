@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 tracer = opentelemetry.trace.get_tracer(__name__)
 
 # Regex to locate 7-bit C1 ANSI sequences
-_ansi_filter = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+ansi_filter = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
 def _cache_init(func: Callable[_P, _T]) -> Callable[_P, _T]:
@@ -1268,7 +1268,7 @@ def install_local(
                 stderr=subprocess.PIPE,
             ).splitlines()[-1]
         snap_name, _ = result.split(' ', 1)
-        snap_name = _ansi_filter.sub('', snap_name)
+        snap_name = ansi_filter.sub('', snap_name)
 
         c = SnapCache()
 
