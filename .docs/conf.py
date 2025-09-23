@@ -145,12 +145,13 @@ extensions = [
 #       substitution, deflist, linkify
 # myst_enable_extensions = set()
 
-intersphinx_mapping = {
-    'ops': ('https://documentation.ubuntu.com/ops/latest', None),
-    'python': ('https://docs.python.org/3', None),
-    'juju': ('https://documentation.ubuntu.com/juju/3.6', None),
-    'charmcraft': ('https://documentation.ubuntu.com/charmcraft/latest', None),
-}
+#intersphinx_mapping = {
+#    'ops': ('https://documentation.ubuntu.com/ops/latest', None),
+#    'python': ('https://docs.python.org/3', None),
+#    'juju': ('https://documentation.ubuntu.com/juju/3.6', None),
+#    'charmcraft': ('https://documentation.ubuntu.com/charmcraft/latest', None),
+#}
+suppress_warnings = ['ref.ref', 'ref.doc', 'myst.xref_missing']
 
 maximum_signature_line_length = 80
 add_function_parentheses = False  # don't automatically add parentheses after func and method refs
