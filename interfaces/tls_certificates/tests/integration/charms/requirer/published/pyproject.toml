@@ -5,5 +5,5 @@ description = "Test requirer charm for integration tests"
 requires-python = ">=3.10"
 dependencies = [
     "ops",
-    "charmlibs-interfaces-tls_certificates",
+    # "charmlibs-interfaces-tls_certificates",  # TODO: uncomment after publishing
 ]
