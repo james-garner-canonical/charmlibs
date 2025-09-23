@@ -54,6 +54,9 @@ path = "src/charmlibs/interfaces/tls_certificates/_version.py"
 [tool.ruff]
 extend = "../../pyproject.toml"
 src = ["src", "tests/unit", "tests/functional", "tests/integration"]  # correctly sort local imports in tests
+exclude = [
+    "tests/integration/charms/*/published/src/charmlibs",
+]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "src/charmlibs/interfaces/tls_certificates/_tls_certificates.py" = [
@@ -69,6 +72,9 @@ src = ["src", "tests/unit", "tests/functional", "tests/integration"]  # correctl
 extends = "../../pyproject.toml"
 include = ["src", "tests"]
 pythonVersion = "3.10"  # check no python > 3.10 features are used
+ignore = [
+    "tests/integration/charms/*/published/src/charmlibs",
+]
 
 [tool.pytest.ini_options]
 markers = [
