@@ -1,13 +1,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Manage TLS certificates using the ``tls_certificates`` interface v1.
-
-This is a port of ``tls_certificates_interface.tls_certificates`` v4.21.
-
-Learn more on how-to use the TLS Certificates interface library by reading the documentation:
-- https://charmhub.io/tls-certificates-interface/
-"""
+"""Source code of ``tls_certificates_interface.tls_certificates`` v4.22."""
 
 from __future__ import annotations
 
