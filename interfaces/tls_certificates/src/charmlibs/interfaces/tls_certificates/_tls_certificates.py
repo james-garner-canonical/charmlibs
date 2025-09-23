@@ -20,7 +20,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pydantic
 from cryptography import x509
@@ -41,6 +41,7 @@ from ops.model import (
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
+    from typing import Any
 
 # legacy Charmhub-hosted lib ID, used at runtime in this lib for labels
 LIBID = 'afd8c2bccf834997afce12c2706d2ede'
@@ -56,9 +57,10 @@ class DataValidationError(TLSCertificatesError):
     """Raised when data validation fails."""
 
 
+_DatabagModel: type[_DatabagModelPydanticV1] | type[_DatabagModelPydanticV2]
 if int(pydantic.version.VERSION.split('.')[0]) < 2:
 
-    class _DatabagModel(pydantic.BaseModel):  # type: ignore
+    class _DatabagModelPydanticV1(pydantic.BaseModel):
         """Base databag model."""
 
         class Config:
@@ -73,17 +75,17 @@ if int(pydantic.version.VERSION.split('.')[0]) < 2:
         _NEST_UNDER = None
 
         @classmethod
-        def load(cls, databag: MutableMapping):
+        def load(cls, databag: MutableMapping[str, str]):
             """Load this model from a Juju databag."""
             if cls._NEST_UNDER:
-                return cls.parse_obj(json.loads(databag[cls._NEST_UNDER]))
+                return cls.parse_obj(json.loads(databag[cls._NEST_UNDER]))  # pyright: ignore[reportDeprecated]
 
             try:
                 data = {
                     k: json.loads(v)
                     for k, v in databag.items()
                     # Don't attempt to parse model-external values
-                    if k in {f.alias for f in cls.__fields__.values()}
+                    if k in {f.alias for f in cls.__fields__.values()}  # pyright: ignore[reportDeprecated]
                 }
             except json.JSONDecodeError as e:
                 msg = f'invalid databag contents: expecting json. {databag}'
@@ -97,7 +99,7 @@ if int(pydantic.version.VERSION.split('.')[0]) < 2:
                 logger.debug(msg, exc_info=True)
                 raise DataValidationError(msg) from e
 
-        def dump(self, databag: MutableMapping | None = None, clear: bool = True):
+        def dump(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
             """Write the contents of this model to Juju databag.
 
             :param databag: the databag to write the data to.
@@ -110,18 +112,20 @@ if int(pydantic.version.VERSION.split('.')[0]) < 2:
                 databag = {}
 
             if self._NEST_UNDER:
-                databag[self._NEST_UNDER] = self.json(by_alias=True, exclude_defaults=True)
+                databag[self._NEST_UNDER] = self.json(by_alias=True, exclude_defaults=True)  # pyright: ignore[reportDeprecated]
                 return databag
 
-            dct = self.dict(by_alias=True, exclude_defaults=True)
+            dct = self.dict(by_alias=True, exclude_defaults=True)  # pyright: ignore[reportDeprecated]
             databag.update({k: json.dumps(v) for k, v in dct.items()})
 
             return databag
 
+    _DatabagModel = _DatabagModelPydanticV1
+
 else:
     from pydantic import ConfigDict
 
-    class _DatabagModel(pydantic.BaseModel):
+    class _DatabagModelPydanticV2(pydantic.BaseModel):
         """Base databag model."""
 
         model_config = ConfigDict(
@@ -136,7 +140,7 @@ else:
         """Pydantic config."""
 
         @classmethod
-        def load(cls, databag: MutableMapping):
+        def load(cls, databag: MutableMapping[str, str]):
             """Load this model from a Juju databag."""
             nest_under = cls.model_config.get('_NEST_UNDER')
             if nest_under:
@@ -161,7 +165,7 @@ else:
                 logger.debug(msg, exc_info=True)
                 raise DataValidationError(msg) from e
 
-        def dump(self, databag: MutableMapping | None = None, clear: bool = True):
+        def dump(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
             """Write the contents of this model to Juju databag.
 
             Args:
@@ -189,6 +193,8 @@ else:
             databag.update({k: json.dumps(v) for k, v in dct.items()})
 
             return databag
+
+    _DatabagModel = _DatabagModelPydanticV2
 
 
 class _Certificate(pydantic.BaseModel):
@@ -223,19 +229,21 @@ class _CertificateSigningRequest(pydantic.BaseModel):
     ca: bool | None
 
 
-class _ProviderApplicationData(_DatabagModel):
+class _ProviderApplicationData(cast('type[_DatabagModelPydanticV1]', _DatabagModel)):
     """Provider application data model."""
 
-    certificates: list[_Certificate] = []
+    # FIXME: mutable default? should it be Field(default_factory=list)?
+    certificates: list[_Certificate] = []  # noqa: RUF012
 
 
-class _RequirerData(_DatabagModel):
+class _RequirerData(cast('type[_DatabagModelPydanticV1]', _DatabagModel)):
     """Requirer data model.
 
     The same model is used for the unit and application data.
     """
 
-    certificate_signing_requests: list[_CertificateSigningRequest] = []
+    # FIXME: mutable default? should it be Field(default_factory=list)?
+    certificate_signing_requests: list[_CertificateSigningRequest] = []  # noqa: RUF012
 
 
 class Mode(Enum):
@@ -358,7 +366,7 @@ class Certificate:
         validity_start_time = certificate_object.not_valid_before_utc
         is_ca = False
         try:
-            is_ca = certificate_object.extensions.get_extension_for_oid(
+            is_ca = certificate_object.extensions.get_extension_for_oid(  # pyright: ignore[reportUnknownVariableType]
                 ExtensionOID.BASIC_CONSTRAINTS
             ).value.ca  # type: ignore[reportAttributeAccessIssue]
         except x509.ExtensionNotFound:
@@ -367,7 +375,7 @@ class Certificate:
         return cls(
             raw=certificate.strip(),
             common_name=str(common_name[0].value),
-            is_ca=is_ca,
+            is_ca=is_ca,  # pyright: ignore[reportUnknownArgumentType]
             country_name=str(country_name[0].value) if country_name else None,
             state_or_province_name=str(state_or_province_name[0].value)
             if state_or_province_name
@@ -464,6 +472,10 @@ class CertificateSigningRequest:
         unique_identifier = csr_object.subject.get_attributes_for_oid(
             NameOID.X500_UNIQUE_IDENTIFIER
         )
+        sans: x509.SubjectAlternativeName | frozenset[str]
+        sans_dns: frozenset[str]
+        sans_ip: frozenset[str]
+        sans_oid: frozenset[str]
         try:
             sans = csr_object.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
             sans_dns = frozenset(sans.get_values_for_type(x509.DNSName))
@@ -671,7 +683,7 @@ class CertificateAvailableEvent(EventBase):
         self.ca = ca
         self.chain = chain
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, str]:
         """Return snapshot."""
         return {
             'certificate': str(self.certificate),
@@ -680,7 +692,7 @@ class CertificateAvailableEvent(EventBase):
             'chain': json.dumps([str(certificate) for certificate in self.chain]),
         }
 
-    def restore(self, snapshot: dict):
+    def restore(self, snapshot: dict[str, str]):
         """Restore snapshot."""
         self.certificate = Certificate.from_string(snapshot['certificate'])
         self.certificate_signing_request = CertificateSigningRequest.from_string(
@@ -941,7 +953,7 @@ def generate_ca(
     )
     if san_extension:
         builder = builder.add_extension(san_extension, critical=False)
-    cert = builder.sign(private_key_object, hashes.SHA256())  # type: ignore[arg-type]
+    cert = builder.sign(private_key_object, hashes.SHA256())
     ca_cert_str = cert.public_bytes(serialization.Encoding.PEM).decode().strip()
     return Certificate.from_string(ca_cert_str)
 
@@ -1026,7 +1038,7 @@ def _generate_certificate_request_extensions(
     authority_key_identifier: bytes,
     csr: x509.CertificateSigningRequest,
     is_ca: bool,
-) -> list[x509.Extension]:
+) -> list[x509.Extension[Any]]:
     """Generate a list of certificate extensions from a CSR and other known information.
 
     Args:
@@ -1037,7 +1049,7 @@ def _generate_certificate_request_extensions(
     Returns:
         List[x509.Extension]: List of extensions
     """
-    cert_extensions_list: list[x509.Extension] = [
+    cert_extensions_list: list[x509.Extension[Any]] = [
         x509.Extension(
             oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
             value=x509.AuthorityKeyIdentifier(
@@ -1094,7 +1106,7 @@ def _generate_certificate_request_extensions(
 
 def _generate_subject_alternative_name_extension(
     csr: x509.CertificateSigningRequest,
-) -> x509.Extension | None:
+) -> x509.Extension[Any] | None:
     sans: list[x509.GeneralName] = []
     try:
         loaded_san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)

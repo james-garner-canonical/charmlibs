@@ -2,6 +2,9 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+# FIXME: use datetime.datetime.now(tz=datetime.timezone.utc)
+# pyright: reportDeprecated=false
+
 """Methods used to generate self-signed certificates."""
 
 import datetime
@@ -48,7 +51,7 @@ def generate_certificate(
     ca_key: bytes,
     ca_key_password: bytes | None = None,
     validity: int = 365,
-    alt_names: list | None = None,
+    alt_names: list[str] | None = None,
 ) -> bytes:
     """Generate a certificate based on CSR.
 
