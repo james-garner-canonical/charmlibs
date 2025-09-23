@@ -20,7 +20,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import pydantic
 from cryptography import x509
@@ -31,13 +31,7 @@ from cryptography.x509.oid import ExtensionOID, NameOID
 from ops import BoundEvent, CharmBase, CharmEvents, Secret, SecretExpiredEvent, SecretRemoveEvent
 from ops.framework import EventBase, EventSource, Handle, Object
 from ops.jujuversion import JujuVersion
-from ops.model import (
-    Application,
-    ModelError,
-    Relation,
-    SecretNotFoundError,
-    Unit,
-)
+from ops.model import Application, ModelError, Relation, SecretNotFoundError, Unit
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -45,6 +39,8 @@ if TYPE_CHECKING:
 
 # legacy Charmhub-hosted lib ID, used at runtime in this lib for labels
 LIBID = 'afd8c2bccf834997afce12c2706d2ede'
+
+IS_PYDANTIC_V1 = int(pydantic.version.VERSION.split('.')[0]) < 2
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +53,13 @@ class DataValidationError(TLSCertificatesError):
     """Raised when data validation fails."""
 
 
-_DatabagModel: type[_DatabagModelPydanticV1] | type[_DatabagModelPydanticV2]
-if int(pydantic.version.VERSION.split('.')[0]) < 2:
+class _DatabagModel(pydantic.BaseModel):
+    """Base databag model.
 
-    class _DatabagModelPydanticV1(pydantic.BaseModel):
-        """Base databag model."""
+    Supports both pydantic v1 and v2.
+    """
+
+    if IS_PYDANTIC_V1:
 
         class Config:
             """Pydantic config."""
@@ -74,127 +72,116 @@ if int(pydantic.version.VERSION.split('.')[0]) < 2:
 
         _NEST_UNDER = None
 
-        @classmethod
-        def load(cls, databag: MutableMapping[str, str]):
-            """Load this model from a Juju databag."""
-            if cls._NEST_UNDER:
-                return cls.parse_obj(json.loads(databag[cls._NEST_UNDER]))  # pyright: ignore[reportDeprecated]
+    model_config = pydantic.ConfigDict(
+        # tolerate additional keys in databag
+        extra='ignore',
+        # Allow instantiating this class by field name (instead of forcing alias).
+        populate_by_name=True,
+        # Custom config key: whether to nest the whole datastructure (as json)
+        # under a field or spread it out at the toplevel.
+        _NEST_UNDER=None,
+    )  # type: ignore
+    """Pydantic config."""
 
-            try:
-                data = {
-                    k: json.loads(v)
-                    for k, v in databag.items()
-                    # Don't attempt to parse model-external values
-                    if k in {f.alias for f in cls.__fields__.values()}  # pyright: ignore[reportDeprecated]
-                }
-            except json.JSONDecodeError as e:
-                msg = f'invalid databag contents: expecting json. {databag}'
-                logger.error(msg)
-                raise DataValidationError(msg) from e
+    @classmethod
+    def load(cls, databag: MutableMapping[str, str]):
+        """Load this model from a Juju databag."""
+        if IS_PYDANTIC_V1:
+            return cls._load_v1(databag)
+        nest_under = cls.model_config.get('_NEST_UNDER')
+        if nest_under:
+            return cls.model_validate(json.loads(databag[nest_under]))
 
-            try:
-                return cls.parse_raw(json.dumps(data))  # type: ignore
-            except pydantic.ValidationError as e:
-                msg = f'failed to validate databag: {databag}'
-                logger.debug(msg, exc_info=True)
-                raise DataValidationError(msg) from e
+        try:
+            data = {
+                k: json.loads(v)
+                for k, v in databag.items()
+                # Don't attempt to parse model-external values
+                if k in {(f.alias or n) for n, f in cls.model_fields.items()}
+            }
+        except json.JSONDecodeError as e:
+            msg = f'invalid databag contents: expecting json. {databag}'
+            logger.error(msg)
+            raise DataValidationError(msg) from e
 
-        def dump(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
-            """Write the contents of this model to Juju databag.
+        try:
+            return cls.model_validate_json(json.dumps(data))
+        except pydantic.ValidationError as e:
+            msg = f'failed to validate databag: {databag}'
+            logger.debug(msg, exc_info=True)
+            raise DataValidationError(msg) from e
 
-            :param databag: the databag to write the data to.
-            :param clear: ensure the databag is cleared before writing it.
-            """
-            if clear and databag:
-                databag.clear()
+    @classmethod
+    def _load_v1(cls, databag: MutableMapping[str, str]):
+        """Load implementation for pydantic v1."""
+        if cls._NEST_UNDER:
+            return cls.parse_obj(json.loads(databag[cls._NEST_UNDER]))  # pyright: ignore[reportDeprecated]
 
-            if databag is None:
-                databag = {}
+        try:
+            data = {
+                k: json.loads(v)
+                for k, v in databag.items()
+                # Don't attempt to parse model-external values
+                if k in {f.alias for f in cls.__fields__.values()}  # pyright: ignore[reportDeprecated]
+            }
+        except json.JSONDecodeError as e:
+            msg = f'invalid databag contents: expecting json. {databag}'
+            logger.error(msg)
+            raise DataValidationError(msg) from e
 
-            if self._NEST_UNDER:
-                databag[self._NEST_UNDER] = self.json(by_alias=True, exclude_defaults=True)  # pyright: ignore[reportDeprecated]
-                return databag
+        try:
+            return cls.parse_raw(json.dumps(data))  # type: ignore
+        except pydantic.ValidationError as e:
+            msg = f'failed to validate databag: {databag}'
+            logger.debug(msg, exc_info=True)
+            raise DataValidationError(msg) from e
 
-            dct = self.dict(by_alias=True, exclude_defaults=True)  # pyright: ignore[reportDeprecated]
-            databag.update({k: json.dumps(v) for k, v in dct.items()})
+    def dump(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
+        """Write the contents of this model to Juju databag.
 
+        Args:
+            databag: The databag to write to.
+            clear: Whether to clear the databag before writing.
+
+        Returns:
+            MutableMapping: The databag.
+        """
+        if IS_PYDANTIC_V1:
+            return self._dump_v1(databag, clear)
+        if clear and databag:
+            databag.clear()
+
+        if databag is None:
+            databag = {}
+        nest_under = self.model_config.get('_NEST_UNDER')
+        if nest_under:
+            databag[nest_under] = self.model_dump_json(
+                by_alias=True,
+                # skip keys whose values are default
+                exclude_defaults=True,
+            )
             return databag
 
-    _DatabagModel = _DatabagModelPydanticV1
+        dct = self.model_dump(mode='json', by_alias=True, exclude_defaults=True)
+        databag.update({k: json.dumps(v) for k, v in dct.items()})
+        return databag
 
-else:
-    from pydantic import ConfigDict
+    def _dump_v1(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
+        """Dump implementation for pydantic v1."""
+        if clear and databag:
+            databag.clear()
 
-    class _DatabagModelPydanticV2(pydantic.BaseModel):
-        """Base databag model."""
+        if databag is None:
+            databag = {}
 
-        model_config = ConfigDict(
-            # tolerate additional keys in databag
-            extra='ignore',
-            # Allow instantiating this class by field name (instead of forcing alias).
-            populate_by_name=True,
-            # Custom config key: whether to nest the whole datastructure (as json)
-            # under a field or spread it out at the toplevel.
-            _NEST_UNDER=None,  # type: ignore
-        )
-        """Pydantic config."""
-
-        @classmethod
-        def load(cls, databag: MutableMapping[str, str]):
-            """Load this model from a Juju databag."""
-            nest_under = cls.model_config.get('_NEST_UNDER')
-            if nest_under:
-                return cls.model_validate(json.loads(databag[nest_under]))
-
-            try:
-                data = {
-                    k: json.loads(v)
-                    for k, v in databag.items()
-                    # Don't attempt to parse model-external values
-                    if k in {(f.alias or n) for n, f in cls.model_fields.items()}
-                }
-            except json.JSONDecodeError as e:
-                msg = f'invalid databag contents: expecting json. {databag}'
-                logger.error(msg)
-                raise DataValidationError(msg) from e
-
-            try:
-                return cls.model_validate_json(json.dumps(data))
-            except pydantic.ValidationError as e:
-                msg = f'failed to validate databag: {databag}'
-                logger.debug(msg, exc_info=True)
-                raise DataValidationError(msg) from e
-
-        def dump(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
-            """Write the contents of this model to Juju databag.
-
-            Args:
-                databag: The databag to write to.
-                clear: Whether to clear the databag before writing.
-
-            Returns:
-                MutableMapping: The databag.
-            """
-            if clear and databag:
-                databag.clear()
-
-            if databag is None:
-                databag = {}
-            nest_under = self.model_config.get('_NEST_UNDER')
-            if nest_under:
-                databag[nest_under] = self.model_dump_json(
-                    by_alias=True,
-                    # skip keys whose values are default
-                    exclude_defaults=True,
-                )
-                return databag
-
-            dct = self.model_dump(mode='json', by_alias=True, exclude_defaults=True)
-            databag.update({k: json.dumps(v) for k, v in dct.items()})
-
+        if self._NEST_UNDER:
+            databag[self._NEST_UNDER] = self.json(by_alias=True, exclude_defaults=True)  # pyright: ignore[reportDeprecated]
             return databag
 
-    _DatabagModel = _DatabagModelPydanticV2
+        dct = json.loads(self.json(by_alias=True, exclude_defaults=True))  # pyright: ignore[reportDeprecated]
+        databag.update({k: json.dumps(v) for k, v in dct.items()})
+
+        return databag
 
 
 class _Certificate(pydantic.BaseModel):
@@ -229,21 +216,21 @@ class _CertificateSigningRequest(pydantic.BaseModel):
     ca: bool | None
 
 
-class _ProviderApplicationData(cast('type[_DatabagModelPydanticV1]', _DatabagModel)):
+class _ProviderApplicationData(_DatabagModel):
     """Provider application data model."""
 
     # FIXME: mutable default? should it be Field(default_factory=list)?
-    certificates: list[_Certificate] = []  # noqa: RUF012
+    certificates: list[_Certificate] = []
 
 
-class _RequirerData(cast('type[_DatabagModelPydanticV1]', _DatabagModel)):
+class _RequirerData(_DatabagModel):
     """Requirer data model.
 
     The same model is used for the unit and application data.
     """
 
     # FIXME: mutable default? should it be Field(default_factory=list)?
-    certificate_signing_requests: list[_CertificateSigningRequest] = []  # noqa: RUF012
+    certificate_signing_requests: list[_CertificateSigningRequest] = []
 
 
 class Mode(Enum):
@@ -1652,7 +1639,10 @@ class TLSCertificatesRequiresV4(Object):
                             }
                         )
                         secret.set_info(
-                            expire=provider_certificate.certificate.expiry_time,
+                            expire=calculate_relative_datetime(
+                                target_time=provider_certificate.certificate.expiry_time,
+                                fraction=self.renewal_relative_time,
+                            ),
                         )
                         secret.get_content(refresh=True)
                     except SecretNotFoundError:
