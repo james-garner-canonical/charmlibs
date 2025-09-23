@@ -22,12 +22,6 @@ mkdir -p "$PACKED_DIR"
 
 for charm in 'provider' 'requirer'; do
     for variant in 'local' 'published'; do
-        # FIXME: remove this guard after publishing
-        if [ "$variant" == 'published' ]; then
-            : library is not published yet, skipping this charm
-            continue
-        fi
- 
         charm_tmp_dir="$TMP_DIR/$charm-$variant"
 
         : copy charm files to temporary directory for packing, dereferencing symlinks
