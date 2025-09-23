@@ -54,6 +54,8 @@ As an example of installing several Snaps and checking details::
 
 from ._snap import (
     Error,
+    JSONAble,
+    JSONType,
     MetaCache,
     Snap,
     SnapAPIError,
@@ -74,6 +76,8 @@ from ._version import __version__ as __version__
 
 __all__ = [
     'Error',
+    'JSONAble',
+    'JSONType',
     'MetaCache',
     'Snap',
     'SnapAPIError',
