@@ -1,16 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import jubilant
 import pytest
-
-
-@pytest.fixture(scope='session', autouse=True)
-def jubi(request: pytest.FixtureRequest):
-    yield
-    if request.session.testsfailed:
-        log = jubilant.Juju().debug_log(limit=1000)
-        print(log, end='')
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
