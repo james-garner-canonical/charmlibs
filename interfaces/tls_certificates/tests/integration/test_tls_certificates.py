@@ -34,30 +34,32 @@ class TestIntegration:
         self, ops_test: OpsTest
     ):
         assert ops_test.model
+        requirer_app_name = f"{TLS_CERTIFICATES_REQUIRER_APP_NAME}-upgrade"
+        provider_app_name = f"{TLS_CERTIFICATES_PROVIDER_APP_NAME}-upgrade"
 
         await ops_test.model.deploy(
             REQUIRER_PUBLISHED,
-            application_name=TLS_CERTIFICATES_REQUIRER_APP_NAME,
+            application_name=requirer_app_name,
             series="jammy",
         )
         await ops_test.model.deploy(
             PROVIDER_PUBLISHED,
-            application_name=TLS_CERTIFICATES_PROVIDER_APP_NAME,
+            application_name=provider_app_name,
             series="jammy",
         )
         # create a relation to requests certs
         await ops_test.model.add_relation(
-            relation1=TLS_CERTIFICATES_REQUIRER_APP_NAME,
-            relation2=TLS_CERTIFICATES_PROVIDER_APP_NAME,
+            relation1=requirer_app_name,
+            relation2=provider_app_name,
         )
 
         await ops_test.model.wait_for_idle(
-            apps=[TLS_CERTIFICATES_REQUIRER_APP_NAME, TLS_CERTIFICATES_PROVIDER_APP_NAME],
+            apps=[requirer_app_name, provider_app_name],
             status="active",
             timeout=1000,
         )
         # retrieve certs and validate
-        requirer_unit = ops_test.model.units[f"{TLS_CERTIFICATES_REQUIRER_APP_NAME}/0"]
+        requirer_unit = ops_test.model.units[f"{requirer_app_name}/0"]
         assert requirer_unit
 
         action = await requirer_unit.run_action(action_name="get-certificate")
@@ -71,15 +73,15 @@ class TestIntegration:
         assert "chain" in action_output and action_output["chain"] is not None
 
         # upgrade to the new version of the lib
-        await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].refresh(
+        await ops_test.model.applications[requirer_app_name].refresh(
             path=REQUIRER_LOCAL,
         )
 
-        await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].refresh(
+        await ops_test.model.applications[provider_app_name].refresh(
             path=PROVIDER_LOCAL,
         )
         await ops_test.model.wait_for_idle(
-            apps=[TLS_CERTIFICATES_REQUIRER_APP_NAME, TLS_CERTIFICATES_PROVIDER_APP_NAME],
+            apps=[requirer_app_name, provider_app_name],
             status="active",
             timeout=1000,
         )
@@ -91,12 +93,12 @@ class TestIntegration:
         )
         assert action_output["return-code"] == 0
         await ops_test.model.wait_for_idle(
-            apps=[TLS_CERTIFICATES_REQUIRER_APP_NAME, TLS_CERTIFICATES_PROVIDER_APP_NAME],
+            apps=[requirer_app_name, provider_app_name],
             status="active",
             timeout=1000,
         )
         # retrieve certs and validate
-        requirer_unit = ops_test.model.units[f"{TLS_CERTIFICATES_REQUIRER_APP_NAME}/0"]
+        requirer_unit = ops_test.model.units[f"{requirer_app_name}/0"]
         assert requirer_unit
 
         action = await requirer_unit.run_action(action_name="get-certificate")
@@ -110,8 +112,8 @@ class TestIntegration:
         assert "chain" in action_output and action_output["chain"] is not None
 
         # tear down so that the rest of the tests can run as normal
-        await ops_test.model.applications[TLS_CERTIFICATES_REQUIRER_APP_NAME].remove()
-        await ops_test.model.applications[TLS_CERTIFICATES_PROVIDER_APP_NAME].remove()
+        await ops_test.model.applications[requirer_app_name].remove()
+        await ops_test.model.applications[provider_app_name].remove()
 
     async def test_given_charms_packed_when_deploy_charm_then_status_is_blocked(
         self, ops_test: OpsTest
