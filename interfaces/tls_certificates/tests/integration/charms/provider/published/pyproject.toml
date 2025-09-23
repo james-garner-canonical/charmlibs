@@ -7,4 +7,5 @@ dependencies = [
     "ops",
     "cryptography",
     # "charmlibs-interfaces-tls_certificates",  # TODO: uncomment after publishing
+    "pydantic",
 ]
