@@ -12,11 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }} package."""
+"""Integration tests using real Juju and pre-packed charm(s)."""
 
-from ._version import __version__ as __version__
+import jubilant
 
-__all__ = [
-    # only the names listed in __all__ are imported when executing:
-    # from charmlibs.{{ cookiecutter.project_slug }} import *
-]
+from charmlibs.interfaces import example
+
+
+def test_deploy(juju: jubilant.Juju, charm: str):
+    """The deployment takes place in the module scoped `juju` fixture."""
+    assert charm in juju.status().apps
+
+
+def test_lib_version(juju: jubilant.Juju, charm: str):
+    result = juju.run(f'{charm}/0', 'lib-version')
+    assert result.results['version'] == example.__version__

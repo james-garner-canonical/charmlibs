@@ -12,11 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }} package."""
-
-from ._version import __version__ as __version__
-
-__all__ = [
-    # only the names listed in __all__ are imported when executing:
-    # from charmlibs.{{ cookiecutter.project_slug }} import *
-]
+"""Fixtures for functional tests, which interact with the real system, but not with Juju."""

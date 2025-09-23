@@ -12,29 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Common charm code for integration test charms.
-
-This file is symlinked alongside src/charm.py by these charms.
-"""
+"""Machine charm for testing."""
 
 import logging
 
+import common
 import ops
-
-from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug }}
 
 logger = logging.getLogger(__name__)
 
 
-class Charm(ops.CharmBase):
+class Charm(common.Charm):
     """Charm the application."""
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        framework.observe(self.on['lib-version'].action, self._on_lib_version)
+        framework.observe(self.on.start, self._on_start)
 
-    def _on_lib_version(self, event: ops.ActionEvent):
-        logger.info('action [lib-version] called with params: %s', event.params)
-        results = {'version': {{ cookiecutter.project_slug }}.__version__}
-        event.set_results(results)
-        logger.info('action [lib-version] set_results: %s', results)
+    def _on_start(self, event: ops.StartEvent):
+        """Handle start event."""
+        self.unit.status = ops.ActiveStatus()
+
+
+if __name__ == '__main__':  # pragma: nocover
+    ops.main(Charm)

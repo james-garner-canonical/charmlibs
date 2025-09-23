@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }} package."""
+"""Unit tests for library code, not involving charm code."""
 
-from ._version import __version__ as __version__
+from charmlibs.interfaces import example
 
-__all__ = [
-    # only the names listed in __all__ are imported when executing:
-    # from charmlibs.{{ cookiecutter.project_slug }} import *
-]
+
+def test_version():
+    assert isinstance(example.__version__, str)
