@@ -117,7 +117,6 @@ class TestIntegration:
         self, ops_test: OpsTest
     ):
         assert ops_test.model
-        print(list(PACKED_DIR.iterdir()))
         await ops_test.model.deploy(
             REQUIRER_LOCAL,
             application_name=TLS_CERTIFICATES_REQUIRER_APP_NAME,
