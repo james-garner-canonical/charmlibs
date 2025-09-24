@@ -135,7 +135,10 @@ __all__ = [
 ```
 
 You can try out your new function in an interactive shell like we did before.
-You can also test out your library in your charms by adding it as a [git dependency](python-package-distribution-git).
+To test your library in charms outside this repo, consider using a [git dependency](python-package-distribution-git) on your branch, like this:
+```bash
+uv add git+https://github.com/<USERNAME>/charmlibs@<BRANCH>#subdirectory=uptime
+```
 
 In the next sections, we'll add tests to the library to verify it works as intended.
 
