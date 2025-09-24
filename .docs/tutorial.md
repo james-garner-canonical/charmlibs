@@ -306,11 +306,11 @@ If you're following along with your own library, then see the next section for h
 Otherwise, if you're using the `uptime` example, open a PR against the `main` branch of your fork -- just make sure you enable the workflows first!
 You'll be prompted to do this if you visit `https://github.com/<USERNAME>/charmlibs/actions`. 
 
-## Add your library to the `charmlibs` monorepo
+## Next steps
 
-You don't need to follow this step if you're using the `uptime` example.
+You can stop here if you're using the `uptime` example.
 
-If you're following along with your own code, you'll want to make a PR to add your library to the `charmlibs` monorepo.
+If you're following along with your own code though, you'll probably want to make a PR to add your library to the `charmlibs` monorepo.
 However, there's one important step we must do first: add an entry to the [CODEOWNERS](https://github.com/canonical/charmlibs/blob/main/CODEOWNERS) file.
 
 Scan through `CODEOWNERS` and find the correct place to enter your library alphabetically.
