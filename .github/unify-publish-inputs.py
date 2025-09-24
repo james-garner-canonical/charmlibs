@@ -32,15 +32,7 @@ def _main() -> None:
     event_name = os.environ['GITHUB_EVENT_NAME']
     event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
     if event_name == 'push':
-        cmd = [
-            'uv',
-            'run',
-            '--script',
-            '--no-project',
-            pathlib.Path('.github', 'get-packages-to-publish.py'),
-            event['before'],
-            os.environ['GITHUB_SHA'],
-        ]
+        cmd = ['.github/get-packages-to-publish.py', event['before'], os.environ['GITHUB_SHA']]
         _output({
             'packages': subprocess.check_output(cmd, text=True).strip(),
             'skip-juju': 'false',

@@ -39,7 +39,7 @@ jobs:
           NEW_REF: ${{ github.event.pull_request.head.sha }}
         run: |
           set -xueo pipefail
-          PACKAGES="$(uv run --no-project --script .github/get-packages-to-publish.py --exclude-placeholders $OLD_REF $NEW_REF)"
+          PACKAGES="$(.github/get-packages-to-publish.py --exclude-placeholders $OLD_REF $NEW_REF)"
           echo "publish=${PACKAGES}" >> $GITHUB_OUTPUT
 
   tests:
