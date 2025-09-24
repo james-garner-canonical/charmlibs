@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.packages.outputs.packages }}
+      packages-to-publish: ${{ github.event_name == 'pull_request' && steps.publish.outputs.packages || '[]' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,6 +30,11 @@ jobs:
       - name: Collect changed packages
         id: packages
         run: uv run --no-project --script .github/get-packages.py ${{ github.base_ref }}
+
+      - name: Collect packages that would be published on merge
+        id: publish
+        if: github.event_name == 'pull_request'
+        run: echo "publish=$(uv run --no-project --script .github/get-packages-to-publish.py ${{ github.base_ref }} ${{ github.head_ref }})" >> $GITHUB_OUTPUT
 
   tests:
     needs: [fast-lint, get-packages]
@@ -81,3 +87,18 @@ jobs:
           STATUS=$(git status --porcelain)
           echo "$STATUS"
           test -z "$STATUS"
+
+  changelog-updated-for-release:
+    needs: [get-packages]
+    if: ${{ needs.get-packages.outputs.packages-to-publish != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.get-packages.outputs.packages-to-publish) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure CHANGELOG.md has been updated
+        run: git diff --name-only ${{ github.base_ref }} | grep -q '^${{ matrix.package }}/CHANGELOG.md$'
