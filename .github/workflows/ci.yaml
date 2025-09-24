@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.packages.outputs.packages }}
-      packages-to-publish: ${{ github.event_name == 'pull_request' && steps.publish.outputs.publish || '[]' }}
+      packages-to-publish: ${{ steps.publish.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,13 +33,16 @@ jobs:
 
       - name: Collect packages that would be published on merge
         id: publish
-        if: github.event_name == 'pull_request'
         env:
           OLD_REF: ${{ github.event.pull_request.base.sha }}
           NEW_REF: ${{ github.event.pull_request.head.sha }}
         run: |
           set -xueo pipefail
-          PACKAGES="$(.github/get-packages-to-publish.py --exclude-placeholders $OLD_REF $NEW_REF)"
+          if [ github.event_name = 'pull_request' ]; then
+            PACKAGES="$(.github/get-packages-to-publish.py --exclude-placeholders $OLD_REF $NEW_REF)"
+          else
+            PACKAGES='[]'
+          fi
           echo "publish=${PACKAGES}" >> $GITHUB_OUTPUT
 
   tests:
