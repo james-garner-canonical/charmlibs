@@ -39,8 +39,8 @@ def _parse_args() -> tuple[str, str, bool]:
     return args.old_ref, args.new_ref, args.exclude_placeholders
 
 
-def _main(old_ref: str, new_ref: str) -> None:
-    packages = _get_packages(old_ref, new_ref)
+def _main(old_ref: str, new_ref: str, exclude_placeholders: bool) -> None:
+    packages = _get_packages(old_ref, new_ref, exclude_placeholders=exclude_placeholders)
     print(json.dumps(packages))
 
 
