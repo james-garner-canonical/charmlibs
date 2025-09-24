@@ -12,15 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fixtures for unit tests, typically mocking out parts of the external system."""
+"""Unit tests for library code, not involving charm code."""
 
-import datetime
-
-import psutil
-import pytest
+from charmlibs import uptime
 
 
-@pytest.fixture(autouse=True)
-def mock_boot_time(monkeypatch: pytest.MonkeyPatch) -> None:
-    timestamp = datetime.datetime(2004, 10, 20).timestamp()
-    monkeypatch.setattr(psutil, 'boot_time', lambda: timestamp)
+def test_version():
+    assert isinstance(uptime.__version__, str)

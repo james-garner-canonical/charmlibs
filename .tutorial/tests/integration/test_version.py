@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fixtures for unit tests, typically mocking out parts of the external system."""
+"""Integration tests using real Juju and pre-packed charm(s)."""
 
-import datetime
+import jubilant
 
-import psutil
-import pytest
+from charmlibs import uptime
 
 
-@pytest.fixture(autouse=True)
-def mock_boot_time(monkeypatch: pytest.MonkeyPatch) -> None:
-    timestamp = datetime.datetime(2004, 10, 20).timestamp()
-    monkeypatch.setattr(psutil, 'boot_time', lambda: timestamp)
+def test_deploy(juju: jubilant.Juju, charm: str):
+    """The deployment takes place in the module scoped `juju` fixture."""
+    assert charm in juju.status().apps
+
+
+def test_lib_version(juju: jubilant.Juju, charm: str):
+    result = juju.run(f'{charm}/0', 'lib-version')
+    assert result.results['version'] == uptime.__version__
