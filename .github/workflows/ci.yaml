@@ -110,9 +110,7 @@ jobs:
           set -xueo pipefail
           OLD_REF=${{ github.event.pull_request.base.sha }}
           NEW_REF=${{ github.event.pull_request.head.sha }}
-          DIFF=$(git diff --name-only $OLD_REF $NEW_REF)
-          echo $DIFF
-          if echo $DIFF | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
+          if git diff --name-only $OLD_REF $NEW_REF | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
               echo 'CHANGELOG.md updated :)'
           else
               echo 'CHANGELOG.md must be updated!'
