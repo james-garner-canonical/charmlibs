@@ -106,4 +106,15 @@ jobs:
         with:
           fetch-depth: 0
       - name: Ensure CHANGELOG.md has been updated
-        run: git diff --name-only ${{ github.base_ref }} | grep -q '^${{ matrix.package }}/CHANGELOG.md$'
+        run: |
+          set -xueo pipefail
+          OLD_REF=${{ github.event.pull_request.base.sha }}
+          NEW_REF=${{ github.event.pull_request.head.sha }}
+          DIFF=$(git diff --name-only $OLD_REF $NEW_REF)
+          echo $DIFF
+          if echo $DIFF | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
+              echo 'CHANGELOG.md updated :)'
+          else
+              echo 'CHANGELOG.md must be updated!'
+              exit 1
+          fi
