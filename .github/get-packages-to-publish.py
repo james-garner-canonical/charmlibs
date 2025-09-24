@@ -30,12 +30,13 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(pathlib.Path()
 logger.setLevel(logging.DEBUG)
 
 
-def _parse_args() -> tuple[str, str]:
+def _parse_args() -> tuple[str, str, bool]:
     parser = argparse.ArgumentParser()
     parser.add_argument('old_ref')
     parser.add_argument('new_ref')
+    parser.add_argument('--exclude-placeholders', action='store_true')
     args = parser.parse_args()
-    return args.old_ref, args.new_ref
+    return args.old_ref, args.new_ref, args.exclude_placeholders
 
 
 def _main(old_ref: str, new_ref: str) -> None:
@@ -43,7 +44,7 @@ def _main(old_ref: str, new_ref: str) -> None:
     print(json.dumps(packages))
 
 
-def _get_packages(old_ref: str, new_ref: str) -> list[str]:
+def _get_packages(old_ref: str, new_ref: str, exclude_placeholders: bool) -> list[str]:
     changes = _get_changes(old_ref, new_ref)
     with tempfile.TemporaryDirectory() as td1:
         new_root = pathlib.Path(td1)
@@ -51,8 +52,12 @@ def _get_packages(old_ref: str, new_ref: str) -> list[str]:
         all_packages = [
             str(pathlib.Path(p).relative_to(new_root))
             for p in (
-                *_get_all_packages(new_root, exclude='interfaces'),
-                *_get_all_packages(new_root / 'interfaces'),
+                *_get_all_packages(
+                    new_root, exclude='interfaces', exclude_placeholders=exclude_placeholders
+                ),
+                *_get_all_packages(
+                    new_root / 'interfaces', exclude_placeholders=exclude_placeholders
+                ),
             )
         ]
         changed_packages = sorted(changes.intersection(all_packages))
@@ -86,9 +91,14 @@ def _get_changes(old_ref: str, new_ref: str) -> set[str]:
     return changes
 
 
-def _get_all_packages(root: pathlib.Path | str, exclude: str | None = None) -> list[str]:
+def _get_all_packages(
+    root: pathlib.Path | str, exclude: str | None = None, exclude_placeholders: bool = False
+) -> list[str]:
+    paths: list[pathlib.Path] = []
     root = pathlib.Path(root)
-    paths = [root / '.package', *root.glob(r'[a-z]*')]
+    if not exclude_placeholders:
+        paths.append(root / '.package')
+    paths.extend(root.glob(r'[a-z]*'))
     return sorted(str(path) for path in paths if path.is_dir() and path.name != exclude)
 
 
