@@ -34,7 +34,12 @@ jobs:
       - name: Collect packages that would be published on merge
         id: publish
         if: github.event_name == 'pull_request'
-        run: echo "publish=$(uv run --no-project --script .github/get-packages-to-publish.py ${{ github.base_ref }} ${{ github.head_ref }})" >> $GITHUB_OUTPUT
+        run: |
+          set -xueo pipefail
+          OLD_REF=${{ github.event.pull_request.base.sha }}
+          NEW_REF=${{ github.event.pull_request.head.sha }}
+          PACKAGES="$(uv run --no-project --script .github/get-packages-to-publish.py $OLD_REF $NEW_REF)"
+          echo "publish=${PACKAGES}" >> $GITHUB_OUTPUT
 
   tests:
     needs: [fast-lint, get-packages]
