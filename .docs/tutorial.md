@@ -153,7 +153,7 @@ The `charmlibs` monorepo supports three distinct types of tests: unit, functiona
 The template starts you off with a simple passing test for each.
 We'll add a test of each kind for our `uptime` library in the following sections.
 
-> Read more: {ref}`charmlibs-tests`.
+> Read more: {ref}`charmlibs-tests`
 
 ### Add unit tests
 
@@ -222,7 +222,7 @@ In this repository, functional tests are essentially integration or end-to-end t
 In contrast to unit tests, which typically mock out external concerns, functional tests interact with real systems, external processes, and networks.
 However, they do not interact with a real Juju environment, which is reserved for tests under the `integration/` directory.
 
-> Read more: {ref}`how-to-customize-functional-tests`.
+> Read more: {ref}`how-to-customize-functional-tests`
 
 Functional tests for our `uptime` package look similar to the unit tests, but we won't mock anything out.
 
@@ -253,7 +253,7 @@ Integration tests are the most complicated and most heavyweight part of the libr
 They involve packing a real charm that includes your library, and deploying it on a real Juju model.
 They can be customized in several ways depending on your library's needs.
 
-> Read more: {ref}`how-to-customize-integration-tests`.
+> Read more: {ref}`how-to-customize-integration-tests`
 
 For now, we'll just add an integration test for our `uptime` function.
 
@@ -326,3 +326,5 @@ Review will automatically be requested from `canonical/charmlibs-maintainers`.
 Their review will cover whether the name and purpose of the library is appropriate (for example, not redundant with an existing library), as well as the library's design and general code review.
 This type of review will be repeated for major version bumps of your library.
 All other releases will only require `CODEOWNERS` approval.
+
+> Read more: {ref}`charmlibs-publishing`
