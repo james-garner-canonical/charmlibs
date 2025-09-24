@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.packages.outputs.packages }}
-      packages-to-publish: ${{ github.event_name == 'pull_request' && steps.publish.outputs.packages || '[]' }}
+      packages-to-publish: ${{ github.event_name == 'pull_request' && steps.publish.outputs.publish || '[]' }}
     steps:
       - uses: actions/checkout@v4
         with:
