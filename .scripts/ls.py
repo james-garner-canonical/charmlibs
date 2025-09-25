@@ -47,7 +47,7 @@ class _Args:
     refs: tuple[str, str | None] | None
     include_examples: bool
     include_placeholders: bool
-    only_version_changes: bool
+    only_if_version_changed: bool
 
     @classmethod
     def from_cli(cls) -> _Args:
@@ -57,14 +57,14 @@ class _Args:
         parser.add_argument('new_ref', nargs='?')
         parser.add_argument('--exclude-examples', action='store_true')
         parser.add_argument('--exclude-placeholders', action='store_true')
-        parser.add_argument('--only-version-changes', action='store_true')
+        parser.add_argument('--only-if-version-changed', action='store_true')
         args = parser.parse_args()
         return cls(
             kind=args.kind,
             refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
             include_examples=not args.exclude_examples,
             include_placeholders=not args.exclude_placeholders,
-            only_version_changes=args.only_version_changes,
+            only_if_version_changed=args.only_if_version_changed,
         )
 
 
@@ -85,7 +85,7 @@ def _ls(args: _Args) -> list[str]:
     if args.refs:
         old_ref, new_ref = args.refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
-        if args.only_version_changes and args.kind == 'packages':
+        if args.only_if_version_changed and args.kind == 'packages':
             dirs = _changed_version_only(dirs, old_ref=old_ref, new_ref=new_ref)
     return [str(p) for p in dirs]
 

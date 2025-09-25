@@ -33,7 +33,7 @@ def _main() -> None:
             event['before'],
             os.environ['GITHUB_SHA'],
             '--exclude-examples',
-            '--only-version-changed',
+            '--only-if-version-changed',
         ]
         _output({
             'packages': subprocess.check_output(cmd, text=True).strip(),
