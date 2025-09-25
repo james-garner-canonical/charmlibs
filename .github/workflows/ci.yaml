@@ -28,7 +28,7 @@ jobs:
 
       - name: Collect changed packages
         id: packages
-        run: .github/get-changed-packages-for-tests.py ${{ github.event.pull_request.base.sha }}
+        run: .github/get-packages.py ${{ github.event.pull_request.base.sha }}
 
   tests:
     needs: [fast-lint, get-packages]
