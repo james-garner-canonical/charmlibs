@@ -29,7 +29,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - id: main
-        run: uv run --no-project --script .github/unify-publish-inputs.py
+        run: .github/get-unified-publish-inputs.py
 
   tests:
     needs: unify-inputs
