@@ -1,5 +1,3 @@
-#!/usr/bin/env -S uv run --script --no-project
-
 # Copyright 2024 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
