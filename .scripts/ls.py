@@ -31,7 +31,7 @@ import pathlib
 import subprocess
 import tarfile
 import tempfile
-from typing import Iterable, Iterator, Sequence
+from typing import Iterable, Iterator, Literal, Sequence
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(pathlib.Path().absolute())))
@@ -43,7 +43,7 @@ _INTERFACES = _REPO_ROOT / 'interfaces'
 
 
 @dataclasses.dataclass
-class Args:
+class _Args:
     kind: Literal['packages', 'interfaces']
     refs: tuple[str, str | None] | None
     include_examples: bool
@@ -51,7 +51,7 @@ class Args:
     only_version_changes: bool
 
     @classmethod
-    def from_cli(cls) -> Args:
+    def from_cli(cls) -> _Args:
         parser = argparse.ArgumentParser()
         parser.add_argument('kind', choices=('packages', 'interfaces'))
         parser.add_argument('old_ref', nargs='?')
@@ -69,7 +69,7 @@ class Args:
         )
 
 
-def _ls(args: Args) -> list[str]:
+def _ls(args: _Args) -> list[str]:
     # create include list
     include: list[str] = []
     if args.include_examples:
@@ -175,4 +175,4 @@ def _get_version(root: pathlib.Path, package: pathlib.Path | str) -> str | None:
 
 
 if __name__ == '__main__':
-    print(json.dumps(_ls(Args.from_cli())))
+    print(json.dumps(_ls(_Args.from_cli())))
