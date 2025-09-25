@@ -31,7 +31,6 @@ import pathlib
 import subprocess
 import tarfile
 import tempfile
-from typing import Iterable, Iterator, Literal, Sequence
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
@@ -42,7 +41,7 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 @dataclasses.dataclass
 class _Args:
-    kind: Literal['packages', 'interfaces']
+    kind: str
     refs: tuple[str, str | None] | None
     include_examples: bool
     include_placeholders: bool
@@ -89,7 +88,7 @@ def _ls(args: _Args) -> list[str]:
     return [str(p) for p in dirs]
 
 
-def _packages(include: Iterable[str] = ()) -> list[pathlib.Path]:
+def _packages(include: list[str] = ()) -> list[pathlib.Path]:
     paths: set[pathlib.Path] = set()
     for root in _REPO_ROOT, _INTERFACES:
         paths.update(root.glob(r'[a-z]*'))
@@ -97,13 +96,13 @@ def _packages(include: Iterable[str] = ()) -> list[pathlib.Path]:
     return sorted(p.relative_to(_REPO_ROOT) for p in paths if (p / 'pyproject.toml').exists())
 
 
-def _interfaces(include: Iterable[str] = ()) -> list[pathlib.Path]:
+def _interfaces(include: list[str] = ()) -> list[pathlib.Path]:
     paths = {*_INTERFACES.glob(r'[a-z]*'), *(_INTERFACES / i for i in include)}
     return sorted(p.relative_to(_REPO_ROOT) for p in paths if (p / 'interface').is_dir())
 
 
 def _changed_only(
-    dirs: Iterable[pathlib.Path], old_ref: str, new_ref: str | None
+    dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
 ) -> list[pathlib.Path]:
     cmd = ['git', 'diff', '--name-only', old_ref]
     if new_ref is not None:
@@ -121,7 +120,7 @@ def _changed_only(
 
 
 def _changed_version_only(
-    dirs: Sequence[pathlib.Path], old_ref: str, new_ref: str | None
+    dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
 ) -> list[pathlib.Path]:
     with _snapshot_repo(old_ref) as root:
         old_versions = {p: _get_version(root, p) for p in dirs}
@@ -138,7 +137,7 @@ def _changed_version_only(
 
 
 @contextlib.contextmanager
-def _snapshot_repo(ref: str) -> Iterator[pathlib.Path]:
+def _snapshot_repo(ref: str):
     if ref is None:
         yield _REPO_ROOT
         return
