@@ -33,7 +33,6 @@ import tarfile
 import tempfile
 from typing import Iterable, Iterator, Literal, Sequence
 
-_GLOBAL_FILES = ('.github', 'justfile', 'pyproject.toml')
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
 
