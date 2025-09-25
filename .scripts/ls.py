@@ -78,7 +78,7 @@ def _ls(args: _Args) -> list[str]:
     elif args.kind == 'interfaces':
         dirs = _interfaces(include=include)
     else:
-        ValueError(f'Unknown value for `kind` {args}')
+        raise ValueError(f'Unknown value for `kind` {args}')
     # filter based on changes
     if args.refs:
         old_ref, new_ref = args.refs
@@ -88,7 +88,7 @@ def _ls(args: _Args) -> list[str]:
     return [str(p) for p in dirs]
 
 
-def _packages(include: list[str] = ()) -> list[pathlib.Path]:
+def _packages(include: list[str]) -> list[pathlib.Path]:
     paths: set[pathlib.Path] = set()
     for root in _REPO_ROOT, _INTERFACES:
         paths.update(root.glob(r'[a-z]*'))
@@ -96,7 +96,7 @@ def _packages(include: list[str] = ()) -> list[pathlib.Path]:
     return sorted(p.relative_to(_REPO_ROOT) for p in paths if (p / 'pyproject.toml').exists())
 
 
-def _interfaces(include: list[str] = ()) -> list[pathlib.Path]:
+def _interfaces(include: list[str]) -> list[pathlib.Path]:
     paths = {*_INTERFACES.glob(r'[a-z]*'), *(_INTERFACES / i for i in include)}
     return sorted(p.relative_to(_REPO_ROOT) for p in paths if (p / 'interface').is_dir())
 
@@ -111,7 +111,7 @@ def _changed_only(
     if new_ref is None:  # include untracked files when run w/out explicit new ref for local tests
         cmd = ['git', 'ls-files', '--others', '--exclude-standard']
         names.extend(subprocess.check_output(cmd, text=True).strip().splitlines())
-    changes: set[str] = set()
+    changes: set[pathlib.Path] = set()
     for name in names:
         parts = pathlib.Path(name).parts
         changes.add(pathlib.Path(parts[0]))
@@ -126,7 +126,7 @@ def _changed_version_only(
         old_versions = {p: _get_version(root, p) for p in dirs}
     with _snapshot_repo(new_ref) as root:
         new_versions = {p: _get_version(root, p) for p in dirs}
-    packages_to_release: list[str] = []
+    packages_to_release: list[pathlib.Path] = []
     for p in dirs:
         old = old_versions[p]
         new = new_versions[p]
@@ -137,7 +137,7 @@ def _changed_version_only(
 
 
 @contextlib.contextmanager
-def _snapshot_repo(ref: str):
+def _snapshot_repo(ref: str | None):
     if ref is None:
         yield _REPO_ROOT
         return
