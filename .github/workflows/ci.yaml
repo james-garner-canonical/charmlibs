@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.packages.outputs.packages }}
+      packages-to-publish: ${{ steps.publish.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,6 +30,20 @@ jobs:
       - name: Collect changed packages
         id: packages
         run: uv run --no-project --script .github/get-packages.py ${{ github.base_ref }}
+
+      - name: Collect packages that would be published on merge
+        id: publish
+        env:
+          OLD_REF: ${{ github.event.pull_request.base.sha }}
+          NEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -xueo pipefail
+          if [ github.event_name = 'pull_request' ]; then
+            PACKAGES="$(.github/get-packages-to-publish.py --exclude-placeholders $OLD_REF $NEW_REF)"
+          else
+            PACKAGES='[]'
+          fi
+          echo "publish=${PACKAGES}" >> $GITHUB_OUTPUT
 
   tests:
     needs: [fast-lint, get-packages]
@@ -81,3 +96,28 @@ jobs:
           STATUS=$(git status --porcelain)
           echo "$STATUS"
           test -z "$STATUS"
+
+  changelog-updated-for-release:
+    needs: [get-packages]
+    if: ${{ needs.get-packages.outputs.packages-to-publish != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.get-packages.outputs.packages-to-publish) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure CHANGELOG.md has been updated
+        env:
+          OLD_REF: ${{ github.event.pull_request.base.sha }}
+          NEW_REF: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -xueo pipefail
+          if git diff --name-only $OLD_REF $NEW_REF | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
+              echo 'CHANGELOG.md updated :)'
+          else
+              echo 'CHANGELOG.md must be updated!'
+              exit 1
+          fi
