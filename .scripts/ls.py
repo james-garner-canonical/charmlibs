@@ -53,32 +53,12 @@ class Args:
     @classmethod
     def from_cli(cls) -> Args:
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            'kind', choices=('packages', 'interfaces'), help='List packages or interfaces.'
-        )
-        parser.add_argument(
-            'old_ref',
-            nargs='?',
-            help='If provided, only output packages changed since this git reference.',
-        )
-        parser.add_argument(
-            'new_ref',
-            nargs='?',
-            help='Second git reference for diff. Compare to current working tree if omitted.',
-        )
-        parser.add_argument(
-            '--exclude-placeholders',
-            action='store_true',
-            help='Exclude namespace placeholder packages.',
-        )
-        parser.add_argument(
-            '--exclude-examples', action='store_true', help='Exclude example packages.',
-        )
-        parser.add_argument(
-            '--only-version-changes',
-            action='store_true',
-            help='Only output packages whose versions have changed.',
-        )
+        parser.add_argument('kind', choices=('packages', 'interfaces'))
+        parser.add_argument('old_ref', nargs='?')
+        parser.add_argument('new_ref', nargs='?')
+        parser.add_argument('--exclude-placeholders', action='store_true')
+        parser.add_argument('--exclude-examples', action='store_true')
+        parser.add_argument('--only-version-changes', action='store_true')
         args = parser.parse_args()
         return cls(
             kind=args.kind,
