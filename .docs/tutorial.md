@@ -32,6 +32,15 @@ This repository uses [just](https://github.com/casey/just) as a command runner. 
 uv tool install rust-just
 ```
 
+If you want to run the Juju integration tests locally, you'll also need `charmcraft`installed for packing, as well as a Juju controller for your local K8s or machine clouds.
+In CI, these are installed and set up for you using [concierge](https://github.com/canonical/concierge?tab=readme-ov-file#presets), with the `microk8s` and `machine` presets.
+The `dev` preset is suitable for local development and testing of both K8s and machine charms, but you may find it easier to run the Juju integration tests in CI when following this tutorial.
+
+> See more:
+> - {ref}`Charmcraft | Install charmcraft <charmcraft:manage-charmcraft>`
+> - {ref}`Juju | Set up your Juju deployment <juju:set-up-your-deployment>`
+> - {ref}`Juju | Set up an isolated environment <juju:set-things-up>`
+
 If you're not already using some alternative authentication for `git push`, you'll also want to [make sure you've set up your Github account with your SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
 
 ## Create a library from the template
@@ -286,6 +295,10 @@ def _on_charm_uptime(self, event: ops.ActionEvent):
     event.set_results(results)
     logger.info('action [charm-uptime] set_results: %s', results)
 ```
+And observe the new method in `Charm.__init__`:
+```python
+framework.observe(self.on['charm-uptime'].action, self._on_charm_uptime)
+```
 
 Finally, we'll need a test to exercise this code. Copy `tests/integration/test_version.py`, to `tests/integration/test_uptime.py`, and add this import to `test_uptime.py`:
 ```python
@@ -298,8 +311,10 @@ def test_charm_uptime(juju: jubilant.Juju, charm: str):
     uptime_seconds = json.loads(result.results['uptime'])
     assert uptime_seconds > 0.0
 ```
+You'll also want to remove the `from charmlibs import uptime` line since it's now unused, and linting will complain about the unused import.
 
 You can test this locally by running `just pack-k8s uptime` and `just pack-machine uptime` to pack your K8s and machine charms, and then running `just integration-k8s uptime` and `just integration-machine uptime` to deploy the charms on your local Juju K8s and machine clouds and test them.
+Note that this will require `charmcraft` installed locally for packing, and a Juju controller available for the K8s or machine clouds.
 
 However, you may find it easier to run the integration tests in CI instead, which is most easily done by opening a pull request.
 If you're following along with your own library, then see the next section for how to do this for real.

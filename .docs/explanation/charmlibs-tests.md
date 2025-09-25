@@ -5,15 +5,18 @@ In addition to static analysis, the `charmlibs` monorepo supports running three 
 These are all optional from the perspective of the repository infrastructure, and will be skipped if the corresponding `tests/` directory does not exist.
 For example, if `<LIBRARY>/tests/functional` does not exist, then the functional testing job will be skipped for `<LIBRARY>`.
 
-`just <TESTS> <LIBRARY>` will run the tests under `<LIBRARY/tests/<TESTS>` with `pytest`.
+`just <TESTS> <LIBRARY>` will run the tests under `<LIBRARY>/tests/<TESTS>` with `pytest`.
 `<TESTS>` is one of unit, functional, or integration.
 `<LIBRARY>` is the path from the repository root to the library, for example `pathops` or `interfaces/.example`.
 
-Extra arguments are passed to `pytest`, so you can, for example, use `-k` to select specific tests, or pass `-x` to exit early on failure.
+Extra arguments are passed to [pytest](https://docs.pytest.org/en/6.2.x/usage.html). For example:
+```bash
+just unit pathops -x  # exit on first failure
+```
 The specific version of `pytest` to run is specified in the repository's `test-requirements.txt`.
 
 ```{tip}
-`just` command can be invoked from anywhere in the repository, as they always execute from the location of the `justfile`.
+`just` commands can be invoked from anywhere in the repository, as they always execute from the location of the `justfile`.
 ```
 
 ## Unit tests
@@ -30,7 +33,7 @@ just unit <LIBRARY>
 Functional tests are intended to be end-to-end tests of everything except the real Juju environment.
 Interacting with Juju itself is reserved for integration tests.
 Functional tests are most useful for libraries that interact with some significant external component that can be decoupled from the Juju context.
-For example, the `apt` and `snap` packages interact with the Ubuntu system's package management, the majority of which will be the same regardless of whether they're being called from a (machine) charm or not.
+For example, the `apt` and `snap` packages interact with the Ubuntu system's package management tools, which will broadly act the same regardless of whether they're being called from a charm. (For machine charms, at least.)
 
 Execute these tests locally with:
 ```bash
