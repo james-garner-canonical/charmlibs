@@ -69,18 +69,16 @@ class _Args:
 
 
 def _ls(args: _Args) -> list[str]:
-    # create include list
     include: list[str] = []
     if args.include_examples:
         include.extend(('.example', '.tutorial'))
     if args.include_placeholders:
         include.append('.package')
     # collect packages or interfaces
-    dirs: list[pathlib.Path] = []
     if args.kind == 'packages':
-        dirs.extend(_packages(include=include))
+        dirs = _packages(include=include)
     elif args.kind == 'interfaces':
-        dirs.extend(_interfaces(include=include))
+        dirs = _interfaces(include=include)
     else:
         ValueError(f'Unknown value for `kind` {args}')
     # filter based on changes
