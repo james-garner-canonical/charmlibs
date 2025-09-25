@@ -46,8 +46,8 @@ _INTERFACES = _REPO_ROOT / 'interfaces'
 class Args:
     kind: Literal['packages', 'interfaces']
     refs: tuple[str, str | None] | None
-    examples: bool
-    placeholders: bool
+    include_examples: bool
+    include_placeholders: bool
     only_version_changes: bool
 
     @classmethod
@@ -56,25 +56,27 @@ class Args:
         parser.add_argument('kind', choices=('packages', 'interfaces'))
         parser.add_argument('old_ref', nargs='?')
         parser.add_argument('new_ref', nargs='?')
-        parser.add_argument('--exclude-placeholders', action='store_true')
         parser.add_argument('--exclude-examples', action='store_true')
+        parser.add_argument('--exclude-placeholders', action='store_true')
         parser.add_argument('--only-version-changes', action='store_true')
         args = parser.parse_args()
         return cls(
             kind=args.kind,
             refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
-            placeholders=not args.exclude_placeholders,
-            examples=not args.exclude_examples,
+            include_examples=not args.exclude_examples,
+            include_placeholders=not args.exclude_placeholders,
             only_version_changes=args.only_version_changes,
         )
 
 
 def _ls(args: Args) -> list[str]:
+    # create include list
     include: list[str] = []
-    if args.placeholders:
-        include.append('.package')
-    if args.examples:
+    if args.include_examples:
         include.extend(('.example', '.tutorial'))
+    if args.include_placeholders:
+        include.append('.package')
+    # collect packages or interfaces
     dirs: list[pathlib.Path] = []
     if args.kind == 'packages':
         dirs.extend(_packages(include=include))
@@ -82,6 +84,7 @@ def _ls(args: Args) -> list[str]:
         dirs.extend(_interfaces(include=include))
     else:
         ValueError(f'Unknown value for `kind` {args}')
+    # filter based on changes
     if args.refs:
         old_ref, new_ref = args.refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
