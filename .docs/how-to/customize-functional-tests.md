@@ -39,3 +39,11 @@ If your library needs another piece of software like `pebble` installed for its 
 When `just functional <LIBRARY>` is executed locally or in CI, `<LIBRARY>/tests/functional/setup.sh` will be sourced before running any tests (if it exists).
 After the tests complete, regardless of whether they passed or failed, `<LIBRARY>/tests/functional/teardown.sh` is sourced.
 For example, `pathops` uses these scripts to start a `pebble` instance and kill it after the tests have completed.
+
+## Examples
+
+- `charmlibs-pathops`
+    - [pyproject.toml](https://github.com/canonical/charmlibs/blob/main/pathops/pyproject.toml) with Pebble and Ubuntu versions configured in `tool.charmlibs.functional`.
+    - [setup.sh](https://github.com/canonical/charmlibs/blob/main/pathops/tests/functional/setup.sh) and [teardown.sh](https://github.com/canonical/charmlibs/blob/main/pathops/tests/functional/teardown.sh) that start Pebble, record its PID, and then kill it after tests have run.
+- `charmlibs-snap`
+    - [pyproject.toml](https://github.com/canonical/charmlibs/blob/main/snap/pyproject.toml) with Ubuntu versions configured and `sudo = true`.

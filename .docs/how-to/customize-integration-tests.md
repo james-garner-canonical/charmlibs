@@ -25,3 +25,9 @@ If no tests are collected for one substrate, it will be skipped in CI.
 (If no tests are collected for either substrate, there will be an error.)
 
 After setting up the test environment with `concierge`, if your library has a `tests/integration/pack.sh` script, it will be executed. The template provides a script that packs a different minimal charm depending on the substrate, using symlinks to share common code and metadata, and resolving these before packing. You can modify this script to pack one or more charms to be deployed in your integration tests. Both `CHARMLIBS_SUBSTRATE` and `CHARMLIBS_TAG` are set when running `pack.sh`, which you can use to change what gets packed.
+
+## Examples
+
+- `charmlibs-pathops`
+    - [pyproject.toml](https://github.com/canonical/charmlibs/blob/main/pathops/pyproject.toml) with tags configured in `tool.charmlibs.functional`. The tags are set to the Ubuntu bases that we want to pack for.
+    - [pack.sh](https://github.com/canonical/charmlibs/blob/main/pathops/tests/integration/pack.sh) which packs a different charm depending on the `CHARMLIBS_SUBSTRATE` and `CHARMLIBS_TAG` environment variables, reflecting the current Github CI matrix.
