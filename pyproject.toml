@@ -30,9 +30,9 @@ exclude_also = [
 line-length = 99
 target-version = "py38"
 exclude = [
-    # these are the default values of ruff's exclude
+    # These are the default values of ruff's exclude
     # they're duplicated here instead of using extend-exclude
-    # so that libraries can use extend-exclude
+    # so that libraries can use extend-exclude.
     ".bzr",
     ".direnv",
     ".eggs",
@@ -53,7 +53,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    # these are the custom excludes specified by this repo
+    # These are the custom excludes specified by this repo.
     "__pycache__",
     "*.egg_info",
     "htmlcov",
