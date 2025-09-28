@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import dataclasses
 import io
 import json
 import logging
@@ -39,51 +38,49 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
-@dataclasses.dataclass
-class _Args:
-    kind: str
-    refs: tuple[str, str | None] | None
-    include_examples: bool
-    include_placeholders: bool
-    only_if_version_changed: bool
-
-    @classmethod
-    def from_cli(cls) -> _Args:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('kind', choices=('packages', 'interfaces'))
-        parser.add_argument('old_ref', nargs='?')
-        parser.add_argument('new_ref', nargs='?')
-        parser.add_argument('--exclude-examples', action='store_true')
-        parser.add_argument('--exclude-placeholders', action='store_true')
-        parser.add_argument('--only-if-version-changed', action='store_true')
-        args = parser.parse_args()
-        return cls(
-            kind=args.kind,
-            refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
-            include_examples=not args.exclude_examples,
-            include_placeholders=not args.exclude_placeholders,
-            only_if_version_changed=args.only_if_version_changed,
-        )
+def _main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('kind', choices=('packages', 'interfaces'))
+    parser.add_argument('old_ref', nargs='?')
+    parser.add_argument('new_ref', nargs='?')
+    parser.add_argument('--exclude-examples', action='store_true')
+    parser.add_argument('--exclude-placeholders', action='store_true')
+    parser.add_argument('--only-if-version-changed', action='store_true')
+    args = parser.parse_args()
+    result = _ls(
+        kind=args.kind,
+        refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
+        include_examples=not args.exclude_examples,
+        include_placeholders=not args.exclude_placeholders,
+        only_if_version_changed=args.only_if_version_changed,
+    )
+    print(json.dumps(result))
 
 
-def _ls(args: _Args) -> list[str]:
+def _ls(
+    kind: str,
+    refs: tuple[str, str | None] | None,
+    include_examples: bool,
+    include_placeholders: bool,
+    only_if_version_changed: bool,
+) -> list[str]:
     include: list[str] = []
-    if args.include_examples:
+    if include_examples:
         include.extend(('.example', '.tutorial'))
-    if args.include_placeholders:
+    if include_placeholders:
         include.append('.package')
     # Collect packages or interfaces.
-    if args.kind == 'packages':
+    if kind == 'packages':
         dirs = _packages(include=include)
-    elif args.kind == 'interfaces':
+    elif kind == 'interfaces':
         dirs = _interfaces(include=include)
     else:
-        raise ValueError(f'Unknown value for `kind` {args}')
+        raise ValueError(f'Unknown value for `kind` {kind!r}')
     # Filter based on changes.
-    if args.refs:
-        old_ref, new_ref = args.refs
+    if refs:
+        old_ref, new_ref = refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
-        if args.only_if_version_changed and args.kind == 'packages':
+        if only_if_version_changed and kind == 'packages':
             dirs = _changed_version_only(dirs, old_ref=old_ref, new_ref=new_ref)
     return [str(p) for p in dirs]
 
@@ -171,4 +168,4 @@ def _get_version(root: pathlib.Path, package: pathlib.Path | str) -> str | None:
 
 
 if __name__ == '__main__':
-    print(json.dumps(_ls(_Args.from_cli())))
+    _main()
