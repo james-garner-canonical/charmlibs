@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Output the packages in the repository as a json list.
+"""Output the packages in the repository as a JSON list.
 
-See the the commandline help for more options.
+See the the command-line help for more options.
 """
 
 from __future__ import annotations
@@ -72,14 +72,14 @@ def _ls(args: _Args) -> list[str]:
         include.extend(('.example', '.tutorial'))
     if args.include_placeholders:
         include.append('.package')
-    # collect packages or interfaces
+    # Collect packages or interfaces.
     if args.kind == 'packages':
         dirs = _packages(include=include)
     elif args.kind == 'interfaces':
         dirs = _interfaces(include=include)
     else:
         raise ValueError(f'Unknown value for `kind` {args}')
-    # filter based on changes
+    # Filter based on changes.
     if args.refs:
         old_ref, new_ref = args.refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
@@ -108,7 +108,8 @@ def _changed_only(
     if new_ref is not None:
         cmd.append(new_ref)
     names = subprocess.check_output(cmd, text=True).strip().splitlines()
-    if new_ref is None:  # include untracked files when run w/out explicit new ref for local tests
+    # include untracked files when run without explicit new ref (for local tests)
+    if new_ref is None:
         cmd = ['git', 'ls-files', '--others', '--exclude-standard']
         names.extend(subprocess.check_output(cmd, text=True).strip().splitlines())
     changes: set[pathlib.Path] = set()

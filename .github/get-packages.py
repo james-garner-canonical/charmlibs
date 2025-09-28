@@ -48,8 +48,9 @@ def _main(git_base_ref: str) -> None:
 
 def _get_global_changes(git_base_ref: str) -> list[str]:
     cmd = ['git', 'diff', '--name-only', git_base_ref]
-    changes = subprocess.check_output(cmd, text=True).strip().splitlines()
-    return sorted(_GLOBAL_FILES.intersection(c.split('/')[0] for c in changes))
+    diff = subprocess.check_output(cmd, text=True).strip().splitlines()
+    changes = {c.split('/')[0] for c in diff}
+    return sorted(_GLOBAL_FILES.intersection(changes))
 
 
 if __name__ == '__main__':
