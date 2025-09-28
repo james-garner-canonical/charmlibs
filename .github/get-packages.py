@@ -41,7 +41,7 @@ def _main(git_base_ref: str) -> None:
     if not git_base_ref:
         logger.info('Using all packages because no git base ref was provided:')
     elif global_changes := _get_global_changes(git_base_ref):
-        logger.info(f'Using all packages because global files were changed: {global_changes}')
+        logger.info('Using all packages because global files were changed: %s', global_changes)
     else:
         cmd.append(git_base_ref)
     packages = subprocess.check_output(cmd, text=True).strip()
