@@ -17,11 +17,16 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import pathlib
 import subprocess
 
 _GLOBAL_FILES = {'.github', 'justfile', 'pyproject.toml'}
+_REPO_ROOT = pathlib.Path(__file__).parent.parent
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
 def _parse_args() -> str:
@@ -41,7 +46,7 @@ def _main(git_base_ref: str) -> None:
         cmd.append(git_base_ref)
     packages = subprocess.check_output(cmd, text=True).strip()
     line = f'packages={packages}'
-    print(line)
+    logging.info(line)
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
         print(line, file=f)
 
