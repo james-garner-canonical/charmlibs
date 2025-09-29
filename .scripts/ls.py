@@ -199,6 +199,7 @@ def _get_version(root: pathlib.Path, package: pathlib.Path | str) -> str | None:
     if not (root / package).exists():
         return None
     logger.debug('Computing version for %s', package)
+    # TODO: read dist name from pyproject.toml, using either tomli or tomllib
     aliases = {
         # placeholders
         '.package': 'charmlibs',
