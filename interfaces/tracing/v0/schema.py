@@ -21,8 +21,9 @@ Examples:
             - type: otlp_http
               port: 5678
 """
+
 from enum import Enum
-from typing import List, Literal
+from typing import List
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Json
@@ -49,6 +50,7 @@ class TracingProviderData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for Tracing."""
+
     app: TracingProviderData
 
 

@@ -16,23 +16,24 @@ Examples:
 
     ProviderSchema:
         # unit_data: <empty>
-        application_data:            
+        application_data:
           receivers:
-            - protocol: 
+            - protocol:
                 name: otlp_http
                 type: http
               url: http://traefik_address:2331
-            - protocol: 
+            - protocol:
                 name: otlp_grpc
                 type: grpc
               url: traefik_address:2331
 
 """
-from typing import List
+
 import enum
+from typing import List
 
 from interface_tester.schema_base import DataBagSchema
-from pydantic import BaseModel, Json, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, Json
 
 
 class TransportProtocolType(str, enum.Enum):
