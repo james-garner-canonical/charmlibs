@@ -3,7 +3,7 @@
 /interfaces/ @canonical/charmlibs-maintainers
 
 # codeowners
-/.github/CODEOWNERS @canonical/charmlibs-maintainers
+/CODEOWNERS @canonical/charmlibs-maintainers
 
 # infra
 /.github/ @canonical/charmlibs-maintainers
