@@ -3,7 +3,7 @@ extend = "../../pyproject.toml"
 [format]
 quote-style = "preserve"
 
-[lint.per-file-ignores]
+[lint.extend-per-file-ignores]
 "./**/schema.py" = [
     "CPY",  # copyright
     "D",  # docs
