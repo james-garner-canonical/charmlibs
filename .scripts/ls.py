@@ -211,7 +211,8 @@ def _get_version(root: pathlib.Path, package: pathlib.Path | str) -> str | None:
     if not (root / package).exists():
         return None
     logger.debug('Computing version for %s', package)
-    dist_name = tomllib.loads((root / package / 'pyproject.toml').read_text())['project']['name']
+    with (root / package / 'pyproject.toml').open() as f:
+        dist_name = tomllib.load(f)['project']['name']
     script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
     cmd = ['uv', 'run', '--no-project', '--with', f'./{package}', 'python', '-c', script]
     return subprocess.check_output(cmd, cwd=root, text=True).strip()
