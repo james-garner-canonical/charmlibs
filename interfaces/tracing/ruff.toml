@@ -1,3 +1,7 @@
+# TODO: change this to a pyproject.toml file after either:
+# merging support for non-package pyproject.toml files, or
+# adding the tracing lib to this directory
+
 extend = "../../pyproject.toml"
 
 [format]
