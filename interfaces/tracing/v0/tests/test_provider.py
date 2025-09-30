@@ -4,7 +4,8 @@
 from interface_tester.interface_test import Tester
 from scenario import Relation, State
 
-# no matter what's in the remote databags, the tracing v1 provider will always populate with valid data.
+# No matter what's in the remote databags,
+# the tracing v1 provider will always populate with valid data.
 
 
 def test_data_on_created():
