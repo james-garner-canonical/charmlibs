@@ -1,5 +1,11 @@
 #!/usr/bin/env -S uv run --script --no-project
 
+# /// script
+# requires-python = ">=3.11"
+# ///
+
+# ruff: noqa: I001  # tomllib is first-party in 3.11+
+
 # Copyright 2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +36,7 @@ import pathlib
 import subprocess
 import tarfile
 import tempfile
+import tomllib
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
@@ -109,13 +116,18 @@ def _packages(include: list[str]) -> list[pathlib.Path]:
 
     Returns any directory starting with [a-z] from the repository root and from the interfaces
     sub-directory, as well as any directories listed in `include`, if they exists and have a
-    'pyproject.toml' file.
+    'pyproject.toml' file with a 'project' table.
     """
     paths: set[pathlib.Path] = set()
     for root in _REPO_ROOT, _INTERFACES:
         paths.update(root.glob(r'[a-z]*'))
         paths.update(root / i for i in include)
-    return sorted(p.relative_to(_REPO_ROOT) for p in paths if (p / 'pyproject.toml').exists())
+    return sorted(
+        path.relative_to(_REPO_ROOT)
+        for path in paths
+        if (pyproject_toml := path / 'pyproject.toml').exists()
+        and 'project' in tomllib.loads(pyproject_toml.read_text())
+    )
 
 
 def _interfaces(include: list[str]) -> list[pathlib.Path]:
