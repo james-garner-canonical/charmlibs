@@ -1,0 +1,163 @@
+name: Interfaces
+# on push: runs interface tests for all interfaces defined in the repo
+# on pull_request: runs interface tests for interfaces with changes in the PR
+# on workflow_dispatch: runs interface tests for a charm if specified, otherwise runs all tests
+# on workflow_call: run interface tests for the charm directory called from
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      charm_repo:
+        description: Repo where charm and (optionally) test fixture are defined, for use with git clone.
+        type: string
+        required: true
+      charm_ref:
+        description: Reference where charm and (optionally) test fixture are defined, for use with git clone.
+        type: string
+        default: 'main'
+      charm_name:
+        description: Name of the charm to be tested. Defaults to the final component of the repo url, minus any extension or '-operator' suffix. If this is incorrect, test_setup config will not be located correctly.
+        type: string
+        default: ''
+      charmlibs_repo:
+        description: Repo where interfaces and tests are defined. Defaults to being inferred from workflow_ref.
+        type: string
+        default: ''
+      charmlibs_ref:
+        description: Reference where interfaces and tests are defined. Defaults to 'main' if charmlibs_repo is provided, otherwise inferred from worfklow_ref.
+        type: string
+        default: ''
+  workflow_call:
+    inputs:
+      # By default we assume the charm_repo and charm_ref are where the workflow is called from:
+      #   - this is calculated from github.workflow_ref
+      #   - this is suitable for charms calling this workflow on a schedule or on merge to main
+      # Charms calling this workflow on a pull_request or pull_request_target should use:
+      #   - charm_repo: ${{ github.event.pull_request.head.repo.clone_url }}
+      #   - charm_branch: ${{ github.event.pull_request.head.ref }}
+      # If charm_repo is provided, charm_branch defaults to 'main'.
+      charm_repo:
+        type: string
+        default: ''
+      charm_branch:
+        type: string
+        default: ''
+      # See workflow_dispatch inputs descriptions above for how defaults for the below inputs are calculated.
+      charm_name:
+        type: string
+        default: ''
+      charmlibs_repo:
+        type: string
+        default: ''
+      charmlibs_branch:
+        type: string
+        default: ''
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      charmlibs-repo: ${{ steps.charmlibs.repo }}
+      charmlibs-ref: ${{ steps.charmlibs.ref }}
+      include: ${{ steps.main.outputs.include }}
+    steps:
+      - name: Get charmlibs repo and ref
+        id: charmlibs
+        run: |
+          set -xueo pipefile
+          case '${{ github.event_name }}' in
+            push|pull_request)
+              CHARMLIBS_REPO=${{ github.event.pull_request.head.repo.clone_url || github.repository }}
+              CHARMLIBS_REF=${{ github.event.pull_request.head.ref || github.ref_name }}
+              ;;
+            workflow_dispatch|workflow_call)
+              if [ ${{ inputs.charmlibs_repo }} ]; then
+                CHARMLIBS_REPO=${{ inputs.charmlibs_repo }}
+                CHARMLIBS_REF=${{ inputs.charmlibs_ref || 'main' }}
+              else
+                CHARMLIBS_REPO=$(echo '${{ github.workflow_ref }}' | awk -F/ '{print $1 "/" $2}')
+                CHARMLIBS_REF=$(echo '${{ github.workflow_ref }}' | awk -F/ '{print $NF}')
+              fi
+              ;;
+            *)
+              echo "Unexpected event name ${{ github.event_name }}"
+              exit 1
+              ;;
+          esac
+          echo "repo=$CHARMLIBS_REPO" >> "$GITHUB_OUTPUT"
+          echo "ref=$CHARMLIBS_REF" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: ${{ steps.charmlibs.outputs.repo }}
+          ref: ${{ steps.charmlibs.outputs.ref }}
+      - uses: astral-sh/setup-uv@v6
+      - name: Define interface test matrix
+        id: main
+        run: |
+          set -xueo pipefile
+          case '${{ github.event_name }}' in
+            push|pull_request)
+              INCLUDE=$(.scripts/get-interface-test-targets-from-interfaces.py ${{ github.event.pull_request.base.sha }} --only-those-with-tests)
+              ;;
+            workflow_dispatch|workflow_call)
+              if [ ${{ inputs.charm_repo }} ]; then
+                CHARM_REPO=${{ inputs.charm_repo }}
+                CHARM_REF=${{ inputs.charm_ref || 'main' }}
+              else  # workflow_call only (as charm_repo is a required input for workflow_dispatch)
+                CHARM_REPO=${{ '${{ github.server_url}}/${{ github.repository }}.git' }}
+                CHARM_REF=${{ github.ref_name }}
+              fi
+              if [ ${{ inputs.charm_name }} ]; then
+                CHARM_NAME=${{ inputs.charm_name }}
+              else
+                CHARM_NAME=$(echo "$CHARM_REPO" | awk -F/ '{name=$NF; sub(/\.git$/, "", name); sub(/-operator$/, "", name); print name}')
+              fi
+              INCLUDE=$(.scripts/get-interface-test-targets-from-charm-repo.py "$CHARM_REPO" --ref "$CHARM_REF" --name "$CHARM_NAME")
+              ;;
+            *)
+              echo "Unexpected event name ${{ github.event_name }}"
+              exit 1
+              ;;
+          esac
+          echo "include=$INCLUDE" >> "$GITHUB_OUTPUT"
+
+  tests:
+    needs: [init]
+    if: ${{ needs.init.outputs.include != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ needs.init.outputs.include }}
+    runs-on: ubuntu-latest
+    env:
+      CHARMLIBS_REPO: ${{ needs.init.outputs.charmlibs-repo }}
+      CHARMLIBS_REF: ${{ needs.init.outputs.charmlibs-ref }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: |
+          set -xueo pipefile
+          .scripts/interface-tests.py \
+            --charmlibs-repo "$CHARMLIBS_REPO" \
+            --charmlibs-ref "$CHARMLIBS_REF" \
+            --charm-repo ${{ matrix.charm_repo }} \
+            --charm-ref ${{ matrix.charm_branch }} \
+            ${{ matrix.interface }} \
+            ${{ matrix.version }} \
+            ${{ matrix.role }} \
+            ${{ matrix.charm_name }}
+
+  interface-tests-passed-or-skipped:
+    needs: [tests]
+    if: ${{ !cancelled() }}  # run even if tests are skipped or failed
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
+        run: |
+          echo '${{ toJSON(needs) }}'
+          exit 1
