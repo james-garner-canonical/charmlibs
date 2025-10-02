@@ -132,7 +132,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ needs.init.outputs.include }}
+        include: ${{ fromJSON(needs.init.outputs.include) }}
     runs-on: ubuntu-latest
     env:
       CHARMLIBS_REPO: ${{ needs.init.outputs.charmlibs-repo }}
