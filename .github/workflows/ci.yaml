@@ -53,7 +53,7 @@ jobs:
           echo '${{ toJSON(needs) }}'
           exit 1
 
-  interface-tests:
+  interface:
     needs: [fast-lint, init]
     if: ${{ needs.init.outputs.interfaces != '[]' }}
     strategy:
@@ -64,13 +64,13 @@ jobs:
     with:
       interface: ${{ matrix.interface }}
 
-  interface-tests-passed:
-    needs: [interface-tests]
+  interfaces-passed:
+    needs: [interface]
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any interface tests failed
-        if: ${{ needs.interface-tests.result != 'success' && needs.interface-tests.result != 'skipped' }}
+        if: ${{ needs.interface.result != 'success' && needs.interface.result != 'skipped' }}
         run: |
           echo '${{ toJSON(needs) }}'
           exit 1
