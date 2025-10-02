@@ -102,7 +102,7 @@ jobs:
           set -xueo pipefile
           case '${{ github.event_name }}' in
             push|pull_request)
-              INCLUDE=$(.scripts/get-interface-test-targets-from-interfaces.py ${{ github.event.pull_request.base.sha }} --only-those-with-tests)
+              INCLUDE=$(.scripts/get-interface-test-targets.py from-interfaces ${{ github.event.pull_request.base.sha }})
               ;;
             workflow_dispatch|workflow_call)
               if [ ${{ inputs.charm_repo }} ]; then
@@ -117,7 +117,7 @@ jobs:
               else
                 CHARM_NAME=$(echo "$CHARM_REPO" | awk -F/ '{name=$NF; sub(/\.git$/, "", name); sub(/-operator$/, "", name); print name}')
               fi
-              INCLUDE=$(.scripts/get-interface-test-targets-from-charm-repo.py "$CHARM_REPO" --ref "$CHARM_REF" --name "$CHARM_NAME")
+              INCLUDE=$(.scripts/get-interface-test-targets.py from-charm "$CHARM_REPO" --charm-ref "$CHARM_REF" --charm-name "$CHARM_NAME")
               ;;
             *)
               echo "Unexpected event name ${{ github.event_name }}"
@@ -142,7 +142,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: |
           set -xueo pipefile
-          .scripts/interface-tests.py \
+          .scripts/run-interface-tests.py \
             --charmlibs-repo "$CHARMLIBS_REPO" \
             --charmlibs-ref "$CHARMLIBS_REF" \
             --charm-repo ${{ matrix.charm_repo }} \
