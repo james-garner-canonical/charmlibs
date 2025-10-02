@@ -157,7 +157,7 @@ def _interface_tests(
         logger.info(git_clone)
         subprocess.check_call(git_clone, cwd=td)
         # write interface test file
-        interface_tests_path = pathlib.Path(interface_dir, 'interface_tests',  f'test_{role}r.py')
+        interface_tests_path = pathlib.Path(interface_dir, 'tests',  f'test_{role}r.py')
         charm_test_content = _TEST_CONTENT.format(
             tests_path=interface_tests_path,
             tests_content=interface_tests_path.read_text(),
