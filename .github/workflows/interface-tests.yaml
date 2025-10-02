@@ -98,9 +98,8 @@ jobs:
           CHARMLIBS_REF: ${{ steps.charmlibs.outputs.ref }}
         run: |
           set -xueo pipefail
-          git clone "$CHARMLIBS_REPO" repo
+          git clone "$CHARMLIBS_REPO" repo --branch "$CHARMLIBS_REF"
           cd repo
-          git switch --track "origin/$CHARMLIBS_REF"
           case "$GITHUB_EVENT_NAME" in
             push|pull_request)
               INCLUDE=$(.scripts/get-interface-test-targets.py from-interfaces ${{ github.event.pull_request.base.sha }})
