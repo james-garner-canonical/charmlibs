@@ -25,6 +25,7 @@ jobs:
       - name: Define interface test matrix
         id: include
         run: |
+          set -xueo pipefail
           INCLUDE=$(.scripts/get-interface-test-targets.py ${{ inputs.interface }})
           echo "result=$INCLUDE" >> "$GITHUB_OUTPUT"
 
@@ -40,7 +41,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - name: Run interface tests
-        run: .scripts/run-interface-tests.py \
+        run: |
+          set -xueo pipefail
+          .scripts/run-interface-tests.py \
             ${{ inputs.interface }} \
             ${{ matrix.version }} \
             ${{ matrix.role }} \
