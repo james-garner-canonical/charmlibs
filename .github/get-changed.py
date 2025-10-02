@@ -36,11 +36,11 @@ def _parse_args() -> tuple[str, str]:
     parser.add_argument('category', choices=('packages', 'interfaces'))
     parser.add_argument('git_base_ref', nargs='?', default='')
     args = parser.parse_args()
-    return category, args.git_base_ref
+    return args.category, args.git_base_ref
 
 
 def _main(category: str, git_base_ref: str) -> None:
-    cmd = ['.scripts/ls.py', category] 
+    cmd = ['.scripts/ls.py', category]
     if not git_base_ref:
         logger.info('Using all packages because no git base ref was provided:')
     elif global_changes := _get_global_changes(git_base_ref):
