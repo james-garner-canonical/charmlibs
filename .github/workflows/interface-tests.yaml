@@ -68,7 +68,7 @@ jobs:
       - name: Get charmlibs repo and ref
         id: charmlibs
         run: |
-          set -xueo pipefile
+          set -xueo pipefail
           case '${{ github.event_name }}' in
             push|pull_request)
               CHARMLIBS_REPO=${{ github.event.pull_request.head.repo.clone_url || github.repository }}
@@ -99,7 +99,7 @@ jobs:
       - name: Define interface test matrix
         id: main
         run: |
-          set -xueo pipefile
+          set -xueo pipefail
           case '${{ github.event_name }}' in
             push|pull_request)
               INCLUDE=$(.scripts/get-interface-test-targets.py from-interfaces ${{ github.event.pull_request.base.sha }})
@@ -141,7 +141,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: |
-          set -xueo pipefile
+          set -xueo pipefail
           .scripts/run-interface-tests.py \
             --charmlibs-repo "$CHARMLIBS_REPO" \
             --charmlibs-ref "$CHARMLIBS_REF" \
