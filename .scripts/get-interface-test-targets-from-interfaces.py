@@ -21,11 +21,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Collect the interface test targets for running interface tests."""
+
 import argparse
 import json
 import logging
 import pathlib
 import subprocess
+import tempfile
 
 import yaml
 
@@ -63,22 +66,59 @@ def _get_interface_test_targets(git_base_ref: str, has_tests_only: bool) -> list
                 if not charms:
                     logger.debug('No charms for %s %s %s role.', interface.name, v.name, role)
                     continue
-                if has_tests_only and not (v / 'tests' / 'test_{role}.py').exists():
+                if has_tests_only and not (v / 'tests' / f'test_{role}r.py').exists():
                     msg = 'Skipping these charms because there are no tests for %s: %s'
                     logger.warning(msg, role, charms)
                     continue
-                targets.extend([
-                    {
-                        'interface': interface.name,
-                        'version': v.name,
-                        'role': role,
-                        'charm_name': c['name'],
-                        'charm_repo': c['url'],
-                        'charm_ref': c.get('branch', 'main'),
-                    }
-                    for c in charms
-                ])
+                for charm_info in charms:
+                    charm_name = charm_info['name']
+                    charm_repo = charm_info['url']
+                    charm_ref = charm_info.get('branch', 'main')
+                    test_setup = charm_info.get('test_setup', {})
+                    charm_root = test_setup.get('charm_root', '')
+                    targets.extend([
+                        {
+                            'interface': interface.name,
+                            'version': v.name,
+                            'role': role,
+                            'charm_name': charm_name,
+                            'endpoint': endpoint,
+                            'charm_repo': charm_repo,
+                            'charm_ref': charm_ref,
+                        }
+                        for endpoint in _get_endpoints(
+                            interface=interface.name,
+                            role=f'{role}s',
+                            charm_repo=charm_repo,
+                            charm_ref=charm_ref,
+                            charm_root=charm_root,
+                        )
+                    ])
     return targets
+
+
+def _get_endpoints(
+    interface: str, role: str, charm_repo: str, charm_ref: str | None, charm_root: str
+) -> str:
+    with tempfile.TemporaryDirectory() as td:
+        repo_path = pathlib.Path(td, 'charm-repo')
+        git_clone = ['git', 'clone', '--depth', '1']
+        if charm_ref:
+            git_clone.extend(['--branch', charm_ref])
+        git_clone.extend([charm_repo, repo_path])
+        logger.info(git_clone)
+        subprocess.check_call(git_clone, cwd=td)
+        for meta in 'metadata.yaml', 'charmcraft.yaml':
+            if (path := repo_path / charm_root / meta).exists():
+                loaded = yaml.safe_load(path.read_bytes())
+                if role not in loaded:
+                    continue
+                endpoints = [e for e, d in loaded[role].items() if d['interface'] == interface]
+                if endpoints:
+                    return endpoints
+                raise ValueError(f'{interface} not found in {path}: {loaded[role]}')
+        msg = f'{role} {interface} not found in metadata for {charm_repo}@{charm_ref}/{charm_root}'
+        raise ValueError(msg)
 
 
 if __name__ == '__main__':
