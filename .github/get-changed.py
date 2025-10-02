@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
-def _main(category: str, git_base_ref: str) -> None:
+def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('category', choices=('packages', 'interfaces'))
     parser.add_argument('git_base_ref', nargs='?', default='')
