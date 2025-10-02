@@ -107,6 +107,7 @@ jobs:
           echo "ref=$CHARMLIBS_REF" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           repository: ${{ steps.charmlibs.output.checkout }}
           ref: ${{ steps.charmlibs.output.ref }}
       - uses: astral-sh/setup-uv@v6
