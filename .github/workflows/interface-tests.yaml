@@ -98,6 +98,7 @@ jobs:
           CHARMLIBS_REF: ${{ steps.charmlibs.outputs.ref }}
         run: |
           set -xueo pipefail
+          # checkout probably needs to be before we set up uv
           git clone "$CHARMLIBS_REPO" repo --branch "$CHARMLIBS_REF"
           cd repo
           case "$GITHUB_EVENT_NAME" in
@@ -138,19 +139,20 @@ jobs:
       CHARMLIBS_REPO: ${{ needs.init.outputs.charmlibs-repo }}
       CHARMLIBS_REF: ${{ needs.init.outputs.charmlibs-ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4  # needs to be checking out the charmlibs repo
       - uses: astral-sh/setup-uv@v6
       - run: |
           set -xueo pipefail
           .scripts/run-interface-tests.py \
             --charmlibs-repo "$CHARMLIBS_REPO" \
             --charmlibs-ref "$CHARMLIBS_REF" \
-            --charm-repo ${{ matrix.charm_repo }} \
-            --charm-ref ${{ matrix.charm_branch }} \
+            --charm-repo '${{ matrix.charm_repo }}' \
+            --charm-ref '${{ matrix.charm_ref }}' \
             ${{ matrix.interface }} \
             ${{ matrix.version }} \
             ${{ matrix.role }} \
-            ${{ matrix.charm_name }}
+            ${{ matrix.charm_name }} \
+            ${{ matrix.endpoint }}
 
   interface-tests-passed-or-skipped:
     needs: [tests]
