@@ -12,23 +12,23 @@ on:
   workflow_dispatch:
     inputs:
       charm_repo:
-        description: Repo where charm and (optionally) test fixture are defined, for use with git clone.
+        description: HTTP URL for use with 'git clone' -- the repo where the charm and (optionally) test fixture are defined.
         type: string
         required: true
       charm_ref:
-        description: Reference where charm and (optionally) test fixture are defined, for use with git clone.
+        description: Reference for use with 'git clone' -- where the charm and (optionally) test fixture are defined.
         type: string
         default: 'main'
       charm_name:
-        description: Name of the charm to be tested. Defaults to the final component of the repo url, minus any extension or '-operator' suffix. If this is incorrect, test_setup config will not be located correctly.
+        description: Name of the charm to be tested. Defaults to the final component of the repo url, minus the '.git' extension and '-operator' suffix. If this is incorrect, test_setup config will not be located correctly.
         type: string
         default: ''
       charmlibs_repo:
-        description: Repo where interfaces and tests are defined. Defaults to being inferred from workflow_ref.
+        description: HTTP URL for use with 'git clone' -- the repo where the interfaces and tests are defined. Defaults to being inferred from 'workflow_ref'.
         type: string
         default: ''
       charmlibs_ref:
-        description: Reference where interfaces and tests are defined. Defaults to 'main' if charmlibs_repo is provided, otherwise inferred from worfklow_ref.
+        description: Reference for use with 'git clone' -- where the interfaces and tests are defined. Defaults to 'main' if 'charmlibs_repo' is provided, otherwise inferred from 'worfklow_ref'.
         type: string
         default: ''
   workflow_call:
@@ -61,35 +61,54 @@ jobs:
   init:
     runs-on: ubuntu-latest
     outputs:
+      checkout-repo: ${{ steps.charmlibs.checkout }}
       charmlibs-repo: ${{ steps.charmlibs.repo }}
       charmlibs-ref: ${{ steps.charmlibs.ref }}
       include: ${{ steps.main.outputs.include }}
     steps:
-      - name: Get charmlibs repo and ref
+      - name: Calculate charmlibs repo and ref for checkout and clone
         id: charmlibs
         run: |
           set -xueo pipefail
-          case '${{ github.event_name }}' in
-            push|pull_request)
-              CHARMLIBS_REPO=${{ github.event.pull_request.head.repo.clone_url || github.repository }}
-              CHARMLIBS_REF=${{ github.event.pull_request.head.ref || github.ref_name }}
+          case "$GITHUB_EVENT_NAME" in
+            push)
+              CHARMLIBS_REPO=${{ github.server_url }}/${{ github.repository }}.git
+              CHARMLIBS_REF=${{ github.ref_name }}
+              CHECKOUT_REPO=${{ github.repository }}
+              ;;
+            pull_request)
+              CHARMLIBS_REPO=${{ github.event.pull_request.head.repo.clone_url }}
+              CHARMLIBS_REF=${{ github.event.pull_request.head.ref }}
+              CHECKOUT_REPO=${{ github.event.pull_request.head.repo.full_name }}
               ;;
             workflow_dispatch|workflow_call)
               if [ ${{ inputs.charmlibs_repo }} ]; then
                 CHARMLIBS_REPO=${{ inputs.charmlibs_repo }}
                 CHARMLIBS_REF=${{ inputs.charmlibs_ref || 'main' }}
+                # split http(s)://domain/org/repo.git -> org/repo
+                CHECKOUT_REPO=$(echo "$CHARMLIBS_REPO" | awk -F'[/]+' '{sub(/\.git$/, "", $4); print $3 "/" $4}')
               else
-                CHARMLIBS_REPO=$(echo '${{ github.workflow_ref }}' | awk -F/ '{print $1 "/" $2}')
+                # workflow_ref looks like this:
+                # octocat/hello-world/.github/workflows/my-workflow.yml@refs/heads/my_branch
+                # first two fields are the repo id for use with actions/checkout
+                # last field is the ref for use with git clone
+                CHECKOUT_REPO=$(echo '${{ github.workflow_ref }}' | awk -F/ '{print $1 "/" $2}')
                 CHARMLIBS_REF=$(echo '${{ github.workflow_ref }}' | awk -F/ '{print $NF}')
+                CHARMLIBS_REPO="$GITHUB_SERVER_URL/$CHECKOUT_REPO.git"
               fi
               ;;
             *)
-              echo "Unexpected event name ${{ github.event_name }}"
+              echo "Unexpected event name $GITHUB_EVENT_NAME"
               exit 1
               ;;
           esac
+          echo "checkout=$CHECKOUT_REPO" >> "$GITHUB_OUTPUT"
           echo "repo=$CHARMLIBS_REPO" >> "$GITHUB_OUTPUT"
           echo "ref=$CHARMLIBS_REF" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.charmlibs.output.checkout }}
+          ref: ${{ steps.charmlibs.output.ref }}
       - uses: astral-sh/setup-uv@v6
       - name: Define interface test matrix
         id: main
@@ -98,9 +117,6 @@ jobs:
           CHARMLIBS_REF: ${{ steps.charmlibs.outputs.ref }}
         run: |
           set -xueo pipefail
-          # checkout probably needs to be before we set up uv
-          git clone "$CHARMLIBS_REPO" repo --branch "$CHARMLIBS_REF"
-          cd repo
           case "$GITHUB_EVENT_NAME" in
             push|pull_request)
               INCLUDE=$(.scripts/get-interface-test-targets.py from-interfaces ${{ github.event.pull_request.base.sha }})
@@ -109,13 +125,17 @@ jobs:
               if [ ${{ inputs.charm_repo }} ]; then
                 CHARM_REPO=${{ inputs.charm_repo }}
                 CHARM_REF=${{ inputs.charm_ref || 'main' }}
-              else  # workflow_call only (as charm_repo is a required input for workflow_dispatch)
+              else
+                # workflow_call only (as charm_repo is a required input for workflow_dispatch)
+                # so we can assume we're being called from the charm repository
                 CHARM_REPO="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
                 CHARM_REF="$GITHUB_REF_NAME"
               fi
               if [ ${{ inputs.charm_name }} ]; then
                 CHARM_NAME=${{ inputs.charm_name }}
               else
+                # guess the charm name from the repository
+                # http(s)://something/org/charmname(-operator)(.git) -> charmname
                 CHARM_NAME=$(echo "$CHARM_REPO" | awk -F/ '{name=$NF; sub(/\.git$/, "", name); sub(/-operator$/, "", name); print name}')
               fi
               INCLUDE=$(.scripts/get-interface-test-targets.py from-charm "$CHARM_REPO" --charm-ref "$CHARM_REF" --charm-name "$CHARM_NAME")
@@ -139,7 +159,10 @@ jobs:
       CHARMLIBS_REPO: ${{ needs.init.outputs.charmlibs-repo }}
       CHARMLIBS_REF: ${{ needs.init.outputs.charmlibs-ref }}
     steps:
-      - uses: actions/checkout@v4  # needs to be checking out the charmlibs repo -- won't work in charm repos as-is
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ needs.init.outputs.checkout-repo }}
+          ref: ${{ needs.init.outputs.charmlibs-ref }}
       - uses: astral-sh/setup-uv@v6
       - name: Run interface tests
         run: |
@@ -160,7 +183,8 @@ jobs:
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
     steps:
-      - if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
+      - name: Fail if any test matrix jobs failed
+        if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
         run: |
           echo '${{ toJSON(needs) }}'
           exit 1
