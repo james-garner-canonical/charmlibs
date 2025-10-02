@@ -63,7 +63,27 @@ def _main() -> None:
     print(output)
 
 
-def _target_from_interface(interface_str: str, has_tests_only: bool, include_interface: bool):
+def _target_from_interface(
+    interface_str: str, has_tests_only: bool, include_interface: bool
+) -> list[dict[str, str]]:
+    """Return a list of interface test targets for this interface.
+
+    Iterates over the interface versions, collects all provider and requirer charms, and clones
+    the charms to discover their endpoints.
+
+    Args:
+        interface_str: The interface path relative to the repo root, e.g. 'interfaces/tracing'.
+        has_tests_only: If true, exclude any targets that don't actually have any tests defined.
+        include_interface: If true, include the `'interface': interface_str` in the output.
+
+    Returns:
+        A list of interface test targets. Each target is a dictionary containing:
+            - interface, if `include_interface` is true
+            - version
+            - role
+            - charm
+            - endpoint
+    """
     interface = _REPO_ROOT / interface_str
     targets: list[dict[str, str]] = []
     for v in sorted((interface / 'interface').glob('v[0-9]*')):
@@ -102,7 +122,7 @@ def _target_from_interface(interface_str: str, has_tests_only: bool, include_int
     return targets
 
 
-def _has_tests(version_dir: pathlib.Path, role: str):
+def _has_tests(version_dir: pathlib.Path, role: str) -> bool:
     """Return whether the test file exists and seems to contain at least one test.
 
     We heuristically check for tests by looking for any line starting with 'def test',
@@ -116,7 +136,8 @@ def _has_tests(version_dir: pathlib.Path, role: str):
 
 def _get_endpoints(
     interface: str, role: str, charm_repo: str, charm_ref: str | None, charm_root: str
-):
+) -> list[str]:
+    """Clone the charm repo and return the endpoints for the interface and role."""
     with tempfile.TemporaryDirectory() as td:
         repo_path = pathlib.Path(td, 'charm-repo')
         git_clone = ['git', 'clone', '--depth', '1']
