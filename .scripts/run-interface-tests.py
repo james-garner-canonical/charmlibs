@@ -33,6 +33,7 @@ import tempfile
 
 import yaml
 
+# TODO: release a new version of pytest-interface-tester with the features we need
 _INTERFACE_TESTER_DEPENDENCY = 'git+https://github.com/james-garner-canonical/pytest-interface-tester@25-09+feat+location-customization-for-charmlibs'
 # paths in this repo
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
