@@ -140,7 +140,7 @@ def _get_endpoints(
     """Clone the charm repo and return the endpoints for the interface and role."""
     with tempfile.TemporaryDirectory() as td:
         repo_path = pathlib.Path(td, 'charm-repo')
-        git_clone = ['git', 'clone', '--depth', '1']
+        git_clone: list[str | pathlib.Path] = ['git', 'clone', '--depth', '1']
         if charm_ref:
             git_clone.extend(['--branch', charm_ref])
         git_clone.extend([charm_repo, repo_path])

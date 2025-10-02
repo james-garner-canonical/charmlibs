@@ -167,7 +167,7 @@ def _interface_tests(
     with tempfile.TemporaryDirectory(delete=not keep_tempdir) as td:
         repo_path = pathlib.Path(td, 'charm-repo')
         # clone charm repo
-        git_clone = ['git', 'clone', '--depth', '1']
+        git_clone: list[str | pathlib.Path] = ['git', 'clone', '--depth', '1']
         if branch := charm_config.get('branch'):
             git_clone.extend(['--branch', branch])
         git_clone.extend([charm_config['url'], repo_path])
