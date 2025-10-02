@@ -1,4 +1,4 @@
-name: Interfaces
+name: Interface tests
 # on push: runs interface tests for all interfaces defined in the repo
 # on pull_request: runs interface tests for interfaces with changes in the PR
 # on workflow_dispatch: runs interface tests for a charm if specified, otherwise runs all tests
