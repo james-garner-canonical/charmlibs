@@ -139,9 +139,10 @@ jobs:
       CHARMLIBS_REPO: ${{ needs.init.outputs.charmlibs-repo }}
       CHARMLIBS_REF: ${{ needs.init.outputs.charmlibs-ref }}
     steps:
-      - uses: actions/checkout@v4  # needs to be checking out the charmlibs repo
+      - uses: actions/checkout@v4  # needs to be checking out the charmlibs repo -- won't work in charm repos as-is
       - uses: astral-sh/setup-uv@v6
-      - run: |
+      - name: Run interface tests
+        run: |
           set -xueo pipefail
           .scripts/run-interface-tests.py \
             --charmlibs-repo "$CHARMLIBS_REPO" \
