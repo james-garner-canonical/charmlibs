@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJson(needs.get-packages.outputs.packages) }}
+        package: ${{ fromJson(needs.init.outputs.packages) }}
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ matrix.package }}
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        interface: ${{ fromJson(needs.get-packages.outputs.interfaces) }}
+        interface: ${{ fromJson(needs.init.outputs.interfaces) }}
     uses: ./.github/workflows/interface-tests.yaml
     with:
       interface: ${{ matrix.interface }}
@@ -69,7 +69,7 @@ jobs:
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
     steps:
-      - name: Fail if any tests failed
+      - name: Fail if any interface tests failed
         if: ${{ needs.interface-tests.result != 'success' && needs.interface-tests.result != 'skipped' }}
         run: |
           echo '${{ toJSON(needs) }}'

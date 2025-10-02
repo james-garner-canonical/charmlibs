@@ -43,11 +43,11 @@ def _main() -> None:
         logger.info('Using all packages because global files were changed: %s', global_changes)
     else:
         cmd.append(args.git_base_ref)
-    packages = subprocess.check_output(cmd, text=True).strip()
-    line = f'result={packages}'
-    logger.info(line)
+    result = subprocess.check_output(cmd, text=True).strip()
+    output = f'result={result}'
+    logger.info(output)
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
-        print(line, file=f)
+        print(output, file=f)
 
 
 def _get_global_changes(git_base_ref: str) -> list[str]:

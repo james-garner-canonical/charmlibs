@@ -46,14 +46,3 @@ jobs:
             ${{ matrix.role }} \
             ${{ matrix.charm_name }} \
             ${{ matrix.endpoint }}
-
-  interface-tests-passed-or-skipped:
-    needs: [tests]
-    if: ${{ !cancelled() }}  # run even if tests are skipped or failed
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fail if any test matrix jobs failed
-        if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
-        run: |
-          echo '${{ toJSON(needs) }}'
-          exit 1
