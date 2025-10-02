@@ -96,6 +96,7 @@ def pytest_runtest_makereport(item, call):
     if report.when == "call":
         setattr(item, "report", report)
 """.strip()
+_INTERFACE_TESTER_PLUGIN = 'git+https://github.com/james-garner-canonical/pytest-interface-tester@25-09+feat+location-customization-for-charmlibs'
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
@@ -157,7 +158,7 @@ def _interface_tests(
         logger.info(git_clone)
         subprocess.check_call(git_clone, cwd=td)
         # write interface test file
-        interface_tests_path = pathlib.Path(interface_dir, 'tests',  f'test_{role}r.py')
+        interface_tests_path = pathlib.Path(interface_dir, 'tests', f'test_{role}r.py')
         charm_test_content = _TEST_CONTENT.format(
             tests_path=interface_tests_path,
             tests_content=interface_tests_path.read_text(),
@@ -171,8 +172,7 @@ def _interface_tests(
         )
         charm_root = repo_path / test_config.get('charm_root', '')
         charm_test_dir = (
-            charm_root
-            / test_config.get('location', 'tests/interface_tests/conftest.py')
+            charm_root / test_config.get('location', 'tests/interface_tests/conftest.py')
         ).parent
         charm_test_file = charm_test_dir / f'test_{role}s_{interface_name}_{interface_version}.py'
         charm_test_file.write_text(charm_test_content)
@@ -181,13 +181,13 @@ def _interface_tests(
         # execute interface tests
         if pre_run := test_config.get('pre_run'):
             logger.info(pre_run)
-            subprocess.check_call(pre_run, shell=True, cwd=charm_root)
+            subprocess.check_call(pre_run, shell=True, cwd=charm_root)  # noqa: S602
         pytest = [
             'uv',
             'tool',
             'run',
             '--with=setuptools',
-            '--with=git+https://github.com/james-garner-canonical/pytest-interface-tester@25-09+feat+location-customization-for-charmlibs',
+            f'--with={_INTERFACE_TESTER_PLUGIN}',
             '--with-requirements=requirements.txt',
             'pytest',
             '-p',
@@ -195,8 +195,8 @@ def _interface_tests(
             charm_test_file,
         ]
         logger.info(pytest)
-        proc = subprocess.run(pytest, env={**os.environ, 'PYTHONPATH': '.:src:lib'}, cwd=charm_root)
-        return proc.returncode
+        ret = subprocess.run(pytest, env={**os.environ, 'PYTHONPATH': '.:src:lib'}, cwd=charm_root)
+        return ret.returncode
 
 
 def _current_branch() -> str:
