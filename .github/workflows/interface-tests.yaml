@@ -100,7 +100,7 @@ jobs:
           set -xueo pipefail
           git clone "$CHARMLIBS_REPO" repo
           cd repo
-          git checkout "$CHARMLIBS_REF"
+          git switch --track "origin/$CHARMLIBS_REF"
           case "$GITHUB_EVENT_NAME" in
             push|pull_request)
               INCLUDE=$(.scripts/get-interface-test-targets.py from-interfaces ${{ github.event.pull_request.base.sha }})
