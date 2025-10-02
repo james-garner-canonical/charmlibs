@@ -44,7 +44,7 @@ def _main() -> None:
     subparsers = parser.add_subparsers(dest='source', required=True)
     # from-interfaces
     interfaces_parser = subparsers.add_parser('from-interfaces')
-    interfaces_parser.add_argument('git_base_ref', nargs='?', default='') 
+    interfaces_parser.add_argument('git_base_ref', nargs='?', default='')
     # from-charm
     charm_parser = subparsers.add_parser('from-charm')
     charm_parser.add_argument('charm-repo')
