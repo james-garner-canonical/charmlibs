@@ -90,17 +90,18 @@ jobs:
           esac
           echo "repo=$CHARMLIBS_REPO" >> "$GITHUB_OUTPUT"
           echo "ref=$CHARMLIBS_REF" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          repository: ${{ steps.charmlibs.outputs.repo }}
-          ref: ${{ steps.charmlibs.outputs.ref }}
       - uses: astral-sh/setup-uv@v6
       - name: Define interface test matrix
         id: main
+        env:
+          CHARMLIBS_REPO: ${{ steps.charmlibs.outputs.repo }}
+          CHARMLIBS_REF: ${{ steps.charmlibs.outputs.ref }}
         run: |
           set -xueo pipefail
-          case '${{ github.event_name }}' in
+          git clone "$CHARMLIBS_REPO" repo
+          cd repo
+          git checkout "$CHARMLIBS_REF"
+          case "$GITHUB_EVENT_NAME" in
             push|pull_request)
               INCLUDE=$(.scripts/get-interface-test-targets.py from-interfaces ${{ github.event.pull_request.base.sha }})
               ;;
@@ -109,8 +110,8 @@ jobs:
                 CHARM_REPO=${{ inputs.charm_repo }}
                 CHARM_REF=${{ inputs.charm_ref || 'main' }}
               else  # workflow_call only (as charm_repo is a required input for workflow_dispatch)
-                CHARM_REPO=${{ '${{ github.server_url}}/${{ github.repository }}.git' }}
-                CHARM_REF=${{ github.ref_name }}
+                CHARM_REPO="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+                CHARM_REF="$GITHUB_REF_NAME"
               fi
               if [ ${{ inputs.charm_name }} ]; then
                 CHARM_NAME=${{ inputs.charm_name }}
@@ -120,7 +121,7 @@ jobs:
               INCLUDE=$(.scripts/get-interface-test-targets.py from-charm "$CHARM_REPO" --charm-ref "$CHARM_REF" --charm-name "$CHARM_NAME")
               ;;
             *)
-              echo "Unexpected event name ${{ github.event_name }}"
+              echo "Unexpected event name $GITHUB_EVENT_NAME"
               exit 1
               ;;
           esac
