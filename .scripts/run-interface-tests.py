@@ -108,10 +108,6 @@ def _main() -> None:
     parser.add_argument('role', choices=('provide', 'require'))
     parser.add_argument('charm_name')
     parser.add_argument('endpoint')
-    parser.add_argument('--charm-repo')
-    parser.add_argument('--charm-ref')
-    parser.add_argument('--charmlibs-repo')
-    parser.add_argument('--charmlibs-ref')
     args = parser.parse_args()
     returncode = _interface_tests(
         interface_name=args.name,
@@ -119,10 +115,6 @@ def _main() -> None:
         role=args.role,
         charm_name=args.charm_name,
         endpoint=args.endpoint,
-        charm_repo=args.charm_repo,
-        charm_ref=args.charm_ref,
-        charmlibs_repo=args.charmlibs_repo,
-        charmlibs_ref=args.charmlibs_ref,
     )
     sys.exit(returncode)
 
@@ -133,27 +125,21 @@ def _interface_tests(
     role: str,
     charm_name: str,
     endpoint: str,
-    charm_repo: str | None,
-    charm_ref: str | None,
-    charmlibs_repo: str | None,
-    charmlibs_ref: str | None,
 ) -> int:
     # load charm and test config if it exists
     interface_dir = _INTERFACES / interface_name / 'interface' / interface_version
     charms = yaml.safe_load((interface_dir / 'interface.yaml').read_text())[f'{role}rs']
-    [charm_config] = [c for c in charms if c['name'] == charm_name] or [{}]
+    [charm_config] = [c for c in charms if c['name'] == charm_name]
     logger.info('Charm config: %s', charm_config)
-    if not charm_config:
-        assert charm_repo, f'--charm-repo is required as there is no config for {charm_name}.'
     test_config = charm_config.get('test_setup', {})
     # write and execute interface tester file in cloned charm repo
     with tempfile.TemporaryDirectory() as td:
         repo_path = pathlib.Path(td, 'charm-repo')
         # clone charm repo
         git_clone = ['git', 'clone', '--depth', '1']
-        if branch := charm_ref or charm_config.get('branch'):
+        if branch := charm_config.get('branch'):
             git_clone.extend(['--branch', branch])
-        git_clone.extend([charm_repo or charm_config['url'], repo_path])
+        git_clone.extend([charm_config['url'], repo_path])
         logger.info(git_clone)
         subprocess.check_call(git_clone, cwd=td)
         # write interface test file
@@ -163,8 +149,8 @@ def _interface_tests(
             tests_content=interface_tests_path.read_text(),
             interface=interface_name,
             version=interface_version.removeprefix('v'),
-            repo=charmlibs_repo or _REPO_ROOT,
-            branch=charmlibs_ref or _current_branch(),
+            repo=_REPO_ROOT,
+            branch=_current_branch(),
             fixture_id=test_config.get('identifier', 'interface_tester'),
             role=f'{role}r',
             endpoint=endpoint,

@@ -21,12 +21,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Collect the interface test targets for running interface tests."""
+"""Collect the targets for running interface tests for the specified interface.
+
+Only outputs targets that there are test cases for by default.
+Does not include the interface name in the output by default.
+"""
 
 import argparse
 import json
 import logging
 import pathlib
+import re
 import subprocess
 import tempfile
 
@@ -40,76 +45,78 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 def _main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument('interface', help='Path from repo root to specific interface directory.')
     parser.add_argument('--all', action='store_true', help='Include combinations with no tests.')
-    subparsers = parser.add_subparsers(dest='source', required=True)
-    # from-interfaces
-    interfaces_parser = subparsers.add_parser('from-interfaces')
-    interfaces_parser.add_argument('git_base_ref', nargs='?', default='')
-    # from-charm
-    charm_parser = subparsers.add_parser('from-charm')
-    charm_parser.add_argument('charm-repo')
-    charm_parser.add_argument('--charm-ref')
-    charm_parser.add_argument('--charm-name')
-    # run
+    parser.add_argument(
+        '--include-interface-in-output',
+        action='store_true',
+        help='Include interface name in output.',
+    )
     args = parser.parse_args()
-    if args.source == 'from-interfaces':
-        targets = _from_interfaces(changed_since=args.git_base_ref, has_tests_only=not args.all)
-    else:
-        raise NotImplementedError('WIP')
+    targets = _target_from_interface(
+        args.interface,
+        has_tests_only=not args.all,
+        include_interface=args.include_interface_in_output,
+    )
     output = json.dumps(targets)
     logger.info(output)
     print(output)
 
 
-def _from_interfaces(changed_since: str, has_tests_only: bool) -> list[dict[str, str]]:
-    cmd = ['.scripts/ls.py', 'interfaces']
-    if changed_since:
-        cmd.append(changed_since)
-    interfaces = json.loads(subprocess.check_output(cmd, text=True).strip())
+def _target_from_interface(interface_str: str, has_tests_only: bool, include_interface: bool):
+    interface = _REPO_ROOT / interface_str
     targets: list[dict[str, str]] = []
-    for i in interfaces:
-        interface = _REPO_ROOT / i
-        for v in sorted((interface / 'interface').glob('v[0-9]*')):
-            interface_yaml = yaml.safe_load((v / 'interface.yaml').read_text())
-            for role in 'provide', 'require':
-                charms = interface_yaml.get(f'{role}rs', [])
-                if not charms:
-                    logger.debug('No charms for %s %s %s role.', interface.name, v.name, role)
-                    continue
-                if has_tests_only and not (v / 'tests' / f'test_{role}r.py').exists():
-                    msg = 'Skipping these charms because there are no tests for %s: %s'
-                    logger.warning(msg, role, charms)
-                    continue
-                for charm_info in charms:
-                    charm_name = charm_info['name']
-                    charm_repo = charm_info['url']
-                    charm_ref = charm_info.get('branch', 'main')
-                    test_setup = charm_info.get('test_setup', {})
-                    charm_root = test_setup.get('charm_root', '')
-                    targets.extend([
-                        {
-                            'interface': interface.name,
-                            'version': v.name,
-                            'role': role,
-                            'charm_name': charm_name,
-                            'endpoint': endpoint,
-                            'charm_repo': charm_repo,
-                            'charm_ref': charm_ref,
-                        }
-                        for endpoint in _get_endpoints(
-                            interface=interface.name,
-                            role=f'{role}s',
-                            charm_repo=charm_repo,
-                            charm_ref=charm_ref,
-                            charm_root=charm_root,
-                        )
-                    ])
+    for v in sorted((interface / 'interface').glob('v[0-9]*')):
+        interface_yaml = yaml.safe_load((v / 'interface.yaml').read_text())
+        for role in 'provide', 'require':
+            charms = interface_yaml.get(f'{role}rs', [])
+            if not charms:
+                logger.debug('No charms for %s %s %s role.', interface_str, v.name, role)
+                continue
+            if has_tests_only and not _has_tests(v, role):
+                msg = 'Skipping these charms because there are no tests for %s %s %s: %s'
+                logger.warning(msg, interface_str, v.name, role, charms)
+                continue
+            for charm_info in charms:
+                charm_name = charm_info['name']
+                charm_repo = charm_info['url']
+                charm_ref = charm_info.get('branch', 'main')
+                charm_root = charm_info.get('test_setup', {}).get('charm_root', '')
+                endpoints = _get_endpoints(
+                    interface=interface.name,
+                    role=f'{role}s',
+                    charm_repo=charm_repo,
+                    charm_ref=charm_ref,
+                    charm_root=charm_root,
+                )
+                targets.extend([
+                    {
+                        **({'interface': interface.name} if include_interface else {}),
+                        'version': v.name,
+                        'role': role,
+                        'charm_name': charm_name,
+                        'endpoint': endpoint,
+                    }
+                    for endpoint in endpoints
+                ])
     return targets
+
+
+def _has_tests(version_dir: pathlib.Path, role: str):
+    """Return whether the test file exists and seems to contain at least one test.
+
+    We heuristically check for tests by looking for any line starting with 'def test',
+    ignoring leading whitespace.
+    """
+    test_file = version_dir / 'tests' / f'test_{role}r.py'
+    if not test_file.exists():
+        return False
+    return bool(re.search(r'^\s*def test', test_file.read_text(), re.MULTILINE))
 
 
 def _get_endpoints(
     interface: str, role: str, charm_repo: str, charm_ref: str | None, charm_root: str
-) -> str:
+):
     with tempfile.TemporaryDirectory() as td:
         repo_path = pathlib.Path(td, 'charm-repo')
         git_clone = ['git', 'clone', '--depth', '1']

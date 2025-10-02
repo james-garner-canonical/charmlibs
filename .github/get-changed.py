@@ -1,3 +1,5 @@
+#!/usr/bin/env -S uv run --script --no-project
+
 # Copyright 2024 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,15 +31,16 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
-def _parse_args() -> str:
+def _parse_args() -> tuple[str, str]:
     parser = argparse.ArgumentParser()
+    parser.add_argument('category', choices=('packages', 'interfaces'))
     parser.add_argument('git_base_ref', nargs='?', default='')
     args = parser.parse_args()
-    return args.git_base_ref
+    return category, args.git_base_ref
 
 
-def _main(git_base_ref: str) -> None:
-    cmd = ['.scripts/ls.py', 'packages']
+def _main(category: str, git_base_ref: str) -> None:
+    cmd = ['.scripts/ls.py', category] 
     if not git_base_ref:
         logger.info('Using all packages because no git base ref was provided:')
     elif global_changes := _get_global_changes(git_base_ref):
@@ -45,7 +48,7 @@ def _main(git_base_ref: str) -> None:
     else:
         cmd.append(git_base_ref)
     packages = subprocess.check_output(cmd, text=True).strip()
-    line = f'packages={packages}'
+    line = f'result={packages}'
     logger.info(line)
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
         print(line, file=f)
