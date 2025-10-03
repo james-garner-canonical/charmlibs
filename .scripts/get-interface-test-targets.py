@@ -93,32 +93,27 @@ def _target_from_interface(
             if not charms:
                 logger.debug('No charms for %s %s %s role.', interface_str, v.name, role)
                 continue
-            if has_tests_only and not _has_tests(v, role):
+            if has_tests_only and not _has_tests(v, f'{role}r'):
                 msg = 'Skipping these charms because there are no tests for %s %s %s: %s'
                 logger.warning(msg, interface_str, v.name, role, charms)
                 continue
-            for charm_info in charms:
-                charm_name = charm_info['name']
-                charm_repo = charm_info['url']
-                charm_ref = charm_info.get('branch', 'main')
-                charm_root = charm_info.get('test_setup', {}).get('charm_root', '')
-                endpoints = _get_endpoints(
+            targets.extend(
+                {
+                    **({'interface': interface.name} if include_interface else {}),
+                    'version': v.name,
+                    'role': role,
+                    'charm_name': charm['name'],
+                    'endpoint': endpoint,
+                }
+                for charm in charms
+                for endpoint in _get_endpoints(
                     interface=interface.name,
                     role=f'{role}s',
-                    charm_repo=charm_repo,
-                    charm_ref=charm_ref,
-                    charm_root=charm_root,
+                    charm_repo=charm['url'],
+                    charm_ref=charm.get('branch', 'main'),
+                    charm_root=charm.get('test_setup', {}).get('charm_root', ''),
                 )
-                targets.extend([
-                    {
-                        **({'interface': interface.name} if include_interface else {}),
-                        'version': v.name,
-                        'role': role,
-                        'charm_name': charm_name,
-                        'endpoint': endpoint,
-                    }
-                    for endpoint in endpoints
-                ])
+            )
     return targets
 
 
@@ -128,7 +123,7 @@ def _has_tests(version_dir: pathlib.Path, role: str) -> bool:
     We heuristically check for tests by looking for any line starting with 'def test',
     ignoring leading whitespace.
     """
-    test_file = version_dir / 'tests' / f'test_{role}r.py'
+    test_file = version_dir / 'tests' / f'test_{role}.py'
     if not test_file.exists():
         return False
     return bool(re.search(r'^\s*def test', test_file.read_text(), re.MULTILINE))
