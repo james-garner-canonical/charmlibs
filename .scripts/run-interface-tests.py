@@ -24,6 +24,8 @@
 """Run interface tests for the specified target, see CLI help for details."""
 
 import argparse
+import contextlib
+import dataclasses
 import logging
 import os
 import pathlib
@@ -38,8 +40,6 @@ _INTERFACE_TESTER_DEPENDENCY = 'git+https://github.com/james-garner-canonical/py
 # paths in this repo
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
-# paths in charm repo
-_DEFAULT_FIXTURE_PATH = 'tests/interface_tests/conftest.py'
 # modules to write to
 _PLUGIN_MODULE = 'interface_tester_report_plugin'
 _SCHEMA_MODULE = 'interface_tester_schema_module'
@@ -121,6 +121,39 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
+@dataclasses.dataclass
+class _Target:
+    """Testable target defined by the arguments to this script.
+
+    See the CLI help for more on the individual arguments.
+    """
+
+    interface_name: str
+    interface_version: str
+    role: str
+    charm_name: str
+    endpoint: str
+
+    def __post_init__(self):
+        self.interface_dir = (
+            _INTERFACES / self.interface_name / 'interface' / self.interface_version
+        )
+        self.interface_tests_path = self.interface_dir / 'tests' / f'test_{self.role}r.py'
+        self.charm_config = self._load_charm_config()
+        self.test_config = self.charm_config.get('test_setup', {})
+
+    def _load_charm_config(self):
+        """Load config for the current interface, role, and charm.
+
+        It is an error if the charm config doesn't exist or is defined more than once.
+        """
+        interface_yaml = yaml.safe_load((self.interface_dir / 'interface.yaml').read_text())
+        charms = interface_yaml[f'{self.role}rs']
+        [charm_config] = [c for c in charms if c['name'] == self.charm_name]
+        logger.info('Charm config: %s', charm_config)
+        return charm_config
+
+
 def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('name', help='The interface name.')
@@ -130,25 +163,18 @@ def _main() -> None:
     parser.add_argument('endpoint', help='A valid endpoint for the charm + role + interface.')
     parser.add_argument('--keep', action='store_true', help="Don't delete cloned charm dir.")
     args = parser.parse_args()
-    returncode = _interface_tests(
+    target = _Target(
         interface_name=args.name,
         interface_version=args.version,
         role=args.role,
         charm_name=args.charm_name,
         endpoint=args.endpoint,
-        keep_tempdir=args.keep,
     )
+    returncode = _interface_tests(target, keep_tempdir=args.keep)
     sys.exit(returncode)
 
 
-def _interface_tests(
-    interface_name: str,
-    interface_version: str,
-    role: str,
-    charm_name: str,
-    endpoint: str,
-    keep_tempdir: bool = False,
-) -> int:
+def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
     """Run interface tests for specified interface / version / role / charm / endpoint.
 
     Executes the following steps:
@@ -157,53 +183,14 @@ def _interface_tests(
         - Writes test files and additional modules to cloned charm repo.
         - Executes tests with pytest.
     """
-    # load charm and test config if it exists
-    interface_dir = _INTERFACES / interface_name / 'interface' / interface_version
-    charms = yaml.safe_load((interface_dir / 'interface.yaml').read_text())[f'{role}rs']
-    [charm_config] = [c for c in charms if c['name'] == charm_name]
-    test_config = charm_config.get('test_setup', {})
-    logger.info('Charm config: %s', charm_config)
     # write and execute interface tester file in cloned charm repo
-    with tempfile.TemporaryDirectory(delete=not keep_tempdir) as td:
-        repo_path = pathlib.Path(td, 'charm-repo')
-        # clone charm repo
-        git_clone: list[str | pathlib.Path] = ['git', 'clone', '--depth', '1']
-        if branch := charm_config.get('branch'):
-            git_clone.extend(['--branch', branch])
-        git_clone.extend([charm_config['url'], repo_path])
-        logger.info(git_clone)
-        subprocess.check_call(git_clone, cwd=td)
-        # find necessary charm directories
-        charm_root = repo_path / test_config.get('charm_root', '')
-        charm_test_dir = (charm_root / test_config.get('location', _DEFAULT_FIXTURE_PATH)).parent
-        # write interface test file to charm interface test directory
-        interface_tests_path = pathlib.Path(interface_dir, 'tests', f'test_{role}r.py')
-        test_content = _TEST_CONTENT.format(
-            script_path=pathlib.Path(__file__).relative_to(_REPO_ROOT),
-            tests_path=interface_tests_path.relative_to(_REPO_ROOT),
-            tests_content=interface_tests_path.read_text(),
-            schema_module=_SCHEMA_MODULE,
-            plugin_module=_PLUGIN_MODULE,
-            interface=interface_name,
-            version=interface_version.removeprefix('v'),
-            repo=_REPO_ROOT,
-            branch=_current_branch(),
-            fixture_id=test_config.get('identifier', 'interface_tester'),
-            role=f'{role}r',
-            endpoint=endpoint,
-        )
-        normalized_interface = interface_name.replace('-', '_')
-        normalized_endpoint = endpoint.replace('-', '_')
-        charm_test_file = (
-            charm_test_dir
-            / f'test_{role}s_{normalized_interface}_{interface_version}_over_{normalized_endpoint}.py'  # noqa: E501
-        )
-        charm_test_file.write_text(test_content)
+    with _clone_charm_repo(target.charm_config, keep_tempdir=keep_tempdir) as charm_root:
+        charm_test_file = _write_charm_test_file(target, charm_root=charm_root)
         # create schema and plugin modules at charm root (included in PYTHONPATH)
-        (charm_root / f'{_SCHEMA_MODULE}.py').symlink_to(interface_dir / 'schema.py')
+        (charm_root / f'{_SCHEMA_MODULE}.py').symlink_to(target.interface_dir / 'schema.py')
         (charm_root / f'{_PLUGIN_MODULE}.py').write_text(_PLUGIN_CONTENT)
         # execute interface tests
-        if pre_run := test_config.get('pre_run'):
+        if pre_run := target.test_config.get('pre_run'):
             logger.info(pre_run)
             subprocess.check_call(pre_run, shell=True, cwd=charm_root)  # noqa: S602
         pytest = [
@@ -223,6 +210,52 @@ def _interface_tests(
         logger.info(env)
         completed_process = subprocess.run(pytest, env={**os.environ, **env}, cwd=charm_root)
         return completed_process.returncode
+
+
+@contextlib.contextmanager
+def _clone_charm_repo(charm_config: dict[str, str], keep_tempdir: bool = False) -> pathlib.Path:
+    """Clone the charm repo to a temporary directory and yield the charm root path."""
+    with tempfile.TemporaryDirectory(delete=not keep_tempdir) as td:
+        repo_path = pathlib.Path(td, 'charm-repo')
+        cmd: list[str | pathlib.Path] = ['git', 'clone', '--depth', '1']
+        if branch := charm_config.get('branch'):
+            cmd.extend(['--branch', branch])
+        cmd.extend([charm_config['url'], repo_path])
+        logger.info(cmd)
+        subprocess.check_call(cmd, cwd=td)
+        yield repo_path / charm_config.get('test_setup', {}).get('charm_root', '')
+
+
+def _write_charm_test_file(target: _Target, charm_root: pathlib.Path) -> pathlib.Path:
+    """Write interface test suite and fixture for target to charm test directory."""
+    test_content = _TEST_CONTENT.format(
+        script_path=pathlib.Path(__file__).relative_to(_REPO_ROOT),
+        tests_path=target.interface_tests_path.relative_to(_REPO_ROOT),
+        tests_content=target.interface_tests_path.read_text(),
+        schema_module=_SCHEMA_MODULE,
+        plugin_module=_PLUGIN_MODULE,
+        interface=target.interface_name,
+        version=target.interface_version.removeprefix('v'),
+        repo=_REPO_ROOT,
+        branch=_current_branch(),
+        fixture_id=target.test_config.get('identifier', 'interface_tester'),
+        role=f'{target.role}r',
+        endpoint=target.endpoint,
+    )
+    charm_test_dir = (
+        charm_root / target.test_config.get('location', 'tests/interface_tests/conftest.py')
+    ).parent
+    charm_test_file = (
+        charm_test_dir
+        / f'test_{target.role}s_{_normalized(target.interface_name)}_{target.interface_version}_over_{_normalized(target.endpoint)}_endpoint.py'  # noqa: E501
+    )
+    charm_test_file.write_text(test_content)
+    return charm_test_file
+
+
+def _normalized(name: str) -> str:
+    """Replace hyphens with underscores for Python module names."""
+    return name.replace('-', '_')
 
 
 def _current_branch() -> str:
