@@ -44,7 +44,7 @@ jobs:
         run: |
           set -xueo pipefail
           .scripts/run-interface-tests.py \
-            ${{ inputs.interface }} \
+            ${{ matrix.interface }} \
             ${{ matrix.version }} \
             ${{ matrix.role }} \
             ${{ matrix.charm_name }} \

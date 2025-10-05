@@ -24,7 +24,6 @@
 """Collect the targets for running interface tests for the specified interface.
 
 Only outputs targets that there are test cases for by default.
-Does not include the interface name in the output by default.
 """
 
 import argparse
@@ -47,25 +46,14 @@ def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('interface', help='Path from repo root to specific interface directory.')
     parser.add_argument('--all', action='store_true', help='Include combinations with no tests.')
-    parser.add_argument(
-        '--include-interface-in-output',
-        action='store_true',
-        help='Include interface name in output.',
-    )
     args = parser.parse_args()
-    targets = _target_from_interface(
-        args.interface,
-        has_tests_only=not args.all,
-        include_interface=args.include_interface_in_output,
-    )
+    targets = _target_from_interface(args.interface, has_tests_only=not args.all)
     output = json.dumps(targets)
     logger.info(output)
     print(output)
 
 
-def _target_from_interface(
-    interface_str: str, has_tests_only: bool, include_interface: bool
-) -> list[dict[str, str]]:
+def _target_from_interface(interface_str: str, has_tests_only: bool) -> list[dict[str, str]]:
     """Return a list of interface test targets for this interface.
 
     Iterates over the interface versions, collects all provider and requirer charms, and clones
@@ -74,15 +62,14 @@ def _target_from_interface(
     Args:
         interface_str: The interface path relative to the repo root, e.g. 'interfaces/tracing'.
         has_tests_only: If true, exclude any targets that don't actually have any tests defined.
-        include_interface: If true, include the `'interface': interface_str` in the output.
 
     Returns:
         A list of interface test targets. Each target is a dictionary containing:
-            - interface, if `include_interface` is true
-            - version
-            - role
-            - charm
-            - endpoint
+            - interface (name)
+            - version (with v prefix)
+            - role (provide or require)
+            - charm (name)
+            - endpoint (name)
     """
     interface = _REPO_ROOT / interface_str
     targets: list[dict[str, str]] = []
@@ -99,7 +86,7 @@ def _target_from_interface(
                 continue
             targets.extend(
                 {
-                    **({'interface': interface.name} if include_interface else {}),
+                    'interface': interface.name,
                     'version': v.name,
                     'role': role,
                     'charm_name': charm['name'],
