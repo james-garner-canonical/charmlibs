@@ -194,9 +194,7 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
             logger.info(pre_run)
             subprocess.check_call(pre_run, shell=True, cwd=charm_root)  # noqa: S602
         pytest = [
-            'uv',
-            'tool',
-            'run',
+            'uvx',
             '--with=setuptools',
             f'--with={_INTERFACE_TESTER_DEPENDENCY}',
             '--with-requirements=requirements.txt',
