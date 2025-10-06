@@ -9,3 +9,4 @@ from charmlibs import apt
 ```
 
 See the [reference documentation](https://canonical-charmlibs.readthedocs-hosted.com/reference/charmlibs/apt/).
+
