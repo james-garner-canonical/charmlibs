@@ -32,7 +32,7 @@ Examples:
         app:  <empty>
 """
 
-from interface_tester.schema_base import DataBagSchema
+from interface_tester.schema_base import DataBagSchema  # pyright: ignore[reportMissingTypeStubs]
 from pydantic import BaseModel, Field, Json
 
 
@@ -76,11 +76,11 @@ class RequirerData(BaseModel):
 class ProviderSchema(DataBagSchema):
     """Provider schema for TLS Certificates."""
 
-    app: ProviderApplicationData
+    app: ProviderApplicationData  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
 
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for TLS Certificates."""
 
-    app: RequirerData
-    unit: RequirerData
+    app: RequirerData  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
+    unit: RequirerData  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
