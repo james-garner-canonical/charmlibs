@@ -95,7 +95,7 @@ def _target_from_interface(interface_str: str, has_tests_only: bool) -> list[dic
                 for charm in charms
                 for endpoint in _get_endpoints(
                     interface=interface.name,
-                    role=f'{role}s',
+                    role_key=f'{role}s',
                     charm_repo=charm['url'],
                     charm_ref=charm.get('branch', 'main'),
                     charm_root=charm.get('test_setup', {}).get('charm_root', ''),
@@ -117,7 +117,7 @@ def _has_tests(version_dir: pathlib.Path, role: str) -> bool:
 
 
 def _get_endpoints(
-    interface: str, role: str, charm_repo: str, charm_ref: str | None, charm_root: str
+    interface: str, role_key: str, charm_repo: str, charm_ref: str | None, charm_root: str
 ) -> list[str]:
     """Clone the charm repo and return the endpoints for the interface and role."""
     with tempfile.TemporaryDirectory() as td:
@@ -131,13 +131,13 @@ def _get_endpoints(
         for meta in 'metadata.yaml', 'charmcraft.yaml':
             if (path := repo_path / charm_root / meta).exists():
                 loaded = yaml.safe_load(path.read_bytes())
-                if role not in loaded:
+                if role_key not in loaded:
                     continue
-                endpoints = [e for e, d in loaded[role].items() if d['interface'] == interface]
+                endpoints = [e for e, d in loaded[role_key].items() if d['interface'] == interface]
                 if endpoints:
                     return endpoints
-                raise ValueError(f'{interface} not found in {path}: {loaded[role]}')
-        msg = f'{role} {interface} not found in metadata for {charm_repo}@{charm_ref}/{charm_root}'
+                raise ValueError(f'{interface} not found in {path}: {loaded[role_key]}')
+        msg = f'{role_key} {interface} not found in metadata for {charm_repo}@{charm_ref}/{charm_root}'  # noqa: E501
         raise ValueError(msg)
 
 
