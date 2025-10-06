@@ -212,7 +212,7 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
 
 
 @contextlib.contextmanager
-def _clone_charm_repo(charm_config: dict[str, str], keep_tempdir: bool = False) -> pathlib.Path:
+def _clone_charm_repo(charm_config: dict[str, str], keep_tempdir: bool = False):
     """Clone the charm repo to a temporary directory and yield the charm root path."""
     with tempfile.TemporaryDirectory(delete=not keep_tempdir) as td:
         repo_path = pathlib.Path(td, 'charm-repo')
@@ -222,7 +222,9 @@ def _clone_charm_repo(charm_config: dict[str, str], keep_tempdir: bool = False) 
         cmd.extend([charm_config['url'], repo_path])
         logger.info(cmd)
         subprocess.check_call(cmd, cwd=td)
-        yield repo_path / charm_config.get('test_setup', {}).get('charm_root', '')
+        test_setup = charm_config.get('test_setup', {})
+        charm_root = test_setup.get('charm_root', '')  # pyright: ignore[reportAttributeAccessIssue]
+        yield repo_path / charm_root
 
 
 def _write_charm_test_file(target: _Target, charm_root: pathlib.Path) -> pathlib.Path:
