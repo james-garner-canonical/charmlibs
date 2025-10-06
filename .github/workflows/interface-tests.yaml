@@ -27,6 +27,7 @@ jobs:
         run: |
           set -xueo pipefail
           INCLUDE=$(.scripts/get-interface-test-targets.py ${{ inputs.interface }})
+          echo "$INCLUDE" | jq  # logging
           echo "result=$INCLUDE" >> "$GITHUB_OUTPUT"
 
   tests:
