@@ -42,7 +42,7 @@ jobs:
     with:
       package: ${{ matrix.package }}
 
-  tests-passed:
+  tests-passed:  # GitHub status checks require a static job name
     needs: [tests]
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
     with:
       interface: ${{ matrix.interface }}
 
-  interfaces-passed:
+  interfaces-passed:  # GitHub status checks require a static job name
     needs: [interface]
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
