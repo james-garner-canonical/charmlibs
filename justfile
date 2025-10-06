@@ -25,7 +25,7 @@ fast-lint:
     #!/usr/bin/env -S bash -xueo pipefail
     FAILURES=0
     uv run --only-group=fast-lint ruff check --preview || ((FAILURES+=1))
-    uv run --only-group=fast-lint ruff check --preview --diff || ((FAILURES+=1))
+    uv run --only-group=fast-lint ruff check --preview --diff || : 'Printed diff of changes to fix `ruff check` issues.'
     uv run --only-group=fast-lint ruff format --preview --diff || ((FAILURES+=1))
     uv run --only-group=fast-lint codespell --toml=pyproject.toml || ((FAILURES+=1))
     : "$FAILURES command(s) failed."
@@ -50,9 +50,9 @@ lint package *pyright_args:
     #!/usr/bin/env -S bash -xueo pipefail
     shift 1  # drop $1 (package) from $@ it's just *args
     FAILURES=0
-    just --justfile='{{justfile()}}' python='{{python}}' fast-lint || ((FAILURES+=1))
+    just --justfile='{{justfile()}}' python='{{python}}' fast-lint || ((FAILURES+=$?))
     just --justfile='{{justfile()}}' python='{{python}}' static '{{package}}' "${@}" || ((FAILURES+=1))
-    : "$FAILURES recipe(s) failed."
+    : "$FAILURES command(s) failed."
 
 [doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
 [positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
