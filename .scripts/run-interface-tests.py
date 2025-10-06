@@ -189,10 +189,11 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
         # create schema and plugin modules at charm root (included in PYTHONPATH)
         (charm_root / f'{_SCHEMA_MODULE}.py').symlink_to(target.interface_dir / 'schema.py')
         (charm_root / f'{_PLUGIN_MODULE}.py').write_text(_PLUGIN_CONTENT)
-        # execute interface tests
+        # generate requirements.txt file
         if pre_run := target.test_config.get('pre_run'):
             logger.info(pre_run)
             subprocess.check_call(pre_run, shell=True, cwd=charm_root)  # noqa: S602
+        # execute interface tests
         pytest = [
             'uvx',
             '--with=setuptools',
