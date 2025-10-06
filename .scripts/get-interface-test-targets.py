@@ -84,23 +84,24 @@ def _target_from_interface(interface_str: str, has_tests_only: bool) -> list[dic
                 msg = 'Skipping these charms because there are no tests for %s %s %s: %s'
                 logger.warning(msg, interface_str, v.name, role, charms)
                 continue
-            targets.extend(
-                {
-                    'interface': interface.name,
-                    'version': v.name,
-                    'role': role,
-                    'charm_name': charm['name'],
-                    'endpoint': endpoint,
-                }
-                for charm in charms
-                for endpoint in _get_endpoints(
+            for charm in charms:
+                endpoints = _get_endpoints(
                     interface=interface.name,
                     role_key=f'{role}s',
                     charm_repo=charm['url'],
                     charm_ref=charm.get('branch', 'main'),
                     charm_root=charm.get('test_setup', {}).get('charm_root', ''),
                 )
-            )
+                targets.extend(
+                    {
+                        'interface': interface.name,
+                        'version': v.name,
+                        'role': role,
+                        'charm_name': charm['name'],
+                        'endpoint': endpoint,
+                    }
+                    for endpoint in endpoints
+                )
     return targets
 
 
