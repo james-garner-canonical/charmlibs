@@ -38,11 +38,11 @@ import yaml
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
 def _main() -> None:
+    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('interface', help='Path from repo root to specific interface directory.')
     parser.add_argument('--all', action='store_true', help='Include combinations with no tests.')
