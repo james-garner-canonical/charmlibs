@@ -55,6 +55,7 @@ static package *args:
     cd '{{package}}'
     {{_uv_run_with_test_requirements}} \
         --group lint --group unit --group functional --group integration \
+        --with pytest-interface-tester \
         pyright --pythonversion='{{python}}' "${@}"
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
