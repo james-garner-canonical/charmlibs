@@ -74,6 +74,7 @@ clean:
     rm -rf reference/generated
     # package reference docs
     rm -rf reference/charmlibs
+    rm -rf reference/interfaces
     rm -rf .save
 
 [doc('Run `pyright` for local sphinx extensions.')]
