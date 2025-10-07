@@ -28,9 +28,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           set -xueo pipefail
-          RESULT=$(git merge-base origin/${{ github.event.pull_request.base.ref }} HEAD)
-          echo "result=$RESULT"
-          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+          echo "result=$(git merge-base origin/${{ github.event.pull_request.base.ref }} HEAD)" >> "$GITHUB_OUTPUT"
       - uses: astral-sh/setup-uv@v6
       - name: Collect changed packages
         id: packages
