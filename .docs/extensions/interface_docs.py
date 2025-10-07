@@ -43,26 +43,45 @@ def _interface_docs(app: sphinx.application.Sphinx) -> None:
 # generation logic #
 ####################
 
-RST_TEMPLATE = """
-{interface}
-{underline}
+INDEX_TEMPLATE = """
+# {interface_name}
+
+```{{toctree}}
+:glob:
+:maxdepth: 1
+
+{interface_name}/*
+```
 """.strip()
+README_TEMPLATE = """
+{readme}
+"""
 
 
 def _main(docs_dir: pathlib.Path) -> None:
     """Write automodule file for package and placeholders rst files for all other packages."""
     root = docs_dir.parent
-    target_dir = docs_dir / 'reference' / 'interfaces'
-    target_dir.mkdir(parents=True, exist_ok=True)
+    ref_dir = docs_dir / 'reference' / 'interfaces'
+    ref_dir.mkdir(parents=True, exist_ok=True)
     cmd = [root / '.scripts/ls.py', 'interfaces', '--exclude-examples', '--exclude-placeholders']
     interfaces = json.loads(subprocess.check_output(cmd, text=True))
     for path_str in interfaces:
-        _, _, interface = path_str.rpartition('/')
-        content = RST_TEMPLATE.format(
-            interface=interface,
-            underline='=' * len(interface),
-        )
-        _write_if_needed(path=target_dir / f'{interface}.rst', content=content)
+        interface_dir = root / path_str
+        interface_name = interface_dir.name
+        interface_ref_dir = ref_dir / interface_name
+        interface_ref_dir.mkdir(exist_ok=True)
+        index = INDEX_TEMPLATE.format(interface_name=interface_name)
+        _write_if_needed(path=ref_dir / f'{interface_name}-index.md', content=index)
+        for v in (interface_dir / 'interface').glob('v[0-9]*'):
+            readme = (v / 'README.md').read_text()
+            if (schema_py := v / 'schema.py').exists():
+                schema_url = f'https://github.com/canonical/charmlibs/blob/main/interfaces/{interface_name}/interface/{v.name}/schema.py'
+                readme = readme.replace(f'./{schema_py.name}', schema_url)
+            if (schemas_dir := v / 'schemas').is_dir():
+                for p in schemas_dir.glob('*.json'):
+                    schema_url = f'https://github.com/canonical/charmlibs/blob/main/interfaces/{interface_name}/interface/{v.name}/schemas/{p.name}'
+                    readme = readme.replace(f'./{schemas_dir.name}/{p.name}', schema_url)
+            _write_if_needed(path=interface_ref_dir / f'{v.name}.md', content=readme)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:

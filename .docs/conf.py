@@ -130,6 +130,7 @@ linkcheck_retries = 3
 extensions = [
     "canonical_sphinx",
     "sphinxcontrib.cairosvgconverter",
+    "sphinxcontrib.mermaid",
     "sphinx_last_updated_by_git",
     "sphinx.ext.autodoc",
     'sphinx.ext.intersphinx',
@@ -239,3 +240,7 @@ datatables_options = {
     'paging': False,  # remove all paging options
     'search': {'regex': True},  # enable regex in search box
 }
+
+# Options for sphinxcontrib-mermaid
+myst_fence_as_directive = ["mermaid"]  # allow ```mermaid like GitHub does
+
