@@ -1,10 +1,10 @@
 # Reference
 
 ```{toctree}
-:glob:
 :maxdepth: 1
 
 general-libs
 interface-libs
-charmlibs/**
+charmlibs-index
+charmlibs-interfaces-index
 ```
