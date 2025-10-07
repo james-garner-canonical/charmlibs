@@ -24,7 +24,7 @@ import os
 import pathlib
 import subprocess
 
-_GLOBAL_FILES = {'.github', 'justfile', 'pyproject.toml'}
+_GLOBAL_FILES = {'.github', '.scripts', 'justfile', 'pyproject.toml'}
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 
 logging.basicConfig(level=logging.DEBUG)
