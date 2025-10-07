@@ -23,13 +23,21 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: Calculate reference for git diff
+        id: ref
+        if: github.event_name == 'pull_request'
+        run: |
+          set -xueo pipefail
+          RESULT=$(git merge-base origin/${{ github.event.pull_request.base.ref }} HEAD)
+          echo "result=$RESULT"
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
       - uses: astral-sh/setup-uv@v6
       - name: Collect changed packages
         id: packages
-        run: .github/get-changed.py packages ${{ github.event.pull_request.base.sha }}
+        run: .github/get-changed.py packages ${{ steps.ref.outputs.result }}
       - name: Collect changed interfaces
         id: interfaces
-        run: .github/get-changed.py interfaces ${{ github.event.pull_request.base.sha }}
+        run: .github/get-changed.py interfaces ${{ steps.ref.outputs.result }}
 
   tests:
     needs: [fast-lint, init]
