@@ -53,9 +53,7 @@ INDEX_TEMPLATE = """
 {interface_name}/*
 ```
 """.strip()
-README_TEMPLATE = """
-{readme}
-"""
+REPO_MAIN_URL = 'https://github.com/canonical/charmlibs/blob/main'
 
 
 def _main(docs_dir: pathlib.Path) -> None:
@@ -73,15 +71,16 @@ def _main(docs_dir: pathlib.Path) -> None:
         index = INDEX_TEMPLATE.format(interface_name=interface_name)
         _write_if_needed(path=ref_dir / f'{interface_name}-index.md', content=index)
         for v in (interface_dir / 'interface').glob('v[0-9]*'):
+            base_url = f'{REPO_MAIN_URL}/interfaces/{interface_name}/interface/{v.name}'
             readme = (v / 'README.md').read_text()
             if (schema_py := v / 'schema.py').exists():
-                schema_url = f'https://github.com/canonical/charmlibs/blob/main/interfaces/{interface_name}/interface/{v.name}/schema.py'
-                readme = readme.replace(f'./{schema_py.name}', schema_url)
+                readme = readme.replace(f'./{schema_py.name}', f'{base_url}/{schema_py.name}')
             if (schemas_dir := v / 'schemas').is_dir():
                 for p in schemas_dir.glob('*.json'):
-                    schema_url = f'https://github.com/canonical/charmlibs/blob/main/interfaces/{interface_name}/interface/{v.name}/schemas/{p.name}'
-                    readme = readme.replace(f'./{schemas_dir.name}/{p.name}', schema_url)
-            _write_if_needed(path=interface_ref_dir / f'{v.name}.md', content=readme)
+                    readme = readme.replace(
+                        f'./{schemas_dir.name}/{p.name}', f'{base_url}/schemas/{p.name}'
+                    )
+            _write_if_needed(path=interface_ref_dir / f'readme-{v.name}.md', content=readme)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
