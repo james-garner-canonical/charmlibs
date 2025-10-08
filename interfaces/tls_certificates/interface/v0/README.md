@@ -2,22 +2,22 @@
 
 ## Usage
 
-This relation interface describes the expected behavior of any charm claiming to be able to provide 
+This relation interface describes the expected behavior of any charm claiming to be able to provide
 or consume TLS certificates.
 
-As all Juju relations, the `tls-certificates` interface consists of a provider and a requirer. 
-One of these, in this case the `provider`, will be expected to create TLS certificates where the 
+As all Juju relations, the `tls-certificates` interface consists of a provider and a requirer.
+One of these, in this case the `provider`, will be expected to create TLS certificates where the
 `requirer` will be able to consume and use them for TLS communications.
 
 ## Behavior
 
-Both the requirer and the provider need to adhere to a certain set of criteria to be considered 
+Both the requirer and the provider need to adhere to a certain set of criteria to be considered
 compatible with the interface.
 
 ### Requirer
 
 - Is expected to provide its unit name
-- Is expected to provide a list of certificate requests 
+- Is expected to provide a list of certificate requests
 
 ### Provider
 
