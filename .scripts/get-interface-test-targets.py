@@ -100,16 +100,17 @@ def _target_from_interface(
                     charm_ref=charm.get('branch', 'main'),
                     charm_root=charm.get('test_setup', {}).get('charm_root', ''),
                 )
-                targets.extend(
-                    {
-                        **({'interface': interface.name} if include_interface else {}),
+                for endpoint in endpoints:
+                    target = {
+                        'interface': interface.name,
                         'version': v.name,
                         'role': role,
                         'charm_name': charm['name'],
                         'endpoint': endpoint,
                     }
-                    for endpoint in endpoints
-                )
+                    if not include_interface:
+                        del target['interface']
+                    targets.append(target)
     return targets
 
 
