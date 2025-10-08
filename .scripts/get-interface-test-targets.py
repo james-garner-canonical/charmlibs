@@ -101,15 +101,13 @@ def _target_from_interface(
                     charm_root=charm.get('test_setup', {}).get('charm_root', ''),
                 )
                 for endpoint in endpoints:
-                    target = {
-                        'interface': interface.name,
-                        'version': v.name,
-                        'role': role,
-                        'charm_name': charm['name'],
-                        'endpoint': endpoint,
-                    }
-                    if not include_interface:
-                        del target['interface']
+                    target: dict[str, str] = {}
+                    if include_interface:
+                        target['interface'] = interface.name
+                    target['version'] = v.name
+                    target['role'] = role
+                    target['charm_name'] = charm['name']
+                    target['endpoint'] = endpoint
                     targets.append(target)
     return targets
 
