@@ -13,4 +13,4 @@ Then run `just` from anywhere in the repository for usage.
 
 # Adding a new library
 
-Follow [the tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` repo.
+Follow the [tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` monorepo.
