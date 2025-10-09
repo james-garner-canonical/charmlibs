@@ -100,7 +100,6 @@ def _target_from_interface(
         for role in 'provide', 'require':
             charms = interface_yaml.get(f'{role}rs', [])
             if not charms:
-                logger.debug('No charms for %s %s %s role.', interface_str, v.name, role)
                 continue
             if has_tests_only and not _has_tests(v, f'{role}r'):
                 msg = 'Skipping these charms because there are no tests for %s %s %s: %s'

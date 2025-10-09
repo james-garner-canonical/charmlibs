@@ -54,7 +54,7 @@ jobs:
           set -xueo pipefail
           cat .scripts/get-interface-test-targets.py
           ARRAYS=()
-          for interface in $(.scripts/ls.py interfaces --name-only | jq --raw-output '.[]'); do
+          for interface in $(.scripts/ls.py interfaces | jq --raw-output '.[]'); do
             targets=$(.scripts/get-interface-test-targets.py "$interface" --only-charm "$CHARM" --include-interface --exclude-charm)
             ARRAYS+=("$targets")
           done
