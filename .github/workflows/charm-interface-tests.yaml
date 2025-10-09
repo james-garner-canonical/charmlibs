@@ -41,19 +41,10 @@ jobs:
       checkout-ref: ${{ steps.init.outputs.ref }}
       include: ${{ steps.include.outputs.result }}
     steps:
-      - name: Configure repository and ref for checkout
-        id: init
-        run: |
-          set -xueo pipefail
-          # $GITHUB_WORKFLOW_REF looks like: octo-org/shared-actions/path/to/workflow.yml@main
-          REPOSITORY=$(echo "$GITHUB_WORKFLOW_REF" | awk -F'/' '{print $1"/"$2}')
-          REF=$(echo "$GITHUB_WORKFLOW_REF" | awk -F'@' '{print $NF}')
-          echo "repository=$REPOSITORY" >> $GITHUB_OUTPUT
-          echo "ref=$REF" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v5
         with:
-          repository: ${{ steps.init.outputs.repository }}
-          ref: ${{ steps.init.outputs.ref }}
+          repository: canonical/charmlibs
+          ref: main
       - uses: astral-sh/setup-uv@v6
       - name: Define interface test matrix
         id: include
@@ -81,8 +72,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          repository: ${{ needs.init.outputs.checkout-repository }}
-          ref: ${{ needs.init.outputs.checkout-ref }}
+          repository: canonical/charmlibs
+          ref: main
       - uses: astral-sh/setup-uv@v6
       - name: Run interface tests
         run: |
