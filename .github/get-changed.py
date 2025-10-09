@@ -24,7 +24,7 @@ import os
 import pathlib
 import subprocess
 
-_GLOBAL_FILES = {'.github', 'justfile', 'pyproject.toml'}
+_GLOBAL_FILES = {'.github', '.scripts', 'justfile', 'pyproject.toml'}
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 
 logging.basicConfig(level=logging.DEBUG)
@@ -35,6 +35,7 @@ def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('category', choices=('packages', 'interfaces'))
     parser.add_argument('git_base_ref', nargs='?', default='')
+    parser.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
     cmd = ['.scripts/ls.py', args.category]
     if not args.git_base_ref:
@@ -43,6 +44,8 @@ def _main() -> None:
         logger.info('Using all packages because global files were changed: %s', global_changes)
     else:
         cmd.append(args.git_base_ref)
+    if args.name_only:
+        cmd.append('--name-only')
     result = subprocess.check_output(cmd, text=True).strip()
     output = f'result={result}'
     logger.info(output)
