@@ -82,7 +82,7 @@ jobs:
             ${{ matrix.interface }} \
             ${{ matrix.version }} \
             ${{ matrix.role }} \
-            ${{ inputs.charm_name }} \
+            ${{ inputs.charm }} \
             ${{ matrix.endpoint }} \
             --charm-repo '${{ inputs.charm_repo }}' \
             --charm-branch '${{ inputs.charm_branch }}'
