@@ -52,13 +52,12 @@ jobs:
           CHARM: ${{ inputs.charm }}
         run: |
           set -xueo pipefail
-          cat .scripts/get-interface-test-targets.py
           ARRAYS=()
           for interface in $(.scripts/ls.py interfaces | jq --raw-output '.[]'); do
             targets=$(.scripts/get-interface-test-targets.py "$interface" --only-charm "$CHARM" --include-interface --exclude-charm)
             ARRAYS+=("$targets")
           done
-          INCLUDE=$(printf "%s\n" "${ARRAYS[@]}" | jq -s 'add')
+          INCLUDE=$(printf "%s\n" "${ARRAYS[@]}" | jq --slurp --compact-output 'add')
           echo "$INCLUDE" | jq  # logging
           echo "result=$INCLUDE" >> "$GITHUB_OUTPUT"
 
