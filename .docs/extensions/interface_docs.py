@@ -48,6 +48,7 @@ INDEX_TEMPLATE = """
 
 ```{{toctree}}
 :glob:
+:reversed:
 :maxdepth: 1
 
 {interface_name}/*
