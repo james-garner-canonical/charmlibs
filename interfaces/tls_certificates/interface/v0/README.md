@@ -1,4 +1,4 @@
-# `tls-certificates/v0`
+# `tls_certificates/v0`
 
 ## Usage
 
