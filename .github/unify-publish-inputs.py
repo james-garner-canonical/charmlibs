@@ -34,21 +34,32 @@ def _main() -> None:
             os.environ['GITHUB_SHA'],
             '--exclude-examples',
             '--only-if-version-changed',
+            '--output=path',
+            '--output=name',
+            '--output=version',
         ]
+        items = json.loads(subprocess.check_output(cmd, text=True))
+        include = [{'package': item['path'], 'tag': _get_tag(item)} for item in items]
         _output({
-            'packages': subprocess.check_output(cmd, text=True).strip(),
+            'include': json.dumps(include),
             'skip-juju': 'false',
             'repository-url': 'https://upload.pypi.org/legacy/',
         })
     elif event_name == 'workflow_dispatch':
         _output({
-            'packages': json.dumps([event['inputs']['package']]),
+            'include': json.dumps([{'package': [event['inputs']['package']], 'tag': ''}]),
             'skip-juju': event['inputs']['skip-juju'],
             'repository-url': 'https://test.pypi.org/legacy/',
         })
     else:
         print(f'Unexpected event name: {event_name}')
         sys.exit(1)
+
+
+def _get_tag(item: dict[str, str]) -> str:
+    name = item['name'].removeprefix('charmlibs-')
+    version = item['version']
+    return f'{name}-v{version}'
 
 
 def _output(di: dict[str, str]) -> None:
