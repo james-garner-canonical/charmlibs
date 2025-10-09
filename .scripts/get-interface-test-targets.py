@@ -107,7 +107,7 @@ def _target_from_interface(
                 logger.warning(msg, interface_str, v.name, role, charms)
                 continue
             for charm in charms:
-                if only_charm and charm != only_charm:
+                if only_charm and charm['name'] != only_charm:
                     continue
                 endpoints = _get_endpoints(
                     interface=interface.name,
