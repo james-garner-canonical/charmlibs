@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import subprocess
 import typing
 
@@ -73,14 +74,11 @@ def _main(docs_dir: pathlib.Path) -> None:
         _write_if_needed(path=ref_dir / f'{interface_name}-index.md', content=index)
         for v in (interface_dir / 'interface').glob('v[0-9]*'):
             base_url = f'{REPO_MAIN_URL}/interfaces/{interface_name}/interface/{v.name}'
-            readme = (v / 'README.md').read_text()
-            if (schema_py := v / 'schema.py').exists():
-                readme = readme.replace(f'./{schema_py.name}', f'{base_url}/{schema_py.name}')
-            if (schemas_dir := v / 'schemas').is_dir():
-                for p in schemas_dir.glob('*.json'):
-                    readme = readme.replace(
-                        f'./{schemas_dir.name}/{p.name}', f'{base_url}/schemas/{p.name}'
-                    )
+            readme = re.sub(
+                r'\[(.+)\]\((?!https?://)([^)]+)\)',  # match all non-http(s) markdown links
+                lambda m: f'[m.group(1)]({base_url}/{m.group(2)})',  # prepend base_url to links
+                (v / 'README.md').read_text(),
+            )
             _write_if_needed(path=interface_ref_dir / f'readme-{v.name}.md', content=readme)
 
 
