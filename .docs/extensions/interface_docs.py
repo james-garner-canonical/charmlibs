@@ -78,7 +78,7 @@ def _main(docs_dir: pathlib.Path) -> None:
             # match all non-http(s) markdown links and prepend base_url to matching links
             readme = re.sub(
                 r'\[(.+)\]\((?!https?://)([^)]+)\)',
-                lambda m: f'[m.group(1)]({base_url}/{m.group(2)})',  # noqa: B023
+                lambda m: f'[{m.group(1)}]({base_url}/{m.group(2)})',  # noqa: B023
                 readme_raw,
             )
             _write_if_needed(path=interface_ref_dir / f'{v.name}.md', content=readme)
