@@ -73,11 +73,13 @@ def _main(docs_dir: pathlib.Path) -> None:
         index = INDEX_TEMPLATE.format(interface_name=interface_name)
         _write_if_needed(path=ref_dir / f'{interface_name}-index.md', content=index)
         for v in (interface_dir / 'interface').glob('v[0-9]*'):
+            readme_raw = (v / 'README.md').read_text()
             base_url = f'{REPO_MAIN_URL}/interfaces/{interface_name}/interface/{v.name}'
+            # match all non-http(s) markdown links and prepend base_url to matching links
             readme = re.sub(
-                r'\[(.+)\]\((?!https?://)([^)]+)\)',  # match all non-http(s) markdown links
-                lambda m: f'[m.group(1)]({base_url}/{m.group(2)})',  # prepend base_url to links
-                (v / 'README.md').read_text(),
+                r'\[(.+)\]\((?!https?://)([^)]+)\)',
+                lambda m: f'[m.group(1)]({base_url}/{m.group(2)})',  # noqa: B023
+                readme_raw,
             )
             _write_if_needed(path=interface_ref_dir / f'readme-{v.name}.md', content=readme)
 
