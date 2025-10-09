@@ -86,4 +86,3 @@ jobs:
             ${{ matrix.endpoint }} \
             --charm-repo '${{ inputs.charm_repo }}' \
             --charm-branch '${{ inputs.charm_branch }}'
-
