@@ -5,7 +5,7 @@
 This relation interface describes the expected behavior of any charm claiming to be able to provide
 or consume TLS certificates.
 
-A recommended approach is to use the [tls_certificates_interface library V4](https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v4/tls_certificates.py).
+The recommended approach is to use [charmlibs.interfaces.tls_certificates](https://pypi.org/project/charmlibs-interfaces-tls-certificates).
 
 ## Direction
 
