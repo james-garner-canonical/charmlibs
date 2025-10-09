@@ -5,7 +5,7 @@
 
 general-libs
 interface-libs
-charmlibs-index
-charmlibs-interfaces-index
-interfaces-index
+charmlibs
+charmlibs-interfaces
+interfaces
 ```
