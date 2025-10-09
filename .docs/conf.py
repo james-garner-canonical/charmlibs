@@ -101,6 +101,8 @@ linkcheck_ignore = [
     "http://127.0.0.1:8000",
     "https://matrix.to/#/*",
 ]
+if 'check-github-links' not in tags:
+    linkcheck_ignore.append(r"https://github\.com/.*")
 
 # A regex list of URLs where anchors are ignored by 'make linkcheck'
 linkcheck_anchors_ignore_for_url = [r"https://github\.com/.*"]
