@@ -52,6 +52,7 @@ jobs:
           CHARM: ${{ inputs.charm }}
         run: |
           set -xueo pipefail
+          cat .scripts/get-interface-test-targets.py
           ARRAYS=()
           for interface in $(.scripts/ls.py interfaces --name-only | jq --raw-output '.[]'); do
             targets=$(.scripts/get-interface-test-targets.py "$interface" --only-charm "$CHARM" --include-interface --exclude-charm)
