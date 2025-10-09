@@ -35,7 +35,7 @@ jobs:
         run: .github/get-changed.py packages ${{ steps.ref.outputs.result }}
       - name: Collect changed interfaces
         id: interfaces
-        run: .github/get-changed.py interfaces ${{ steps.ref.outputs.result }}
+        run: .github/get-changed.py interfaces ${{ steps.ref.outputs.result }} --name-only
 
   tests:
     needs: [fast-lint, init]
