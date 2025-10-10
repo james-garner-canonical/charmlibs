@@ -1,6 +1,6 @@
 # charmlibs-interfaces-tls_certificates
 
-The `tls_certificates` interface library.
+The `tls-certificates` interface library.
 
 To install, add `charmlibs-interfaces-tls-certificates` to your Python dependencies. Then in your Python code, import as:
 
