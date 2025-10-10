@@ -17,9 +17,10 @@ explanation/index
 `charmlibs` is the home of Canonical's charm libraries.
 
 This site hosts reference documentation for {ref}`charmlibs<reference-charmlibs>` and {ref}`charmlibs.interfaces<reference-charmlibs-interfaces>` packages, as well as for {ref}`interfaces<reference-interfaces>`.
-There's are also pages listing {ref}`general charm libraries<general-libs-listing>` and {ref}`charm interface libraries<interface-libs-listing>`, including `charmlibs` packages, legacy Charmhub-hosted libs, and everything in-between, where you can find out more about which libraries are recommended and where to get them.
 
-To get started contributing your own library to the `charmlibs` monorepo, check out {doc}`the tutorial<tutorial>`.
+Read more about {ref}`the different types of charm libraries <charm-libs>`, or check out the {ref}`general charm libraries<general-libs-listing>` and {ref}`charm interface libraries<interface-libs-listing>` listings to learn more about which libraries are recommended and where to get them.
+
+To get started contributing your own library to the `charmlibs` monorepo, follow {doc}`the tutorial<tutorial>`.
 
 You can also read our {ref}`guidance on distributing charm libraries<how-to-python-package>`.
 
