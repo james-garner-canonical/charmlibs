@@ -1,3 +1,4 @@
+(tutorial)=
 # Tutorial
 
 In this tutorial you'll add a new library to the `charmlibs` monorepo.
