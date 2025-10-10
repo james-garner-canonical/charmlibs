@@ -1,5 +1,5 @@
 ---
-relatedlinks: "[Ops](https://documentation.ubuntu.com/ops/), [Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/), [Concierge](https://github.com/canonical/concierge), [Jubilant](https://documentation.ubuntu.com/jubilant/), [Juju](https://documentation.ubuntu.com/juju/3.6/), [Pebble](https://documentation.ubuntu.com/pebble/)"
+relatedlinks: "[Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/), [Concierge](https://github.com/canonical/concierge), [Jubilant](https://documentation.ubuntu.com/jubilant/), [Juju](https://documentation.ubuntu.com/juju/3.6/), [Ops](https://documentation.ubuntu.com/ops/), [Pebble](https://documentation.ubuntu.com/pebble/)"
 ---
 
 # Charmlibs
