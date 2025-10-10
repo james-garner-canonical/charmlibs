@@ -1,6 +1,6 @@
 [project]
-name = "charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}"
-description = "The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }} package."
+name = "charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug.replace('_', '-') }}"
+description = "The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug.replace('-', '_') }} package."
 readme = "README.md"
 requires-python = ">={{ cookiecutter.min_python_version }}"
 authors = [
@@ -43,7 +43,7 @@ build-backend = "hatchling.build"
 packages = ["src/charmlibs"]
 
 [tool.hatch.version]
-path = "src/charmlibs{{ '/interfaces' if cookiecutter._interface else '' }}/{{ cookiecutter.project_slug }}/_version.py"
+path = "src/charmlibs{{ '/interfaces' if cookiecutter._interface else '' }}/{{ cookiecutter.project_slug.replace('-', '_') }}/_version.py"
 
 [tool.ruff]
 extend = "{{ '../' if cookiecutter._interface else '' }}../pyproject.toml"

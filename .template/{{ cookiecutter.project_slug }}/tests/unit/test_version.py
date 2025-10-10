@@ -14,8 +14,8 @@
 
 """Unit tests for library code, not involving charm code."""
 
-from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug }}
+from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug.replace('-', '_') }}
 
 
 def test_version():
-    assert isinstance({{ cookiecutter.project_slug }}.__version__, str)
+    assert isinstance({{ cookiecutter.project_slug.replace('-', '_') }}.__version__, str)

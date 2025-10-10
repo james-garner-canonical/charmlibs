@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The charmlibs.interfaces.example package."""
+"""The charmlibs.interfaces.example_interface package."""
 
 from ._version import __version__ as __version__
 
 __all__ = [
-    # only the names listed in __all__ are imported when executing:
-    # from charmlibs.example import *
+    # only the names listed in __all__ are imported when executing `from ... import *`
 ]

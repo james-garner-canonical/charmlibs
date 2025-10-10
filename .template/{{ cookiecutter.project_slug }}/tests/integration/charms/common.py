@@ -21,7 +21,7 @@ import logging
 
 import ops
 
-from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug }}
+from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug.replace('-', '_') }}
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,6 @@ class Charm(ops.CharmBase):
 
     def _on_lib_version(self, event: ops.ActionEvent):
         logger.info('action [lib-version] called with params: %s', event.params)
-        results = {'version': {{ cookiecutter.project_slug }}.__version__}
+        results = {'version': {{ cookiecutter.project_slug.replace('-', '_') }}.__version__}
         event.set_results(results)
         logger.info('action [lib-version] set_results: %s', results)

@@ -1,4 +1,4 @@
-# charmlibs-example
+# charmlibs.example
 
 The `example` library.
 
