@@ -1,4 +1,4 @@
-# charmlibs-interfaces-tls_certificates
+# charmlibs.interfaces.tls_certificates
 
 The `tls-certificates` interface library.
 
