@@ -16,13 +16,16 @@ explanation/index
 
 `charmlibs` is the home of Canonical's charm libraries.
 
-This site hosts reference documentation for {ref}`charmlibs<reference-charmlibs>` and {ref}`charmlibs.interfaces<reference-charmlibs-interfaces>` packages, as well as for {ref}`interfaces<reference-interfaces>`.
+If you're searching for a library to use in a charm, check out the library listings to learn which libraries are recommended and where to get them:
 
-Read more about {ref}`the different types of charm libraries <charm-libs>`, or check out the {ref}`general charm libraries<general-libs-listing>` and {ref}`charm interface libraries<interface-libs-listing>` listings to learn more about which libraries are recommended and where to get them.
+- {ref}`General charm libraries<general-libs-listing>`
+- {ref}`Charm interface libraries<interface-libs-listing>`
 
-To get started contributing your own library to the `charmlibs` monorepo, follow {doc}`the tutorial<tutorial>`.
+This site also hosts documentation for Python packages in the [charmlibs monorepo](https://github.com/canonical/charmlibs):
 
-You can also read our {ref}`guidance on distributing charm libraries<how-to-python-package>`.
+- {ref}`reference-charmlibs` - General libraries, imported from `charmlibs` in charm code.
+- {ref}`reference-charmlibs-interfaces` - Interface libraries, imported from `charmlibs.interfaces` in charm code.
+
 
 If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
@@ -31,13 +34,14 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 ````{grid} 1 1 2 2
 
 ```{grid-item-card} [Tutorial](tutorial)
-**Start here:** Write your first charm library.
+**Start here:** Write your first charm library and contribute it to the monorepo.
 ```
 
 ```{grid-item-card} [How-to guides](how-to/index)
 **Step-by-step guides**
 - {ref}`Distribute charm libraries <how-to-python-package>`
-- Customize {ref}`functional <how-to-customize-functional-tests>` and {ref}`integration <how-to-customize-integration-tests>` tests in the `charmlibs` monorepo
+- {ref}`Customize functional tests <how-to-customize-functional-tests>`
+- {ref}`Customize integration tests <how-to-customize-integration-tests>`
 ```
 
 ````
@@ -47,15 +51,17 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
 ```{grid-item-card} [Reference](reference/index)
 **Technical information** 
-- Listing of {ref}`general <general-libs-listing>` and {ref}`interface <interface-libs-listing>` charm libraries
-- Library reference documentation for {ref}`charmlibs <reference-charmlibs>` and {ref}`charmlibs.interfaces <reference-charmlibs-interfaces>` packages
-- {ref}`Interface documentation <reference-interfaces>`
+- {ref}`General libraries <general-libs-listing>` and {ref}`interface libraries <interface-libs-listing>`
+- {ref}`charmlibs package docs <reference-charmlibs>`
+- {ref}`charmlibs.interfaces package docs <reference-charmlibs-interfaces>`
+- {ref}`Interface specifications <reference-interfaces>`
 ```
 
 ```{grid-item-card} [Explanation](explanation/index)
 **Discussion and clarification** of key topics
 - {ref}`Charm libraries <charm-libs>`
-- {ref}`Testing <charmlibs-tests>` and {ref}`publishing <charmlibs-publishing>` from the `charmlibs` monorepo
+- {ref}`Testing packages in the monorepo <charmlibs-tests>`
+- {ref}`Publishing packages from the monorepo <charmlibs-publishing>`
 ```
 
 ````
