@@ -1,3 +1,4 @@
+(reference-interfaces)=
 # Interface specifications
 
 ```{toctree}

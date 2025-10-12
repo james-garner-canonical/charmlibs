@@ -1,3 +1,4 @@
+(reference-charmlibs-interfaces)=
 # charmlibs.interfaces
 
 ```{toctree}
