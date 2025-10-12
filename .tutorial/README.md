@@ -1,4 +1,4 @@
-# charmlibs-uptime
+# charmlibs.uptime
 
 The `uptime` library.
 
