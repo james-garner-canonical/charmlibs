@@ -16,7 +16,7 @@
 
 import jubilant
 
-from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug.replace('-', '_') }}
+from {{ cookiecutter.__ns }} import {{ cookiecutter.__pkg }}
 
 
 def test_deploy(juju: jubilant.Juju, charm: str):
@@ -26,4 +26,4 @@ def test_deploy(juju: jubilant.Juju, charm: str):
 
 def test_lib_version(juju: jubilant.Juju, charm: str):
     result = juju.run(f'{charm}/0', 'lib-version')
-    assert result.results['version'] == {{ cookiecutter.project_slug.replace('-', '_') }}.__version__
+    assert result.results['version'] == {{ cookiecutter.__pkg }}.__version__

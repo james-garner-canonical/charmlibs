@@ -3,6 +3,12 @@
   "min_python_version": "3.10",
   "author": "The Charm Tech team at Canonical",
   "_interface": false,
+  "__sub_ns": "{{ 'interfaces' if cookiecutter._interface else '' }}",
+  "__ns": "charmlibs{{ ('.') + cookiecutter.__sub_ns if cookiecutter.__sub_ns else ''}}",
+  "__pkg": "{{ cookiecutter.project_slug.replace('-', '_') }}",
+  "__import_pkg": "{{ cookiecutter.__ns }}.{{ cookiecutter.__pkg }}",
+  "__dist_pkg": "{{ cookiecutter.__import_pkg.replace('.', '-').replace('_', '-') }}",
+  "__path": "{{ (cookiecutter.__sub_ns + '/') if cookiecutter.__sub_ns else '' }}{{ cookiecutter.__pkg }}",
   "__prompts__": {
     "project_slug": "The package name (without the charmlibs prefix), e.g.",
     "min_python_version": "The minimum Python version supported by the package",

@@ -14,8 +14,8 @@
 
 """Functional tests interacting with the real system, but not with Juju."""
 
-from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug.replace('-', '_') }}
+from {{ cookiecutter.__ns }} import {{ cookiecutter.__pkg }}
 
 
 def test_version():
-    assert isinstance({{ cookiecutter.project_slug.replace('-', '_') }}.__version__, str)
+    assert isinstance({{ cookiecutter.__pkg }}.__version__, str)
