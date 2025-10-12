@@ -97,9 +97,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - working-directory: interfaces
         run: |
-          uvx --from rust-just just interface init --no-input
+          uvx --from rust-just just interface init --no-input project_slug=example-interface
           rm -rf .example
-          mv example .example
+          mv example-interface .example
           # check if tracked files changed, or any new files were added
           # (git diff --exit-code isn't effected by new files)
           STATUS=$(git status --porcelain)

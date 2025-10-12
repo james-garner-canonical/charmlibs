@@ -14,8 +14,8 @@
 
 """Unit tests for library code, not involving charm code."""
 
-from charmlibs.interfaces import example
+from charmlibs.interfaces import example_interface
 
 
 def test_version():
-    assert isinstance(example.__version__, str)
+    assert isinstance(example_interface.__version__, str)
