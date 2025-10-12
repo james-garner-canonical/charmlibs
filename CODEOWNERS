@@ -29,4 +29,4 @@
 /snap/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
-/interfaces/tls_certificates/ @canonical/tls
+/interfaces/tls-certificates/ @canonical/tls

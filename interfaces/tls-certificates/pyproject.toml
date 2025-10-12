@@ -61,6 +61,10 @@ exclude = [
 quote-style = "double"
 
 [tool.ruff.lint.extend-per-file-ignores]
+"interface/v1/schema.py" = [
+    "CPY",  # copyright
+    "E501",  # line too long
+]
 "src/charmlibs/interfaces/tls_certificates/_tls_certificates.py" = [
     "B904",  # FIXME: use raise ... from
     "B909",  # FIXME: mutation to loop iterable during iteration
@@ -72,7 +76,7 @@ quote-style = "double"
 
 [tool.pyright]
 extends = "../../pyproject.toml"
-include = ["src", "tests"]
+include = ["src", "tests", "interface"]
 pythonVersion = "3.10"  # check no python > 3.10 features are used
 ignore = [
     "tests/integration/charms/*/published/src/charmlibs",
