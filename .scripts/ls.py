@@ -225,14 +225,13 @@ def _changed_version_only(
     Excludes changes where the new version is a dev version.
     """
     with _snapshot_repo(old_ref) as root:
-        old_versions = {p: _get_version(root, p) for p in dirs}
+        old_versions = dict(_get_version(root, p) for p in dirs)
     with _snapshot_repo(new_ref) as root:
         new_versions = {p: _get_version(root, p) for p in dirs}
     dist_names: dict[pathlib.Path, str] = {}
     versions: dict[pathlib.Path, str] = {}
-    for p in dirs:
-        _, old = old_versions[p]
-        dist_name, new = new_versions[p]
+    for p, (dist_name, new) in new_versions.items():
+        _, old = old_versions.get(p, (None, None))
         if new is not None and '.dev' not in new and old != new:
             dist_names[p] = dist_name
             versions[p] = new
