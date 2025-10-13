@@ -6,36 +6,36 @@ In future, using Charmhub to host and distribute charm libraries will be depreca
 
 For the purposes of library distribution, there are two kinds of charm libraries:
 
-1. Libraries of general interest, intended to be used in a wide range of charms. All libraries for public interfaces fall into this category. These libraries comprise a key part of the charming ecosystem.
+1. Libraries of broad interest, intended to be used in a wide range of charms. All libraries for public interfaces fall into this category. These libraries comprise a key part of the charming ecosystem.
 
-2. Libraries that are very domain specific and likely to be used exclusively by a single team. These libraries are considered implementation details of one or more charms.
+2. Libraries that are domain specific and likely to be used exclusively by a single team. These libraries are considered implementation details of one or more charms.
 
-Libraries of general interest should be developed in the `charmlibs` monorepo and distributed under the `charmlibs` or `charmlibs.interfaces` namespace on PyPI.
+Libraries of broad interest should be developed in the `charmlibs` monorepo and distributed under the `charmlibs` or `charmlibs.interfaces` namespace on PyPI.
 
 Team-internal libraries should not be published on PyPI under the `charmlibs` namespace.
 Instead, consider including such libraries in a shared team package for common code, distributing them as a `git` dependency, or including them as a local dependency (in a charm monorepo).
 If none of those options work for you, then you might consider publishing them as generic packages on PyPI.
 
-To get started with a new `charmlibs` package, follow {ref}`the tutorial<tutorial>`.
+To get started with a new `charmlibs` package, follow {doc}`the tutorial </tutorial>`.
 
 Read on to learn more about your other options for distributing Python packages.
 
 (python-package-distribution)=
-## How to distribute your team's Python package
+## Distribute your team's Python package
 
-It may be easiest to begin by distributing your package by sharing a git URL.
+It may be easiest to begin by distributing your package by sharing a `git` URL.
 This avoids some publishing overhead and keeps things tidy.
 
 If your package is developed in the same repo as one or more charms, consider working with the local files, especially during development and testing.
 This way, you can test against the latest changes before releasing the next version of your package.
 
 Distributing your package on PyPI allows your users to use dependency ranges.
-However, it requires some additional work to publish, so it's best for long-lived packages that are used across the entire team.
+However, it requires some additional work to publish, so it's best for stable packages that are used across the entire team.
 
 (python-package-distribution-git)=
 ### Git
 
-You can get started by distributing your library as a Python package with very little friction using GitHub.
+You can use GitHub to distribute your library with very little friction.
 This is a good fit for libraries that are intended for team-internal use.
 It's also very useful when developing a new library or porting a Charmhub-hosted library.
 
@@ -59,7 +59,7 @@ If your package is in a subdirectory of your repository, for example in a monore
 
 In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+...` in your dependencies list. Alternatively, use `uv add git+...` to have `uv` add `charmlibs-pathops` to your dependencies list and the git reference to `tool.uv.sources`. For `poetry` see [the `poetry` docs](https://python-poetry.org/docs/dependency-specification/#git-dependencies).
 
-The exact commit being referenced should be captured in a lockfile (e.g. `uv.lock`) and committed to the charm repository, so that rebuilding a given charm release is consistent.
+The exact commit being referenced should be captured in `uv.lock` and committed to the charm repository, so that rebuilding a given charm release is consistent.
 
 (python-package-distribution-local)=
 ### Local files
@@ -152,7 +152,7 @@ Make sure that your repository only allows write access from trusted contributor
 
 A major benefit of publishing on PyPI is that users of your library can specify version ranges in their dependencies. Therefore, if you’re going to publish on PyPI, we highly recommend that you use semantic versioning for your library.
 
-A 1.x release to PyPI that isn't qualified with dev/alpha/beta/etc signifies that your library is ready for public consumption. You should also communicate this through the ["Development Status" Trove classifier](https://pypi.org/classifiers/) in your `pyproject.toml`.
+A 1.x release to PyPI that doesn't have a qualifier such as dev/alpha/beta signifies that your library is ready for public consumption. You should also communicate this through the ["Development Status" Trove classifier](https://pypi.org/classifiers/) in your `pyproject.toml`.
 
 
 (python-package-deps)=
