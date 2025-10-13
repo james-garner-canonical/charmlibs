@@ -133,8 +133,8 @@ jobs:
         run: |
           set -xueo pipefail
           if git diff --name-only ${{ github.event.pull_request.base.sha }} | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
-              echo 'CHANGELOG.md updated :)'
+              echo 'CHANGELOG.md updated ^_^'
           else
-              echo 'CHANGELOG.md should be updated before merging.'
+              echo 'CHANGELOG.md should be updated before merging >_<'
               exit 1
           fi
