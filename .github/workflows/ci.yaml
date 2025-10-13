@@ -31,20 +31,16 @@ jobs:
       - name: Collect changed interfaces
         id: interfaces
         run: .github/get-changed.py interfaces ${{ github.event.pull_request.base.sha }} --name-only
-
       - name: Collect packages that would be published on merge
         id: publish
-        env:
-          OLD_REF: ${{ github.event.pull_request.base.sha }}
-          NEW_REF: ${{ github.event.pull_request.head.sha }}
         run: |
           set -xueo pipefail
           if [ github.event_name = 'pull_request' ]; then
-            PACKAGES="$(.github/get-packages-to-publish.py --exclude-placeholders $OLD_REF $NEW_REF)"
+            PACKAGES="$(.scripts/ls.py ${{ github.event.pull_request.base.sha }} --exclude-examples --only-if-version-changed)"
           else
             PACKAGES='[]'
           fi
-          echo "result=${PACKAGES}" >> $GITHUB_OUTPUT
+          echo "result=$PACKAGES" >> $GITHUB_OUTPUT
 
   tests:
     needs: [fast-lint, init]
