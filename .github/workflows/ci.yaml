@@ -35,7 +35,7 @@ jobs:
         id: publish
         run: |
           set -xueo pipefail
-          if [ github.event_name = 'pull_request' ]; then
+          if [ ${{ github.event_name }} = 'pull_request' ]; then
             PACKAGES="$(.scripts/ls.py packages ${{ github.event.pull_request.base.sha }} --exclude-examples --only-if-version-changed)"
           else
             PACKAGES='[]'
