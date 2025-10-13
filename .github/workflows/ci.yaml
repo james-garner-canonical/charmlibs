@@ -19,6 +19,7 @@ jobs:
     outputs:
       packages: ${{ steps.packages.outputs.result }}
       interfaces: ${{ steps.interfaces.outputs.result }}
+      publish: ${{ steps.publish.outputs.result }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -30,6 +31,17 @@ jobs:
       - name: Collect changed interfaces
         id: interfaces
         run: .github/get-changed.py interfaces ${{ github.event.pull_request.base.sha }} --name-only
+      - name: Collect packages that would be published on merge
+        id: publish
+        run: |
+          set -xueo pipefail
+          if [ ${{ github.event_name }} = 'pull_request' ]; then
+            PACKAGES=$(.scripts/ls.py packages ${{ github.event.pull_request.base.sha }} --exclude-examples --exclude-placeholders --only-if-version-changed)
+          else
+            PACKAGES='[]'
+          fi
+          echo "$PACKAGES" | jq  # logging
+          echo "result=$PACKAGES" >> $GITHUB_OUTPUT
 
   tests:
     needs: [fast-lint, init]
@@ -50,7 +62,7 @@ jobs:
       - name: Fail if any tests failed
         if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
         run: |
-          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
 
   interface:
@@ -72,7 +84,7 @@ jobs:
       - name: Fail if any interface tests failed
         if: ${{ needs.interface.result != 'success' && needs.interface.result != 'skipped' }}
         run: |
-          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
 
   template-and-example-in-sync:
@@ -105,3 +117,36 @@ jobs:
           STATUS=$(git status --porcelain)
           echo "$STATUS"
           test -z "$STATUS"
+
+  changelog-updated:
+    needs: [init]
+    if: ${{ needs.init.outputs.publish != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.init.outputs.publish) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure CHANGELOG.md has been updated
+        run: |
+          set -xueo pipefail
+          if git diff --name-only ${{ github.event.pull_request.base.sha }} | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
+            : 'CHANGELOG.md updated :)'
+          else
+            : 'CHANGELOG.md must be updated before merging :('
+            exit 1
+          fi
+
+  changelogs-updated-if-releasing:  # GitHub status checks require a static job name
+    needs: [changelog-updated]
+    if: ${{ !cancelled() }}  # run even if checks are skipped or failed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required changelogs are not updated
+        if: ${{ needs.changelog-updated.result != 'success' && needs.changelog-updated.result != 'skipped' }}
+        run: |
+          echo '${{ toJSON(needs) }}' | jq  # logging
+          exit 1
