@@ -131,8 +131,13 @@ def uptime() -> datetime.timedelta:
     utc_boot_time = datetime.datetime.fromtimestamp(psutil.boot_time(), tz=utc)
     return utc_now - utc_boot_time
 ```
-Consider running `just format` to make sure you have everything formatted correctly.
-You can confirm this with `just lint uptime`, which will also run static type checking for your package.
+Confirm that you've formatted it correctly with `just lint uptime`, which will also run static type checking for your package.
+
+```{tip}
+Automatically format your code with `just format`.
+
+You can optionally run `just format uptime` to confine formatting changes to the `uptime` directory.
+```
 
 Currently, the `uptime` function isn't part of our package's public interface.
 It *is* a public function, but it's hidden away from our users in a private module.
