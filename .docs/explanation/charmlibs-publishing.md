@@ -4,6 +4,11 @@
 The `charmlibs` monorepo has CI that automatically releases your library to PyPI each time you bump your library's version to a non-dev version.
 That is, whenever a PR is merged, if the version of a library has changed, and the new version is not a dev version like `X.Y.Z.devN`, the CI will try to publish your library to PyPI.
 
+```{warning}
+Merging a PR that would publish a library will be blocked unless the library's `CHANGELOG.md` is also updated.
+```
+
+
 ## Trusted publishing
 
 Before you can make your first release, you'll need to [set up trusted publishing on PyPI for your library](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
@@ -44,3 +49,5 @@ Every release should be accompanied by an entry in your library's `CHANGELOG.md`
 That is, a heading with the version number, separated by spaces and a hyphen from the release date.
 The body of the section should include a meaningful description of the changes in this release.
 This could be a bulleted list of commits, or a short paragraph, or both.
+
+Merging a PR that would release your library will be blocked unless the `CHANGELOG.md` is updated.
