@@ -22,11 +22,11 @@ jobs:
       linkcheck-result: ${{ steps.linkcheck-step.outcome }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv
@@ -41,9 +41,9 @@ jobs:
       - name: Links
         id: linkcheck-step
         if: success() || failure()
-        uses: canonical/documentation-workflows/linkcheck@main
-        with:
-          working-directory: .docs
+        run: |
+          set -xueo pipefail
+          uvx --from rust-just just docs linkcheck ${{ github.event_name != 'pull_request' && '--tag check-github-links' || '' }}
       - name: Markdown lint
         id: markdown-step
         if: success() || failure()

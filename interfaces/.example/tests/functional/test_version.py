@@ -14,8 +14,8 @@
 
 """Functional tests interacting with the real system, but not with Juju."""
 
-from charmlibs.interfaces import example
+from charmlibs.interfaces import example_interface
 
 
 def test_version():
-    assert isinstance(example.__version__, str)
+    assert isinstance(example_interface.__version__, str)

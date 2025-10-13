@@ -1,9 +1,9 @@
 # default
-. @canonical/charmlibs-maintainers
+* @canonical/charmlibs-maintainers
 /interfaces/ @canonical/charmlibs-maintainers
 
 # codeowners
-/.github/CODEOWNERS @canonical/charmlibs-maintainers
+/CODEOWNERS @canonical/charmlibs-maintainers
 
 # infra
 /.github/ @canonical/charmlibs-maintainers
@@ -24,6 +24,9 @@
 
 # charmlibs packages (alphabetical)
 /apt/ @canonical/charmlibs-maintainers
+/nginx_k8s/ @canonical/tracing-and-profiling
 /pathops/ @canonical/charmlibs-maintainers
+/snap/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
+/interfaces/tls-certificates/ @canonical/tls

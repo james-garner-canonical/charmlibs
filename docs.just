@@ -21,13 +21,13 @@ to be combined into the final docs in a separate pass.
 """)]
 _packages *packages:
     #!/usr/bin/env -S uv run --script --no-project
-    import pathlib, subprocess
+    import json, pathlib, subprocess
     ROOT = pathlib.Path('{{justfile_directory()}}')
-    # Any directory (or subdirectory of interfaces) starting with a-z is assumed to be a package.
-    for package in '{{packages}}'.split() or [
-        *sorted(p.name for p in ROOT.glob(r'[a-z]*') if p.is_dir() and p.name != 'interfaces'),
-        *sorted(f'interfaces/{p.name}' for p in (ROOT / 'interfaces').glob(r'[a-z]*') if p.is_dir()),
-    ]:
+    packages = '{{packages}}'.split()
+    if not packages:
+        cmd = [ROOT / '.scripts/ls.py', 'packages', '--exclude-examples', '--exclude-placeholders']
+        packages = json.loads(subprocess.check_output(cmd, text=True))
+    for package in packages:
         cmd = [
             'uvx',
             '--from', 'sphinx',
@@ -55,9 +55,9 @@ run: _packages
         sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{build_dir}}/html'
 
 [doc('Check links.')]
-linkcheck: _packages
+linkcheck *sphinx_args: _packages
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-build -b linkcheck . '{{build_dir}}'
+        sphinx-build -b linkcheck . '{{build_dir}}' {{sphinx_args}}
 
 [doc('Check spelling.')]
 spelling: html
@@ -74,6 +74,7 @@ clean:
     rm -rf reference/generated
     # package reference docs
     rm -rf reference/charmlibs
+    rm -rf reference/interfaces
     rm -rf .save
 
 [doc('Run `pyright` for local sphinx extensions.')]

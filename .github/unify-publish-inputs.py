@@ -17,22 +17,24 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import pathlib
 import subprocess
 import sys
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(pathlib.Path().absolute())))
-logger.setLevel(logging.DEBUG)
 
 
 def _main() -> None:
     event_name = os.environ['GITHUB_EVENT_NAME']
     event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
     if event_name == 'push':
-        cmd = ['.github/get-packages-to-publish.py', event['before'], os.environ['GITHUB_SHA']]
+        cmd = [
+            '.scripts/ls.py',
+            'packages',
+            event['before'],
+            os.environ['GITHUB_SHA'],
+            '--exclude-examples',
+            '--only-if-version-changed',
+        ]
         _output({
             'packages': subprocess.check_output(cmd, text=True).strip(),
             'skip-juju': 'false',

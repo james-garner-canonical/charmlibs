@@ -1,22 +1,68 @@
+---
+relatedlinks: "[Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/), [Concierge](https://github.com/canonical/concierge), [Jubilant](https://documentation.ubuntu.com/jubilant/), [Juju](https://documentation.ubuntu.com/juju/3.6/), [Ops](https://documentation.ubuntu.com/ops/), [Pebble](https://documentation.ubuntu.com/pebble/)"
+---
+
 # Charmlibs
 
 ```{toctree}
 :maxdepth: 3
 :hidden: false
 
+tutorial
 how-to/index
 reference/index
 explanation/index
 ```
 
-This is the Charm Tech team at Canonical's documentation website for charm libraries. It hosts the documentation for the team's charm libraries that are distributed as Python packages, as well as general documentation about charm libraries.
+`charmlibs` is the home of Canonical's charm libraries.
 
-You can also read our {ref}`guidance on distributing charm libraries as Python packages <how-to-python-package>`.
+If you're searching for a library to use in a charm, check out the library listings to learn which libraries are recommended and where to get them:
+
+- {ref}`General charm libraries<general-libs-listing>`
+- {ref}`Charm interface libraries<interface-libs-listing>`
+
+This site also hosts documentation for Python packages in the [charmlibs monorepo](https://github.com/canonical/charmlibs):
+
+- {ref}`reference-charmlibs` - General libraries, imported from `charmlibs` in charm code.
+- {ref}`reference-charmlibs-interfaces` - Interface libraries, imported from `charmlibs.interfaces` in charm code.
+
 
 If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
-## Pathops
+## In this documentation
 
-Pathops is a Python package that provides a {doc}`pathlib <python:library/pathlib>`-like interface for both local filesystem and Kubernetes workload container paths. Charms can use [ContainerPath](pathops.ContainerPath) to interact with files in the workload container, or [LocalPath](pathops.LocalPath) to interact with local files using the same API. Code designed to work for both cases can use [PathProtocol](pathops.PathProtocol) in type annotations.
+````{grid} 1 1 2 2
 
-Pathops is [available on PyPI](https://pypi.org/project/charmlibs-pathops) with examples of how to get started. You can also read the [full reference documentation](pathops).
+```{grid-item-card} [Tutorial](tutorial)
+**Start here:** Write your first charm library and contribute it to the monorepo.
+```
+
+```{grid-item-card} [How-to guides](how-to/index)
+**Step-by-step guides**
+- {ref}`Distribute charm libraries <how-to-python-package>`
+- {ref}`Customize functional tests <how-to-customize-functional-tests>`
+- {ref}`Customize integration tests <how-to-customize-integration-tests>`
+```
+
+````
+
+````{grid} 1 1 2 2
+:reverse:
+
+```{grid-item-card} [Reference](reference/index)
+**Technical information** 
+- {ref}`General libraries <general-libs-listing>` and {ref}`interface libraries <interface-libs-listing>`
+- {ref}`charmlibs package docs <reference-charmlibs>`
+- {ref}`charmlibs.interfaces package docs <reference-charmlibs-interfaces>`
+- {ref}`Interface specifications <reference-interfaces>`
+```
+
+```{grid-item-card} [Explanation](explanation/index)
+**Discussion and clarification** of key topics
+- {ref}`Charm libraries <charm-libs>`
+- {ref}`Testing packages in the monorepo <charmlibs-tests>`
+- {ref}`Publishing packages from the monorepo <charmlibs-publishing>`
+```
+
+````
+

@@ -25,7 +25,7 @@ fast-lint:
     #!/usr/bin/env -S bash -xueo pipefail
     FAILURES=0
     uv run --only-group=fast-lint ruff check --preview || ((FAILURES+=1))
-    uv run --only-group=fast-lint ruff check --preview --diff || ((FAILURES+=1))
+    uv run --only-group=fast-lint ruff check --preview --diff || : 'Printed diff of changes to fix `ruff check` issues.'
     uv run --only-group=fast-lint ruff format --preview --diff || ((FAILURES+=1))
     uv run --only-group=fast-lint codespell --toml=pyproject.toml || ((FAILURES+=1))
     : "$FAILURES command(s) failed."
@@ -45,7 +45,14 @@ add package +args:
     uv add --constraints {{quote(join(justfile_dir(), 'test-requirements.txt'))}} "${@}"
 
 [doc('Run global `fast-lint` and package specific `static` analysis, e.g. `just python=3.10 lint pathops`.')]
-lint package *pyright_args: fast-lint (static package pyright_args)
+[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
+lint package *pyright_args:
+    #!/usr/bin/env -S bash -xueo pipefail
+    shift 1  # drop $1 (package) from $@ it's just *args
+    FAILURES=0
+    just --justfile='{{justfile()}}' python='{{python}}' fast-lint || ((FAILURES+=$?))
+    just --justfile='{{justfile()}}' python='{{python}}' static '{{package}}' "${@}" || ((FAILURES+=1))
+    : "$FAILURES command(s) failed."
 
 [doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
 [positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
@@ -55,26 +62,28 @@ static package *args:
     cd '{{package}}'
     {{_uv_run_with_test_requirements}} \
         --group lint --group unit --group functional --group integration \
+        --with pytest-interface-tester \
         pyright --pythonversion='{{python}}' "${@}"
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
 unit package +flags='-rA': (_coverage package 'unit' flags)
 
 [doc("Run functional tests with `coverage`, e.g. `just python=3.10 functional pathops`.")]
-functional package +flags='-rA': (_coverage package 'functional' flags)
-
-[doc("Run functional tests with `coverage` and a live `pebble` running. Requires `pebble`.")]
-functional-pebble package +flags='-rA':
+[positional-arguments]  # pass recipe args to recipe script positionally to enable correct quoting when forwarding variadic args
+functional package +flags='-rA':
     #!/usr/bin/env -S bash -xueo pipefail
-    export PEBBLE=/tmp/pebble-test
-    umask 0
-    pebble run --create-dirs &>/dev/null &
-    PEBBLE_PID=$!
+    shift 1  # drop $1 (package) from $@ it's just +flags
+    cd '{{package}}'
+    if [ -e tests/functional/setup.sh ]; then
+        source ./tests/functional/setup.sh
+    fi
     set +e  # don't exit if the tests fail
-    just --justfile='{{justfile()}}' python='{{python}}' functional '{{package}}' {{flags}}
+    just --justfile='{{justfile()}}' python='{{python}}' _coverage '{{package}}' functional "${@}"
     EXITCODE=$?
     set -e  # do exit if anything goes wrong now
-    kill $PEBBLE_PID
+    if [ -e tests/functional/teardown.sh ]; then
+        source ./tests/functional/teardown.sh
+    fi
     exit $EXITCODE
 
 [doc("Use uv to install and run coverage for the specified package's tests.")]

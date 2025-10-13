@@ -33,7 +33,7 @@ jobs:
       integration-substrates: ${{ steps.integration-substrates.outputs.substrates }}
       integration-tags: ${{ steps.integration-tags.outputs.tags }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -103,7 +103,7 @@ jobs:
       matrix:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -120,7 +120,7 @@ jobs:
       matrix:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -135,13 +135,11 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.init.outputs.functional-matrix) }}
     runs-on: ${{ matrix.ubuntu }}
-    env:
-      RECIPE_SUFFIX: ${{ matrix.pebble != 'no-pebble' && '-pebble' || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.24'
           # To suppress the "Restore cache failed" error, since there is no go.sum file here.
@@ -156,11 +154,11 @@ jobs:
 
       - name: Run functional tests
         if: matrix.sudo == 'no-sudo'
-        run: uvx --from rust-just just python=${{ matrix.python }} functional$RECIPE_SUFFIX ${{ inputs.package }}
+        run: uvx --from rust-just just python=${{ matrix.python }} functional ${{ inputs.package }}
 
       - name: Run functional tests with sudo
         if: matrix.sudo != 'no-sudo'
-        run: sudo env "PATH=$PATH" uvx --from rust-just just python=${{ matrix.python }} functional$RECIPE_SUFFIX ${{ inputs.package }}
+        run: sudo env "PATH=$PATH" uvx --from rust-just just python=${{ matrix.python }} functional ${{ inputs.package }}
 
   integration:
     needs: init
@@ -172,7 +170,7 @@ jobs:
         tag: ${{ fromJson(needs.init.outputs.integration-tags) }}
         substrate: ${{ fromJson(needs.init.outputs.integration-substrates) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install concierge
         run: sudo snap install --classic concierge
