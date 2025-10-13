@@ -40,6 +40,7 @@ jobs:
           else
             PACKAGES='[]'
           fi
+          echo "$PACKAGES" | jq  # logging
           echo "result=$PACKAGES" >> $GITHUB_OUTPUT
 
   tests:
@@ -61,7 +62,7 @@ jobs:
       - name: Fail if any tests failed
         if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
         run: |
-          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
 
   interface:
@@ -83,7 +84,7 @@ jobs:
       - name: Fail if any interface tests failed
         if: ${{ needs.interface.result != 'success' && needs.interface.result != 'skipped' }}
         run: |
-          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
 
   template-and-example-in-sync:
