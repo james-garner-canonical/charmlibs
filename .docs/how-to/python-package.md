@@ -57,7 +57,7 @@ You can specify any branch, tag, or commit after the `@`. If you leave it off, i
 
 If your package is in a subdirectory of your repository, for example in a monorepo (like the example above), or when developing libraries alongside charms, you'll need to specify the subdirectory. If your library has a dedicated repository, leave off the subdirectory and it will default to the repository root.
 
-In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+...` in your dependencies list. Alternatively, use `uv add git+...` to have `uv` add `charmlibs-pathops` to your dependencies list and the git reference to `tool.uv.sources`. For `poetry` see [the `poetry` docs](https://python-poetry.org/docs/dependency-specification/#git-dependencies).
+In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+...` in your dependencies list. Alternatively, use `uv add git+...` to have `uv` add `charmlibs-pathops` to your dependencies list and the `git` reference to `tool.uv.sources`. For `poetry` see [the `poetry` docs](https://python-poetry.org/docs/dependency-specification/#git-dependencies).
 
 The exact commit being referenced should be captured in `uv.lock` and committed to the charm repository, so that rebuilding a given charm release is consistent.
 
