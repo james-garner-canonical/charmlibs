@@ -33,6 +33,7 @@ import io
 import json
 import logging
 import pathlib
+import re
 import subprocess
 import sys
 import tarfile
@@ -271,8 +272,17 @@ def _get_version(
 
 
 def _get_dist_name(root: pathlib.Path, package: pathlib.Path) -> str:
+    """Load distribution package name from pyproject.toml and normalize it."""
     with (root / package / 'pyproject.toml').open('rb') as f:
-        return tomllib.load(f)['project']['name']
+        return _normalize(tomllib.load(f)['project']['name'])
+
+
+def _normalize(name: str) -> str:
+    """Normalize distribution package name according to PyPI rules.
+
+    https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization
+    """
+    return re.sub(r'[-_.]+', '-', name).lower()
 
 
 if __name__ == '__main__':
