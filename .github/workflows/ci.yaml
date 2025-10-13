@@ -118,7 +118,7 @@ jobs:
           echo "$STATUS"
           test -z "$STATUS"
 
-  changelog-updated-for-release:
+  changelog-updated:
     needs: [init]
     if: ${{ needs.init.outputs.publish != '[]' }}
     runs-on: ubuntu-latest
@@ -140,13 +140,13 @@ jobs:
             exit 1
           fi
 
-  changelog-updated:  # GitHub status checks require a static job name
-    needs: [changelog-updated-for-release]
+  changelogs-updated-if-releasing:  # GitHub status checks require a static job name
+    needs: [changelog-updated]
     if: ${{ !cancelled() }}  # run even if checks are skipped or failed
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required changelogs are not updated
-        if: ${{ needs.changelog-updated-for-release.result != 'success' && needs.changelog-updated-for-release.result != 'skipped' }}
+        if: ${{ needs.changelog-updated.result != 'success' && needs.changelog-updated.result != 'skipped' }}
         run: |
           echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
