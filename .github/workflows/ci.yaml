@@ -139,3 +139,14 @@ jobs:
             : 'CHANGELOG.md must be updated before merging :('
             exit 1
           fi
+
+  changelog-updated:  # GitHub status checks require a static job name
+    needs: [changelog-updated-for-release]
+    if: ${{ !cancelled() }}  # run even if checks are skipped or failed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required changelogs are not updated
+        if: ${{ needs.changelog-updated-for-release.result != 'success' && needs.changelog-updated-for-release.result != 'skipped' }}
+        run: |
+          echo '${{ toJSON(needs) }}' | jq  # logging
+          exit 1
