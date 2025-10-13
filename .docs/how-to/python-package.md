@@ -127,7 +127,7 @@ The approach should be the same if you have multiple charms, (for example `$char
 (python-package-distribution-pypi)=
 ### PyPI
 
-To publish your library on PyPI, set up [trusted publishing](https://docs.pypi.org/trusted-publishers/) on PyPI, and create a GitHub workflow triggered by a version tag. For example:
+To publish a new library on PyPI, set up [trusted publishing](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/#github-actions) on PyPI, and create a GitHub workflow triggered by a version tag. For example:
 
 ```yaml
 # .github/workflows/publish.yaml
@@ -137,13 +137,17 @@ on:
       - 'v*.*.*'
 jobs:
   build-n-publish:
+    # A dedicated environment for publishing is optional, but recommended.
+    # https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
     environment: pypi
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      # Consider pinning to the exact commit hash and updating dependencies with dependabot.
+      # https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv build
       - uses: pypa/gh-action-pypi-publish@release/v1
 ```
