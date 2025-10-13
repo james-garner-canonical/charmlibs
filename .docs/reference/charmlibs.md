@@ -1,3 +1,4 @@
+(reference-charmlibs)=
 # charmlibs
 
 ```{toctree}

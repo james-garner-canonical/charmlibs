@@ -17,7 +17,7 @@
 import ops
 import ops.testing
 
-from charmlibs{{ '.interfaces' if cookiecutter._interface else '' }} import {{ cookiecutter.project_slug }}
+from {{ cookiecutter.__ns }} import {{ cookiecutter.__pkg }}
 
 
 class Charm(ops.CharmBase):
@@ -28,7 +28,7 @@ class Charm(ops.CharmBase):
         framework.observe(self.on.start, self._on_start)
 
     def _on_start(self, event: ops.StartEvent):
-        self.package_version = {{ cookiecutter.project_slug }}.__version__
+        self.package_version = {{ cookiecutter.__pkg }}.__version__
 
 
 def test_version():

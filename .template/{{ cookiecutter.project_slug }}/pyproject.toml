@@ -1,6 +1,6 @@
 [project]
-name = "charmlibs-{{ 'interfaces-' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}"
-description = "The charmlibs.{{ 'interfaces.' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }} package."
+name = "{{ cookiecutter.__dist_pkg }}"
+description = "The {{ cookiecutter.__import_pkg }} package."
 readme = "README.md"
 requires-python = ">={{ cookiecutter.min_python_version }}"
 authors = [
@@ -19,15 +19,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed for `just lint {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}` (unit, functional, and integration are also installed)
+lint = [  # installed for `just lint {{ cookiecutter.__path_prefix }}{{ cookiecutter.project_slug }}` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
-unit = [  # installed for `just unit {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}`
+unit = [  # installed for `just unit {{ cookiecutter.__path_prefix }}{{ cookiecutter.project_slug }}`
     "ops[testing]",
 ]
-functional = [  # installed for `just functional {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}`
+functional = [  # installed for `just functional {{ cookiecutter.__path_prefix }}{{ cookiecutter.project_slug }}`
 ]
-integration = [  # installed for `just integration {{ 'interfaces/' if cookiecutter._interface else '' }}{{ cookiecutter.project_slug }}`
+integration = [  # installed for `just integration {{ cookiecutter.__path_prefix }}{{ cookiecutter.project_slug }}`
     "jubilant",
 ]
 
@@ -43,7 +43,7 @@ build-backend = "hatchling.build"
 packages = ["src/charmlibs"]
 
 [tool.hatch.version]
-path = "src/charmlibs{{ '/interfaces' if cookiecutter._interface else '' }}/{{ cookiecutter.project_slug }}/_version.py"
+path = "src/charmlibs/{{ cookiecutter.__path_prefix }}{{ cookiecutter.__pkg}}/_version.py"
 
 [tool.ruff]
 extend = "{{ '../' if cookiecutter._interface else '' }}../pyproject.toml"
