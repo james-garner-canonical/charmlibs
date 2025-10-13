@@ -19,6 +19,7 @@ jobs:
     outputs:
       packages: ${{ steps.packages.outputs.result }}
       interfaces: ${{ steps.interfaces.outputs.result }}
+      publish: ${{ steps.publish.outputs.result }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -30,6 +31,16 @@ jobs:
       - name: Collect changed interfaces
         id: interfaces
         run: .github/get-changed.py interfaces ${{ github.event.pull_request.base.sha }} --name-only
+      - name: Collect packages that would be published on merge
+        id: publish
+        run: |
+          set -xueo pipefail
+          if [ ${{ github.event_name }} = 'pull_request' ]; then
+            PACKAGES="$(.scripts/ls.py packages ${{ github.event.pull_request.base.sha }} --exclude-examples --exclude-placeholders --only-if-version-changed)"
+          else
+            PACKAGES='[]'
+          fi
+          echo "result=$PACKAGES" >> $GITHUB_OUTPUT
 
   tests:
     needs: [fast-lint, init]
@@ -105,3 +116,25 @@ jobs:
           STATUS=$(git status --porcelain)
           echo "$STATUS"
           test -z "$STATUS"
+
+  changelog-updated-for-release:
+    needs: [init]
+    if: ${{ needs.init.outputs.publish != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.init.outputs.publish) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure CHANGELOG.md has been updated
+        run: |
+          set -xueo pipefail
+          if git diff --name-only ${{ github.event.pull_request.base.sha }} | grep -q '^${{ matrix.package }}/CHANGELOG.md$'; then
+              echo 'CHANGELOG.md updated ^_^'
+          else
+              echo 'CHANGELOG.md should be updated before merging >_<'
+              exit 1
+          fi
