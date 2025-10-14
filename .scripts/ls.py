@@ -28,6 +28,7 @@ See the the command-line help for options.
 from __future__ import annotations
 
 import argparse
+import collections
 import contextlib
 import io
 import json
@@ -42,6 +43,10 @@ import tomllib
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
+
+# global cache for package names and versions
+# populated when calculating the new version when run with --only-if-version-changed
+_CACHE: dict[str, tuple[str, str]] = {}
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
@@ -69,35 +74,37 @@ def _main() -> None:
         help='Output an array of json objects, with each including the requested outputs.',
     )
     args = parser.parse_args()
-    items = _ls(
+    package_info_cache: dict[str, tuple[str, str]] = {}
+    dirs = _ls(
         category=args.category,
         refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
         include_examples=not args.exclude_examples,
         include_placeholders=not args.exclude_placeholders,
         only_if_version_changed=args.only_if_version_changed,
     )
-    if 'version' in args.output and items and 'version' not in items[0]:
-        if args.category != 'packages':
-            logger.error('Can only output `version` for `packages`, not `%s`', args.category)
-            sys.exit(1)
-        for item in items:
-            item['name'], item['version'] = _get_version(_REPO_ROOT, item['path'])
-    if ('name' in args.output or args.name_only) and items and 'name' not in items[0]:
-        for item in items:
-            item['name'] = (
-                _get_dist_name(_REPO_ROOT, item['path'])
-                if args.category == 'packages'
-                else pathlib.Path(item['path']).name
-            )
-    result = (
-        [{k: item[k] for k in args.output} for item in items]
-        if args.output
-        else [item['name'] for item in items]
-        if args.name_only
-        else [item['path'] for item in items]
-    )
+    result: list[str] | list[dict[str, str]]
+    if args.output:
+        result = []
+        for path in dirs:
+            if 'path' in args.output:
+                item['name']
+            if 'name' in args.output:
+                item['name'] = _get_name(args.category, path)
+            if 'version' in args.output:
+                item['version'] = _get_version(args.category, path)
+            result.append(item)
+    elif args.name_only:
+        result = [_get_name(args.category, path) for path in dirs]
+    else:   # default
+        result = dirs
     print(json.dumps(result))
 
+
+def _get_name(category: str, path: str):
+    if category == 'package':
+        if path in _CACHE:
+            name, version = _CACHE[path]
+            return name
 
 def _ls(
     category: str,
@@ -105,8 +112,8 @@ def _ls(
     only_if_version_changed: bool,
     include_examples: bool,
     include_placeholders: bool,
-) -> list[dict[str, str]]:
-    """Return information about items matching the category, filtered based on the other options.
+) -> list[str]:
+    """Return directories matching the category, filtered based on the other options.
 
     Args:
         category: What to iterate over -- 'packages' or 'interfaces'.
@@ -123,10 +130,6 @@ def _ls(
 
     Returns:
         A list of items from the specified category.
-        Each item is a dict with the following entries:
-            path: str  # path from repo root to directory
-            name: str  # name of directory
-            version: str  # version of package if `only_if_version_changed` was applied
     """
     include: list[str] = []
     if include_examples:
@@ -141,24 +144,12 @@ def _ls(
     else:
         raise ValueError(f'Unknown value for `category` {category!r}')
     # Filter based on changes.
-    dist_names: dict[pathlib.Path, str] = {}
-    versions: dict[pathlib.Path, str] = {}
     if refs:
         old_ref, new_ref = refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
         if only_if_version_changed and category == 'packages':
-            dirs, dist_names, versions = _changed_version_only(
-                dirs, old_ref=old_ref, new_ref=new_ref
-            )
-    items: list[dict[str, str]] = []
-    for path in dirs:
-        item = {'path': str(path)}
-        if dist_name := dist_names.get(path):
-            item['name'] = dist_name
-        if version := versions.get(path):
-            item['version'] = version
-        items.append(item)
-    return items
+            dirs = _changed_version_only(dirs, old_ref=old_ref, new_ref=new_ref)
+    return [str(p) for p in dirs]
 
 
 def _packages(include: list[str]) -> list[pathlib.Path]:
@@ -216,7 +207,7 @@ def _changed_only(
 
 def _changed_version_only(
     dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
-) -> tuple[list[str], dict[pathlib.Path, str], dict[pathlib.Path, str]]:
+) -> list[pathlib.Path]:
     """Returns only those `dirs` that have had a version change between `old_ref` and `new_ref`.
 
     Takes a snapshot of the repo for each reference.
@@ -225,18 +216,16 @@ def _changed_version_only(
     Excludes changes where the new version is a dev version.
     """
     with _snapshot_repo(old_ref) as root:
-        old_versions = dict(_get_version(root, p) for p in dirs)
+        old_info = dict(_get_package_info(root, p, cache=None) for p in dirs)
     with _snapshot_repo(new_ref) as root:
-        new_versions = {p: _get_version(root, p) for p in dirs}
-    dist_names: dict[pathlib.Path, str] = {}
-    versions: dict[pathlib.Path, str] = {}
-    for p, (dist_name, new) in new_versions.items():
-        _, old = old_versions.get(p, (None, None))
-        if new is not None and '.dev' not in new and old != new:
-            dist_names[p] = dist_name
-            versions[p] = new
-            logger.info('%s (%s): %s -> %s', p, dist_name, old, new)
-    return list(dist_names), dist_names, versions
+        new_info = {p: _get_package_info(root, p, cache=_CACHE) for p in dirs}
+    packages: list[pathlib.Path] = []
+    for p, (dist_name, version) in new_info.items():
+        _, old_version = old_info.get(p, (None, None))
+        if version is not None and '.dev' not in version and version != old_version:
+            logger.info('%s (%s): %s -> %s', p, dist_name, old_version, version)
+            packages.append(p)
+    return packages
 
 
 @contextlib.contextmanager
@@ -257,17 +246,25 @@ def _snapshot_repo(ref: str | None):
         yield root
 
 
-def _get_version(
-    root: pathlib.Path, package: pathlib.Path | str
+def _get_package_info(
+    root: pathlib.Path,
+    package: pathlib.Path | str,
+    cache: dict[str, tuple[str, str]] | None = None,
 ) -> tuple[str, str] | tuple[None, None]:
     """Return the version of `root / package`, or `None` if it doesn't exist."""
+    if cache is not None and package in cache:
+        return cache[package]
     if not (root / package).exists():
         return None, None
     logger.debug('Computing version for %s', package)
     dist_name = _get_dist_name(root, package)
     script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
     cmd = ['uv', 'run', '--no-project', '--with', f'./{package}', 'python', '-c', script]
-    return dist_name, subprocess.check_output(cmd, cwd=root, text=True).strip()
+    version = subprocess.check_output(cmd, cwd=root, text=True).strip()
+    info = (dist_name, version)
+    if cache is not None:
+        cache[package] = info
+    return info
 
 
 def _get_dist_name(root: pathlib.Path, package: pathlib.Path) -> str:
