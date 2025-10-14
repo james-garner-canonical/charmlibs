@@ -137,8 +137,8 @@ def _ls(
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
         if only_if_version_changed:
             return _get_changed_version_info(category, dirs, old_ref=old_ref, new_ref=new_ref)
-    # Return only path info by default.
-    if 'name' not in output and 'version' not in output:
+    # Return only path info if we can get away with it.
+    if output == ['path']:
         return [_Info(path=str(p), name='', version='') for p in dirs]
     # Otherwise calculate the requested info and return it.
     with _snapshot_repo(refs[-1] if refs else None) as root:
