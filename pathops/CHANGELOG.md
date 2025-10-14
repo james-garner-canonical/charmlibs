@@ -1,3 +1,7 @@
+# 1.2.0.post0 - 14 October 2025
+
+Update project URLs.
+
 # 1.2.0 - 8 September 2025
 
 Drop Python 3.8 and 3.8 support.
