@@ -133,18 +133,22 @@ def _ls(
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
         if only_if_version_changed:
             return _get_changed_version_info(category, dirs, old_ref=old_ref, new_ref=new_ref)
-    # Return only path info if we can get away with it.
-    if output == ['path']:
-        return [Info(path=str(p), name='', version='') for p in dirs]
-    # Otherwise calculate the requested info and return it.
-    with _snapshot_repo(refs[-1] if refs else None) as root:
-        if 'version' in output:
-            return [info for p in dirs if (info := _get_info(category, root, p))]
-        return [
-            Info(path=str(p), name=_get_name(category, root, p), version='')
-            for p in dirs
-            if (root / p).exists()
-        ]
+    # Otherwise calculate only the information needed.
+    ref = refs[-1] if refs else None
+    with _snapshot_repo(ref) as root:
+        infos: list[Info] = []
+        for path in dirs:
+            if not (root / path).exists():
+                continue
+            if 'version' in output:
+                info = _get_info(category, root, path)
+                assert info is not None  # we already skipped if the path doesn't exist
+            elif 'name' in output:
+                info = Info(path=str(path), name=_get_name(category, root, path), version='')
+            else:
+                info = Info(path=str(path), name='', version='')
+            infos.append(info)
+        return infos
 
 
 def _packages(include: list[str]) -> list[pathlib.Path]:
