@@ -84,9 +84,9 @@ def _main() -> None:
         output=args.output or [single_output],
     )
     result = (
-        [info.to_dict(*args.output) for info in infos]
+        sorted((info.to_dict(*args.output) for info in infos), key=lambda d: tuple(d.items()))
         if args.output
-        else [getattr(info, single_output) for info in infos]
+        else sorted(getattr(info, single_output) for info in infos)
     )
     print(json.dumps(result))
 
