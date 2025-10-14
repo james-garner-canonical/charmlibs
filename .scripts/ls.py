@@ -82,11 +82,13 @@ def _main() -> None:
         only_if_version_changed=args.only_if_version_changed,
         output=args.output or [single_output],
     )
-    result = (
-        sorted((info.to_dict(*args.output) for info in infos), key=lambda d: tuple(d.items()))
-        if args.output
-        else sorted(getattr(info, single_output) for info in infos)
-    )
+    if args.output:
+        result = sorted(
+            (info.to_dict(*args.output) for info in infos),
+            key=lambda di: tuple(di.items()),
+        )
+    else:
+        result = sorted(getattr(info, single_output) for info in infos)
     print(json.dumps(result))
 
 
