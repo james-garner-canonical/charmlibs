@@ -48,7 +48,9 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
 @dataclasses.dataclass(frozen=True)
-class _Info:
+class Info:
+    """Information about a specific package or interface."""
+
     path: str
     name: str
     version: str
@@ -95,7 +97,7 @@ def _ls(
     include_examples: bool,
     include_placeholders: bool,
     output: list[str],
-) -> list[_Info]:
+) -> list[Info]:
     """Return info about directories matching the category, filtered based on the other options.
 
     Args:
@@ -133,13 +135,13 @@ def _ls(
             return _get_changed_version_info(category, dirs, old_ref=old_ref, new_ref=new_ref)
     # Return only path info if we can get away with it.
     if output == ['path']:
-        return [_Info(path=str(p), name='', version='') for p in dirs]
+        return [Info(path=str(p), name='', version='') for p in dirs]
     # Otherwise calculate the requested info and return it.
     with _snapshot_repo(refs[-1] if refs else None) as root:
         if 'version' in output:
             return [info for p in dirs if (info := _get_info(category, root, p))]
         return [
-            _Info(path=str(p), name=_get_name(category, root, p), version='')
+            Info(path=str(p), name=_get_name(category, root, p), version='')
             for p in dirs
             if (root / p).exists()
         ]
@@ -200,7 +202,7 @@ def _changed_only(
 
 def _get_changed_version_info(
     category: str, dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
-) -> list[_Info]:
+) -> list[Info]:
     """Returns only those packages that have had a version change between `old_ref` and `new_ref`.
 
     Takes a snapshot of the repo for each reference.
@@ -215,7 +217,7 @@ def _get_changed_version_info(
             if info is not None:
                 old_versions[info.name] = info.version
     with _snapshot_repo(new_ref) as root:
-        infos: list[_Info] = []
+        infos: list[Info] = []
         for path in dirs:
             info = _get_info(category, root, path)
             if info is None:
@@ -263,7 +265,7 @@ def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> _I
     else:
         assert category == 'interfaces'
         version = max((root / path / 'interface').glob('v[0-9]*')).name
-    info = _Info(path=str(path), name=name, version=version)
+    info = Info(path=str(path), name=name, version=version)
     logger.debug('Computed %s', info)
     return info
 
