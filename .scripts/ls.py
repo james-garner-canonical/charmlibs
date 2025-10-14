@@ -36,7 +36,6 @@ import logging
 import pathlib
 import re
 import subprocess
-import sys
 import tarfile
 import tempfile
 import tomllib
@@ -49,12 +48,13 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
 @dataclasses.dataclass(frozen=True)
-class Info:
+class _Info:
     path: str
     name: str
     version: str
 
     def to_dict(self, *fields: str) -> dict[str, str]:
+        """Return dictionary containing only specified fields."""
         return {field: getattr(self, field) for field in fields}
 
 
@@ -87,7 +87,7 @@ def _main() -> None:
         output=args.output or [single_output],
     )
     result = (
-        [info.to_dict(*output) for info in infos]
+        [info.to_dict(*args.output) for info in infos]
         if args.output
         else [getattr(info, single_output) for info in infos]
     )
@@ -101,8 +101,8 @@ def _ls(
     include_examples: bool,
     include_placeholders: bool,
     output: list[str],
-) -> list[Info]:
-    """Return directories matching the category, filtered based on the other options.
+) -> list[_Info]:
+    """Return info about directories matching the category, filtered based on the other options.
 
     Args:
         category: What to iterate over -- 'packages' or 'interfaces'.
@@ -111,7 +111,6 @@ def _ls(
             If provided, only changed items are returned.
         only_if_version_changed: Only output items that have had a version bump.
             Only respected if `refs` are provided.
-            Only implemented for the 'packages' category, and ignored otherwise.
         include_examples: Whether to include the example libraries.
             Typically included for testing, but excluded from docs and publishing.
         include_placeholders: Whether to include the namespace placeholder packages.
@@ -137,22 +136,18 @@ def _ls(
         old_ref, new_ref = refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
         if only_if_version_changed:
-            if category == 'packages':
-                return _get_changed_package_version_info(dirs, old_ref=old_ref, new_ref=new_ref)
-            raise NotImplementedError('Version change diff is only implemented for packages.')
+            return _get_changed_version_info(category, dirs, old_ref=old_ref, new_ref=new_ref)
     # Return only path info by default.
     if 'name' not in output and 'version' not in output:
-        return [Info(path=str(p), name='', version='') for p in dirs]
+        return [_Info(path=str(p), name='', version='') for p in dirs]
     # Otherwise calculate the requested info and return it.
     with _snapshot_repo(refs[-1] if refs else None) as root:
-        if category == 'packages':
-            if 'version' in output:
-                return [_get_package_info(root, p) for p in dirs]
-            return [Info(path=str(p), name=_get_dist_name(root, p), version='') for p in dirs]
-        assert category == 'interfaces'
+        if 'version' in output:
+            return [info for p in dirs if (info := _get_info(category, root, p))]
         return [
-            Info(path=str(p), name=p.name, version=max((p / 'interface').glob('v[0-9]*')).name)
+            _Info(path=str(p), name=_get_name(category, root, p), version='')
             for p in dirs
+            if (root / p).exists()
         ]
 
 
@@ -209,9 +204,9 @@ def _changed_only(
     return [p for p in dirs if p in changes]
 
 
-def _get_changed_package_version_info(
-    dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
-) -> tuple[list[pathlib.Path], list[dict[str, str]]]:
+def _get_changed_version_info(
+    category: str, dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
+) -> list[_Info]:
     """Returns only those packages that have had a version change between `old_ref` and `new_ref`.
 
     Takes a snapshot of the repo for each reference.
@@ -221,24 +216,19 @@ def _get_changed_package_version_info(
     """
     with _snapshot_repo(old_ref) as root:
         old_versions = {
-            info.name: info.version
-            for path in dirs
-            if (info := _get_package_info(root, path))
+            info.name: info.version for path in dirs if (info := _get_info(category, root, path))
         }
     with _snapshot_repo(new_ref) as root:
-        infos: list[Info] = []
+        infos: list[_Info] = []
         for path in dirs:
-            info = _get_package_info(root, path)
+            info = _get_info(category, root, path)
             if info is None:
-                logger.debug('%s is no longer a package.', path)
+                logger.debug('%s no longer exists!', path)
                 continue
             old_version = old_versions.get(info.name)
-            if info.version != old_version:
-                logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
-                if '.dev' in info.version:
-                    logger.debug('Excluding %s (%s): %s', info.path, info.name, info.version)
-                else:
-                    infos.append(info)
+            logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
+            if info.version != old_version and 'dev' not in info.version:
+                infos.append(info)
     return infos
 
 
@@ -260,27 +250,35 @@ def _snapshot_repo(ref: str | None):
         yield root
 
 
-def _get_package_info(
-    root: pathlib.Path,
-    package: pathlib.Path | str,
-    cache: dict[str, tuple[str, str]] | None = None,
-) -> Info | None:
-    """Return `Info` for `root / package`, or None if it doesn't exist."""
-    if not (root / package).exists():
+def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> _Info | None:
+    """Return info for `root / package`, or `None` if it doesn't exist."""
+    if not (root / path).exists():
         return None
-    logger.debug('Computing version for %s', package)
-    dist_name = _get_dist_name(root, package)
-    script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
-    cmd = ['uv', 'run', '--no-project', '--with', f'./{package}', 'python', '-c', script]
-    version = subprocess.check_output(cmd, cwd=root, text=True).strip()
-    info = Info(path=str(package), name=dist_name, version=version)
+    logger.debug('Computing version for %s', path)
+    name = _get_name(category, root, path)
+    if category == 'packages':
+        script = f'import importlib.metadata; print(importlib.metadata.version("{name}"))'
+        cmd = ['uv', 'run', '--no-project', '--with', f'./{path}', 'python', '-c', script]
+        version = subprocess.check_output(cmd, cwd=root, text=True).strip()
+    else:
+        assert category == 'interfaces'
+        version = max((root / path / 'interface').glob('v[0-9]*')).name
+    info = _Info(path=str(path), name=name, version=version)
     logger.debug('Computed %s', info)
     return info
 
 
-def _get_dist_name(root: pathlib.Path, package: pathlib.Path) -> str:
+def _get_name(category: str, root: pathlib.Path, path: pathlib.Path | str) -> str:
+    """Return package or interface name."""
+    if category == 'packages':
+        return _get_dist_name(root / path)
+    assert category == 'interfaces'
+    return (root / path).name
+
+
+def _get_dist_name(package: pathlib.Path) -> str:
     """Load distribution package name from pyproject.toml and normalize it."""
-    with (root / package / 'pyproject.toml').open('rb') as f:
+    with (package / 'pyproject.toml').open('rb') as f:
         return _normalize(tomllib.load(f)['project']['name'])
 
 
