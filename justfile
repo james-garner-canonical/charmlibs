@@ -32,9 +32,9 @@ fast-lint:
     exit $FAILURES
 
 [doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
-format:
-    uv run --only-group=fast-lint ruff format --preview
-    uv run --only-group=fast-lint ruff check --preview --fix
+format package='.':
+    uv run --only-group=fast-lint ruff format --preview '{{package}}'
+    uv run --only-group=fast-lint ruff check --preview --fix '{{package}}'
 
 [doc("Run `uv add` for package, respecting repo-level version constraints, e.g. `just add pathops 'pydantic>=2'`.")]
 [positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
