@@ -70,7 +70,7 @@ def _main() -> None:
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--output', action='append', choices=('path', 'name', 'version'))
+    group.add_argument('--output', action='append', choices=['path', 'name', 'version'])
     group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
     single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
