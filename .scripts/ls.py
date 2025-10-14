@@ -41,7 +41,6 @@ import tempfile
 import tomllib
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
-_INTERFACES = _REPO_ROOT / 'interfaces'
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
@@ -74,9 +73,11 @@ def _main() -> None:
     group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
     single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
+    old_ref, new_ref = (args.old_ref, args.new_ref) if args.old_ref is not None else (None, None)
     infos = _ls(
         category=args.category,
-        refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
+        old_ref=old_ref,
+        new_ref=new_ref,
         include_examples=not args.exclude_examples,
         include_placeholders=not args.exclude_placeholders,
         only_if_version_changed=args.only_if_version_changed,
@@ -92,7 +93,8 @@ def _main() -> None:
 
 def _ls(
     category: str,
-    refs: tuple[str, str | None] | None,
+    old_ref: str | None,
+    new_ref: str | None,
     only_if_version_changed: bool,
     include_examples: bool,
     include_placeholders: bool,
@@ -102,9 +104,11 @@ def _ls(
 
     Args:
         category: What to iterate over -- 'packages' or 'interfaces'.
-        refs: Tuple of git references to diff with in the form `(old, new)`.
-            If `new` is `None`, diff with the current state on disk.
-            If provided, only changed items are returned.
+        old_ref: git reference to diff with.
+            If `None`, no diff is performed.
+            Otherwiseonly changed items are returned.
+        new_ref: if old_ref is not `None`, diff it with new_ref.
+            If this new_ref is `None`, old_ref is diffed with the current state on disk.
         only_if_version_changed: Only output items that have had a version bump.
             Only respected if `refs` are provided.
         include_examples: Whether to include the example libraries.
@@ -119,23 +123,21 @@ def _ls(
         include.extend(('.example', '.tutorial'))
     if include_placeholders:
         include.append('.package')
-    # Collect packages or interfaces.
-    if category == 'packages':
-        dirs = _packages(include=include)
-    elif category == 'interfaces':
-        dirs = _interfaces(include=include)
-    else:
-        raise ValueError(f'Unknown value for `category` {category!r}')
-    # Filter based on changes.
-    # Return full info if we calculate it.
-    if refs:
-        old_ref, new_ref = refs
-        dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
-        if only_if_version_changed:
-            return _get_changed_version_info(category, dirs, old_ref=old_ref, new_ref=new_ref)
-    # Otherwise calculate only the information needed.
-    ref = refs[-1] if refs else None
-    with _snapshot_repo(ref) as root:
+    with _snapshot_repo(new_ref) as root:
+        # Collect packages or interfaces.
+        if category == 'packages':
+            dirs = _packages(root, include=include)
+        elif category == 'interfaces':
+            dirs = _interfaces(root, include=include)
+        else:
+            raise ValueError(f'Unknown value for `category` {category!r}')
+        # Filter based on changes.
+        # Return full info if we calculate it.
+        if old_ref:
+            dirs = _changed_only(root, dirs, ref=old_ref)
+            if only_if_version_changed:
+                return _get_changed_version_info(category, root, dirs, ref=old_ref)
+        # Otherwise calculate only the information needed.
         infos: list[Info] = []
         for path in dirs:
             if not (root / path).exists():
@@ -151,51 +153,58 @@ def _ls(
         return infos
 
 
-def _packages(include: list[str]) -> list[pathlib.Path]:
+def _packages(root: pathlib.Path, include: list[str]) -> list[pathlib.Path]:
     """Iterate over package directories in the repository.
 
-    Returns any directory starting with [a-z] from the repository root and from the interfaces
+    Returns any directory starting with [a-z] from the root and from the 'interfaces'
     sub-directory, as well as any directories listed in `include`, if they exists and have a
     'pyproject.toml' file with a 'project' table.
     """
     paths: set[pathlib.Path] = set()
-    for root in _REPO_ROOT, _INTERFACES:
-        paths.update(root.glob(r'[a-z]*'))
-        paths.update(root / i for i in include)
-    return sorted(
-        path.relative_to(_REPO_ROOT)
-        for path in paths
-        if (pyproject_toml := path / 'pyproject.toml').exists()
-        and 'project' in tomllib.loads(pyproject_toml.read_text())
-    )
+    for r in root, root / 'interfaces':
+        paths.update(r.glob(r'[a-z]*'))
+        paths.update(r / i for i in include)
+    return sorted(path.relative_to(root) for path in paths if _is_package(path))
 
 
-def _interfaces(include: list[str]) -> list[pathlib.Path]:
+def _is_package(path: pathlib.Path) -> bool:
+    """Return whether path points to a Python package."""
+    pyproject_toml = path / 'pyproject.toml'
+    if not pyproject_toml.exists():
+        return False
+    return 'project' in tomllib.loads(pyproject_toml.read_text())
+
+
+def _interfaces(root: pathlib.Path, include: list[str]) -> list[pathlib.Path]:
     """Iterate over interface directories in the repository.
 
     Returns any directory starting with [a-z] from the interfaces sub-directory, as well as any
     directories listed in `include`, if they exist and have an 'interface' subdirectory.
     """
-    paths = {*_INTERFACES.glob(r'[a-z]*'), *(_INTERFACES / i for i in include)}
-    return sorted(p.relative_to(_REPO_ROOT) for p in paths if (p / 'interface').is_dir())
+    interfaces_root = root / 'interfaces'
+    paths: set[pathlib.Path] = {*interfaces_root.glob(r'[a-z]*')}
+    paths.update(interfaces_root / path for path in include)
+    return sorted(path.relative_to(root) for path in paths if _is_interface(path))
 
 
-def _changed_only(
-    dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
-) -> list[pathlib.Path]:
-    """Return only those `dirs` that have changed between `old_ref` and `new_ref`.
+def _is_interface(path: pathlib.Path) -> bool:
+    """Return whether path points to a directory containing an interface definition."""
+    return (path / 'interface').is_dir()
 
-    If `new_ref` is `None`, `git diff` is called with a single reference, and untracked files
-    are included as changes. Calls `git diff` only once.
+
+def _changed_only(root: pathlib.Path, dirs: list[pathlib.Path], ref: str) -> list[pathlib.Path]:
+    """Return only those `dirs` that have changed between `ref` and current state on disk.
+
+    Untracked files are included as changes.
+    Calls `git diff` and `git ls-files` once each.
     """
-    cmd = ['git', 'diff', '--name-only', old_ref]
-    if new_ref is not None:
-        cmd.append(new_ref)
+    cmd = ['git', 'diff', '--name-only', ref]
     names = subprocess.check_output(cmd, text=True).strip().splitlines()
-    # Include untracked files when run without explicit new ref (for local tests).
-    if new_ref is None:
-        cmd = ['git', 'ls-files', '--others', '--exclude-standard']
-        names.extend(subprocess.check_output(cmd, text=True).strip().splitlines())
+    # Include untracked files (for running locally).
+    cmd = ['git', 'ls-files', '--others', '--exclude-standard']
+    names.extend(subprocess.check_output(cmd, text=True).strip().splitlines())
+    # Make set of all top-level and one-level-deep parents of changes.
+    # e.g. [foo/bar/baz/bartholemew] -> {foo, foo/bar}
     changes: set[pathlib.Path] = set()
     for name in names:
         parts = pathlib.Path(name).parts
@@ -205,36 +214,33 @@ def _changed_only(
 
 
 def _get_changed_version_info(
-    category: str, dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
+    category: str, root: pathlib.Path, dirs: list[pathlib.Path], ref: str
 ) -> list[Info]:
-    """Returns only those packages that have had a version change between `old_ref` and `new_ref`.
+    """Returns only those packages that have had a version change between `ref` and current state.
 
-    Takes a snapshot of the repo for each reference.
-    If `new_ref` is `None`, compares to the current working tree instead.
-    Only implemented for Python package directories.
+    Takes a snapshot of the repo at `ref` for comparison.
     Excludes changes where the new version is a dev version.
     """
-    with _snapshot_repo(old_ref) as root:
+    with _snapshot_repo(ref) as old_root:
         old_versions: dict[str, str] = {}
         for path in dirs:
-            info = _get_info(category, root, path)
+            info = _get_info(category, old_root, path)
             if info is not None:
                 old_versions[info.name] = info.version
-    with _snapshot_repo(new_ref) as root:
-        infos: list[Info] = []
-        for path in dirs:
-            info = _get_info(category, root, path)
-            if info is None:
-                logger.debug('%s no longer exists!', path)
-                continue
-            old_version = old_versions.get(info.name)
-            logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
-            if info.version == old_version:
-                logger.debug('Version unchanged')
-            elif 'dev' in info.version:
-                logger.debug('Skipping dev release.')
-            else:
-                infos.append(info)
+    infos: list[Info] = []
+    for path in dirs:
+        info = _get_info(category, root, path)
+        if info is None:
+            logger.debug('%s no longer exists!', path)
+            continue
+        old_version = old_versions.get(info.name)
+        logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
+        if info.version == old_version:
+            logger.debug('Version unchanged')
+        elif 'dev' in info.version:
+            logger.debug('Skipping dev release.')
+        else:
+            infos.append(info)
     return infos
 
 
