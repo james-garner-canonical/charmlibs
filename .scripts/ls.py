@@ -51,8 +51,8 @@ class Info:
     """Information about a specific package or interface."""
 
     path: str
-    name: str
-    version: str
+    name: str = ''
+    version: str = ''
 
     def to_dict(self, *fields: str) -> dict[str, str]:
         """Return dictionary containing only specified fields."""
@@ -146,9 +146,9 @@ def _ls(
                 info = _get_info(category, root, path)
                 assert info is not None  # we already skipped if the path doesn't exist
             elif 'name' in output:
-                info = Info(path=str(path), name=_get_name(category, root, path), version='')
+                info = Info(path=str(path), name=_get_name(category, root, path))
             else:
-                info = Info(path=str(path), name='', version='')
+                info = Info(path=str(path))
             infos.append(info)
         return infos
 
