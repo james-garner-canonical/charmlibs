@@ -68,16 +68,10 @@ def _main() -> None:
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--name-only', action='store_true', help='Output an array of names.')
-    group.add_argument(
-        '--output',
-        action='append',
-        choices=('path', 'name', 'version'),
-        default=[],
-        help='Output an array of json objects, with each including the requested outputs.',
-    )
+    group.add_argument('--output', action='append', choices=('path', 'name', 'version'))
+    group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
-    single_output = 'name' if args.name_only else 'path'
+    single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
     infos = _ls(
         category=args.category,
         refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
@@ -215,9 +209,11 @@ def _get_changed_version_info(
     Excludes changes where the new version is a dev version.
     """
     with _snapshot_repo(old_ref) as root:
-        old_versions = {
-            info.name: info.version for path in dirs if (info := _get_info(category, root, path))
-        }
+        old_versions: dict[str, str] = {}
+        for path in dirs:
+            info = _get_info(category, root, path)
+            if info is not None:
+                old_versions[info.name] = info.version
     with _snapshot_repo(new_ref) as root:
         infos: list[_Info] = []
         for path in dirs:
@@ -227,7 +223,11 @@ def _get_changed_version_info(
                 continue
             old_version = old_versions.get(info.name)
             logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
-            if info.version != old_version and 'dev' not in info.version:
+            if info.version == old_version:
+                logger.debug('Version unchanged')
+            elif 'dev' in info.version:
+                logger.debug('Skipping dev release.')
+            else:
                 infos.append(info)
     return infos
 
