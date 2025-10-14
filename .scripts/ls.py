@@ -252,7 +252,7 @@ def _snapshot_repo(ref: str | None):
         yield root
 
 
-def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> _Info | None:
+def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> Info | None:
     """Return info for `root / package`, or `None` if it doesn't exist."""
     if not (root / path).exists():
         return None
