@@ -28,8 +28,8 @@ See the the command-line help for options.
 from __future__ import annotations
 
 import argparse
-import collections
 import contextlib
+import dataclasses
 import io
 import json
 import logging
@@ -44,12 +44,18 @@ import tomllib
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
 
-# global cache for package names and versions
-# populated when calculating the new version when run with --only-if-version-changed
-_CACHE: dict[str, tuple[str, str]] = {}
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
+
+
+@dataclasses.dataclass(frozen=True)
+class Info:
+    path: str
+    name: str
+    version: str
+
+    def to_dict(self, *fields: str) -> dict[str, str]:
+        return {field: getattr(self, field) for field in fields}
 
 
 def _main() -> None:
@@ -61,12 +67,9 @@ def _main() -> None:
     parser.add_argument('--exclude-examples', action='store_true')
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
-    output_group = parser.add_mutually_exclusive_group()
-    output_group.add_argument(
-        '--path-only', action='store_true', help='Output an array of paths (default behaviour).'
-    )
-    output_group.add_argument('--name-only', action='store_true', help='Output an array of names.')
-    output_group.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--name-only', action='store_true', help='Output an array of names.')
+    group.add_argument(
         '--output',
         action='append',
         choices=('path', 'name', 'version'),
@@ -74,37 +77,22 @@ def _main() -> None:
         help='Output an array of json objects, with each including the requested outputs.',
     )
     args = parser.parse_args()
-    package_info_cache: dict[str, tuple[str, str]] = {}
-    dirs = _ls(
+    single_output = 'name' if args.name_only else 'path'
+    infos = _ls(
         category=args.category,
         refs=(args.old_ref, args.new_ref) if args.old_ref is not None else None,
         include_examples=not args.exclude_examples,
         include_placeholders=not args.exclude_placeholders,
         only_if_version_changed=args.only_if_version_changed,
+        output=args.output or [single_output],
     )
-    result: list[str] | list[dict[str, str]]
-    if args.output:
-        result = []
-        for path in dirs:
-            if 'path' in args.output:
-                item['name']
-            if 'name' in args.output:
-                item['name'] = _get_name(args.category, path)
-            if 'version' in args.output:
-                item['version'] = _get_version(args.category, path)
-            result.append(item)
-    elif args.name_only:
-        result = [_get_name(args.category, path) for path in dirs]
-    else:   # default
-        result = dirs
+    result = (
+        [info.to_dict(*output) for info in infos]
+        if args.output
+        else [getattr(info, single_output) for info in infos]
+    )
     print(json.dumps(result))
 
-
-def _get_name(category: str, path: str):
-    if category == 'package':
-        if path in _CACHE:
-            name, version = _CACHE[path]
-            return name
 
 def _ls(
     category: str,
@@ -112,7 +100,8 @@ def _ls(
     only_if_version_changed: bool,
     include_examples: bool,
     include_placeholders: bool,
-) -> list[str]:
+    output: list[str],
+) -> list[Info]:
     """Return directories matching the category, filtered based on the other options.
 
     Args:
@@ -127,9 +116,8 @@ def _ls(
             Typically included for testing, but excluded from docs and publishing.
         include_placeholders: Whether to include the namespace placeholder packages.
             Typically included for testing and publishing, but excluded from docs.
-
-    Returns:
-        A list of items from the specified category.
+        output: List of fields to include in the output, one or more of
+            'name', 'path', or 'version'
     """
     include: list[str] = []
     if include_examples:
@@ -144,12 +132,28 @@ def _ls(
     else:
         raise ValueError(f'Unknown value for `category` {category!r}')
     # Filter based on changes.
+    # Return full info if we calculate it.
     if refs:
         old_ref, new_ref = refs
         dirs = _changed_only(dirs, old_ref=old_ref, new_ref=new_ref)
-        if only_if_version_changed and category == 'packages':
-            dirs = _changed_version_only(dirs, old_ref=old_ref, new_ref=new_ref)
-    return [str(p) for p in dirs]
+        if only_if_version_changed:
+            if category == 'packages':
+                return _get_changed_package_version_info(dirs, old_ref=old_ref, new_ref=new_ref)
+            raise NotImplementedError('Version change diff is only implemented for packages.')
+    # Return only path info by default.
+    if 'name' not in output and 'version' not in output:
+        return [Info(path=str(p), name='', version='') for p in dirs]
+    # Otherwise calculate the requested info and return it.
+    with _snapshot_repo(refs[-1] if refs else None) as root:
+        if category == 'packages':
+            if 'version' in output:
+                return [_get_package_info(root, p) for p in dirs]
+            return [Info(path=str(p), name=_get_dist_name(root, p), version='') for p in dirs]
+        assert category == 'interfaces'
+        return [
+            Info(path=str(p), name=p.name, version=max((p / 'interface').glob('v[0-9]*')).name)
+            for p in dirs
+        ]
 
 
 def _packages(include: list[str]) -> list[pathlib.Path]:
@@ -205,10 +209,10 @@ def _changed_only(
     return [p for p in dirs if p in changes]
 
 
-def _changed_version_only(
+def _get_changed_package_version_info(
     dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
-) -> list[pathlib.Path]:
-    """Returns only those `dirs` that have had a version change between `old_ref` and `new_ref`.
+) -> tuple[list[pathlib.Path], list[dict[str, str]]]:
+    """Returns only those packages that have had a version change between `old_ref` and `new_ref`.
 
     Takes a snapshot of the repo for each reference.
     If `new_ref` is `None`, compares to the current working tree instead.
@@ -216,16 +220,26 @@ def _changed_version_only(
     Excludes changes where the new version is a dev version.
     """
     with _snapshot_repo(old_ref) as root:
-        old_info = dict(_get_package_info(root, p, cache=None) for p in dirs)
+        old_versions = {
+            info.name: info.version
+            for path in dirs
+            if (info := _get_package_info(root, path))
+        }
     with _snapshot_repo(new_ref) as root:
-        new_info = {p: _get_package_info(root, p, cache=_CACHE) for p in dirs}
-    packages: list[pathlib.Path] = []
-    for p, (dist_name, version) in new_info.items():
-        _, old_version = old_info.get(p, (None, None))
-        if version is not None and '.dev' not in version and version != old_version:
-            logger.info('%s (%s): %s -> %s', p, dist_name, old_version, version)
-            packages.append(p)
-    return packages
+        infos: list[Info] = []
+        for path in dirs:
+            info = _get_package_info(root, path)
+            if info is None:
+                logger.debug('%s is no longer a package.', path)
+                continue
+            old_version = old_versions.get(info.name)
+            if info.version != old_version:
+                logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
+                if '.dev' in info.version:
+                    logger.debug('Excluding %s (%s): %s', info.path, info.name, info.version)
+                else:
+                    infos.append(info)
+    return infos
 
 
 @contextlib.contextmanager
@@ -250,20 +264,17 @@ def _get_package_info(
     root: pathlib.Path,
     package: pathlib.Path | str,
     cache: dict[str, tuple[str, str]] | None = None,
-) -> tuple[str, str] | tuple[None, None]:
-    """Return the version of `root / package`, or `None` if it doesn't exist."""
-    if cache is not None and package in cache:
-        return cache[package]
+) -> Info | None:
+    """Return `Info` for `root / package`, or None if it doesn't exist."""
     if not (root / package).exists():
-        return None, None
+        return None
     logger.debug('Computing version for %s', package)
     dist_name = _get_dist_name(root, package)
     script = f'import importlib.metadata; print(importlib.metadata.version("{dist_name}"))'
     cmd = ['uv', 'run', '--no-project', '--with', f'./{package}', 'python', '-c', script]
     version = subprocess.check_output(cmd, cwd=root, text=True).strip()
-    info = (dist_name, version)
-    if cache is not None:
-        cache[package] = info
+    info = Info(path=str(package), name=dist_name, version=version)
+    logger.debug('Computed %s', info)
     return info
 
 
