@@ -72,8 +72,8 @@ def _main() -> None:
     group.add_argument('--output', action='append', choices=['path', 'name', 'version'])
     group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
-    single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
     old_ref, new_ref = (args.old_ref, args.new_ref) if args.old_ref is not None else (None, None)
+    single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
     infos = _ls(
         category=args.category,
         old_ref=old_ref,
