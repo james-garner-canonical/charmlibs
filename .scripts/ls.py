@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import dataclasses
+import enum
 import io
 import json
 import logging
@@ -45,6 +46,16 @@ _INTERFACES = _REPO_ROOT / 'interfaces'
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
+
+
+class Category(enum.Enum):
+    """Category to return information about."""
+
+    PACKAGES = 'packages'
+    INTERFACES = 'interfaces'
+
+    def __str__(self):
+        return self.value
 
 
 @dataclasses.dataclass(frozen=True)
@@ -63,7 +74,7 @@ class Info:
 def _main() -> None:
     """Parse command-line arguments and output packages as JSON."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('category', choices=('packages', 'interfaces'))
+    parser.add_argument('category', type=Category, choices=Category)
     parser.add_argument('old_ref', nargs='?')
     parser.add_argument('new_ref', nargs='?')
     parser.add_argument('--exclude-examples', action='store_true')
@@ -91,7 +102,7 @@ def _main() -> None:
 
 
 def _ls(
-    category: str,
+    category: Category,
     refs: tuple[str, str | None] | None,
     only_if_version_changed: bool,
     include_examples: bool,
@@ -101,7 +112,7 @@ def _ls(
     """Return info about directories matching the category, filtered based on the other options.
 
     Args:
-        category: What to iterate over -- 'packages' or 'interfaces'.
+        category: What to iterate over -- `Category.PACKAGES` or `Category.INTERFACES`.
         refs: Tuple of git references to diff with in the form `(old, new)`.
             If `new` is `None`, diff with the current state on disk.
             If provided, only changed items are returned.
@@ -120,12 +131,12 @@ def _ls(
     if include_placeholders:
         include.append('.package')
     # Collect packages or interfaces.
-    if category == 'packages':
+    if category is Category.PACKAGES:
         dirs = _packages(include=include)
-    elif category == 'interfaces':
+    elif category is Category.INTERFACES:
         dirs = _interfaces(include=include)
     else:
-        raise ValueError(f'Unknown value for `category` {category!r}')
+        raise ValueError(f'Unknown category: {category!r}')
     # Filter based on changes.
     # Return full info if we calculate it.
     if refs:
@@ -201,7 +212,7 @@ def _changed_only(
 
 
 def _get_changed_version_info(
-    category: str, dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
+    category: Category, dirs: list[pathlib.Path], old_ref: str, new_ref: str | None
 ) -> list[Info]:
     """Returns only those packages that have had a version change between `old_ref` and `new_ref`.
 
@@ -252,29 +263,29 @@ def _snapshot_repo(ref: str | None):
         yield root
 
 
-def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> _Info | None:
+def _get_info(category: Category, root: pathlib.Path, path: pathlib.Path | str) -> Info | None:
     """Return info for `root / package`, or `None` if it doesn't exist."""
     if not (root / path).exists():
         return None
     logger.debug('Computing version for %s', path)
     name = _get_name(category, root, path)
-    if category == 'packages':
+    if category is Category.PACKAGES:
         script = f'import importlib.metadata; print(importlib.metadata.version("{name}"))'
         cmd = ['uv', 'run', '--no-project', '--with', f'./{path}', 'python', '-c', script]
         version = subprocess.check_output(cmd, cwd=root, text=True).strip()
     else:
-        assert category == 'interfaces'
+        assert category is Category.INTERFACES
         version = max((root / path / 'interface').glob('v[0-9]*')).name
     info = Info(path=str(path), name=name, version=version)
     logger.debug('Computed %s', info)
     return info
 
 
-def _get_name(category: str, root: pathlib.Path, path: pathlib.Path | str) -> str:
+def _get_name(category: Category, root: pathlib.Path, path: pathlib.Path | str) -> str:
     """Return package or interface name."""
-    if category == 'packages':
+    if category is Category.PACKAGES:
         return _get_dist_name(root / path)
-    assert category == 'interfaces'
+    assert category is Category.INTERFACES
     return (root / path).name
 
 
