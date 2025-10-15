@@ -107,7 +107,7 @@ def _ls(
         category: What to iterate over -- 'packages' or 'interfaces'.
         old_ref: git reference to diff with.
             If `None`, no diff is performed.
-            Otherwiseonly changed items are returned.
+            Otherwise only changed items are returned.
         new_ref: if old_ref is not `None`, diff it with new_ref.
             If this new_ref is `None`, old_ref is diffed with the current state on disk.
         only_if_version_changed: Only output items that have had a version bump.
