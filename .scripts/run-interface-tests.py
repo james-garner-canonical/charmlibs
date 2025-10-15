@@ -35,8 +35,6 @@ import tempfile
 
 import yaml
 
-# TODO: release a new version of pytest-interface-tester with the features we need
-_INTERFACE_TESTER_DEPENDENCY = 'git+https://github.com/james-garner-canonical/pytest-interface-tester@25-09+feat+location-customization-for-charmlibs'
 # paths in this repo
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
@@ -203,7 +201,7 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
         pytest = [
             'uvx',
             '--with=setuptools',
-            f'--with={_INTERFACE_TESTER_DEPENDENCY}',
+            '--with=pytest-interface-tester~=3.4',
             '--with-requirements=requirements.txt',
             'pytest',
             '-p',

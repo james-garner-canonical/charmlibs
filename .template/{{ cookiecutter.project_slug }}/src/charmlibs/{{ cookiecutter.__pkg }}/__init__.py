@@ -12,4 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "1.0.0.post0"
+"""The {{ cookiecutter.__import_pkg }} package."""
+
+from ._version import __version__ as __version__
+
+__all__ = [
+    # only the names listed in __all__ are imported when executing:
+    # from {{ cookiecutter.__import_pkg }} import *
+]

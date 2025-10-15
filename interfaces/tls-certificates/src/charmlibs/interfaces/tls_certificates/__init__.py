@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Manage TLS certificates using the ``tls_certificates`` interface (V1).
+"""Manage TLS certificates using the ``tls-certificates`` interface (V1).
 
 This is a port of ``tls_certificates_interface.tls_certificates`` v4.22.
 
-Learn more on how-to use the TLS Certificates interface library by reading the documentation:
-
-* https://charmhub.io/tls-certificates-interface/
+Learn more about how to use the TLS Certificates interface library by reading the
+[usage documentation on Charmhub](https://charmhub.io/tls-certificates-interface/).
 """
 
 from ._tls_certificates import (
