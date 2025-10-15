@@ -275,7 +275,8 @@ def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> In
         version = subprocess.check_output(cmd, cwd=root, text=True).strip()
     else:
         assert category == 'interfaces'
-        version = max((root / path / 'interface').glob('v[0-9]*')).name
+        versions = [v.name for v in (root / path / 'interface').glob('v[0-9]*')]
+        version = max(versions, key=lambda v: int(v.removeprefix('v')))
     info = Info(path=str(path), name=name, version=version)
     logger.debug('Computed %s', info)
     return info
