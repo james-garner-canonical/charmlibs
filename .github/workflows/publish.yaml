@@ -19,7 +19,7 @@ jobs:
   unify-inputs:
     runs-on: ubuntu-latest
     outputs:
-      packages: ${{ steps.main.outputs.packages }}
+      include: ${{ steps.main.outputs.include }}
       skip-juju:  ${{ steps.main.outputs.skip-juju }}
       repository-url:  ${{ steps.main.outputs.repository-url }}
     steps:
@@ -33,11 +33,11 @@ jobs:
 
   tests:
     needs: unify-inputs
-    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
+    if: ${{ needs.unify-inputs.outputs.include != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
+        include: ${{ fromJSON(needs.unify-inputs.outputs.include) }}
     uses: ./.github/workflows/tests.yaml
     with:
       package: ${{ matrix.package }}
@@ -45,17 +45,17 @@ jobs:
 
   build-n-publish:
     needs: [unify-inputs,tests]
-    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
+    if: ${{ needs.unify-inputs.outputs.include != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
+        include: ${{ fromJSON(needs.unify-inputs.outputs.include) }}
     name: Build and publish ${{ matrix.package }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       attestations: write
-      contents: read
+      contents: write  # needed to push tag
     steps:
       - uses: actions/checkout@v5
       - name: Install uv
@@ -73,3 +73,11 @@ jobs:
           packages-dir: ./${{ matrix.package }}/dist/
           repository-url: ${{ needs.unify-inputs.outputs.repository-url }}
           verbose: true
+      - name: Tag
+        if: ${{ matrix.tag }}
+        run: |
+          set -xueo pipefail
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ matrix.tag }}
+          git push origin ${{ matrix.tag }}
