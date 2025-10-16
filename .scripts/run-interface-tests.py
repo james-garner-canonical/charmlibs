@@ -35,8 +35,6 @@ import tempfile
 
 import yaml
 
-# TODO: release a new version of pytest-interface-tester with the features we need
-_INTERFACE_TESTER_DEPENDENCY = 'git+https://github.com/james-garner-canonical/pytest-interface-tester@25-09+feat+location-customization-for-charmlibs'
 # paths in this repo
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 _INTERFACES = _REPO_ROOT / 'interfaces'
@@ -132,6 +130,8 @@ class _Target:
     role: str
     charm_name: str
     endpoint: str
+    charm_repo: str
+    charm_branch: str
 
     def __post_init__(self):
         self.interface_dir = (
@@ -161,6 +161,8 @@ def _main() -> None:
     parser.add_argument('role', choices=('provide', 'require'))
     parser.add_argument('charm_name', help="Used to load the charm's interface test config.")
     parser.add_argument('endpoint', help='A valid endpoint for the charm + role + interface.')
+    parser.add_argument('--charm-repo', default='', help='Override charm repository from config.')
+    parser.add_argument('--charm-branch', default='', help='Override charm branch from config.')
     parser.add_argument('--keep', action='store_true', help="Don't delete cloned charm dir.")
     args = parser.parse_args()
     target = _Target(
@@ -169,6 +171,8 @@ def _main() -> None:
         role=args.role,
         charm_name=args.charm_name,
         endpoint=args.endpoint,
+        charm_repo=args.charm_repo,
+        charm_branch=args.charm_branch,
     )
     returncode = _interface_tests(target, keep_tempdir=args.keep)
     sys.exit(returncode)
@@ -184,7 +188,7 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
         - Executes tests with pytest.
     """
     # write and execute interface tester file in cloned charm repo
-    with _clone_charm_repo(target.charm_config, keep_tempdir=keep_tempdir) as charm_root:
+    with _clone_charm_repo(target, keep_tempdir=keep_tempdir) as charm_root:
         charm_test_file = _write_charm_test_file(target, charm_root=charm_root)
         # create schema and plugin modules at charm root (included in PYTHONPATH)
         (charm_root / f'{_SCHEMA_MODULE}.py').symlink_to(target.interface_dir / 'schema.py')
@@ -197,7 +201,7 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
         pytest = [
             'uvx',
             '--with=setuptools',
-            f'--with={_INTERFACE_TESTER_DEPENDENCY}',
+            '--with=pytest-interface-tester~=3.4',
             '--with-requirements=requirements.txt',
             'pytest',
             '-p',
@@ -212,18 +216,19 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
 
 
 @contextlib.contextmanager
-def _clone_charm_repo(charm_config: dict[str, str], keep_tempdir: bool = False):
+def _clone_charm_repo(target: _Target, keep_tempdir: bool = False):
     """Clone the charm repo to a temporary directory and yield the charm root path."""
+    charm_repo = target.charm_repo or target.charm_config['url']
+    charm_branch = target.charm_branch or target.charm_config.get('branch')
+    charm_root = target.test_config.get('charm_root', '')
     with tempfile.TemporaryDirectory(delete=not keep_tempdir) as td:
         repo_path = pathlib.Path(td, 'charm-repo')
         cmd: list[str | pathlib.Path] = ['git', 'clone', '--depth', '1']
-        if branch := charm_config.get('branch'):
-            cmd.extend(['--branch', branch])
-        cmd.extend([charm_config['url'], repo_path])
+        if charm_branch:
+            cmd.extend(['--branch', charm_branch])
+        cmd.extend([charm_repo, repo_path])
         logger.info(cmd)
         subprocess.check_call(cmd, cwd=td)
-        test_setup = charm_config.get('test_setup', {})
-        charm_root = test_setup.get('charm_root', '')  # pyright: ignore[reportAttributeAccessIssue]
         yield repo_path / charm_root
 
 

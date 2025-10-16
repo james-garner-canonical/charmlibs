@@ -1,6 +1,6 @@
 [project]
-name = "charmlibs-interfaces-example"
-description = "The charmlibs.interfaces.example package."
+name = "charmlibs-interfaces-example-interface"
+description = "The charmlibs.interfaces.example_interface package."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -19,15 +19,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed for `just lint interfaces/example` (unit, functional, and integration are also installed)
+lint = [  # installed for `just lint interfaces/example-interface` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
-unit = [  # installed for `just unit interfaces/example`
+unit = [  # installed for `just unit interfaces/example-interface`
     "ops[testing]",
 ]
-functional = [  # installed for `just functional interfaces/example`
+functional = [  # installed for `just functional interfaces/example-interface`
 ]
-integration = [  # installed for `just integration interfaces/example`
+integration = [  # installed for `just integration interfaces/example-interface`
     "jubilant",
 ]
 
@@ -43,7 +43,7 @@ build-backend = "hatchling.build"
 packages = ["src/charmlibs"]
 
 [tool.hatch.version]
-path = "src/charmlibs/interfaces/example/_version.py"
+path = "src/charmlibs/interfaces/example_interface/_version.py"
 
 [tool.ruff]
 extend = "../../pyproject.toml"

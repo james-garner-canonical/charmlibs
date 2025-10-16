@@ -1,0 +1,88 @@
+name: Charm interface tests
+# Runs interface tests for specified charm.
+
+on:
+  workflow_call:
+    inputs:
+      # See workflow_dispatch descriptions.
+      charm:
+        required: true
+        type: string
+      charm_repo:
+        required: false
+        type: string
+        default: ''
+      charm_branch:
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      charm:
+        description: Name of the charm to run interface tests for.
+        required: true
+        type: string
+      charm_repo:
+        description: Reference to charm repository suitable for use with `git clone`, e.g. `https://github.com/canonical/vault-k8s-operator.git`. Read from charm config if not provided.
+        required: false
+        type: string
+        default: ''
+      charm_branch:
+        description: Reference to branch to checkout, suitable for use with `git clone --branch`, e.g. `main`. Read from charm config if not provided.
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      checkout-repository: ${{ steps.init.outputs.repository }}
+      checkout-ref: ${{ steps.init.outputs.ref }}
+      include: ${{ steps.include.outputs.result }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: james-garner-canonical/charmlibs
+          ref: 25-10+ci+interface-test-workflow-for-charms
+      - uses: astral-sh/setup-uv@v6
+      - name: Define interface test matrix
+        id: include
+        env:
+          CHARM: ${{ inputs.charm }}
+        run: |
+          set -xueo pipefail
+          ARRAYS=()
+          for interface in $(.scripts/ls.py interfaces | jq --raw-output '.[]'); do
+            targets=$(.scripts/get-interface-test-targets.py "$interface" --only-charm "$CHARM" --include-interface --exclude-charm)
+            ARRAYS+=("$targets")
+          done
+          INCLUDE=$(printf "%s\n" "${ARRAYS[@]}" | jq --slurp --compact-output 'add')
+          echo "$INCLUDE" | jq  # logging
+          echo "result=$INCLUDE" >> "$GITHUB_OUTPUT"
+
+  tests:
+    needs: [init]
+    if: ${{ needs.init.outputs.include != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.init.outputs.include) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: james-garner-canonical/charmlibs
+          ref: 25-10+ci+interface-test-workflow-for-charms
+      - uses: astral-sh/setup-uv@v6
+      - name: Run interface tests
+        run: |
+          set -xueo pipefail
+          .scripts/run-interface-tests.py \
+            '${{ matrix.interface }}' \
+            '${{ matrix.version }}' \
+            '${{ matrix.role }}' \
+            '${{ inputs.charm }}' \
+            '${{ matrix.endpoint }}' \
+            --charm-repo '${{ inputs.charm_repo }}' \
+            --charm-branch '${{ inputs.charm_branch }}'
