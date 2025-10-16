@@ -230,6 +230,7 @@ For more on `ops.testing`, see:
 - [ops.testing reference docs for custom events](ops.testing.CharmEvents.custom)
 - [ops.testing how-to for testing that a custom event is emitted](https://documentation.ubuntu.com/ops/latest/howto/manage-libraries/#test-that-the-custom-event-is-emitted)
 
+(tutorial-add-functional-tests)=
 ### Add functional tests
 
 In this repository, functional tests are essentially integration or end-to-end tests.
@@ -261,6 +262,7 @@ Another example is `charmlibs-pathops`, which provides a `pathlib`-like API for 
 
 In both cases, these tests fully exercise the interesting parts of the library, but are a lot faster than packing the library into a charm and deploying it with Juju.
 
+(tutorial-add-integration-tests)=
 ### Add integration tests
 
 Integration tests are the most complicated and most heavyweight part of the library testing story.
@@ -273,7 +275,7 @@ For now, we'll just add an integration test for our `uptime` function.
 
 We'll start by taking a look at the files that will make up our packed charm, under `tests/integration/charms`.
 At the top level are directories for two test charms, with the directory name reflecting the substrate the charm is for: `k8s` and `machine`.
-You'll also see some common files which are symlinked into the structure for our two test charms -- these symlinks are resolved by by the packing step before `charmcraft pack` is executed.
+You'll also see some common files which are symlinked into the structure for our two test charms -- these symlinks are resolved by the packing step before `charmcraft pack` is executed.
 Taking a look inside one of the charm directories, you can see these symlinks, as well as a unique `charmcraft.yaml` file per substrate, and the usual `src/` directory.
 There's also a directory named `library/`, which contains symlinks to your library code and metadata -- this is how the latest changes from your library are made available to these charms.
 Under `src/`, you'll see a unique `charm.py` file, and a symlink to `common.py`.
