@@ -5,4 +5,6 @@ help:
 
 [doc('Create the files for a new charmlibs.interfaces package interactively.')]
 init *args:
-    env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter --output-dir interfaces .template _interface=True {{args}}
+    @echo '✨{{BOLD}}IMPORTANT{{NORMAL}}✨ The project name should be the canonical interface name, as used in {{CYAN}}charmcraft.yaml{{NORMAL}} files.'
+    @echo 'You can press enter to accept the default, shown in brackets.'
+    @env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter --output-dir interfaces .template _interface=True {{args}}

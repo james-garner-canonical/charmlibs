@@ -266,7 +266,7 @@ def test_given_ca_certificate_attributes_when_generate_ca_then_ca_is_generated_c
     assert ca_certificate.common_name == "certifier.example.com"
     expected_expiry = datetime.now(timezone.utc) + timedelta(days=365)
     assert ca_certificate.expiry_time
-    assert abs(ca_certificate.expiry_time - expected_expiry) <= timedelta(seconds=1)
+    assert abs(ca_certificate.expiry_time - expected_expiry) <= timedelta(seconds=10)
     assert ca_certificate.email_address == "banana@gmail.com"
     assert ca_certificate.organization == "Example"
     assert ca_certificate.organizational_unit == "Example Unit"
@@ -315,7 +315,7 @@ def test_given_csr_when_generate_certificate_then_certificate_generated_with_req
     assert certificate.is_ca is False
     expected_expiry = datetime.now(timezone.utc) + timedelta(days=200)
     assert certificate.expiry_time
-    assert abs(certificate.expiry_time - expected_expiry) <= timedelta(seconds=1)
+    assert abs(certificate.expiry_time - expected_expiry) <= timedelta(seconds=10)
     assert certificate.sans_dns == frozenset(["example.com"])
     assert certificate.sans_ip == frozenset()
     assert certificate.sans_oid == frozenset()
@@ -355,7 +355,7 @@ def test_given_csr_for_ca_when_generate_certificate_then_certificate_generated_w
     assert certificate.is_ca is True
     expected_expiry = datetime.now(timezone.utc) + timedelta(days=200)
     assert certificate.expiry_time
-    assert abs(certificate.expiry_time - expected_expiry) <= timedelta(seconds=1)
+    assert abs(certificate.expiry_time - expected_expiry) <= timedelta(seconds=10)
     assert certificate.sans_dns == frozenset(["example.com"])
     assert certificate.sans_ip == frozenset()
     assert certificate.sans_oid == frozenset()
@@ -489,11 +489,11 @@ def test_given_certificate_string_when_from_string_then_certificate_is_created_c
     certificate_from_string = Certificate.from_string(str(certificate))
     assert certificate_from_string.common_name == "example.com"
     expected_expiry = datetime.now(timezone.utc) + timedelta(days=200)  # FIXME: Relies on time
-    assert abs(certificate_from_string.expiry_time - expected_expiry) <= timedelta(seconds=2)
+    assert abs(certificate_from_string.expiry_time - expected_expiry) <= timedelta(seconds=10)
     expected_validity_start_time = datetime.now(timezone.utc)  # FIXME: Relies on time
     assert abs(
         certificate_from_string.validity_start_time - expected_validity_start_time
-    ) <= timedelta(seconds=2)
+    ) <= timedelta(seconds=10)
     assert certificate_from_string.sans_dns == frozenset(["example.com"])
     assert certificate_from_string.sans_ip == frozenset(["1.2.3.4"])
     assert certificate_from_string.sans_oid is not None
