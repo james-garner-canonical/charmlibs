@@ -152,6 +152,13 @@ Commit your code now if you haven't already!
 ```
 
 To be merged, your library will need to comply with the repo's linting and static type checking.
+Check how you're doing by running:
+
+```bash
+just lint <library path>
+```
+
+Consider running `just format` to handle any automatically fixable errors.
 
 You can also check if your docstrings are compatible with the format that Sphinx expects when building the reference docs.
 From anywhere in the repo, run `just docs`.
