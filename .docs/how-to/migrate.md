@@ -96,7 +96,7 @@ just add interfaces/tls-certificates --requirements my-requirements.txt
 ```
 ````
 
-## Migrating your library's code
+## Migrate your library's code
 
 This is the easy bit, since Charmhub-hosted libs are only a single module.
 Download a copy of the latest release of your library, and add it to your new package as a private module, alongside the `__init__.py` file.
@@ -169,7 +169,7 @@ To speed things up, only build the reference docs for your library:
 just docs html <library path>
 ```
 
-## Migrating your library's tests
+## Migrate your library's tests
 
 This part is a bit trickier.
 With any luck, your library was previously developed in a placeholder charm that exists purely for library distribution.
@@ -258,7 +258,7 @@ The `charmlibs` CI is aware of two special `pytest` marks: `k8s_only` and `machi
 If there are no tests compatible with a substrate, then it's skipped completely.
 By default each test is treated as compatible with both substrates.
 
-## Migrating your library's docs
+## Migrate your library's docs
 
 Your library's reference documentation is automatically built from its docstrings and source code.
 
@@ -279,7 +279,7 @@ docs
 └── tutorial.{md,rst}
 ```
 
-## Deprecating the old library
+## Deprecate the old library
 
 When migrating an existing Charmhub-hosted library, our recommendation is to do a bug-for-bug migration of the latest release.
 The new `charmlibs` package should be released as version `1.0.0`, indicating that the API is stable.
