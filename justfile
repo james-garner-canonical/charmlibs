@@ -8,7 +8,7 @@ python := '3.10'
 # for integration tests, e.g. `just tag=24.04 pack-k8s` `just tag=foo integration-machine`
 tag := env('CHARMLIBS_TAG', '')
 
-_uv_run_with_test_requirements := 'uv run --with-requirements ' + quote(join(justfile_dir(), 'test-requirements.txt'))
+_uv_run_with_test_requirements := 'uv run --with-requirements ' + quote(join(justfile_dir(), 'test-requirements.txt')) + ' --python ' + python
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
 [doc('Describe usage and list the available recipes.')]
