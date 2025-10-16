@@ -21,6 +21,7 @@ After cloning your fork of the `charmlibs` monorepo, run the following command t
 
 `````{tab-set}
 ````{tab-item} General libraries
+:sync: general
 
 ```bash
 just init
@@ -53,6 +54,7 @@ We'll refer to this as `<library path>` in examples.
 ````
 
 ````{tab-item} Interface libraries
+:sync: interface
 
 ```bash
 just interface init
@@ -90,12 +92,16 @@ Download a copy of the latest release of your library, and add it to your new pa
 
 `````{tab-set}
 ````{tab-item} General libraries
+:sync: general
+
 ```
 <library path>/src/charmlibs/<name>/_<name>.py
 ```
 ````
 
 ````{tab-item} Interface libraries
+:sync: interface
+
 ```
 <library path>/src/charmlibs/interfaces/<name>/_<name>.py
 ```
@@ -177,6 +183,8 @@ from charms.<charm>.v<n>.<name> import ...
 With imports like this:
 `````{tab-set}
 ````{tab-item} General libraries
+:sync: general
+
 ```python
 from charmlibs import <name>
 from charmlibs.<name> import ...
@@ -184,6 +192,8 @@ from charmlibs.<name> import ...
 ````
 
 ````{tab-item} Interface libraries
+:sync: interface
+
 ```python
 from charmlibs.interfaces import <name>
 from charmlibs.interfaces.<name> import ...
