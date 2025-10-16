@@ -275,7 +275,7 @@ For now, we'll just add an integration test for our `uptime` function.
 
 We'll start by taking a look at the files that will make up our packed charm, under `tests/integration/charms`.
 At the top level are directories for two test charms, with the directory name reflecting the substrate the charm is for: `k8s` and `machine`.
-You'll also see some common files which are symlinked into the structure for our two test charms -- these symlinks are resolved by by the packing step before `charmcraft pack` is executed.
+You'll also see some common files which are symlinked into the structure for our two test charms -- these symlinks are resolved by the packing step before `charmcraft pack` is executed.
 Taking a look inside one of the charm directories, you can see these symlinks, as well as a unique `charmcraft.yaml` file per substrate, and the usual `src/` directory.
 There's also a directory named `library/`, which contains symlinks to your library code and metadata -- this is how the latest changes from your library are made available to these charms.
 Under `src/`, you'll see a unique `charm.py` file, and a symlink to `common.py`.
