@@ -19,6 +19,7 @@ The specific version of `pytest` to run is specified in the repository's `test-r
 `just` commands can be invoked from anywhere in the repository, as they always execute from the location of the `justfile`.
 ```
 
+(charmlibs-unit-tests)=
 ## Unit tests
 
 Unit tests are lightweight tests of your library that are fast to run and don't require any additional setup.
@@ -28,6 +29,7 @@ Execute them locally with:
 just unit <LIBRARY>
 ```
 
+(charmlibs-functional-tests)=
 ## Functional tests
 
 Functional tests are intended to be end-to-end tests of everything except the real Juju environment.
@@ -49,6 +51,7 @@ Finally, the recipe exits with the return code of the `pytest` run.
 
 > Read more: {ref}`how-to-customize-functional-tests`
 
+(charmlibs-integration-tests)=
 ## Integration tests
 
 Integration tests involve packing one or more real charms that includes your library, deploying them on a real Juju model, and running tests against the deployed charms.

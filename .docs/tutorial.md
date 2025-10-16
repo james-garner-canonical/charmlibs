@@ -230,6 +230,7 @@ For more on `ops.testing`, see:
 - [ops.testing reference docs for custom events](ops.testing.CharmEvents.custom)
 - [ops.testing how-to for testing that a custom event is emitted](https://documentation.ubuntu.com/ops/latest/howto/manage-libraries/#test-that-the-custom-event-is-emitted)
 
+(tutorial-add-functional-tests)=
 ### Add functional tests
 
 In this repository, functional tests are essentially integration or end-to-end tests.
@@ -261,6 +262,7 @@ Another example is `charmlibs-pathops`, which provides a `pathlib`-like API for 
 
 In both cases, these tests fully exercise the interesting parts of the library, but are a lot faster than packing the library into a charm and deploying it with Juju.
 
+(tutorial-add-integration-tests)=
 ### Add integration tests
 
 Integration tests are the most complicated and most heavyweight part of the library testing story.
