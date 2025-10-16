@@ -21,9 +21,11 @@ to be combined into the final docs in a separate pass.
 """)]
 _packages *packages:
     #!/usr/bin/env -S uv run --script --no-project
-    import json, pathlib, subprocess
+    import json, pathlib, subprocess, sys
     ROOT = pathlib.Path('{{justfile_directory()}}')
     packages = '{{packages}}'.split()
+    if packages == ['-']:
+        sys.exit()
     if not packages:
         cmd = [ROOT / '.scripts/ls.py', 'packages', '--exclude-examples', '--exclude-placeholders']
         packages = json.loads(subprocess.check_output(cmd, text=True))
