@@ -152,6 +152,14 @@ If your library's development and testing was tightly coupled to a real charm, t
 You'll need to consider which tests can live alongside the library, and which only make sense with the charm.
 You might want to add a simplified dummy charm to run some of the tests against.
 
+```{warning}
+Don't add `pytest` to your `pyproject.toml`.
+
+`just unit uptime` will install and run a specific version of `pytest`, which may clash with the version added in your dependencies.
+Instead, use `just` to run tests -- any extra arguments will be passed to `pytest`.
+You can point your IDE to `uptime/.venv` after running any of the test commands to have it use the correct virtual environment.
+```
+
 ### Unit tests
 
 If your library wasn't tightly coupled to a real charm, these steps should be sufficient:
@@ -184,14 +192,6 @@ from charmlibs.interfaces.<name> import ...
 `````
 
 There's now a good chance that the following command will successfully run your unit tests!
-
-```{warning}
-Don't add `pytest` to your `pyproject.toml`.
-
-`just unit uptime` will install and run a specific version of `pytest`, which may clash with the version added in your dependencies.
-Instead, use `just` to run tests -- any extra arguments will be passed to `pytest`.
-You can point your IDE to `uptime/.venv` after running any of the test commands to have it use the correct virtual environment.
-```
 
 ```bash
 just unit <library path>
