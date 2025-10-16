@@ -127,7 +127,8 @@ Now follow these steps to migrate your library's source code:
 5. Move the contents of `PYDEPS` to the `dependencies` entry in your `pyproject.toml` (using `just add`), and delete the `PYDEPS` variable. You'll also need to add any additional dependencies that were assumed to be provided by the charm, like `ops` or `pydantic`. Consider adding version constraints to your dependencies too.
 6. Import the public API of your library to `__init__.py` and add the imported names to `__all__`, like this:
 ```python
-# immediately before or after from ._version (imports are sorted alphabetically)
+# immediately before or after from ._version
+# (imports are sorted alphabetically)
 from ._<name> import (
     # your library's public API
 )
