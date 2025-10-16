@@ -9,8 +9,8 @@
   "__import_pkg": "{{ cookiecutter.__ns }}.{{ cookiecutter.__pkg }}",
   "__dist_pkg": "{{ cookiecutter.__import_pkg.replace('.', '-').replace('_', '-') }}",
   "__prompts__": {
-    "project_slug": "The package name (without the charmlibs prefix), e.g.",
-    "min_python_version": "The minimum Python version supported by the package",
-    "author": "The author field for PyPI"
+    "project_slug": "🌈 The project name",
+    "min_python_version": "🐍 The minimum Python version supported by the package",
+    "author": "📝 The author field for PyPI"
   }
 }

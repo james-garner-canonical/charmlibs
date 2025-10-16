@@ -18,7 +18,9 @@ _help:
 
 [doc('Create the files for a new charmlibs package interactively.')]
 init *args:
-    env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter .template {{args}}
+    @echo '✨{{BOLD}}IMPORTANT{{NORMAL}}✨ The project name should be the import package name, without the {{CYAN}}charmlibs.{{NORMAL}} namespace.'
+    @echo 'You can press enter to accept the default, shown in brackets.'
+    @env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter .template {{args}}
 
 [doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]
 fast-lint:
