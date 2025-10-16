@@ -85,6 +85,17 @@ We'll refer to this as `<library path>` in examples.
 ````
 `````
 
+````{tip}
+Add dependencies with the `just add <library path> <args...>` command.
+This will automatically respect any repo-level version constraints imposed by the tool versions used in CI.
+This uses [uv add](https://docs.astral.sh/uv/reference/cli/#uv-add) under the hood -- any arguments after `<library path>` are passed to it.
+For example:
+```bash
+just add pathops 'pydantic>=2' 'requests~=2.3'
+just add interfaces/tls-certificates --requirements my-requirements.txt
+```
+````
+
 ## Migrating your library's code
 
 This is the easy bit, since Charmhub-hosted libs are only a single module.
@@ -113,7 +124,7 @@ Now follow these steps to migrate your library's source code:
 2. Move the docstring from `_<name>.py` to `__init__.py` so that it's included in your library's automatically built reference docs.
 3. Document in the `_<name>.py` docstring the API and patch version of the source code that you're migrating. This will be helpful for future maintainers and users if they need to debug issues.
 4. Delete `LIB_ID`, `LIB_API`, and `LIB_PATCH` from `_<name>.py` -- unless they're used internally by the library, then you'll need to keep them for now.
-5. Move the contents of `PYDEPS` to the `dependencies` entry in your `pyproject.toml`, and delete the `PYDEPS` variable. You'll also need to add any additional dependencies that were assumed to be provided by the charm, like `ops` or `pydantic`. Consider adding version constraints to your dependencies too.
+5. Move the contents of `PYDEPS` to the `dependencies` entry in your `pyproject.toml` (using `just add`), and delete the `PYDEPS` variable. You'll also need to add any additional dependencies that were assumed to be provided by the charm, like `ops` or `pydantic`. Consider adding version constraints to your dependencies too.
 6. Import the public API of your library to `__init__.py` and add the imported names to `__all__`, like this:
 ```python
 # immediately before or after from ._version (imports are sorted alphabetically)
@@ -170,7 +181,7 @@ You can point your IDE to `uptime/.venv` after running any of the test commands 
 
 If your library wasn't tightly coupled to a real charm, these steps should be sufficient:
 
-1. Add any unit test dependencies to the `unit` dependency group in your `pyproject.toml`.
+1. Add any unit test dependencies to the `unit` dependency group in your `pyproject.toml` (using `just add`).
 2. Copy any relevant contents of your `conftest.py` to `tests/unit/conftest.py`.
 3. Copy your library's existing unit test files to `tests/unit/`, along with any data files, dummy charms, and so on.
 4. Correct the imports in those files.
