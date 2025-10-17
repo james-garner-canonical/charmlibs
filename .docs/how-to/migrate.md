@@ -42,8 +42,8 @@ You'll be prompted for information about your package, with default values shown
 The most important piece of information to get right initially is the project name.
 This determines the name of your library's project directory, which most of the `just` commands run later in this guide require.
 We'll refer to this as `<library path>` in examples.
-This is the import package name for general libraries (without the `charmlibs.` namespace),
-and `interfaces/<interface name>` for interface libraries.
+- For a general library, the project name is the import package name (without the `charmlibs.` namespace).
+- For an interface library, the project name is `interfaces/<interface name>`.
 
 Read on for more details about naming and generating your project, depending on whether you're migrating a general library or an interface library.
 
