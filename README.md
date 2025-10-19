@@ -1,3 +1,53 @@
-# charmlibs
+# charmlibs/.github/workflows/charm-interface-tests.yaml@v0
 
-This monorepo hosts the source code for Canonical's charm libraries. Read the [docs](https://documentation.ubuntu.com/charmlibs) for more.
+This branch of the `charmlibs` monorepo hosts `v0` of the `charm-interface-tests` workflow.
+This workflow can be used from your `charm` repo to run the interface tests that are run against your charm in `charmlibs@main`.
+
+To run the workflow on your `main` or feature branch, you could add a workflow like this:
+
+```yaml
+# .github/workflows/interface-tests.yaml
+
+on:
+  push:
+    - 'main'
+
+jobs:
+  interfaces:
+    uses: canonical/charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+    with:
+      charm: <your-charm-name>
+```
+
+Or add that job to an existing workflow.
+If you have a charm monorepo, you can use the workflow in a matrix job like this:
+
+```yaml
+  interfaces:
+    strategy:
+      fail-fast: false
+      matrix:
+        charm: [<charm-one>, <charm-two>]
+    uses: canonical/charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+    with:
+      charm: ${{ matrix.charm }}
+```
+
+To see how merging a specific PR would change your interface test results, you can run the workflow on PRs like this:
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  interfaces:
+    uses: canonical/charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+    with:
+      charm: <your-charm-name>
+      charm_repo: ${{ format('{0}/{1}.git', github.server_url, github.event.pull_request.head.repo.full_name) }}
+      charm_branch: ${{ github.event.pull_request.head.ref }}
+```
+
+Or again, add that job to an existing workflow.
+
+Visit the `main` branch of this repo for more information about charm libraries, or [read the docs](https://documentation.ubuntu.com/charmlibs).
