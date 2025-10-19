@@ -1,4 +1,4 @@
-# charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+# charm-interface-tests.yaml@v0
 
 This branch of the `charmlibs` monorepo hosts `v0` of the `charm-interface-tests` workflow.
 This workflow can be used from your `charm` repo to run the interface tests that are run against your charm in `charmlibs@main`.
