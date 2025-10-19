@@ -26,11 +26,30 @@ After cloning your fork of the `charmlibs` monorepo, run the following command t
 ```bash
 just init
 ```
+````
+
+````{tab-item} Interface libraries
+:sync: interface
+
+```bash
+just interface init
+```
+````
+`````
 
 You'll be prompted for information about your package, with default values shown in brackets.
 
-The most important piece of information to get right initially is the package name.
-This should be the name of the package as users would type it when they import with:
+The most important piece of information to get right initially is the project name.
+This determines the name of your library's project directory, which most of the `just` commands run later in this guide require.
+We'll refer to this as `<library path>` in examples.
+- For a general library, the project name is the import package name (without the `charmlibs.` namespace).
+- For an interface library, the project name is `interfaces/<interface name>`.
+
+Read on for more details about naming and generating your project, depending on whether you're migrating a general library or an interface library.
+
+### General libraries
+
+The project name must be the name of the package as users would type it when they import with:
 ```python
 from charmlibs import <your package name>
 ```
@@ -48,22 +67,9 @@ If the name you want to use for your library is already taken, consider the foll
     2. If so, perhaps the library you're looking at migrating could be deprecated without migration.
 2. Is there another logical name your library could use?
 
-Most of the `just` commands run later in this guide require the path to your library's project directory,
-which is `<package name>` for general libraries.
-We'll refer to this as `<library path>` in examples.
-````
+### Interface libraries
 
-````{tab-item} Interface libraries
-:sync: interface
-
-```bash
-just interface init
-```
-
-You'll be prompted for information about your package, with the default shown in brackets.
-
-The most important piece of information to get right initially is the interface name.
-This must be the canonical name of the interface from the charms' perspective -- exactly as it is spelled in `charmcraft.yaml` files.
+The project name must be the canonical name of the interface from the charms' perspective -- exactly as it is spelled in `charmcraft.yaml` files.
 
 This means it might be a hyphenated name or an underscored name.
 The important thing is that it exactly matches the actual interface name.
@@ -79,24 +85,7 @@ In this case:
 
 You'll also want to check for any config files under the old `<interface name>` directory (for example, a `ruff.toml` file), and incorporate any applicable settings into your project's `pyproject.toml`.
 
-Most of the `just` commands run later in this guide require the path to your library's project directory,
-with is `interfaces/<interface name>` for interface libraries.
-We'll refer to this as `<library path>` in examples.
-````
-`````
-
-````{tip}
-Add dependencies with the `just add <library path> <args...>` command.
-This will automatically respect any repo-level version constraints imposed by the tool versions used in CI.
-This uses [uv add](https://docs.astral.sh/uv/reference/cli/#uv-add) under the hood -- any arguments after `<library path>` are passed to it.
-For example:
-```bash
-just add pathops 'pydantic>=2' 'requests~=2.3'
-just add interfaces/tls-certificates --requirements my-requirements.txt
-```
-````
-
-## Migrating your library's code
+## Migrate your library's code
 
 This is the easy bit, since Charmhub-hosted libs are only a single module.
 Download a copy of the latest release of your library, and add it to your new package as a private module, alongside the `__init__.py` file.
@@ -118,6 +107,17 @@ Download a copy of the latest release of your library, and add it to your new pa
 ```
 ````
 `````
+
+````{tip}
+Add dependencies with the `just add <library path> <args...>` command.
+This will automatically respect any repo-level version constraints imposed by the tool versions used in CI.
+This uses [uv add](https://docs.astral.sh/uv/reference/cli/#uv-add) under the hood -- any arguments after `<library path>` are passed to it.
+For example:
+```bash
+just add pathops 'pydantic>=2' 'requests~=2.3'
+just add interfaces/tls-certificates --requirements my-requirements.txt
+```
+````
 
 Now follow these steps to migrate your library's source code:
 1. Copy the copyright header from `__init__.py` to `_<name>.py` to satisfy the linter.
@@ -169,7 +169,7 @@ To speed things up, only build the reference docs for your library:
 just docs html <library path>
 ```
 
-## Migrating your library's tests
+## Migrate your library's tests
 
 This part is a bit trickier.
 With any luck, your library was previously developed in a placeholder charm that exists purely for library distribution.
@@ -180,7 +180,7 @@ You might want to add a simplified dummy charm to run some of the tests against.
 ```{warning}
 Don't add `pytest` to your `pyproject.toml`.
 
-`just unit uptime` will install and run a specific version of `pytest`, which may clash with the version added in your dependencies.
+`just unit <library path>` will install and run a specific version of `pytest`, which may clash with the version added in your dependencies.
 Instead, use `just` to run tests -- any extra arguments will be passed to `pytest`.
 You can point your IDE to `uptime/.venv` after running any of the test commands to have it use the correct virtual environment.
 ```
@@ -258,12 +258,12 @@ The `charmlibs` CI is aware of two special `pytest` marks: `k8s_only` and `machi
 If there are no tests compatible with a substrate, then it's skipped completely.
 By default each test is treated as compatible with both substrates.
 
-## Migrating your library's docs
+## Migrate your library's docs
 
 Your library's reference documentation is automatically built from its docstrings and source code.
 
 ```{warning}
-🚧 Actually including the docs described below in this ducomentation site is coming soon™ 🚧
+🚧 Actually including the docs described below in this documentation site is coming soon™ 🚧
 ```
 
 Additional documentation may be placed under `<library path>/docs`, and will be included in this documentation site under the respective categories.
@@ -279,7 +279,7 @@ docs
 └── tutorial.{md,rst}
 ```
 
-## Deprecating the old library
+## Deprecate the old library
 
 When migrating an existing Charmhub-hosted library, our recommendation is to do a bug-for-bug migration of the latest release.
 The new `charmlibs` package should be released as version `1.0.0`, indicating that the API is stable.
