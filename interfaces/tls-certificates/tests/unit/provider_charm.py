@@ -1,1 +1,0 @@
-dummy_provider_charm/src/charm.py
