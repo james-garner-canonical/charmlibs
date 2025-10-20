@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - v0
+      - interface-tests-v0
   pull_request:
   workflow_dispatch:
 
@@ -15,6 +15,6 @@ jobs:
         charm:
           - pyroscope-coordinator-k8s
           - tempo-coordinator-k8s
-    uses: ./.github/workflows/charm-interface-tests.yaml
+    uses: ./.github/workflows/interface-tests.yaml
     with:
       charm: ${{ matrix.charm }}
