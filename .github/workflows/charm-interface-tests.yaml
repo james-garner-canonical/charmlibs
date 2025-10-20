@@ -43,8 +43,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          repository: james-garner-canonical/charmlibs
-          ref: 25-10+ci+interface-test-workflow-for-charms
+          repository: canonical/charmlibs
+          ref: main
       - uses: astral-sh/setup-uv@v6
       - name: Define interface test matrix
         id: include
@@ -72,8 +72,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          repository: james-garner-canonical/charmlibs
-          ref: 25-10+ci+interface-test-workflow-for-charms
+          repository: canonical/charmlibs
+          ref: main
       - uses: astral-sh/setup-uv@v6
       - name: Run interface tests
         run: |
