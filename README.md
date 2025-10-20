@@ -1,7 +1,7 @@
-# charm-interface-tests.yaml@v0
+# interface-tests-v0
 
-This branch of the `charmlibs` monorepo hosts `v0` of the `charm-interface-tests` workflow.
-This workflow can be used from your `charm` repo to run the interface tests that are run against your charm in `charmlibs@main`.
+This branch of the `charmlibs` monorepo hosts `v0` of the `interface-tests` workflow.
+This workflow can be used from your charm's repo to run the interface tests that are run against your charm in `charmlibs@main`.
 
 To run the workflow on your `main` or feature branch, you could add a workflow like this:
 
@@ -14,7 +14,7 @@ on:
 
 jobs:
   interfaces:
-    uses: canonical/charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+    uses: canonical/charmlibs/.github/workflows/interface-tests.yaml@interface-tests-v0
     with:
       charm: <your-charm-name>
 ```
@@ -28,7 +28,7 @@ If you have a charm monorepo, you can use the workflow in a matrix job like this
       fail-fast: false
       matrix:
         charm: [<charm-one>, <charm-two>]
-    uses: canonical/charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+    uses: canonical/charmlibs/.github/workflows/interface-tests.yaml@interface-tests-v0
     with:
       charm: ${{ matrix.charm }}
 ```
@@ -41,7 +41,7 @@ on:
 
 jobs:
   interfaces:
-    uses: canonical/charmlibs/.github/workflows/charm-interface-tests.yaml@v0
+    uses: canonical/charmlibs/.github/workflows/interface-tests.yaml@interface-tests-v0
     with:
       charm: <your-charm-name>
       charm_repo: ${{ format('{0}/{1}.git', github.server_url, github.event.pull_request.head.repo.full_name) }}
