@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - v0
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  charms:
+    strategy:
+      fail-fast: false
+      matrix:
+        charm:
+          - pyroscope-coordinator-k8s
+          - tempo-coordinator-k8s
+    uses: ./.github/workflows/charm-interface-tests.yaml
+    with:
+      charm: ${{ matrix.charm }}
