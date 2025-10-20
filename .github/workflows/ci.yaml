@@ -12,7 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        charm: [tempo-coordinator-k8s]
+        charm:
+          - pyroscope-coordinator-k8s
+          - tempo-coordinator-k8s
     uses: ./.github/workflows/charm-interface-tests.yaml
     with:
       charm: ${{ matrix.charm }}
