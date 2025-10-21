@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       charm:
-        description: Name of the charm to run interface tests for.
+        description: Name of the charm to run interface tests for. Used to look up the charm's interface testing configuration.
         required: true
         type: string
       charm-repo:
@@ -28,7 +28,7 @@ on:
         type: string
         default: ''
       charm-branch:
-        description: Reference to branch to checkout, suitable for use with `git clone --branch`, e.g. `main`. Read from charm config if not provided.
+        description: Reference to branch to checkout, suitable for use with `git clone --branch`, e.g. `main`. Read from charm config if not provided, and defaults to `main` if not configured.
         required: false
         type: string
         default: ''
