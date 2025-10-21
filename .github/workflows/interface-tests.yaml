@@ -23,7 +23,7 @@ on:
         required: true
         type: string
       charm-repo:
-        description: Reference to charm repository suitable for use with `git clone`, e.g. `https://github.com/canonical/vault-k8s-operator.git`. Read from charm config if not provided.
+        description: Reference to charm repository, e.g. `canonical/vault-k8s-operator`. Combined with the Github server URL to construct a URL for use with `git clone`. Read from charm config if not provided.
         required: false
         type: string
         default: ''
@@ -82,5 +82,5 @@ jobs:
             '${{ matrix.role }}' \
             '${{ inputs.charm }}' \
             '${{ matrix.endpoint }}' \
-            --charm-repo '${{ inputs.charm-repo }}' \
+            --charm-repo '${{ inputs.charm-repo && format('{0}/{1}.git', github.server_url, inputs.charm_repo) || '' }}' \
             --charm-branch '${{ inputs.charm-branch }}'
