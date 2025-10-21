@@ -37,8 +37,6 @@ jobs:
   init:
     runs-on: ubuntu-latest
     outputs:
-      checkout-repository: ${{ steps.init.outputs.repository }}
-      checkout-ref: ${{ steps.init.outputs.ref }}
       include: ${{ steps.include.outputs.result }}
     steps:
       - uses: actions/checkout@v5
