@@ -82,5 +82,5 @@ jobs:
             '${{ matrix.role }}' \
             '${{ inputs.charm }}' \
             '${{ matrix.endpoint }}' \
-            --charm-repo '${{ inputs.charm-repo && format('{0}/{1}', github.server_url, inputs.charm_repo) || '' }}' \
+            --charm-repo '${{ inputs.charm-repo && format('{0}/{1}', github.server_url, inputs.charm-repo) || '' }}' \
             --charm-branch '${{ inputs.charm-branch }}'
