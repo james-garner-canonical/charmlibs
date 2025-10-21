@@ -8,11 +8,11 @@ on:
       charm:
         required: true
         type: string
-      charm_repo:
+      charm-repo:
         required: false
         type: string
         default: ''
-      charm_branch:
+      charm-branch:
         required: false
         type: string
         default: ''
@@ -22,12 +22,12 @@ on:
         description: Name of the charm to run interface tests for.
         required: true
         type: string
-      charm_repo:
+      charm-repo:
         description: Reference to charm repository suitable for use with `git clone`, e.g. `https://github.com/canonical/vault-k8s-operator.git`. Read from charm config if not provided.
         required: false
         type: string
         default: ''
-      charm_branch:
+      charm-branch:
         description: Reference to branch to checkout, suitable for use with `git clone --branch`, e.g. `main`. Read from charm config if not provided.
         required: false
         type: string
@@ -82,5 +82,5 @@ jobs:
             '${{ matrix.role }}' \
             '${{ inputs.charm }}' \
             '${{ matrix.endpoint }}' \
-            --charm-repo '${{ inputs.charm_repo }}' \
-            --charm-branch '${{ inputs.charm_branch }}'
+            --charm-repo '${{ inputs.charm-repo }}' \
+            --charm-branch '${{ inputs.charm-branch }}'
