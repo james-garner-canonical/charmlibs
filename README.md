@@ -44,7 +44,7 @@ jobs:
     uses: canonical/charmlibs/.github/workflows/interface-tests.yaml@interface-tests-v0
     with:
       charm: <your-charm-name>
-      charm-repo: ${{ format('{0}/{1}.git', github.server_url, github.event.pull_request.head.repo.full_name) }}
+      charm-repo: ${{ github.event.pull_request.head.repo.full_name }}
       charm-branch: ${{ github.event.pull_request.head.ref }}
 ```
 
