@@ -1,0 +1,11 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+version: 2
+build:
+  os: ubuntu-24.04
+  commands:
+    - mkdir -p "$READTHEDOCS_OUTPUT/html"
+    # Note: can't use single quotes here because readthedocs does f"/bin/bash -c '{command}'"
+    # https://github.com/readthedocs/readthedocs.org/issues/9397
+    - echo "<!doctype html><title>Placeholder</title>" > "$READTHEDOCS_OUTPUT/html/index.html"

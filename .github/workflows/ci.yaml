@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - interface-tests-v0
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  charms:
+    strategy:
+      fail-fast: false
+      matrix:
+        charm:
+          - pyroscope-coordinator-k8s
+          - tempo-coordinator-k8s
+    uses: ./.github/workflows/interface-tests.yaml
+    with:
+      charm: ${{ matrix.charm }}
+
+  charm-with-charm-repo:
+    uses: ./.github/workflows/interface-tests.yaml
+    with:
+      charm: tempo-coordinator-k8s
+      charm-repo: canonical/tempo-operators
+
+  charm-with-charm-repo-and-charm-branch:
+    uses: ./.github/workflows/interface-tests.yaml
+    with:
+      charm: tempo-coordinator-k8s
+      charm-repo: canonical/tempo-operators
+      charm-branch: main
+
+  charm-with-charm-branch-only:
+    uses: ./.github/workflows/interface-tests.yaml
+    with:
+      charm: tempo-coordinator-k8s
+      charm-branch: main
