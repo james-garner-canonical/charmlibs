@@ -25,14 +25,14 @@ jobs:
       charm: tempo-coordinator-k8s
       charm-repo: canonical/tempo-operators
 
-  charm-with-charm-repo-and-charm-ref:
+  charm-with-charm-repo-and-charm-branch:
     uses: ./.github/workflows/interface-tests.yaml
     with:
       charm: tempo-coordinator-k8s
       charm-repo: canonical/tempo-operators
       charm-branch: main
 
-  charm-with-charm-ref-only:
+  charm-with-charm-branch-only:
     uses: ./.github/workflows/interface-tests.yaml
     with:
       charm: tempo-coordinator-k8s
