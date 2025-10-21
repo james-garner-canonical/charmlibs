@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import pathlib
 import pickle  # noqa: S403
+import re
 import subprocess
 import typing
 
@@ -92,11 +93,13 @@ RST_TEMPLATE = """
 
    <style>
       h1:before {{
-         content: "{prefix}";
+         content: "{import_prefix}";
       }}
    </style>
 
-{package}
+.. _{label}:
+
+{import_name}
 {underline}
 """.strip()
 AUTOMODULE_TEMPLATE = """
@@ -114,15 +117,29 @@ def _main(docs_dir: pathlib.Path, package: str | None) -> None:
     packages = json.loads(subprocess.check_output(cmd, text=True))
     for raw_package in packages:
         subdir, _, p = raw_package.rpartition('/')
-        module = p.replace('-', '_')
+        canonical_path = ['charmlibs']
+        if subdir:
+            canonical_path.append(_normalize(subdir))
+        canonical_path.append(_normalize(p))
+        *import_prefix_parts, import_name = (part.replace('-', '_') for part in canonical_path)
         content = RST_TEMPLATE.format(
-            prefix=f'charmlibs.{subdir}.' if subdir else 'charmlibs.',
-            package=module,
-            underline='=' * len(module),
+            import_prefix='.'.join(import_prefix_parts) + '.',
+            import_name=import_name,
+            underline='=' * len(p),
+            label='-'.join(canonical_path),
         )
         if package is not None and package == str(pathlib.Path(subdir, p)):
-            content += AUTOMODULE_TEMPLATE.format(package=module)
-        _write_if_needed(path=ref_dir / 'charmlibs' / subdir / f'{p}.rst', content=content)
+            content += AUTOMODULE_TEMPLATE.format(package=import_name)
+        path = ref_dir.joinpath(*canonical_path).with_suffix('.rst')
+        _write_if_needed(path=path, content=content)
+
+
+def _normalize(name: str) -> str:
+    """Normalize distribution package name according to PyPI rules.
+
+    https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization
+    """
+    return re.sub(r'[-_.]+', '-', name).lower()
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
