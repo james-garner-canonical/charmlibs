@@ -34,20 +34,20 @@ jobs:
       - id: main
         run: uv run --no-project --script .github/unify-publish-inputs.py
 
-  tests:
+  test-package:
     needs: unify-inputs
     if: ${{ needs.unify-inputs.outputs.include != '[]' }}
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.unify-inputs.outputs.include) }}
-    uses: ./.github/workflows/tests.yaml
+    uses: ./.github/workflows/test-package.yaml
     with:
       package: ${{ matrix.package }}
       skip-juju: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
 
   build-n-publish:
-    needs: [unify-inputs,tests]
+    needs: [unify-inputs,test-package]
     if: ${{ needs.unify-inputs.outputs.include != '[]' }}
     strategy:
       fail-fast: false

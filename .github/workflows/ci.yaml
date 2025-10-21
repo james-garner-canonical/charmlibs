@@ -52,24 +52,24 @@ jobs:
           echo "$PACKAGES" | jq  # logging
           echo "result=$PACKAGES" >> $GITHUB_OUTPUT
 
-  tests:
+  package:
     needs: [fast-lint, init]
     if: ${{ needs.init.outputs.packages != '[]' }}
     strategy:
       fail-fast: false
       matrix:
         package: ${{ fromJson(needs.init.outputs.packages) }}
-    uses: ./.github/workflows/tests.yaml
+    uses: ./.github/workflows/test-package.yaml
     with:
       package: ${{ matrix.package }}
 
-  tests-passed:  # GitHub status checks require a static job name
-    needs: [tests]
+  package-tests-passed:  # GitHub status checks require a static job name
+    needs: [package]
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any tests failed
-        if: ${{ needs.tests.result != 'success' && needs.tests.result != 'skipped' }}
+        if: ${{ needs.package.result != 'success' && needs.package.result != 'skipped' }}
         run: |
           echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
@@ -81,11 +81,11 @@ jobs:
       fail-fast: false
       matrix:
         interface: ${{ fromJson(needs.init.outputs.interfaces) }}
-    uses: ./.github/workflows/interface-tests.yaml
+    uses: ./.github/workflows/test-interface.yaml
     with:
       interface: ${{ matrix.interface }}
 
-  interfaces-passed:  # GitHub status checks require a static job name
+  interface-tests-passed:  # GitHub status checks require a static job name
     needs: [interface]
     if: ${{ !cancelled() }}  # run even if tests are skipped or failed
     runs-on: ubuntu-latest

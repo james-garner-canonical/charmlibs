@@ -1,4 +1,4 @@
-name: Tests
+name: Test a package
 # runs tests for specified package
 # always runs static tests
 # runs unit, functional, and integration tests if the package implements them
