@@ -1,5 +1,7 @@
 name: Fast lint
 
+permissions: {}
+
 on:
   workflow_call:
   workflow_dispatch:
