@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Calculate reference for git diff
         id: ref
         if: github.event_name == 'pull_request'
@@ -99,6 +100,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
       - run: |
           uvx --from rust-just just init --no-input
@@ -114,6 +117,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
       - working-directory: interfaces
         run: |
@@ -138,6 +143,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Ensure CHANGELOG.md has been updated
         run: |
           set -xueo pipefail
