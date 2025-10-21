@@ -65,6 +65,8 @@ jobs:
           persist-credentials: false
       - name: Install uv
         uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false  # avoid cache poisoning when publishing
       - name: Build
         run: uv build
         working-directory: ./${{ matrix.package }}
