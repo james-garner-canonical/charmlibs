@@ -1,4 +1,4 @@
-name: Interface tests
+name: Test an interface
 # runs tests for specified interface
 
 on:
