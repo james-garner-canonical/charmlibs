@@ -1,4 +1,4 @@
-name: Tests
+name: Test a package
 # runs tests for specified package
 # always runs static tests
 # runs unit, functional, and integration tests if the package implements them
@@ -23,6 +23,8 @@ on:
         required: false
         type: boolean
 
+permissions: {}
+
 jobs:
   init:
     runs-on: ubuntu-latest
@@ -36,6 +38,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -104,6 +107,8 @@ jobs:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -121,6 +126,8 @@ jobs:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -137,6 +144,8 @@ jobs:
     runs-on: ${{ matrix.ubuntu }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -171,6 +180,8 @@ jobs:
         substrate: ${{ fromJson(needs.init.outputs.integration-substrates) }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install concierge
         run: sudo snap install --classic concierge

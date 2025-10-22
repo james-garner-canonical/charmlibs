@@ -1,5 +1,7 @@
 name: Fast lint
 
+permissions: {}
+
 on:
   workflow_call:
   workflow_dispatch:
@@ -9,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
