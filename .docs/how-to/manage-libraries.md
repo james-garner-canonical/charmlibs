@@ -1,8 +1,7 @@
 (how-to-manage-charm-libraries)=
 # How to manage charm libraries
 
-This guide will walk you through the best practices for using `charmlibs` packages.
-This advice applies to other PyPI dependencies too.
+This guide will walk you through the best practices for using `charmlibs` packages, and other packages from PyPI.
 
 This guide also covers installing Python packages directly from Git repositories, as well as managing legacy Charmhub-hosted libraries.
 
@@ -19,11 +18,12 @@ If you're looking for advice for library developers, take a look at the other ho
 This means that they're installed as separate _distribution_ packages, but imported from the same `charmlibs` namespace.
 
 For example, `charmlibs-apt` and `charmlibs-snap` are separate packages for the `apt` and `snap` package managers respectively.
-You could add them to your dependencies like this:
+You can add them to your dependencies the same way you'd add any other PyPI package.
+For example:
 ```bash
 uv add 'charmlibs-apt~=1.0' 'charmlibs-snap~=1.0'
 ```
-Which would add two (separate) new entries to your charm's dependencies.
+Which would add two (separate) new entries to the `dependencies` list in your charm's `pyproject.toml`.
 
 In your charm code, you would then import the packages like this:
 ```python
@@ -52,13 +52,16 @@ A major version of 0 means that the package is still in the early stages of deve
 After the 1.0 release, breaking changes are always accompanied by a major version bump.
 A minor version bump indicates new features, while other changes like bugfixes or refactors only require a patch version bump.
 
-A good rule of thumb is to specify your dependency versions as `~=X.Y`, where `X.Y` is the oldest release that has all the features that you need.
+A good rule of thumb when using dependencies that respect semantic versioning is to specify your dependency versions as `~=X.Y`, where `X.Y` is the oldest release that has all the features that you need.
 This is a shorthand for something like `>=X.Y,<X+1`.
 That is, greater than or equal to the version you need, but less than the next major version.
 This protects your charm from breaking changes.
 
 On top of this, you should lock your charm's dependencies, commit the lockfile to version control, and use a charm plugin that installs dependencies from the lockfile when packing.
 We recommend the [uv plugin](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/plugins/uv_plugin/).
+
+Many packages on PyPI follow semantic versioning, some more closely that others.
+If you use locked dependencies, you won't need to worry too much about this, as it will be very clear which version bumps cause breakages -- assuming you have good test coverage!
 
 (manage-git-dependencies)=
 ## Manage git dependencies
