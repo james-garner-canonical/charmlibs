@@ -5,7 +5,7 @@ This guide will walk you through the best practices for using `charmlibs` packag
 
 This guide also covers installing Python packages directly from Git repositories, as well as managing legacy Charmhub-hosted libraries.
 
-> Read more: {ref}`charm-libs` to learn more about the different kinds of charm libraries.
+> {ref}`Learn more about different kinds of charm libraries. <charm-libs>`
 
 ```{tip}
 This guide is for charm developers who want to use libraries.
