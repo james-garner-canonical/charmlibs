@@ -30,7 +30,7 @@ Charmhub-hosted libraries live in the namespaces of specific charms.
 Some libraries use placeholder charms for this, that aren't intended to be deployed.
 
 Each library is a single-file Python module.
-Its dependencies are listed in the `PYDEPS` field in the module itself, and must be added to the charm's dependencies manually.
+Its dependencies are listed in the `PYDEPS` variable in the module itself, and must be added to the charm's dependencies manually.
 
 If they're specified in your `charmcraft.yaml` file, they'll be downloaded from Charmhub when running `charmcraft pack`.
 They're placed under the `lib/` directory, which sits alongside your charm's `src/` directory.

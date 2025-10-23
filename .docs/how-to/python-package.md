@@ -39,7 +39,7 @@ You can use GitHub to distribute your library with very little friction.
 This is a good fit for libraries that are intended for team-internal use.
 It's also very useful when developing a new library or porting a Charmhub-hosted library.
 
-You don't need to do anything special to make your Python package installable via `git` -- just commit it and push to your git repository as usual.
+You don't need to do anything special to make your Python package installable with `git` -- just commit it and push to your repository as usual.
 
 > Read more: {ref}`manage-git-dependencies`
 

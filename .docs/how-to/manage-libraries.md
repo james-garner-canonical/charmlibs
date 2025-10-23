@@ -5,7 +5,7 @@ This guide will walk you through the best practices for using `charmlibs` packag
 
 This guide also covers installing Python packages directly from Git repositories, as well as managing legacy Charmhub-hosted libraries.
 
-> {ref}`Learn more about different kinds of charm libraries. <charm-libs>`
+> {ref}`Learn more about different kinds of charm libraries <charm-libs>`
 
 ```{tip}
 This guide is for charm developers who want to use libraries.
@@ -23,7 +23,7 @@ For example:
 ```bash
 uv add 'charmlibs-apt~=1.0' 'charmlibs-snap~=1.0'
 ```
-Which would add two (separate) new entries to the `dependencies` list in your charm's `pyproject.toml`.
+This would add two entries to the `dependencies` list in `pyproject.toml`.
 
 In your charm code, you would then import the packages like this:
 ```python
@@ -35,11 +35,11 @@ from charmlibs import apt, snap
 Charm interface libraries are also namespace packages.
 The only difference is that they use the `charmlibs.interfaces` namespace instead of the base `charmlibs` namespace.
 
-For example, you could add an interface library to your charm's dependencies like this:
+For example, you could add an interface library to your charm's dependencies:
 ```bash
 uv add 'charmlibs-interfaces-tls-certificates~=1.0'
 ```
-And then import it like this in your charm code:
+And then import it in your charm code:
 ```python
 from charmlibs.interfaces import tls_certificates
 ```
@@ -47,12 +47,12 @@ from charmlibs.interfaces import tls_certificates
 ### Semantic versioning
 
 `charmlibs` packages all use [semantic versioning](https://packaging.python.org/en/latest/discussions/versioning/#semantic-versioning).
-This means that they use a three part version number in the form `<MAJOR>.<MINOR>.<PATCH>`, like 1.2.3.
-A major version of 0 means that the package is still in the early stages of development, and might make changes to the API before the stable 1.0 release.
+This means that they use a three part version number in the form `<MAJOR>.<MINOR>.<PATCH>`.
+A major version of 0 means that the package is in early development and its API might change before the stable 1.0 release.
 After the 1.0 release, breaking changes are always accompanied by a major version bump.
 A minor version bump indicates new features, while other changes like bugfixes or refactors only require a patch version bump.
 
-A good rule of thumb when using dependencies that respect semantic versioning is to specify your dependency versions as `~=X.Y`, where `X.Y` is the oldest release that has all the features that you need.
+A good rule of thumb is to specify your dependency versions as `~=X.Y`, where `X.Y` is the oldest release that has all the features that you need.
 This is a shorthand for something like `>=X.Y,<X+1`.
 That is, greater than or equal to the version you need, but less than the next major version.
 This protects your charm from breaking changes.
@@ -66,7 +66,7 @@ If you use locked dependencies, you won't need to worry too much about this, as 
 (manage-git-dependencies)=
 ## Manage git dependencies
 
-You’ll need to include `git` in your charm’s build dependencies:
+You'll need to include `git` in your charm's build dependencies:
 
 ```yaml
 parts:
@@ -74,19 +74,19 @@ parts:
     build-packages: [git]
 ```
 
-Then you can specify the dependency in your requirements:
+Then you can specify the dependency in your requirements. For example:
 
 ```
-charmlibs-pathops @ git+https://github.com/canonical/charmtech-charmlibs@main#subdirectory=pathops
+charmlibs-pathops @ git+https://github.com/canonical/charmlibs@main#subdirectory=pathops
 ```
 
-You can specify any branch, tag, or commit after the `@`. If you leave it off, it will default to `@main`. You can’t specify a version range. This can make dependency resolution problematic for users, especially if your library is depended on by other charm libraries. Tools that scan versions for security vulnerabilities may also struggle with such dependencies.
+You can specify any branch, tag, or commit after the `@`. If you leave it off, it will default to `@main`. You can't specify a version range. This can make dependency resolution problematic, especially if the library is depended on by other charm libraries. Tools that scan versions for security vulnerabilities may also struggle with such dependencies.
 
-If your package is in a subdirectory of your repository, for example in a monorepo (like the example above), or when developing libraries alongside charms, you'll need to specify the subdirectory. If your library has a dedicated repository, leave off the subdirectory and it will default to the repository root.
+If the package is in a subdirectory of a repository, as in the `charmlibs-pathops` example, you'll need to specify the subdirectory. If the library has a dedicated repository, leave off the subdirectory and the dependency will default to the repository root.
 
-In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+...` in your dependencies list. Alternatively, use `uv add git+...` to have `uv` add `charmlibs-pathops` to your dependencies list and the `git` reference to `tool.uv.sources`. For `poetry` see [the `poetry` docs](https://python-poetry.org/docs/dependency-specification/#git-dependencies).
+In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+...` in your dependencies list. Alternatively, use `uv add git+...` to have `uv` add the library to your dependencies list and the `git` reference to `tool.uv.sources`. For `poetry` see [the `poetry` docs](https://python-poetry.org/docs/dependency-specification/#git-dependencies).
 
-The exact commit being referenced should be captured in `uv.lock` and committed to the charm repository, so that rebuilding a given charm release is consistent.
+The exact commit being referenced should be captured in `uv.lock` and committed to your charm's repository, so that rebuilding a given charm release is consistent.
 
 (manage-charmhub-libraries)=
 ## Manage legacy Charmhub-hosted libraries
@@ -97,7 +97,7 @@ Charm libraries all have an API version and a patch version, broadly equivalent 
 
 The `lib` directory is added to the `PYTHONPATH` by the charm's `dispatch` script, so these libraries are imported in charm code as `$charm.v$api-version.$lib-name`.
 
-For example, you might add this to your `charmcraft.yaml`:
+For example, you might add this to `charmcraft.yaml`:
 
 ```yaml
 charm-libs:
@@ -107,15 +107,15 @@ charm-libs:
 
 And then in your charm code, you would write `from operator_libs_linux.v2 import snap`.
 
-```{note}
-But don't do this, add `charmlibs-snap` to your dependencies and write `from charmlibs import snap` instead!
+```{warning}
+This is just an example -- don't  really do this! Add `charmlibs-snap` to your dependencies and write `from charmlibs import snap` instead.
 ```
 
 It is recommended that Charmhub-hosted libraries have no additional dependencies, but some do. It's possible that a Charmhub-hosted library might depend on a regular Python package, or it might even depend on another Charmhub-hosted library.
 
 If a library depends on a Python package, the package should be listed in the `PYDEPS` variable in the library itself. You will need to manually add these dependencies to your charm's Python dependencies. For example, if the `snap` library depended on a Python package named `foo` (it doesn't), it might have `PYDEPS = ['foo']`, and you would add `foo` to your dependencies in `pyproject.toml`.
 
-If a library depends on another Charmhub-hosted library, the dependency should be clearly specified in the library's documentation. In this case, you will need to add this additional Charmhub-hosted library to your charm's `charmcraft.yaml` and  run `charmcraft fetch-libs`. For example, if the `snap` library depended on a Charmhub-hosted library `foo.v0.bar`, then you would update your `charmcraft.yaml` to look like this:
+If a library depends on another Charmhub-hosted library, the dependency should be clearly specified in the library's documentation. In this case, you will need to add this additional Charmhub-hosted library to your charm's `charmcraft.yaml` and  run `charmcraft fetch-libs`. For example, if the `snap` library depended on a Charmhub-hosted library `foo.v0.bar`, then you would update `charmcraft.yaml` to look like this:
 
 ```yaml
 charm-libs:
