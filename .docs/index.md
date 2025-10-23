@@ -39,6 +39,7 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
 ```{grid-item-card} [How-to guides](how-to/index)
 **Step-by-step guides**
+- {ref}`Manage charm libraries <how-to-manage-charm-libraries>`
 - {ref}`Distribute charm libraries <how-to-python-package>`
 - {ref}`Customize functional tests <how-to-customize-functional-tests>`
 - {ref}`Customize integration tests <how-to-customize-integration-tests>`

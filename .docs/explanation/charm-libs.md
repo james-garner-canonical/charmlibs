@@ -26,41 +26,22 @@ See also:
 (charm-libs-charmhub-hosted)=
 ### Charmhub-hosted libraries
 
-Charmhub-hosted libraries are live in the namespaces of specific charms. Some libraries use placeholder charms for this, that aren't intended to be deployed.
+Charmhub-hosted libraries live in the namespaces of specific charms.
+Some libraries use placeholder charms for this, that aren't intended to be deployed.
 
-Each library is a single-file Python module. To use Charmhub-hosted libraries, list them in the {ref}`charm-libs section of charmcraft.yaml <charmcraft:charmcraft-yaml-key-charm-libs>` and then run {doc}`charmcraft fetch-libs <charmcraft:reference/commands/fetch-libs>`. This will download the libraries and place them in `lib/<charm>/v<api-version>/<lib-name>.py`. These files should be committed into your charm's version control.
+Each library is a single-file Python module.
+Its dependencies are listed in the `PYDEPS` variable in the module itself, and must be added to the charm's dependencies manually.
 
-Charm libraries all have an API version and a patch version, broadly equivalent to the major and minor version in semantic versioning. If a library is specified by API version only then rerunning `charmcraft fetch-libs` will update the library if a newer patch release is available.
+If they're specified in your `charmcraft.yaml` file, they'll be downloaded from Charmhub when running `charmcraft pack`.
+They're placed under the `lib/` directory, which sits alongside your charm's `src/` directory.
+The `lib/` directory is added to the [PYTHONPATH](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH) by the default `dispatch` script that `charmcraft pack` generates
+(Juju executes the `dispatch` script, which is how your charm gets run).
 
-The `lib` directory is added to the `PYTHONPATH` by the charm's `dispatch` script, so these libraries are imported in charm code as `$charm.v$api-version.$lib-name`.
+Charmhub-hosted libraries are typically committed to your charm's version control.
 
-For example, you might add this to your `charmcraft.yaml`:
-
-```yaml
-charm-libs:
-  - lib: operator_libs_linux.snap
-    version: "2"
-```
-
-And then in your charm code, you would write `from operator_libs_linux.v2 import snap`.
-
-It is recommended that Charmhub-hosted libraries have no additional dependencies, but some do. It's possible that a Charmhub-hosted library might depend on a regular Python package, or it might even depend on another Charmhub-hosted library.
-
-If a library depends on a Python package, the package should be listed in the `PYDEPS` variable in the library itself. You will need to manually add these dependencies to your charm's Python dependencies. For example, if the `snap` library depended on a Python package named `foo` (it doesn't), it might have `PYDEPS = ['foo']`, and you would add `foo` to your dependencies in `pyproject.toml`.
-
-If a library depends on another Charmhub-hosted library, the dependency should be clearly specified in the library's documentation. In this case, you will need to add this additional Charmhub-hosted library to your charm's `charmcraft.yaml` and  run `charmcraft fetch-libs`. For example, if the `snap` library depended on a Charmhub-hosted library `foo.v0.bar`, then you would update your `charmcraft.yaml` to look like this:
-
-```yaml
-charm-libs:
-  - lib: operator_libs_linux.snap
-    version: "2"
-  - lib: foo.bar
-    version: "0"
-```
-
-See also:
-
-- {ref}`Charmcraft | Manage libraries <charmcraft:manage-libraries>`
+> Read more:
+> - {ref}`manage-charmhub-libraries`
+> - {ref}`Charmcraft | Manage libraries <charmcraft:manage-libraries>`
 
 (charm-libs-purpose)=
 ## Library purpose

@@ -39,27 +39,9 @@ You can use GitHub to distribute your library with very little friction.
 This is a good fit for libraries that are intended for team-internal use.
 It's also very useful when developing a new library or porting a Charmhub-hosted library.
 
-You’ll need to include `git` in your charm’s build dependencies:
+You don't need to do anything special to make your Python package installable with `git` -- just commit it and push to your repository as usual.
 
-```yaml
-parts:
-  charm:
-    build-packages: [git]
-```
-
-Then you can specify the dependency in your requirements:
-
-```
-charmlibs-pathops @ git+https://github.com/canonical/charmtech-charmlibs@main#subdirectory=pathops
-```
-
-You can specify any branch, tag, or commit after the `@`. If you leave it off, it will default to `@main`. You can’t specify a version range. This can make dependency resolution problematic for users, especially if your library is depended on by other charm libraries. Tools that scan versions for security vulnerabilities may also struggle with such dependencies.
-
-If your package is in a subdirectory of your repository, for example in a monorepo (like the example above), or when developing libraries alongside charms, you'll need to specify the subdirectory. If your library has a dedicated repository, leave off the subdirectory and it will default to the repository root.
-
-In `pyproject.toml`, quote the entire string starting `charmlibs-pathops @ git+...` in your dependencies list. Alternatively, use `uv add git+...` to have `uv` add `charmlibs-pathops` to your dependencies list and the `git` reference to `tool.uv.sources`. For `poetry` see [the `poetry` docs](https://python-poetry.org/docs/dependency-specification/#git-dependencies).
-
-The exact commit being referenced should be captured in `uv.lock` and committed to the charm repository, so that rebuilding a given charm release is consistent.
+> Read more: {ref}`manage-git-dependencies`
 
 (python-package-distribution-local)=
 ### Local files
