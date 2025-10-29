@@ -45,6 +45,7 @@ def _interface_docs(app: sphinx.application.Sphinx) -> None:
 ####################
 
 INDEX_TEMPLATE = """
+({label})=
 # {interface_name}
 
 ```{{toctree}}
@@ -70,7 +71,8 @@ def _main(docs_dir: pathlib.Path) -> None:
         interface_name = interface_dir.name
         interface_ref_dir = ref_dir / interface_name
         interface_ref_dir.mkdir(exist_ok=True)
-        index = INDEX_TEMPLATE.format(interface_name=interface_name)
+        label = f'interfaces-{interface_name.replace("_", "-")}'
+        index = INDEX_TEMPLATE.format(label=label, interface_name=interface_name)
         _write_if_needed(path=ref_dir / f'{interface_name}.md', content=index)
         for v in (interface_dir / 'interface').glob('v[0-9]*'):
             readme_raw = (v / 'README.md').read_text()
@@ -81,8 +83,8 @@ def _main(docs_dir: pathlib.Path) -> None:
                 lambda m: f'[{m.group(1)}]({base_url}/{m.group(2)})',  # noqa: B023
                 readme_raw,
             )
-            readme = f'.. _interfaces-{interface_name.replace("_", "-")}-{v.name}:\n\n' + readme
-            _write_if_needed(path=interface_ref_dir / f'{v.name}.md', content=readme)
+            content = f'({label}-{v.name})=\n' + readme
+            _write_if_needed(path=interface_ref_dir / f'{v.name}.md', content=content)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
