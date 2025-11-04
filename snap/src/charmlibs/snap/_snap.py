@@ -424,13 +424,12 @@ class Snap:
         args = ['stop', '--disable'] if disable else ['stop']
         self._snap_daemons(args, services)
 
-    def logs(self, services: list[str] | None = None, num_lines: int = 10) -> str:
+    def logs(self, services: list[str] | None = None, num_lines: int | Literal['all'] = 10) -> str:
         """Fetch a snap services' logs.
 
         Args:
-            services (list): (optional) list of individual snap services to show logs from
-                (otherwise all)
-            num_lines (int): (optional) integer number of log lines to return. Default `10`
+            services: individual snap services to show logs from. Includes all by default.
+            num_lines: number of log lines to return, or 'all'. Returns 10 by default.
         """
         args = ['logs', f'-n={num_lines}'] if num_lines else ['logs']
         return self._snap_daemons(args, services).stdout
