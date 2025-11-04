@@ -1,3 +1,7 @@
+# 1.0.1 - 4 November 2025
+
+Update the type annotation of `log`'s `num_lines` parameter to indicate that `'all'` is accepted.
+
 # 1.0.0.post0 - 14 October 2025
 
 Update project URLs.
