@@ -347,7 +347,7 @@ class TestSnapCache(unittest.TestCase):
 
         foo.logs(num_lines='all')
         mock_subprocess.assert_called_with(
-            ["snap", "logs", "-n=all", "foo"],
+            ['snap', 'logs', '-n=all', 'foo'],
             text=True,
             check=True,
             capture_output=True,
