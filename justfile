@@ -12,6 +12,8 @@ _uv_run_with_test_requirements := 'uv run --with-requirements ' + quote(join(jus
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
 _short_help:
+    @echo '{{BOLD}}Charmlibs is the Canonical charm libraries monorepo{{NORMAL}}'
+    @echo ''
     @echo '{{BOLD}}List all commands with {{CYAN}}`just help`{{NORMAL}}{{BOLD}}, or:{{NORMAL}}'
     @echo '🛠️  Create a new package: {{CYAN}}`just init`{{NORMAL}} or {{CYAN}}`just interface init`{{NORMAL}}'
     @echo '⚡ Run {{CYAN}}`ruff`{{NORMAL}} for all packages: {{CYAN}}`just fast-lint`{{NORMAL}}'
