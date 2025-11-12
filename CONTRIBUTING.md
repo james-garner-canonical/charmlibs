@@ -13,4 +13,20 @@ Then run `just` from anywhere in the repository for usage.
 
 # Adding a new library
 
-Follow the [tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` monorepo.
+Follow the [tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` monorepo, or read the [how-to guide for migrating an existing library to this repository](https://documentation.ubuntu.com/charmlibs/how-to/migrate/).
+
+# Working on an existing library
+
+Run `just check <my package> to run the following tests for your package:
+- `just lint <my package>` runs linters and static type checkers.
+    - `just fast-lint` will run fast linters for all packages.
+    - `just format <my package>` or `just format` will try to automatically fix errors.
+- `just docs html <my package>` builds the docs, only including reference docs for `<my package>` (for speed).
+    - `just docs html` or `just docs` will build docs for all packages.
+- `just unit <my package>` runs unit tests.
+
+`functional` and `integration` tests are also executed in CI, and can be executed locally too.
+
+Read more:
+- [The different types of tests](https://documentation.ubuntu.com/charmlibs/explanation/charmlibs-tests/).
+- [Publishing packages](https://documentation.ubuntu.com/charmlibs/explanation/charmlibs-publishing/).

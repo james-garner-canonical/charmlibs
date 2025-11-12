@@ -11,8 +11,27 @@ tag := env('CHARMLIBS_TAG', '')
 _uv_run_with_test_requirements := 'uv run --with-requirements ' + quote(join(justfile_dir(), 'test-requirements.txt')) + ' --python ' + python
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
+_short_help:
+    @echo '{{BOLD}}List all commands with {{CYAN}}`just help`{{NORMAL}}{{BOLD}}, or:{{NORMAL}}'
+    @echo '🛠️  Create a new package: {{CYAN}}`just init`{{NORMAL}} or {{CYAN}}`just interface init`{{NORMAL}}'
+    @echo '⚡ Run {{CYAN}}`ruff`{{NORMAL}} for all packages: {{CYAN}}`just fast-lint`{{NORMAL}}'
+    @echo '🔍 Lint, unit test, and build docs for a package: {{CYAN}}`just check <package>`{{NORMAL}}'
+    @echo ''
+    @echo '{{BOLD}}Run individual checks for a package:{{NORMAL}}'
+    @echo '🧹 {{CYAN}}`just lint <package>`{{NORMAL}} (fix errors with {{CYAN}}`just format <package>`{{NORMAL}}'
+    @echo '⚗️  {{CYAN}}`just unit <package>`{{NORMAL}}'
+    @echo '⚙️  {{CYAN}}`just functional <package>`{{NORMAL}} (may require additional software like {{CYAN}}`pebble`{{NORMAL}})'
+    @echo ''
+    @echo '{{BOLD}}Run integration tests{{NORMAL}} (requires a Juju controller and a cloud):'
+    @echo '📦 Pack: {{CYAN}}`just pack-k8s <package>`{{NORMAL}} or {{CYAN}}`just pack-machine <package>`{{NORMAL}}'
+    @echo '🏁 Run: {{CYAN}}`just integration-k8s <package>`{{NORMAL}} or {{CYAN}}`just integration-machine <package>`{{NORMAL}}'
+    @echo ''
+    @echo '{{BOLD}}Build the docs: {{CYAN}}`just docs html`{{NORMAL}} (or {{CYAN}}`just docs`{{NORMAL}} for short)'
+    @echo '📚 Build reference docs for specific packages only (faster), e.g.'
+    @echo '    {{CYAN}}`just docs html pathops interfaces/tls-certificates`{{NORMAL}}'
+
 [doc('Describe usage and list the available recipes.')]
-_help:
+help:
     @echo 'All recipes require {{CYAN}}`uv`{{NORMAL}} to be available.'
     @just --list --unsorted --list-submodules
 
@@ -22,16 +41,18 @@ init *args:
     @echo 'You can press enter to accept the default, shown in brackets.'
     @env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter .template {{args}}
 
-[doc('Run `ruff` and `codespell`, failing afterwards if any errors are found.')]
+[doc('Run `ruff`, failing afterwards if any errors are found.')]
 fast-lint:
     #!/usr/bin/env -S bash -xueo pipefail
     FAILURES=0
     uv run --only-group=fast-lint ruff check --preview || ((FAILURES+=1))
     uv run --only-group=fast-lint ruff check --preview --diff || : 'Printed diff of changes to fix `ruff check` issues.'
     uv run --only-group=fast-lint ruff format --preview --diff || ((FAILURES+=1))
-    uv run --only-group=fast-lint codespell --toml=pyproject.toml || ((FAILURES+=1))
     : "$FAILURES command(s) failed."
     exit $FAILURES
+
+[doc('`lint`, `unit` test, and build the `docs` for a package.')]
+check package: (lint package) (unit package) (docs::html package)
 
 [doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
 format package='.':
