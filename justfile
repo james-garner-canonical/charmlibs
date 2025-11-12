@@ -29,8 +29,7 @@ _short_help:
     @echo '- Run: {{CYAN}}just integration-k8s <package>{{NORMAL}} or {{CYAN}}just integration-machine <package>{{NORMAL}}'
     @echo ''
     @echo '{{BOLD}}Build the docs: {{CYAN}}just docs{{NORMAL}}'
-    @echo '- Build reference docs for specific packages only (faster), e.g.'
-    @echo '    {{CYAN}}just docs html pathops interfaces/tls-certificates{{NORMAL}}'
+    @echo '- For specific packages only: {{CYAN}}just docs html <packages>{{NORMAL}}'
 
 [doc('Describe usage and list the available recipes.')]
 help:
