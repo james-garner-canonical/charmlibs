@@ -20,7 +20,7 @@ _short_help:
     @echo '- Lint, unit test, and build docs for a package: {{CYAN}}just check <package>{{NORMAL}}'
     @echo ''
     @echo '{{BOLD}}Run individual checks for a package:{{NORMAL}}'
-    @echo '- {{CYAN}}just lint <package>{{NORMAL}} (fix errors with {{CYAN}}just format <package>{{NORMAL}}'
+    @echo '- {{CYAN}}just lint <package>{{NORMAL}} (fix errors with {{CYAN}}just format <package>{{NORMAL}})'
     @echo '- {{CYAN}}just unit <package>{{NORMAL}}'
     @echo '- {{CYAN}}just functional <package>{{NORMAL}} (may require additional software like {{CYAN}}pebble{{NORMAL}})'
     @echo ''
