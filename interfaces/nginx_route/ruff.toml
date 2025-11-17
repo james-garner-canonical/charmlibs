@@ -8,4 +8,5 @@ quote-style = "preserve"
     "CPY",  # copyright
     "D",  # docs
     "E501",  # line too long
+    "UP045",  # use X | None instead of Optional[X]
 ]
