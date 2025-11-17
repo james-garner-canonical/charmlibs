@@ -19,8 +19,7 @@ class LdapProviderData(BaseModel):
         example=["ldap://ldap.canonical.com:3893", "ldap://ldap.ubuntu.com:3893"],
     )
     base_dn: str = Field(
-        description="The base entry as the starting point for LDAP search "
-                    "operation",
+        description="The base entry as the starting point for LDAP search operation",
         title="Base DN",
         example="dc=canonical,dc=com",
     )
@@ -31,7 +30,7 @@ class LdapProviderData(BaseModel):
     )
     bind_password_secret: str = Field(
         description="The juju secret ID of the bind account's password",
-        example="secret://59060ecc-0495-4a80-8006-5f1fc13fd783/cjqub6vubg2s77p3nio0"
+        example="secret://59060ecc-0495-4a80-8006-5f1fc13fd783/cjqub6vubg2s77p3nio0",
     )
     auth_method: str = Field(
         description="The LDAP authentication method",
@@ -56,9 +55,11 @@ class LdapRequirerData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """The schema for the provider side of the ldap interface."""
+
     app: LdapProviderData
 
 
 class RequirerSchema(DataBagSchema):
     """The schema for the requirer side of the ldap interface."""
+
     app: LdapRequirerData

@@ -56,9 +56,10 @@ Examples:
         }
 """
 
-from typing import List, Dict, Optional
-from pydantic import BaseModel, Field, Json
+from typing import Dict, List, Optional
+
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field, Json
 
 
 class AlertRuleModel(BaseModel):
@@ -69,16 +70,12 @@ class AlertRuleModel(BaseModel):
         description="The duration for which the conditions must be true for the alert to be firing.",
     )
     labels: Dict[str, str] = Field(description="Labels associated with the alert rule.")
-    annotations: Dict[str, str] = Field(
-        description="Annotations associated with the alert rule."
-    )
+    annotations: Dict[str, str] = Field(description="Annotations associated with the alert rule.")
 
 
 class AlertGroupModel(BaseModel):
     name: str = Field(description="The name of the alert group.")
-    rules: List[AlertRuleModel] = Field(
-        description="List of alert rules within the group."
-    )
+    rules: List[AlertRuleModel] = Field(description="List of alert rules within the group.")
 
 
 class AlertRulesModel(BaseModel):
@@ -89,9 +86,7 @@ class ScrapeStaticConfigModel(BaseModel):
     class Config:
         extra = "allow"
 
-    targets: List[str] = Field(
-        description='List of scrape targets. Accepts wildcard ("*")'
-    )
+    targets: List[str] = Field(description='List of scrape targets. Accepts wildcard ("*")')
     labels: Optional[Dict[str, str]] = Field(
         description="Optional labels for the scrape targets", default=None
     )
@@ -105,9 +100,7 @@ class ScrapeJobModel(BaseModel):
         description="Name of the Prometheus scrape job, each job must be given a unique name &  should be a fixed string (e.g. hardcoded literal)",
         default=None,
     )
-    metrics_path: Optional[str] = Field(
-        description="Path for metrics scraping.", default=None
-    )
+    metrics_path: Optional[str] = Field(description="Path for metrics scraping.", default=None)
     static_configs: List[ScrapeStaticConfigModel] = Field(
         description="List of static configurations for scrape targets."
     )

@@ -15,27 +15,23 @@ Examples:
         app:  <empty>
 """
 
-from pydantic import BaseModel, IPvAnyAddress, Field
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field, IPvAnyAddress
 
 
 class FivegN2ProviderAppData(BaseModel):
     amf_ip_address: IPvAnyAddress = Field(
-        description="IP Address to reach the AMF's N2 interface.",
-        examples=["192.168.70.132"]
+        description="IP Address to reach the AMF's N2 interface.", examples=["192.168.70.132"]
     )
     amf_hostname: str = Field(
-        description="Hostname to reach the AMF's N2 interface.",
-        examples=["amf"]
+        description="Hostname to reach the AMF's N2 interface.", examples=["amf"]
     )
-    amf_port: int = Field(
-        description="Port to reach the AMF's N2 interface.",
-        examples=[38412]
-    )
+    amf_port: int = Field(description="Port to reach the AMF's N2 interface.", examples=[38412])
+
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for fiveg_n2."""
+
     app: FivegN2ProviderAppData
 
 

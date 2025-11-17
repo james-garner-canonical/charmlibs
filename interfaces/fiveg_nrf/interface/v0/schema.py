@@ -11,20 +11,19 @@ Examples:
         app:  <empty>
 """
 
-from pydantic import BaseModel, AnyHttpUrl, Field
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class MyProviderAppData(BaseModel):
     url: AnyHttpUrl = Field(
-        description="url to reach the NRF.",
-        examples=["https://nrf-example.com:1234"]
+        description="url to reach the NRF.", examples=["https://nrf-example.com:1234"]
     )
 
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for fiveg_nrf."""
+
     app: MyProviderAppData
 
 

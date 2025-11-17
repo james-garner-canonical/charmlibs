@@ -1,5 +1,5 @@
 from interface_tester import Tester
-from scenario import State, Relation
+from scenario import Relation, State
 
 
 def test_datasource_exchange():
@@ -7,13 +7,9 @@ def test_datasource_exchange():
     source_exchange = Relation(
         endpoint='grafana-source-exchange',
         interface='grafana_datasource_exchange',
-        remote_app_name='bar'
+        remote_app_name='bar',
     )
-    tester = Tester(state_in=State(
-        relations=[
-            source_exchange
-        ]
-    ))
+    tester = Tester(state_in=State(relations=[source_exchange]))
     # WHEN the requirer processes any relation event
     tester.run('grafana-source-exchange-relation-changed')
     # THEN the requirer publishes valid data

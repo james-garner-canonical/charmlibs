@@ -10,12 +10,8 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class KratosInfoProvider(BaseModel):
-    admin_endpoint: AnyHttpUrl = Field(
-        description="Kratos admin URL."
-    )
-    public_endpoint: AnyHttpUrl = Field(
-        description="Kratos public URL."
-    )
+    admin_endpoint: AnyHttpUrl = Field(description="Kratos admin URL.")
+    public_endpoint: AnyHttpUrl = Field(description="Kratos public URL.")
     login_browser_endpoint: AnyHttpUrl = Field(
         description="The Kratos endpoint that initializes a browser-based user login flow."
     )
@@ -31,9 +27,7 @@ class KratosInfoProvider(BaseModel):
     configmaps_namespace: str = Field(
         description="The namespace where the ConfigMaps are located."
     )
-    mfa_enabled: bool = Field(
-        description="Whether MFA is enabled."
-    )
+    mfa_enabled: bool = Field(description="Whether MFA is enabled.")
     oidc_webauthn_sequencing_enabled: bool = Field(
         description="Whether OIDC WebAuthn sequencing is enabled."
     )
@@ -41,6 +35,7 @@ class KratosInfoProvider(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """The schema for the provider side of this interface."""
+
     app: KratosInfoProvider
 
 

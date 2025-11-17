@@ -16,11 +16,11 @@ Examples:
                 }
             ]
 """
+
 from typing import List
-import yaml
-from pydantic import BaseModel, AnyHttpUrl, validator
 
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel
 
 
 class DashboardItem(BaseModel):
@@ -43,7 +43,7 @@ class DashboardItem(BaseModel):
     link: str
     location: str
     icon: str = "icons:link"
-    type: str = "item"  # noqa: A003
+    type: str = "item"
     desc: str = ""
 
 

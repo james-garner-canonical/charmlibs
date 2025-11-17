@@ -17,9 +17,8 @@ Examples:
               }
 """
 
-from pydantic import BaseModel, Field
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field
 
 
 class MyProviderAppData(BaseModel):
@@ -32,22 +31,17 @@ class MyProviderAppData(BaseModel):
     index_url: str = Field(
         description="Endpoint Kratos forwards users to access index page of Public Login UI."
     )
-    login_url: str = Field(
-        description="Endpoint Hydra forwards users signing in."
-    )
+    login_url: str = Field(description="Endpoint Hydra forwards users signing in.")
     oidc_error_url: str = Field(
         description="Endpoint Hydra forwards users to access error operations related to OpenID Connect."
     )
-    registration_url: str = Field(
-        description="Endpoint Kratos forwards users to register."
-    )
-    default_url: str = Field(
-        description="Default Browser endpoint Kratos forwards users to."
-    )
+    registration_url: str = Field(description="Endpoint Kratos forwards users to register.")
+    default_url: str = Field(description="Default Browser endpoint Kratos forwards users to.")
 
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for login_ui_endpoints."""
+
     app: MyProviderAppData
 
 

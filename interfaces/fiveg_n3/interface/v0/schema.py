@@ -13,9 +13,8 @@ Examples:
         app:  <empty>
 """
 
-from pydantic import BaseModel
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel
 
 
 class FivegN3ProviderAppData(BaseModel):
@@ -24,6 +23,7 @@ class FivegN3ProviderAppData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for fiveg_n3."""
+
     app: FivegN3ProviderAppData
 
 

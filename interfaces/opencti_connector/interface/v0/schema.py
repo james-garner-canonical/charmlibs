@@ -21,8 +21,9 @@ Examples:
                 "opencti_token": "secret:secret-id",
               }
 """
+
 from interface_tester.schema_base import DataBagSchema
-from pydantic import AnyHttpUrl, BaseModel, Field, Json
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class ProviderAppData(BaseModel):

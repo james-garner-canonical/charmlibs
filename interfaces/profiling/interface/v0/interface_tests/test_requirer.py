@@ -3,7 +3,8 @@
 import json
 
 from interface_tester.interface_test import Tester
-from scenario import State, Relation
+from scenario import Relation, State
+
 
 # on created, joined, changed: the requirer is expected to publish no data
 def test_no_data_on_created():
@@ -36,11 +37,10 @@ def test_data_on_changed():
                     remote_app_data={
                         "otlp_grpc_endpoint_url": json.dumps("my.fqdn.cluster.local:1234"),
                         "insecure": json.dumps(False),
-                    }
-                    )
+                    },
+                )
             ]
         )
     )
     tester.run('tracing-relation-changed')
     tester.assert_schema_valid()
-

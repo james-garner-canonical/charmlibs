@@ -48,10 +48,10 @@ Examples:
 
 from enum import Enum
 from typing import List
-from pydantic import IPvAnyAddress, BaseModel, Field
 from uuid import UUID
 
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field, IPvAnyAddress
 
 
 class Status(str, Enum):
@@ -97,26 +97,27 @@ class DnsProviderData(BaseModel):
     uuid: UUID = Field(
         name="UUID",
         description="UUID for this domain as specified by the requirer.",
-        examples="550e8400-e29b-41d4-a716-446655440000"
+        examples="550e8400-e29b-41d4-a716-446655440000",
     )
     status: Status = Field(
         name="Status",
         description="Status for the domain request.",
-        examples=[Status.APPROVED, Status.PERMISSION_DENIED]
+        examples=[Status.APPROVED, Status.PERMISSION_DENIED],
     )
     description: str = Field(
         default=None,
         name="Status description",
         description="Status description.",
-        examples=["incorrect credentials"]
+        examples=["incorrect credentials"],
     )
 
 
 class DNSRecordProvider(BaseModel):
     """List statuses for the DNS records informed by the requirer."""
+
     dns_entries: List[DnsProviderData] = Field(
         name="DNS entries",
-        description="List of statuses for the DNS records requested by the requirer."
+        description="List of statuses for the DNS records requested by the requirer.",
     )
 
 
@@ -125,57 +126,56 @@ class RequirerEntries(BaseModel):
         min_length=1,
         name="Domain",
         description="Domain name requested.",
-        examples=["cloud.canonical.com", "staging.ubuntu.com"]
+        examples=["cloud.canonical.com", "staging.ubuntu.com"],
     )
     host_label: str = Field(
-        min_length=1,
-        name="Host label",
-        description="Host label.",
-        examples=["admin", "www"]
+        min_length=1, name="Host label", description="Host label.", examples=["admin", "www"]
     )
     ttl: int = Field(
         default=None,
         name="TTL",
         description="The DNS time to live (seconds).",
-        examples=[600, 1200]
+        examples=[600, 1200],
     )
     record_class: RecordClass = Field(
         default=None,
         name="Record class",
         description="The DNS record class.",
-        examples=[RecordClass.IN]
+        examples=[RecordClass.IN],
     )
-    record_type: RecordType =Field(
+    record_type: RecordType = Field(
         default=None,
         name="Record type",
         description="The DNS record type.",
-        examples=[RecordType.A, RecordType.CNAME]
+        examples=[RecordType.A, RecordType.CNAME],
     )
     record_data: IPvAnyAddress = Field(
         name="Record data",
         description="The DNS record value.",
-        examples=["91.189.91.47", "91.189.91.48"]
+        examples=["91.189.91.47", "91.189.91.48"],
     )
     uuid: UUID = Field(
         name="UUID",
         description="UUID for this entry.",
-        examples="550e8400-e29b-41d4-a716-446655440000"
+        examples="550e8400-e29b-41d4-a716-446655440000",
     )
 
 
 class DNSRecordRequirer(BaseModel):
     """List of domains for the provider to manage."""
+
     dns_entries: List[RequirerEntries] = Field(
-        name="DNS entries",
-        description="List of DNS records for the provider to manage."
+        name="DNS entries", description="List of DNS records for the provider to manage."
     )
 
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for dns_record."""
+
     app: DNSRecordProvider
 
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for dns_record."""
+
     app: DNSRecordRequirer

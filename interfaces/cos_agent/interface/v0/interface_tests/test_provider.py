@@ -2,8 +2,9 @@
 # See LICENSE file for licensing details.
 
 import json
+
 from interface_tester import Tester
-from scenario import State, Relation
+from scenario import Relation, State
 from scenario.context import CharmEvents
 
 
@@ -18,10 +19,12 @@ def test_no_data_on_joined():
     state_out = t.run("cos-agent-relation-joined")
     t.assert_schema_valid()
 
+
 def test_no_data_on_changed():
     t = Tester()
     state_out = t.run("cos-agent-relation-changed")
     t.assert_schema_valid()
+
 
 valid_unit_data = {
     "config": {
@@ -75,14 +78,13 @@ valid_unit_data = {
         "dashboards": [
             "/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4af1GDxdAD2CgBccJ1Wse0YL0FXaPTB5Bgw6u7FoNcUn99tIdLOGVyat",
         ],
-        "metrics_scrape_jobs": [
-            {"job_name": "kafka_0", "path": "/metrics", "port": 9101}
-        ],
+        "metrics_scrape_jobs": [{"job_name": "kafka_0", "path": "/metrics", "port": 9101}],
         "log_slots": ["charmed-kafka:logs"],
     }
 }
 
 valid_unit_data["config"] = json.dumps(valid_unit_data["config"])
+
 
 def test_on_changed_with_existing_valid_data():
     relation = Relation(

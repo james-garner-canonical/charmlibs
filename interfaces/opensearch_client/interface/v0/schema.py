@@ -106,7 +106,9 @@ class OpenSearchRequirerData(BaseModel):
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",
-        examples=["[{\"resource_name\": \"myindex\", \"resource_type\": \"INDEX\", \"privileges\": [\"WRITE\"]}]"],
+        examples=[
+            "[{\"resource_name\": \"myindex\", \"resource_type\": \"INDEX\", \"privileges\": [\"WRITE\"]}]"
+        ],
         title="Entity permissions",
     )
 

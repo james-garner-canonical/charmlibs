@@ -22,12 +22,13 @@ from pydantic import BaseModel, Field
 class SdcoreConfigProviderAppData(BaseModel):
     webui_url: str = Field(
         description="GRPC address of the Webui including Webui hostname and a fixed GRPC port.",
-        examples=["sdcore-webui-k8s:9876"]
+        examples=["sdcore-webui-k8s:9876"],
     )
 
 
 class ProviderSchema(DataBagSchema):
     """The schema for the provider side of the sdcore_config interface."""
+
     app: SdcoreConfigProviderAppData
 
 

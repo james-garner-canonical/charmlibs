@@ -129,7 +129,9 @@ class MySQLRequirerData(BaseModel):
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",
-        examples=["[{\"resource_name\": \"items\", \"resource_type\": \"TABLE\", \"privileges\": [\"SELECT\"]}]"],
+        examples=[
+            "[{\"resource_name\": \"items\", \"resource_type\": \"TABLE\", \"privileges\": [\"SELECT\"]}]"
+        ],
         title="Entity permissions",
     )
 

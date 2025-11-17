@@ -120,10 +120,11 @@ class MongoDBRequirerData(BaseModel):
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",
-        examples=["[{\"resource_name\": \"posts\", \"resource_type\": \"COLLECTION\", \"privileges\": [\"READ\"]}]"],
+        examples=[
+            "[{\"resource_name\": \"posts\", \"resource_type\": \"COLLECTION\", \"privileges\": [\"READ\"]}]"
+        ],
         title="Entity permissions",
     )
-
 
 
 class ProviderSchema(DataBagSchema):

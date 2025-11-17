@@ -19,16 +19,17 @@ def test_no_data_on_joined():
 
 
 def test_data_published_on_changed_remote_valid():
-    t = Tester(State(
-        relations=[Relation(
-            endpoint='openfga',
-            interface='openfga',
-            remote_app_name='remote',
-            remote_app_data={
-                'store_name': 'test-store'
-            }
-        )]
-    ))
+    t = Tester(
+        State(
+            relations=[
+                Relation(
+                    endpoint='openfga',
+                    interface='openfga',
+                    remote_app_name='remote',
+                    remote_app_data={'store_name': 'test-store'},
+                )
+            ]
+        )
+    )
     t.run('openfga-relation-changed')
     t.assert_schema_valid()
-

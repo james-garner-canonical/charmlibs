@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 from interface_tester import Tester
-from scenario import State, Relation
+from scenario import Relation, State
 
 
 def test_add_content_on_relation_created():

@@ -25,10 +25,12 @@ Examples:
         }
 """
 
-from pydantic import BaseModel, IPvAnyAddress, Field
 from dataclasses import dataclass
+from typing import Optional, conlist
+
 from interface_tester.schema_base import DataBagSchema
-from typing import List, Optional, conlist
+from pydantic import BaseModel, Field, IPvAnyAddress
+
 
 @dataclass
 class PLMNConfig:
@@ -58,15 +60,13 @@ class PLMNConfig:
         le=16777215,
     )
 
+
 class FivegF1ProviderAppData(BaseModel):
     f1_ip_address: IPvAnyAddress = Field(
         description="IPv4 address of the network interface used for F1 traffic",
-        examples=["192.168.70.132"]
+        examples=["192.168.70.132"],
     )
-    f1_port: int = Field(
-        description="Number of the port used for F1 traffic",
-        examples=[2153]
-    )
+    f1_port: int = Field(description="Number of the port used for F1 traffic", examples=[2153])
     tac: int = Field(
         description="Tracking Area Code",
         examples=[1],
@@ -77,17 +77,16 @@ class FivegF1ProviderAppData(BaseModel):
 
 
 class FivegF1RequirerAppData(BaseModel):
-    f1_port: int = Field(
-        description="Number of the port used for F1 traffic",
-        examples=[2153]
-    )
+    f1_port: int = Field(description="Number of the port used for F1 traffic", examples=[2153])
 
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for fiveg_f1."""
+
     app: FivegF1ProviderAppData
 
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for fiveg_f1."""
+
     app: FivegF1RequirerAppData

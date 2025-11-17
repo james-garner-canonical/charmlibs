@@ -15,16 +15,18 @@ Examples:
 
 import typing
 
-from pydantic import IPvAnyAddress, BaseModel
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, IPvAnyAddress
 
 
 class CloudflaredRouteProvider(BaseModel):
     """Provider application databag schema for cloudflared_route integration."""
+
     tunnel_token_secret_id: str
     nameserver: typing.Optional[IPvAnyAddress] = None
 
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for cloudflared_route integration."""
+
     app: CloudflaredRouteProvider

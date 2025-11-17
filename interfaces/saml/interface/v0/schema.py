@@ -37,9 +37,11 @@ Examples:
                 }
              }
 """
+
+from typing import Optional
+
 from interface_tester.schema_base import DataBagSchema
 from pydantic import AnyHttpUrl, BaseModel, Field
-from typing import Optional
 
 
 class SamlProviderData(BaseModel):
@@ -101,7 +103,8 @@ class SamlProviderData(BaseModel):
     x509certs: str = Field(
         description="Comma separated list of public X.509 certificates of the IdP.",
         title="Public IdP certificates",
-        examples=["""-----BEGIN CERTIFICATE-----
+        examples=[
+            """-----BEGIN CERTIFICATE-----
             MIIC6DCCAdCgAwIBAgIUW42TU9LSjEZLMCclWrvSwAsgRtcwDQYJKoZIhvcNAQEL
             BQAwIDELMAkGA1UEBhMCVVMxETAPBgNVBAMMCHdoYXRldmVyMB4XDTIzMDMyNDE4
             NDMxOVoXDTI0MDMyMzE4NDMxOVowPDELMAkGA1UEAwwCb2sxLTArBgNVBC0MJGUw
@@ -118,13 +121,16 @@ class SamlProviderData(BaseModel):
             ipcxuKhSUIVNkTLusN5b+HE2gwF1fn0K0z5jWABy08huLgbaEKXJEx5/FKLZGJga
             fpIzAdf25kMTu3gggseaAmzyX3AtT1i8A8nqYfe8fnnVMkvud89kq5jErv/hlMC9
             49g5yWQR2jilYYM3j9BHDuB+Rs+YS5BCep1JnQ==
-            -----END CERTIFICATE-----"""],
+            -----END CERTIFICATE-----"""
+        ],
     )
 
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for SAML."""
+
     app: SamlProviderData
+
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for SAML."""

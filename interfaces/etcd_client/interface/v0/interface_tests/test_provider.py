@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 from interface_tester import Tester
-from scenario import Secret, State, Relation
+from scenario import Relation, Secret, State
 
 
 def test_nothing_happens_if_remote_empty():

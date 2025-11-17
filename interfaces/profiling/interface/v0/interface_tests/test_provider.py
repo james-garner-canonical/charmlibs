@@ -1,8 +1,8 @@
 # Copyright 2024 Canonical
 # See LICENSE file for licensing details.
-import json
 
 from interface_tester.interface_test import Tester
+
 
 # on created, joined, changed: the provider is expected to publish all data
 def test_data_on_created():

@@ -106,7 +106,7 @@ class KafkaRequirerData(BaseModel):
             "consumer,producer",
             "consumer,admin",
             "producer,admin",
-            "consumer,producer,admin"
+            "consumer,producer,admin",
         ],
         title="Extra user roles",
     )
@@ -131,7 +131,9 @@ class KafkaRequirerData(BaseModel):
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",
-        examples=["[{\"resource_name\": \"messages\", \"resource_type\": \"TOPIC\", \"privileges\": [\"READ\"]}]"],
+        examples=[
+            "[{\"resource_name\": \"messages\", \"resource_type\": \"TOPIC\", \"privileges\": [\"READ\"]}]"
+        ],
         title="Entity permissions",
     )
 

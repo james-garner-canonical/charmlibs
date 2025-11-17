@@ -21,18 +21,13 @@ from pydantic import BaseModel, Field
 
 
 class FivegGnbIdentityProviderAppData(BaseModel):
-    gnb_name: str = Field(
-        description="Name of the gnB.",
-        examples=["gnb001"]
-    )
-    tac: int = Field(
-        description="Tracking Area Code",
-        examples=[1]
-    )
+    gnb_name: str = Field(description="Name of the gnB.", examples=["gnb001"])
+    tac: int = Field(description="Tracking Area Code", examples=[1])
 
 
 class ProviderSchema(DataBagSchema):
     """The schema for the provider side of the fiveg_gnb_identity interface."""
+
     app: FivegGnbIdentityProviderAppData
 
 

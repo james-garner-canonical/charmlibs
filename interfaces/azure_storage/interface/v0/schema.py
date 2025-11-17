@@ -3,16 +3,13 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - ProviderSchema
 - RequirerSchema
 """
+
 from enum import Enum
 from pathlib import Path
 from typing import List
 
 from interface_tester.schema_base import DataBagSchema
-from pydantic import (
-    BaseModel,
-    Field,
-    SecretStr
-)
+from pydantic import BaseModel, Field, SecretStr
 
 
 class ConnectionProtocolEnum(str, Enum):
@@ -28,8 +25,8 @@ class AzureStorageProviderAppData(BaseModel):
         examples=["mycontainer"],
         title="Container",
     )
-    
-    storage_account : str = Field(
+
+    storage_account: str = Field(
         description="The name of Azure storage account.",
         examples=["test-storage-account"],
         title="Storage account",
@@ -51,13 +48,13 @@ class AzureStorageProviderAppData(BaseModel):
     path: Path = Field(
         description="The path inside the container to store objects.",
         examples=["foo/bar"],
-        title="Path"
+        title="Path",
     )
 
     endpoint: str = Field(
         description="The endpoint corresponding to the specific container and storage account.",
         examples=["abfss://test-container@test-account.dfs.core.windows.net/"],
-        title="Endpoint URL"
+        title="Endpoint URL",
     )
 
 

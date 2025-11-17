@@ -20,15 +20,13 @@ Examples:
 """
 
 from typing import List, Optional
-from pydantic import BaseModel, Field
 
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field
 
 
 class ForwardAuthProvider(BaseModel):
-    decisions_address: str = Field(
-        description="The internal decisions endpoint address."
-    )
+    decisions_address: str = Field(description="The internal decisions endpoint address.")
     app_names: List[str] = Field(
         description="List of names of applications requesting to be protected by Identity and Access Proxy."
     )
@@ -45,9 +43,11 @@ class ForwardAuthRequirer(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for forward_auth."""
+
     app: ForwardAuthProvider
 
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for forward_auth."""
+
     app: ForwardAuthRequirer

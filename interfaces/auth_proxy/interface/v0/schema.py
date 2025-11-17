@@ -20,9 +20,9 @@ Examples:
 """
 
 from typing import List, Optional
-from pydantic import AnyHttpUrl, BaseModel, Field
 
 from interface_tester.schema_base import DataBagSchema
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class AuthProxyRequirer(BaseModel):
@@ -43,4 +43,5 @@ class ProviderSchema(DataBagSchema):
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for auth_proxy."""
+
     app: AuthProxyRequirer

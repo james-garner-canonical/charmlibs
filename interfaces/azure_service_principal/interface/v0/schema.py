@@ -5,26 +5,21 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-from pathlib import Path
 from typing import List
 
 from interface_tester.schema_base import DataBagSchema
-from pydantic import (
-    BaseModel,
-    Field,
-    SecretStr
-)
+from pydantic import BaseModel, Field, SecretStr
 
 
 class AzureServicePrincipalProviderAppData(BaseModel):
     """Credentials for an Azure Service Principal."""
-    
+
     subscription_id: str = Field(
         description="The unique identifier for an Azure subscription.",
         examples=["12345678-1234-1234-1234-1234567890ab"],
         title="Subscription ID",
     )
-    
+
     tenant_id: str = Field(
         description="The unique identifier of the Azure Active Directory (Entra ID) tenant.",
         examples=["87654321-4321-4321-4321-ba0987654321"],

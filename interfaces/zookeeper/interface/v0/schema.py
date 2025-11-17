@@ -13,7 +13,6 @@ from pydantic import (
     Field,
 )
 
-
 Endpoints: TypeAlias = str
 
 

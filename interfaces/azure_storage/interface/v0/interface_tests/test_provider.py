@@ -1,5 +1,6 @@
 from interface_tester import Tester
-from scenario import State, Relation
+from scenario import Relation, State
+
 
 def test_nothing_happens_if_remote_empty():
     # GIVEN that the remote end has not published anything on databag

@@ -9,12 +9,12 @@ import enum
 import typing
 
 import pydantic
-
 from interface_tester.schema_base import DataBagSchema
 
 
 class MimirRole(str, enum.Enum):
     """Mimir component role names."""
+
     overrides_exporter = "overrides-exporter"
     query_scheduler = "query-scheduler"
     flusher = "flusher"
@@ -36,6 +36,7 @@ class MimirRole(str, enum.Enum):
 
 class Scheme(str, enum.Enum):
     """Scheme strings."""
+
     http = "http"
     https = "https"
 
@@ -46,6 +47,7 @@ class MimirClusterProviderAppData(pydantic.BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """The schema for the provider side of this interface."""
+
     app: MimirClusterProviderAppData
 
 
@@ -71,5 +73,6 @@ class MimirClusterRequirerAppData(pydantic.BaseModel):
 
 class RequirerSchema(DataBagSchema):
     """The schema for the requirer side of this interface."""
+
     unit: MimirClusterRequirerUnitData
     app: MimirClusterRequirerAppData

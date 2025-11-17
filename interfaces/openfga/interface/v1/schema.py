@@ -22,7 +22,9 @@ Examples:
         unit: <empty>
         app: {"store_name": "test-store-name"}
 """
+
 from typing import Dict, Optional
+
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, validator
 
@@ -38,8 +40,7 @@ class OpenFGAProviderData(BaseModel):
     )
     token_secret_id: Optional[str] = Field(
         description=(
-            "Secret ID of the preshared token to be used to connect to"
-            " the OpenFGA service."
+            "Secret ID of the preshared token to be used to connect to the OpenFGA service."
         ),
         title="Secret ID of the OpenFGA token",
         default=None,

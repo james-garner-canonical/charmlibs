@@ -27,12 +27,12 @@ Examples:
         }
 """
 
-from enum import Enum
 import textwrap
+from enum import Enum
 from typing import List, Optional
-from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
 
 from interface_tester.schema_base import DataBagSchema
+from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
 
 
 class Url(BaseModel):
@@ -76,8 +76,9 @@ class ExternalIdpProvider(BaseModel):
             "A jsonnet file that will be used to map the external claims to Kratos' claims. "
             "For more info see https://www.ory.sh/docs/kratos/reference/jsonnet."
         ),
-        examples=[textwrap.dedent(
-        """
+        examples=[
+            textwrap.dedent(
+                """
         local claims = {
             email_verified: false,
         } + std.extVar('claims');
@@ -92,7 +93,9 @@ class ExternalIdpProvider(BaseModel):
             },
             },
         }
-        """)]
+        """
+            )
+        ],
     )
     tenant_id: Optional[str]
     private_key: Optional[str]
@@ -119,7 +122,9 @@ class ExternalIdpProvider(BaseModel):
     @field_validator("issuer_url")
     def issuer_url_allowed(cls, v, info):
         if v and info.data.get("provider") in ["generic", "auth0"]:
-            raise ValueError(f"`issuer_url` not allowed with provider: {info.data.get('provider')}")
+            raise ValueError(
+                f"`issuer_url` not allowed with provider: {info.data.get('provider')}"
+            )
         elif not v and info.data.get("provider") in ["generic", "auth0"]:
             raise ValueError("`issuer_url` is required with {values['provider'] provider")
         return v
@@ -133,6 +138,7 @@ class ProviderSchema(DataBagSchema):
     """Provider schema for KratosExternalIdp.
     This relation interface can be used to provide a set of client configurations to Kratos to connect with external providers.
     """
+
     app: KratosExternalIdpProviderData
 
     class Config:
@@ -149,9 +155,10 @@ class ProviderSchema(DataBagSchema):
                             "provider": "microsoft",
                         }
                     ]
-                }
+                },
             }
         }
+
 
 class ExternalIdpRequirer(BaseModel):
     redirect_uri: Url
@@ -166,6 +173,7 @@ class RequirerSchema(DataBagSchema):
     """Requirer schema for KratosExternalIdp.
     This relation interface can be used from Kratos to provide the redirect_uri of a client that will be used with an external provider.
     """
+
     app: KratosExternalIdpRequirerData
 
     class Config:
@@ -179,6 +187,6 @@ class RequirerSchema(DataBagSchema):
                             "provider_id": "microsoft",
                         }
                     ]
-                }
+                },
             }
         }

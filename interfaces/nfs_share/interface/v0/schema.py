@@ -21,9 +21,8 @@ Examples:
             }
 """
 
-from pydantic import BaseModel
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel
 
 
 class NFSShareProviderAppData(BaseModel):
@@ -38,10 +37,11 @@ class NFSShareRequirerAppData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for nfs-share."""
+
     app: NFSShareProviderAppData
 
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for nfs-share."""
-    app: NFSShareRequirerAppData
 
+    app: NFSShareRequirerAppData

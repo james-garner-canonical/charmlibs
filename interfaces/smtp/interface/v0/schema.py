@@ -20,10 +20,12 @@ Examples:
                 }
              }
 """
+
 from enum import Enum
+from typing import Optional
+
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class TransportSecurity(str, Enum):

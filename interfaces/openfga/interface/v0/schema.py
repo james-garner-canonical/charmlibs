@@ -22,6 +22,7 @@ Examples:
         unit: <empty>
         app: {"store_name": "test-store-name"}
 """
+
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, IPvAnyAddress
 
@@ -36,11 +37,11 @@ class OpenFGAProviderData(BaseModel):
         description="Port on which the OpenFGA service is listening (HTTP).",
         title="OpenFGA port",
         examples=[8080],
-    ) 
+    )
     scheme: str = Field(
         description="Scheme to be used to connect to the OpenFGA service.",
         title="OpenFGA scheme",
-        examples=["http","https"],
+        examples=["http", "https"],
     )
     token_secret_id: str = Field(
         description="Secret ID of the preshared token to be used to connect to the OpenFGA service.",
@@ -56,6 +57,7 @@ class OpenFGAProviderData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for OpenFGA."""
+
     app: OpenFGAProviderData
 
 
@@ -69,4 +71,5 @@ class OpenFGARequirerData(BaseModel):
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for OpenFGA."""
+
     app: OpenFGARequirerData

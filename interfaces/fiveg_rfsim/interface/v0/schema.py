@@ -14,18 +14,15 @@ Examples:
         unit: <empty>
         app:  <empty>
 """
+
 from typing import Optional
 
-from pydantic import BaseModel, Field
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field
 
 
 class FivegRFSIMProviderAppData(BaseModel):
-    rfsim_address: str = Field(
-        description="RF simulator service ip",
-        examples=["192.168.70.130"]
-    )
+    rfsim_address: str = Field(description="RF simulator service ip", examples=["192.168.70.130"])
     sst: int = Field(
         description="Slice/Service Type",
         examples=[1, 2, 3, 4],
@@ -43,6 +40,7 @@ class FivegRFSIMProviderAppData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for the fiveg_rfsim interface."""
+
     app: FivegRFSIMProviderAppData
 
 

@@ -26,9 +26,10 @@ Examples:
 """
 
 from dataclasses import dataclass
+from typing import List, Optional
+
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
 @dataclass
@@ -72,17 +73,17 @@ class FivegCoreGnbProviderAppData(BaseModel):
 
 class FivegCoreGnbRequirerAppData(BaseModel):
     gnb_name: str = Field(
-        alias="gnb-name",
-        description="Unique identifier of the CU/gnB.",
-        examples=["gnb001"]
+        alias="gnb-name", description="Unique identifier of the CU/gnB.", examples=["gnb001"]
     )
 
 
 class ProviderSchema(DataBagSchema):
     """The schema for the provider side of the fiveg_core_gnb interface."""
+
     app: FivegCoreGnbProviderAppData
 
 
 class RequirerSchema(DataBagSchema):
     """The schema for the requirer side of the fiveg_core_gnb interface."""
+
     app: FivegCoreGnbRequirerAppData

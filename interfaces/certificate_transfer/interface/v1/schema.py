@@ -16,9 +16,10 @@ Examples:
         app:  <empty>
 """
 
-from pydantic import BaseModel, Field
 from typing import Set
+
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field
 
 
 class CertificateTransferProviderAppData(BaseModel):
@@ -26,8 +27,7 @@ class CertificateTransferProviderAppData(BaseModel):
         description="The set of certificates that will be transferred to a requirer"
     )
     version: int = Field(
-        description="The version of the interface used in this databag",
-        default=1
+        description="The version of the interface used in this databag", default=1
     )
 
 
@@ -39,8 +39,7 @@ class ProviderSchema(DataBagSchema):
 
 class CertificateTransferRequirerAppData(BaseModel):
     version: int = Field(
-        description="The version of the interface used by this requirer",
-        default=1
+        description="The version of the interface used by this requirer", default=1
     )
 
 

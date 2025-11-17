@@ -62,10 +62,12 @@ from typing import Dict, List, Union
 from interface_tester.schema_base import DataBagSchema
 from pydantic import (
     AfterValidator,
+    BaseModel,
+    Field,
+    Json,
     PlainSerializer,
     WithJsonSchema,
 )
-from pydantic import BaseModel, Field, Json
 from typing_extensions import Annotated
 
 
@@ -79,7 +81,9 @@ def _serialize_grafana_dashboard(raw_json: Union[str, bytes]) -> "GrafanaDashboa
 # custom data type, pydantic 2
 GrafanaDashboard = Annotated[
     str,
-    AfterValidator(lambda x: json.loads(lzma.decompress(base64.b64decode(x.encode("utf-8"))).decode())),
+    AfterValidator(
+        lambda x: json.loads(lzma.decompress(base64.b64decode(x.encode("utf-8"))).decode())
+    ),
     PlainSerializer(lambda x: _serialize_grafana_dashboard, return_type=str),
     WithJsonSchema({'type': 'string'}, mode='serialization'),
 ]

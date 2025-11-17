@@ -46,9 +46,10 @@ Examples:
             }
 """
 
-from pydantic import BaseModel, IPvAnyAddress, IPvAnyNetwork
-from typing import Optional, List
+from typing import List, Optional
+
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, IPvAnyAddress, IPvAnyNetwork
 
 
 class Route(BaseModel):
@@ -72,9 +73,11 @@ class IPRouterRequirerAppData(BaseModel):
 
 class ProviderSchema(DataBagSchema):
     """Provider schema for ip_router."""
+
     app: IPRouterProviderAppData
 
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for ip_router."""
+
     app: IPRouterRequirerAppData

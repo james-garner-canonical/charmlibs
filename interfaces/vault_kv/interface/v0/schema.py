@@ -7,9 +7,8 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 
 from typing import Mapping, Optional
 
-from pydantic import BaseModel, Field, Json
-
 from interface_tester.schema_base import DataBagSchema
+from pydantic import BaseModel, Field, Json
 
 
 class VaultKvProviderSchema(BaseModel):
@@ -44,16 +43,17 @@ class AppVaultKvRequirerSchema(BaseModel):
             "Whether to request approle secret_id as a response-wrapping token with a certain TTL."
             " If not set, no wrapping will be made to secret_id. Otherwise, wrap_ttl specifies"
             " the duration of seconds before the expiration of the response-wrapping token."
-        )
+        ),
     )
 
 
 class UnitVaultKvRequirerSchema(BaseModel):
-    egress_subnet: str = Field(description="A string of egress subnets separated by commas, in CIDR notation.")
+    egress_subnet: str = Field(
+        description="A string of egress subnets separated by commas, in CIDR notation."
+    )
     nonce: str = Field(
         description=(
-            "Uniquely identifying value for this unit."
-            " `secrets.token_hex(16)` is recommended."
+            "Uniquely identifying value for this unit. `secrets.token_hex(16)` is recommended."
         )
     )
 

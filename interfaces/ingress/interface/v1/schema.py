@@ -21,10 +21,10 @@ Examples:
               "model": "model-name"
               }
 """
-import yaml
-from pydantic import BaseModel,  AnyHttpUrl, validator
 
+import yaml
 from interface_tester.schema_base import DataBagSchema
+from pydantic import AnyHttpUrl, BaseModel, validator
 
 
 class Url(BaseModel):
@@ -39,9 +39,9 @@ class MyProviderData(BaseModel):
         return yaml.safe_load(ingress)
 
 
-
 class ProviderSchema(DataBagSchema):
     """Provider schema for Ingress."""
+
     app: MyProviderData
 
 
@@ -54,4 +54,5 @@ class IngressRequirerData(BaseModel):
 
 class RequirerSchema(DataBagSchema):
     """Requirer schema for Ingress."""
+
     app: IngressRequirerData

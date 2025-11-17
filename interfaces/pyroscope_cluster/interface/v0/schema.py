@@ -5,7 +5,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -16,6 +15,7 @@ from typing_extensions import TypedDict
 
 class RemoteWriteEndpoint(TypedDict):
     """Type of the remote write endpoints to be passed to the worker through cluster relation data."""
+
     url: str
 
 
@@ -47,7 +47,7 @@ class PyroscopeClusterProviderAppData(BaseModel):
     worker_ports: Optional[Json[List[int]]] = Field(
         default=None,
         description="Ports that the worker should open. "
-                    "If not provided, the worker will open all the legacy ones.",
+        "If not provided, the worker will open all the legacy ones.",
     )
     ca_cert: Optional[Json[str]] = Field(
         default=None, description="CA certificate for tls encryption."
@@ -59,7 +59,7 @@ class PyroscopeClusterProviderAppData(BaseModel):
         default=None,
         description="Private key used by the coordinator, for tls encryption.",
     )
-    s3_tls_ca_chain: Optional[str] =  Field(
+    s3_tls_ca_chain: Optional[str] = Field(
         default=None,
         description="CA chain to use to validate traffic with the s3 endpoint.",
     )
