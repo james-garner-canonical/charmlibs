@@ -1,4 +1,4 @@
-# `opencti-connector`
+# `opencti-connector/v0`
 
 ## Usage
 
@@ -59,4 +59,3 @@ application_data: {
     "opencti_token": "secret:secret-id",
 }
 ```
-

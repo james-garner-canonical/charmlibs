@@ -1,4 +1,4 @@
-# `litmus_auth`
+# `litmus_auth/v0`
 
 ## Usage
 

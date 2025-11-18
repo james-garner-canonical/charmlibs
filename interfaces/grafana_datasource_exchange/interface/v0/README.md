@@ -1,4 +1,4 @@
-# `grafana_datasource_exchange`
+# `grafana_datasource_exchange/v0`
 
 The `grafana_datasource_exchange` interface allows charms that generate telemetry and have a reference to the datasources where said telemetry is queriable, 
 to share those references to other charms for correlation and cross-referencing purposes. 

@@ -1,4 +1,4 @@
-# `kubeflow-dashboard-links/v0`
+# `kubeflow-dashboard-links/v0/v0`
 
 ## Usage
 

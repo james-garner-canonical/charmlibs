@@ -1,4 +1,4 @@
-# `postgresql_client`
+# `postgresql_client/v0`
 
 ## Usage
 

@@ -1,4 +1,4 @@
-# `mimir_cluster`
+# `mimir_cluster/v0`
 
 ## Usage
 

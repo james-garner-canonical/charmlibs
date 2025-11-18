@@ -1,4 +1,4 @@
-# `kafka_client`
+# `kafka_client/v0`
 
 ## Usage
 

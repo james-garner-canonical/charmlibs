@@ -1,4 +1,4 @@
-# `prometheus_remote_write`
+# `prometheus_remote_write/v0`
 
 ## Usage
 
@@ -94,5 +94,4 @@ application-data:
     ]
   }
 ```
-
 

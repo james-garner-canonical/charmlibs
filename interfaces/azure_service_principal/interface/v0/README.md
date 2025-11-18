@@ -1,4 +1,4 @@
-# `azure_service_principal`
+# `azure_service_principal/v0`
 
 ## Usage
 

@@ -1,4 +1,4 @@
-# `openfga`
+# `openfga/v0`
 
 ## Usage
 

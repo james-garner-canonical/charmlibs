@@ -1,4 +1,4 @@
-# `auth_proxy`
+# `auth_proxy/v0`
 
 ## Usage
 

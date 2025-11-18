@@ -1,4 +1,4 @@
-# `zookeeper`
+# `zookeeper/v0`
 
 ## Usage
 

@@ -1,4 +1,4 @@
-# `opensearch_client`
+# `opensearch_client/v0`
 
 ## Usage
 

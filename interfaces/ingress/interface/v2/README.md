@@ -1,4 +1,4 @@
-# `ingress`
+# `ingress/v2`
 
 ## Usage
 
@@ -75,4 +75,3 @@ application_data: {
   ingress: '{"url": "http://foo.bar:80/model_name-app_name/0"}'
 }
 ```
-

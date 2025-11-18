@@ -1,4 +1,4 @@
-# `fiveg_nrf`
+# `fiveg_nrf/v0`
 
 ## Usage
 

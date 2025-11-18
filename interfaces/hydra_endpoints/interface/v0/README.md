@@ -1,4 +1,4 @@
-# `hydra_endpoints`
+# `hydra_endpoints/v0`
 
 ## Overview
 

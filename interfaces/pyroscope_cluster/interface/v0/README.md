@@ -1,4 +1,4 @@
-# `pyroscope_cluster`
+# `pyroscope_cluster/v0`
 
 ## Usage
 

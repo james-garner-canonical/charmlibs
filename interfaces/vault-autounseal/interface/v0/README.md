@@ -1,4 +1,4 @@
-# `vault-autounseal`
+# `vault-autounseal/v0`
 
 ## Usage
 

@@ -1,4 +1,4 @@
-# `prometheus_scrape`
+# `prometheus_scrape/v0`
 
 ## Usage
 

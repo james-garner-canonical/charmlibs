@@ -1,4 +1,4 @@
-# `kratos_info`
+# `kratos_info/v0`
 
 ## Usage
 

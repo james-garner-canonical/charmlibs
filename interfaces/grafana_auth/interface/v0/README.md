@@ -1,4 +1,4 @@
-# `grafana-auth`
+# `grafana-auth/v0`
 
 ## Usage
 

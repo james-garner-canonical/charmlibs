@@ -1,4 +1,4 @@
-# `grafana_datasource`
+# `grafana_datasource/v0`
 
 ## Usage
 

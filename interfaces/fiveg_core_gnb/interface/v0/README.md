@@ -1,4 +1,4 @@
-# `fiveg_core_gnb`
+# `fiveg_core_gnb/v0`
 
 ## Usage
 

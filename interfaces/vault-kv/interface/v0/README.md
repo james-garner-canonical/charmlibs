@@ -1,4 +1,4 @@
-# `vault-kv`
+# `vault-kv/v0`
 
 ## Usage
 

@@ -1,4 +1,4 @@
-# `smtp`
+# `smtp/v0`
 
 ## Overview
 

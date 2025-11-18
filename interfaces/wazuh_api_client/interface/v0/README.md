@@ -1,4 +1,4 @@
-# `wazuh_api_client`
+# `wazuh_api_client/v0`
 
 ## Usage
 

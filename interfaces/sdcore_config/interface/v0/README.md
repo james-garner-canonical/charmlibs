@@ -1,4 +1,4 @@
-# `sdcore_config`
+# `sdcore_config/v0`
 
 ## Usage
 

@@ -1,4 +1,4 @@
-# `kratos_external_idp`
+# `kratos_external_idp/v0`
 
 ## Usage
 This relation interface describes the expected behavior of any charm claiming to be able to interface with an Ory Kratos server as an integrator between an OIDC Provider external to the Juju model  and the Kratos charm. Charms providing this relation interface are expected to facilitate the automatic management of the client credentials from the Kratos server.
@@ -74,4 +74,3 @@ Requirer provides a redirect_uri and provider_id for every provider. It should b
         - redirect_uri: https://example.kratos.com/self-service/methods/oidc/callback/microsoft
           provider_id: microsoft
 ```
-
