@@ -1,4 +1,4 @@
-# `etcd_-_client`
+# `etcd-client`
 
 ## Usage
 
