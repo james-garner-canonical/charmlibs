@@ -51,9 +51,9 @@ requirer:
     role: receiver
   unit: 
    juju_topology: 
-     model: "mymodel", 
-     model_uuid: "1231234120941234", 
-     application: "tempo-receiver", 
-     charm_name: "tempo-worker-k8s", 
-     unit: "tempo-receiver/2", 
+     model: "mymodel"
+     model_uuid: "1231234120941234"
+     application: "tempo-receiver"
+     charm_name: "tempo-worker-k8s"
+     unit: "tempo-receiver/2"
 ```

@@ -41,8 +41,8 @@ Exposes a `url` field containing the url at which ingress is available. Should b
 
 ```yaml
 application_data:
-  service-name: "kfp-api.kubeflow",
-  service-port: "8888",
+  service-name: "kfp-api.kubeflow"
+  service-port: "8888"
 ```
 
 ### Requirer
