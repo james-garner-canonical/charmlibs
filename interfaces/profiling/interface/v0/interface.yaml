@@ -9,7 +9,6 @@ status: draft
 providers:
   - name: pyroscope-coordinator-k8s
     url: https://github.com/canonical/pyroscope-operators
-    branch: feat/interface-tests-profiling
     test_setup:
       charm_root: coordinator
       location: tests/interface/conftest.py
