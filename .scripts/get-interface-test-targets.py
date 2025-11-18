@@ -183,7 +183,9 @@ def _get_endpoints(
                 endpoints = [e for e, d in loaded[role_key].items() if d['interface'] == interface]
                 if endpoints:
                     return endpoints
-                raise ValueError(f'{interface} not found in {path}[{role_key}]: {loaded[role_key]}')
+                raise ValueError(
+                    f'{interface} not found in {path}[{role_key}]: {loaded[role_key]}'
+                )
             else:
                 logger.debug('%s:%s does not exist', charm_repo, path.relative_to(repo_path))
         msg = f'{role_key} {interface} not found in metadata for {charm_repo}@{charm_ref}/{charm_root}'  # noqa: E501
