@@ -37,7 +37,7 @@ Describe the contents of the databags, and provide schemas for them.
 
 [\[Pydantic Schema\]](./schema.py)
 
-#### Example
+### Example
 Here is a yaml example of a valid databag state (for the whole relation).
 ```yaml
 provider:

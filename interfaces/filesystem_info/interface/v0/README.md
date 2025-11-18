@@ -58,7 +58,7 @@ Additionally, any string from the language must adhere to a list of additional r
 - Any sensitive data must be provided as a Juju secret where possible, and only charms that cannot create secrets are
   allowed to provide their sensitive data as plain text.
 
-#### Examples
+### Examples
 
 The following examples show some URIs adhering to the defined grammar, and their equivalent components.
 
@@ -103,7 +103,7 @@ Only the provider must export relation data.
 
 [\[Pydantic Schema\]](./schema.py)
 
-#### Example
+### Example
 ```yaml
 provider:
   app: {
