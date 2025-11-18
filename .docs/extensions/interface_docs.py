@@ -37,6 +37,13 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 
 def _interface_docs(app: sphinx.application.Sphinx) -> None:
+    if app.config.package is not None:
+        # For efficiency, don't write interface docs during the package reference docs passes.
+        # But we need to make sure something is there so that the TOC glob doesn't fail.
+        ref_dir = pathlib.Path(app.confdir, 'reference', 'interfaces')
+        ref_dir.mkdir(parents=True, exist_ok=True)
+        _write_if_needed(path=ref_dir / 'placeholder.md', content='# Temporary TOC placeholder')
+        return
     _main(docs_dir=pathlib.Path(app.confdir))
 
 
@@ -64,6 +71,7 @@ def _main(docs_dir: pathlib.Path) -> None:
     root = docs_dir.parent
     ref_dir = docs_dir / 'reference' / 'interfaces'
     ref_dir.mkdir(parents=True, exist_ok=True)
+    (ref_dir / 'placeholder.md').unlink(missing_ok=True)
     cmd = [root / '.scripts/ls.py', 'interfaces', '--exclude-examples', '--exclude-placeholders']
     interfaces = json.loads(subprocess.check_output(cmd, text=True))
     for path_str in interfaces:
