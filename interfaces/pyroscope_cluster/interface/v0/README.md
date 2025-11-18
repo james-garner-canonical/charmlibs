@@ -51,9 +51,9 @@ requirer:
     role: querier
   unit: 
    juju_topology: 
-     model: "mymodel", 
-     model_uuid: "1231234120941234", 
-     application: "pyroscope-querier", 
-     charm_name: "pyroscope-worker-k8s", 
-     unit: "pyroscope-querier/2", 
+     model: "mymodel"
+     model_uuid: "1231234120941234"
+     application: "pyroscope-querier"
+     charm_name: "pyroscope-worker-k8s"
+     unit: "pyroscope-querier/2"
 ```
