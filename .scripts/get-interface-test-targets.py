@@ -138,6 +138,8 @@ def _has_tests(version_dir: pathlib.Path, role: str) -> bool:
     test_file = version_dir / 'tests' / f'test_{role}.py'
     if not test_file.exists():
         return False
+    if (version_dir / 'tests' / '.disable').exists():
+        return False
     return bool(re.search(r'^\s*def test', test_file.read_text(), re.MULTILINE))
 
 
