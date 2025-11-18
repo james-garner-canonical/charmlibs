@@ -1,4 +1,4 @@
-name: cloudflared_route
+name: cloudflared-route
 internal: false
 
 version: 0
