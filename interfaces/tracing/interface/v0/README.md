@@ -47,7 +47,7 @@ The full list of supported trace protocols can change, but those supported by Te
 [\[Pydantic model\]](./schema.py)
 
 
-#### Example
+### Example
 ```yaml
 # unit_data: <empty> 
 application_data: 

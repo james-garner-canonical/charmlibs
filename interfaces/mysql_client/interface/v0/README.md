@@ -61,7 +61,7 @@ If any side, Provider or Requirer doesn't support Juju Secrets, sensitive inform
 Provider provides credentials, endpoints, TLS info and database-specific fields. It should be placed in the **application** databag.
 
 
-#### Example
+### Example
 ```yaml
   relation-info:
   - endpoint: database
@@ -80,7 +80,7 @@ Provider provides credentials, endpoints, TLS info and database-specific fields.
 
 Requirer provides database name. It should be placed in the **application** databag.
 
-#### Example
+### Example
 
 ```yaml
   relation-info:

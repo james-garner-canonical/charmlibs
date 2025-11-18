@@ -37,7 +37,7 @@ Both the Requirer and the Provider need to adhere to criteria to be considered c
 
 The provider writes any number of certficates to its relation data.
 
-#### Example
+### Example
 
 ```yaml
 relation-info:
@@ -56,7 +56,7 @@ relation-info:
 
 The requirer writes the version number of the interface to its application databag as soon as feasible.
 
-#### Example
+### Example
 ```yaml
 relation-info:
   - endpoint: certificate_transfer

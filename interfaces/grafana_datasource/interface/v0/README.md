@@ -51,7 +51,7 @@ the requirer is expected to share the following fields:
 The whole configuration is expected to be json-encoded and nested under a `grafana_source_data` 
 toplevel field.
 
-#### Example
+### Example
 
 ```yaml
 application_data: {
@@ -78,7 +78,7 @@ The provider is expected to share back a unique identifier for each unit of the 
 This will be encoded as a json dict and nested under the `datasource_uids` field in the application databag.
 Also, is expected to share back a unique ID for the grafana application.
 
-#### Example
+### Example
 ```yaml
 application-data: {
  grafana_uid: 0000-0000-0000-0000,

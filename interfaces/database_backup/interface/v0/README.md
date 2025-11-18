@@ -46,7 +46,7 @@ The following is the criteria that a Provider and Requirer need to adhere to be 
 
 Provider (database charm) is expected to record the status of running or completed jobs in the **unit** databag of the unit that performed the job.
 
-#### Example
+### Example
 ```yaml
   relation-info:
   - endpoint: database-backup
@@ -105,7 +105,7 @@ Provider (database charm) is expected to record the status of running or complet
 
 Requirer (database backup manager charm) is expected to request jobs by placing them in the **application** databag.
 
-#### Example
+### Example
 
 ```yaml
   relation-info:

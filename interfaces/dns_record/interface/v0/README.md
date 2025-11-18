@@ -34,7 +34,7 @@ The following is the criteria that a Provider and Requirer need to adhere to be 
 
 Provider provides the result of the requirer request. It should be placed in the application databag.
 
-#### Example
+### Example
 ```json
   "application-data": {
     "dns_entries": [
@@ -58,7 +58,7 @@ Provider provides the result of the requirer request. It should be placed in the
 
 Requirer request the details of one or more DNS records. It should be placed in the application databag.
 
-#### Example
+### Example
 
 ```json
   "application-data": {

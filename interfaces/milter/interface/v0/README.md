@@ -39,7 +39,7 @@ The requirer and the provider must adhere to a certain set of criteria to be con
 
 Provider publishes the Milter configuration. It should be placed in the **unit** databag.
 
-#### Example
+### Example
 
 ```yaml
 # application_data: <empty>

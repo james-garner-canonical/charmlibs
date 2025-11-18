@@ -40,7 +40,7 @@ On the requirer side, the application data bag must contain structure with the f
 
 ### Requirer
 
-#### Example
+### Example
 
 ```yaml
   application-data:

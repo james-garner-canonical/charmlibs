@@ -38,7 +38,7 @@ The requirer and the provider need to adhere to a certain set of criteria to be 
 
 Exposes a `urls` field containing a mapping from unit name to the url at which ingress is available for that unit. Should be placed in the **application** databag, encoded as yaml and nested in a "data" field.
 
-#### Example
+### Example
 
 ```yaml
 application_data: {
@@ -54,7 +54,7 @@ application_data: {
 
 Exposes the unit name, model name, hostname and port at which ingress should be provided. Should be placed in the **unit** databag of _each unit_ of the requirer application.
 
-#### Example
+### Example
 ```yaml
 unit-data: {
  name: "unit-name",

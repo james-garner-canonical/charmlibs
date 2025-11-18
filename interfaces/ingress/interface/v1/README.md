@@ -48,7 +48,7 @@ The requirer and the provider need to adhere to a certain set of criteria to be 
 
 Exposes a `url` field containing the url at which ingress is available. Should be placed in the **application** databag.
 
-#### Example
+### Example
 
 ```yaml
 application_data: {
@@ -63,7 +63,7 @@ application_data: {
 Exposes the unit name, model name, hostname and port at which ingress should be provided. Should be placed in the **application** databag.
 Depending on the library being used (and the provider charm), additional configuration keys may be supported. 
 
-#### Example
+### Example
 ```yaml
 application-data: {
  name: "unit-name",

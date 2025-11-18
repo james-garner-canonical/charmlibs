@@ -45,7 +45,7 @@ compatible with the interface.
 
 The requirer specifies a set of certificate signing requests (CSR's).
 
-#### Example
+### Example
 
 ```json
 {
@@ -73,7 +73,7 @@ Where `certificate_signing_requests` is a stringified `json` array of objects li
 The provider replies with a certificate, a CA Certificate and a CA chain for each of the
 Certificate Signing Requests requested by the requirer.
 
-#### Example
+### Example
 
 ```json
 {

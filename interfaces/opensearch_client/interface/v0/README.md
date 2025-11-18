@@ -68,7 +68,7 @@ If any side, Provider or Requirer doesn't support Juju Secrets, sensitive inform
 Provider provides credentials, endpoint addresses, TLS info and index-specific fields in the **application** databag.
 
 
-#### Example
+### Example
 ```yaml
   relation-info:
   - endpoint: opensearch-client
@@ -85,7 +85,7 @@ Provider provides credentials, endpoint addresses, TLS info and index-specific f
 
 Requirer provides the index name in the **application** databag.
 
-#### Example
+### Example
 
 ```yaml
   relation-info:

@@ -37,7 +37,7 @@ with the interface.
 
 [\[Pydantic Schema\]](./schema.py)
 
-#### Example
+### Example
 
 ```yaml
 provider:

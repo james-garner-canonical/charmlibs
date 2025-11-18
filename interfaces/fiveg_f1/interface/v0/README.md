@@ -43,7 +43,7 @@ The list of PLMNs should include the following data:
 
 [\[Pydantic Schema\]](./schema.py)
 
-#### Example
+### Example
 
 ```yaml
 provider:

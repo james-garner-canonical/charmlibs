@@ -39,7 +39,7 @@ The provider gives connection and authentication information:
 - **client-secret** (str): Client secret for the service principal.
 
 
-#### Example
+### Example
 ```yaml
   relation-info:
   - endpoint: azure_service_principal
@@ -59,7 +59,7 @@ The requirer shares a list of the requested Juju secrets that should be shared b
 
 - **requested-secrets** (list): List of Juju secret keys that the provider must share. Must include `client-id` and `client-secret`.
 
-#### Example
+### Example
 ```yaml
   relation-info:
   - endpoint: azure_service_principal

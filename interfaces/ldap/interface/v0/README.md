@@ -59,7 +59,7 @@ The `provider` provides LDAP URL, base DN, and bind DN, and LDAP
 authentication method for the `requirer` to connect and perform LDAP operations.
 It should be placed in the **application** databag.
 
-#### Example
+### Example
 
 ```yaml
   relation-info:
@@ -79,7 +79,7 @@ It should be placed in the **application** databag.
 The `requirer` provides LDAP client information. It should be placed in the
 **application** databag.
 
-#### Example
+### Example
 
 ```yaml
   relation-info:

@@ -45,7 +45,7 @@ For examples, see below.
 [\[Pydantic model\]](./schema.py)
 
 
-#### Example
+### Example
 ```yaml
 # unit_data: <empty> 
 application_data: 
@@ -64,7 +64,7 @@ The full list of supported trace protocols can change. For a full list see https
 [\[Pydantic model\]](./schema.py)
 
 
-#### Example
+### Example
 ```yaml
 # unit_data: <empty> 
 application_data:            

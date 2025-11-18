@@ -46,7 +46,7 @@ As all Juju relations, the `cos_agent` interface consists of a provider and a re
 #### Unit data
 - Exposes mtrics_alert_rules, log_alert_rules, and log_slots
 
-#### Example
+### Example
 
 
 ```json

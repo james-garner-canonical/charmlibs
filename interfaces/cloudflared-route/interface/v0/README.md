@@ -45,7 +45,7 @@ The following are the criteria that a Provider and Requirer need to adhere to in
 
 The Provider provides the result of the requirer's request. It should be placed in the application databag.
 
-#### Example
+### Example
 ```json
   {
     "application-data": {

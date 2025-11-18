@@ -39,7 +39,7 @@ Exposes the `connector_name` and `connector_type` that OpenCTI requires to creat
 the appropriate privileges. `connector_name` and `connector_type` should be placed in 
 the **application** databag. 
 
-#### Example
+### Example
 ```yaml
 application-data: {
     "connector_charm_name": "connector-charm-name",
@@ -51,7 +51,7 @@ application-data: {
 
 Exposes a `opencti_url` field containing the url at which OpenCTI is reachable. It also provides an `opencti_token` for authentication while reaching OpenCTI. Should be placed in the **application** databag.
 
-#### Example
+### Example
 
 ```yaml
 application_data: {
