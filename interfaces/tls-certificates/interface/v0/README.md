@@ -34,7 +34,7 @@ compatible with the interface.
 
 The requirer specifies a set of client or server common names for which it requires certificates.
 
-### Example
+#### Example
 
 ```json
 {
@@ -58,7 +58,7 @@ Where `cert_requests` is a stringified json array with contents like:
 
 The provider replies with certificates for each of the requested domain.
 
-### Example
+#### Example
 
 ```json
 {

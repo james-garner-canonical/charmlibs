@@ -45,7 +45,7 @@ For examples, see below.
 [\[Pydantic model\]](./schema.py)
 
 
-### Example
+#### Example
 ```yaml
 # unit_data: <empty> 
 application_data: 
@@ -65,7 +65,7 @@ For a full list see https://github.com/open-telemetry/opentelemetry-collector-co
 [\[Pydantic model\]](./schema.py)
 
 
-### Example
+#### Example
 ```yaml
 # unit_data: <empty> 
 application_data: 

@@ -37,7 +37,7 @@ The requirer isn't expected to provide any data.
 Provider provides credentials and endpoint addresses fields in the **application** databag.
 
 
-### Example
+#### Example
 ```yaml
   relation-info:
   - endpoint: wazuh-api-client

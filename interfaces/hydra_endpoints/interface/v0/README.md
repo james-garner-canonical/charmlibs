@@ -39,7 +39,7 @@ Both the requirer and the provider need to adhere to a certain set of criteria t
 [\[JSON Schema\]](./schemas/provider.json)
 
 
-### Example
+#### Example
 
 
 ```json

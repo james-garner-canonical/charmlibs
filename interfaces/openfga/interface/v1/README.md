@@ -37,7 +37,7 @@ Both the Requirer and the Provider need to adhere to the following criteria to b
 Provider exposes `store_id`, `token_secret_id`, `token`, `grpc_api_url` and `http_api_url` fields in the **application** databag.
 
 
-### Example
+#### Example
 ```yaml
   relation-info:
   - endpoint: openfga
@@ -56,7 +56,7 @@ Provider exposes `store_id`, `token_secret_id`, `token`, `grpc_api_url` and `htt
 
 The Requirer exposes the store name for which authorization is requested in the **application** databag.
 
-### Example
+#### Example
 
 ```yaml
   relation-info:

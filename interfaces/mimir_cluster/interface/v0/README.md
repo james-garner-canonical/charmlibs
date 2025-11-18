@@ -36,7 +36,7 @@ The requirer and provider should provide specific information to facilitate the 
 [\[Pydantic Schema\]](./schema.py)
 All fields are json-serialized.
 
-### Example
+#### Example
 ```yaml
 provider:
   app: {<python object representing mimir config>}

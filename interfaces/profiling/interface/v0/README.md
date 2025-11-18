@@ -33,7 +33,7 @@ flowchart TD
 
 [\[Pydantic Schema\]](./schema.py)
 
-### Example
+#### Example
 A yaml/json example of a valid databag state (for the whole relation), in absence of an ingress 
 integration for the provider:
 ```yaml

@@ -37,7 +37,7 @@ Is expected to provide following information:
 
 [\[Pydantic Schema\]](./schema.py)
 
-### Example
+#### Example
 
 ```yaml
 provider:

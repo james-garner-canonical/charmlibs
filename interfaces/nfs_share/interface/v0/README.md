@@ -61,7 +61,7 @@ compatible with the interface.
 Provider provides its NFS share endpoints. The NFS share endpoints should be placed in the
 __application__ databag.
 
-### Example
+#### Example
 
 ```yaml
 application_data: {
@@ -71,7 +71,7 @@ application_data: {
 
 ### Requirer
 
-### Example
+#### Example
 
 ```yaml
 application-data: {

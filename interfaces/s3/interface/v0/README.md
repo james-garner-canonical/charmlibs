@@ -45,7 +45,7 @@ Both the Requirer and the Provider must adhere to criteria to be compatible with
 The Provider provides credentials, endpoints, TLS info and database-specific fields. It should be placed in the **application** databag.
 
 
-### Example
+#### Example
 ```yaml
   relation-info:
   - endpoint: object
@@ -70,7 +70,7 @@ The Provider provides credentials, endpoints, TLS info and database-specific fie
 
 Requirer provides bucket name. Should be placed in the **unit** databag in at least one unit of the Requirer.
 
-### Example
+#### Example
 
 ```yaml
   relation-info:

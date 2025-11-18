@@ -49,7 +49,7 @@ As mentioned above the field client_secret_id holds the id of a Juju Secret, thi
 
 Provider provides its endpoints, configurations and the client credentials. It should be placed in the **application** databag.
 
-### Example
+#### Example
 
 ```yaml
 related-units: {}
@@ -72,7 +72,7 @@ application_data: {
 
 Requirer requires its client configurations. It should be placed in the **application** databag.
 
-### Example
+#### Example
 ```yaml
 related-units: {}
 application-data: {

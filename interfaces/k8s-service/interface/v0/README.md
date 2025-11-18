@@ -37,7 +37,7 @@ The requirer and the provider need to adhere to a certain set of criteria to be 
 
 Exposes a `url` field containing the url at which ingress is available. Should be placed in the **application** databag, encoded as yaml and nested in a "data" field.
 
-### Example
+#### Example
 
 ```yaml
 application_data:

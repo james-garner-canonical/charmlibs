@@ -43,7 +43,7 @@ The Provider MUST adhere to the criteria, to be considered compatible with the i
 
 Provider provides client credentials and information about the external OP. It MUST be placed in the **application** databag.
 
-### Example
+#### Example
 ```yaml
   relation-info:
   - endpoint: kratos_external_idp
@@ -63,7 +63,7 @@ Provider provides client credentials and information about the external OP. It M
 
 Requirer provides a redirect_uri and provider_id for every provider. It should be placed in the **application** databag.
 
-### Example
+#### Example
 
 ```yaml
   relation-info:

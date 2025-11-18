@@ -36,7 +36,7 @@ The provider is expected to share with requirers all the credentials and configu
 The Provider shares the data necessary to connect to Azure Storage in the **application** databag.
 
 
-### Example
+#### Example
 ```yaml
   application-data:
     container: test-container
@@ -53,7 +53,7 @@ The Provider shares the data necessary to connect to Azure Storage in the **appl
 
 Requirer shares the container name in the **application** databag.
 
-### Example
+#### Example
 
 ```yaml
   application-data:

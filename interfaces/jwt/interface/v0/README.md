@@ -58,7 +58,7 @@ As mentioned above the field `signing-key` holds the id of a Juju Secret, this m
 
 Provider provides its configurations in the **application** databag and the `signing-key` as a Juju secret.
 
-### Example
+#### Example
 
 ```yaml
 related-units: {}

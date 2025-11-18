@@ -40,7 +40,7 @@ The `provider` provides the authentication mode and its configuration.
 - Supported modes:
   - proxy
 
-### Example
+#### Example
 
 ```json
 {
@@ -59,7 +59,7 @@ The `provider` provides the authentication mode and its configuration.
 [\[JSON Schema\]](./schemas/requirer.json)
 The `provider` returns a `url` that the `requirer` charm uses as needed.
 
-### Example
+#### Example
 
 ```json
 {

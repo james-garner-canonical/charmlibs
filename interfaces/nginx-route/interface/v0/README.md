@@ -53,7 +53,7 @@ are required in the relation data.
 
 [\[Pydantic Schema\]](./schema.py)
 
-### Example
+#### Example
 ```yaml
 application-data:
   service-hostname: example.test

@@ -47,7 +47,7 @@ Both the Requirer and the provider need to adhere to a certain set of criterias 
 Exposes all endpoints the requirer should write metrics to. Should be placed in the **unit** databag for each 
 unit of the provider capable of receiving metrics over remote write.
 
-### Example
+#### Example
 
 ```yaml
 related-units:
@@ -66,7 +66,7 @@ related-units:
 
 Exposes all alert rules relevant to the metrics being sent over. Expected to contain expressions without Juju topology injected, but with the topology available as labels. Should be placed in the **application** databag.
 
-### Example
+#### Example
 ```yaml
 application-data:
   alert_rules: {

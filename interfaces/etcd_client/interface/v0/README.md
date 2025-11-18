@@ -59,7 +59,7 @@ Describe the contents of the databags, and provide schemas for them.
 
 [\[Pydantic Schema\]](./schema.py)
 
-### Example
+#### Example
 
 Provide a yaml/json example of a valid databag state (for the whole relation).
 

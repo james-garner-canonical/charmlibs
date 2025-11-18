@@ -42,7 +42,7 @@ The requirer and the provider must adhere to a certain set of criteria to be con
 
 Provider provides the SAML configuration. It should be placed in the **application** databag.
 
-### Example
+#### Example
 
 ```yaml
 related-units: {}

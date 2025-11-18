@@ -38,7 +38,7 @@ Both the Requirer and the Provider need to adhere to criteria to be considered c
 The provider writes a certificate, CA certificate and CA chain in its unit relation data. In newer patch versions of the library, it also writes the version
 of the interface to the databag.
 
-### Example
+#### Example
 
 ```yaml
 relation-info:
@@ -62,7 +62,7 @@ In newer patch versions of the library, the requirer writes the version number o
 
 For older version, the requirer does not write anything to its databags. The provider must assume version 0 in that case.
 
-### Example
+#### Example
 
 ```yaml
 relation-info:

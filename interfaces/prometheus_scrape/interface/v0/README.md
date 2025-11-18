@@ -47,7 +47,7 @@ Both the Requirer and the provider need to adhere to a certain set of criterias 
 - Exposes all scrape jobs the requirer should scrape metrics through. Should be placed in the **application** databag.
 - Exposes the unit address of each unit to be scraped, along with the unit name. Additionally, it includes an optional path provided by the unit for Prometheus scraping. This path is present when the provider charm is backed by an Ingress or a Proxy. Should be placed in the **unit** databag of each scrapable unit.
 
-### Example
+#### Example
 
 
 ```yaml

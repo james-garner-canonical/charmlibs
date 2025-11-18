@@ -44,7 +44,7 @@ Both the requirer and the provider need to adhere to a certain set of criteria t
 
 [\[JSON Schema\]](./schemas/provider.json)
 
-### Example
+#### Example
 
 ```json
 {
@@ -60,7 +60,7 @@ Both the requirer and the provider need to adhere to a certain set of criteria t
 
 [\[JSON Schema\]](./schemas/requirer.json)
 
-### Example
+#### Example
 
 ```json
 {

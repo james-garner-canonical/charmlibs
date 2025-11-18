@@ -48,7 +48,7 @@ Both the Requirer and the Provider need to adhere to the criteria, to be conside
 Provider provides application credentials and server connection uris. It should be placed in the **application** databag.
 
 
-### Example
+#### Example
 ```yaml
   relation-info:
   - endpoint: kafka_client
@@ -68,7 +68,7 @@ Provider provides application credentials and server connection uris. It should 
 
 Requirer provides application role and topic. It should be placed in the **application** databag.
 
-### Example
+#### Example
 
 ```yaml
   relation-info:
