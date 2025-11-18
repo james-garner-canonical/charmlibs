@@ -44,7 +44,7 @@ Requirer expectations
 
 [\[Pydantic Schema\]](./schema.py)
 
-#### Example
+### Example
 
 ```yaml
 provider:
