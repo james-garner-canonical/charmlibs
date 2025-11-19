@@ -1,3 +1,7 @@
+# 1.0.0.post2 - 19 November 2025
+
+Correct docs URL in README.md.
+
 # 1.0.0.post1 - 13 October 2025
 
 Correct interface name in docs.
