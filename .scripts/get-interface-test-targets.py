@@ -117,8 +117,7 @@ def _target_from_interface(
                 logger.warning(msg, interface_str, v.name, role, charms)
                 continue
             if not charms:
-                msg = 'No charms for %s %s %s'
-                logger.warning(msg, interface_str, v.name, role)
+                logger.warning('No charms for %s %s %s', interface_str, v.name, role)
                 continue
             for charm in charms:
                 logger.debug('%s %s %s', only_charm, charm['name'], charm)
