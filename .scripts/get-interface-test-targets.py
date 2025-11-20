@@ -43,6 +43,7 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 def _main() -> None:
     logging.basicConfig(level=logging.DEBUG)
+    logger.setLevel(logging.WARNING)
     parser = argparse.ArgumentParser()
     parser.add_argument('interface', help='Path from repo root to specific interface directory.')
     parser.add_argument('--only-charm')
@@ -53,12 +54,7 @@ def _main() -> None:
     parser.add_argument(
         '--exclude-charm', action='store_true', help='Exclude `charm` field from the output.'
     )
-    parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.WARNING)
     targets = _target_from_interface(
         args.interface,
         has_tests_only=not args.all,
