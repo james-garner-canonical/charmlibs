@@ -1,0 +1,19 @@
+extend = "../../pyproject.toml"
+
+[format]
+quote-style = "preserve"
+
+[lint.extend-per-file-ignores]
+"./**/schema.py" = [
+    "CPY",  # copyright
+    "D",  # docs
+    "E501",  # line too long
+    "N805",  # first argument of a method should be named self
+]
+"./interface/v*/tests/*.py" = [
+    "CPY",  # copyright
+    "D",  # docs
+    "S",  # security
+    "E501",  # line too long
+    "F841",  # assignment to unused variable
+]

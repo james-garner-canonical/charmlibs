@@ -1,0 +1,10 @@
+name: fiveg_gnb_identity
+internal: true
+
+version: 0
+status: draft
+
+providers: []
+requirers: []
+
+maintainer: telco

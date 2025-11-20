@@ -43,6 +43,7 @@ logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 def _main() -> None:
     logging.basicConfig(level=logging.DEBUG)
+    logger.setLevel(logging.WARNING)
     parser = argparse.ArgumentParser()
     parser.add_argument('interface', help='Path from repo root to specific interface directory.')
     parser.add_argument('--only-charm')
@@ -94,16 +95,25 @@ def _target_from_interface(
             - endpoint (name)
     """
     interface = _REPO_ROOT / interface_str
+    version_dirs = sorted((interface / 'interface').glob('v[0-9]*'))
+    if not version_dirs:
+        logger.warning('%s does not define any interface versions.', interface_str)
+        return []
     targets: list[dict[str, str]] = []
-    for v in sorted((interface / 'interface').glob('v[0-9]*')):
+    for v in version_dirs:
         interface_yaml = yaml.safe_load((v / 'interface.yaml').read_text())
+        if (disable := v / 'tests' / '.disable').exists():
+            msg = 'Targets for %s %s will not be included since %s exists.'
+            logger.warning(msg, interface_str, v.name, disable)
+            continue
         for role in 'provide', 'require':
             charms = interface_yaml.get(f'{role}rs', [])
-            if not charms:
-                continue
             if has_tests_only and not _has_tests(v, f'{role}r'):
                 msg = 'Skipping these charms because there are no tests for %s %s %s: %s'
                 logger.warning(msg, interface_str, v.name, role, charms)
+                continue
+            if not charms:
+                logger.warning('No charms for %s %s %s', interface_str, v.name, role)
                 continue
             for charm in charms:
                 logger.debug('%s %s %s', only_charm, charm['name'], charm)
@@ -137,8 +147,13 @@ def _has_tests(version_dir: pathlib.Path, role: str) -> bool:
     """
     test_file = version_dir / 'tests' / f'test_{role}.py'
     if not test_file.exists():
+        logger.warning('%s does not exist.', test_file.relative_to(_REPO_ROOT))
         return False
-    return bool(re.search(r'^\s*def test', test_file.read_text(), re.MULTILINE))
+    has_tests = bool(re.search(r'^\s*def test', test_file.read_text(), re.MULTILINE))
+    if not has_tests:
+        msg = '%s exists, but does not seem to have any tests.'
+        logger.warning(msg, test_file.relative_to(_REPO_ROOT))
+    return has_tests
 
 
 def _get_endpoints(
@@ -155,13 +170,19 @@ def _get_endpoints(
         subprocess.check_call(git_clone, cwd=td)
         for meta in 'metadata.yaml', 'charmcraft.yaml':
             if (path := repo_path / charm_root / meta).exists():
-                loaded = yaml.safe_load(path.read_bytes())
+                text = path.read_text()
+                logger.debug('%s:%s\n%s\n', charm_repo, path.relative_to(repo_path), text)
+                loaded = yaml.safe_load(text)
                 if role_key not in loaded:
                     continue
                 endpoints = [e for e, d in loaded[role_key].items() if d['interface'] == interface]
                 if endpoints:
                     return endpoints
-                raise ValueError(f'{interface} not found in {path}: {loaded[role_key]}')
+                raise ValueError(
+                    f'{interface} not found in {path}[{role_key}]: {loaded[role_key]}'
+                )
+            else:
+                logger.debug('%s:%s does not exist', charm_repo, path.relative_to(repo_path))
         msg = f'{role_key} {interface} not found in metadata for {charm_repo}@{charm_ref}/{charm_root}'  # noqa: E501
         raise ValueError(msg)
 
