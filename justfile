@@ -168,3 +168,7 @@ _integration package substrate label +flags:
     cd '{{package}}'
     CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG='{{tag}}' {{_uv_run_with_test_requirements}} --group integration \
         pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
+
+[doc("Make .interfaces.json file.")]
+interfaces-json:
+    .scripts/ls.py interfaces --output=name --output=version --output=description --output lib --output lib_url --output docs | jq > .interfaces.json
