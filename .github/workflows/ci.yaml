@@ -96,6 +96,17 @@ jobs:
           echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
 
+  interfaces-json-up-to-date:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+      - run: |
+          uvx --from rust-just just interfaces-json
+          git diff --exit-code
+
   template-and-example-in-sync:
     runs-on: ubuntu-latest
     steps:
