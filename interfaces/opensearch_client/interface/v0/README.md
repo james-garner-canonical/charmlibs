@@ -61,9 +61,9 @@ If any side, Provider or Requirer doesn't support Juju Secrets, sensitive inform
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides credentials, endpoint addresses, TLS info and index-specific fields in the **application** databag.
 
@@ -80,8 +80,6 @@ Provider provides credentials, endpoint addresses, TLS info and index-specific f
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer provides the index name in the **application** databag.
 

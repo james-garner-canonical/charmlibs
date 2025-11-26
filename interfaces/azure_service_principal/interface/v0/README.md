@@ -28,8 +28,9 @@ To be considered compatible with the interface, the requirer and the provider ne
 
 ## Relation Data
 
+[\[Pydantic Schema\]](./schema.py)
+
 ### Provider
-[\[JSON Schema\]](../../../docs/json_schemas/azure_service_principal/v0/provider.json)
 
 The provider gives connection and authentication information:
 
@@ -53,7 +54,6 @@ The provider gives connection and authentication information:
 
 
 ### Requirer
-[\[JSON Schema\]](../../../docs/json_schemas/azure_service_principal/v0/requirer.json)
 
 The requirer shares a list of the requested Juju secrets that should be shared by the provider charm:
 

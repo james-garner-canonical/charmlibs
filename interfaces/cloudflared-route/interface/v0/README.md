@@ -39,9 +39,9 @@ The following are the criteria that a Provider and Requirer need to adhere to in
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 The Provider provides the result of the requirer's request. It should be placed in the application databag.
 

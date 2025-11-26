@@ -30,9 +30,9 @@ Both the Requirer and the Provider need to adhere to the following criteria to b
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider exposes `token_secret_id`, `store_id`, `address`, `scheme` and `port` fields in the **application** databag.
 
@@ -51,8 +51,6 @@ Provider exposes `token_secret_id`, `store_id`, `address`, `scheme` and `port` f
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 The Requirer exposes the store name for which authorization is requested in the **application** databag.
 
