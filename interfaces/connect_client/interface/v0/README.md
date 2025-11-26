@@ -41,9 +41,9 @@ Both the Requirer and the Provider need to adhere to the following criteria, to 
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides credentials and REST endpoint uris. It should be placed in the **application** databag.
 
@@ -60,8 +60,6 @@ relation-info:
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer provides (and possibly serves) the `plugin-url`. It should be placed in the **application** databag.
 

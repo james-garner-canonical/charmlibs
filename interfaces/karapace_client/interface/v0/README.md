@@ -56,9 +56,9 @@ Both the Requirer and the Provider need to adhere to the criteria, to be conside
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides credentials and endpoints. It should be placed in the **application** databag.
 
@@ -76,8 +76,6 @@ Provider provides credentials and endpoints. It should be placed in the **applic
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer specifies the subject and access requirements. It should be placed in the **application** databag.
 
