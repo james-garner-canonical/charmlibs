@@ -7,10 +7,8 @@ It exposes two interfaces.schema_base.DataBagSchema subclasses called:
 
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
 from interface_tester.schema_base import DataBagSchema
-
+from pydantic import BaseModel, Field
 
 PLUGIN_URL_NOT_REQUIRED = "NOT-REQUIRED"
 
@@ -18,10 +16,8 @@ PLUGIN_URL_NOT_REQUIRED = "NOT-REQUIRED"
 class ConnectProviderData(BaseModel):
     endpoints: str = Field(
         description="A comma-separated list of Kafka Connect REST endpoint(s), including the protocol (either `http` or `https`)",
-        examples=[
-            "http://10.1.1.100:8083,http://10.1.1.101:8083,http://10.1.1.102:8083"
-        ],
-        title="Kafka Connect Endpoints"
+        examples=["http://10.1.1.100:8083,http://10.1.1.101:8083,http://10.1.1.102:8083"],
+        title="Kafka Connect Endpoints",
     )
     secret_user: str = Field(
         alias="secret-user",
@@ -36,7 +32,6 @@ class ConnectProviderData(BaseModel):
         examples=["secret://59060ecc-0495-4a80-8006-5f1fc13fd783/cjqub7fubg2s77p3niog"],
         title="TLS Secret Name",
     )
-
 
 
 class ConnectRequirerData(BaseModel):

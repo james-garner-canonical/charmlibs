@@ -98,7 +98,9 @@ class KarapaceRequirerData(BaseModel):
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",
-        examples=["[{\"resource_name\": \"schemas\", \"resource_type\": \"SUBJECT\", \"privileges\": [\"READ\"]}]"],
+        examples=[
+            "[{\"resource_name\": \"schemas\", \"resource_type\": \"SUBJECT\", \"privileges\": [\"READ\"]}]"
+        ],
         title="Entity permissions",
     )
 
