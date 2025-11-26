@@ -93,7 +93,7 @@ class PostgreSQLProviderData(BaseModel):
         None,
         alias="tls-ca",
         description="The TLS CA chain of certificates, if TLS is set",
-        examples=[ "-----BEGIN CERTIFICATE-----\nexample\n-----END CERTIFICATE-----"],
+        examples=["-----BEGIN CERTIFICATE-----\nexample\n-----END CERTIFICATE-----"],
         title="TLS CA",
     )
 
@@ -174,7 +174,9 @@ class PostgreSQLRequirerData(BaseModel):
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",
-        examples=["[{\"resource_name\": \"items\", \"resource_type\": \"TABLE\", \"privileges\": [\"SELECT\"]}]"],
+        examples=[
+            "[{\"resource_name\": \"items\", \"resource_type\": \"TABLE\", \"privileges\": [\"SELECT\"]}]"
+        ],
         title="Entity permissions",
     )
 
@@ -197,4 +199,3 @@ class RequirerSchema(DataBagSchema):
     """The schema for the requirer side of this interface."""
 
     app: PostgreSQLRequirerData
-
