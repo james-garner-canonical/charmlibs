@@ -4,7 +4,7 @@
 
 This relation interface describes the expected behaviour of any charm claiming to be able to interact with a OpenFGA.
 
-In most cases, this will be accomplished using the [openfga library](https://github.com/canonical/cs-openfga/blob/main/charms/openfga-k8s/lib/charms/openfga_k8s/v0/openfga.py), although charm developers are free to provide alternative libraries as long as they fulfil the behavioural and schematic requirements described in this document.
+In most cases, this will be accomplished using the [openfga library](https://charmhub.io/openfga-k8s/libraries/openfga), although charm developers are free to provide alternative libraries as long as they fulfil the behavioural and schematic requirements described in this document.
 
 ## Direction
 
