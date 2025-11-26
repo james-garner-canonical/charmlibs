@@ -1,8 +1,6 @@
-"""This file defines the schemas for the provider and requirer sides of the s3 v1 relation
-interface.
-"""
+"""Schemas for v1 of the s3 interface."""
 
-from enum import IntEnum, Enum
+from enum import Enum, IntEnum
 from typing import List, Optional
 
 from interface_tester.schema_base import DataBagSchema
@@ -21,7 +19,6 @@ class S3APIVersion(IntEnum):
 
 class S3ProviderAppData(BaseModel):
     """Data expected on the provider side for the s3 v1 interface."""
-
 
     bucket: Optional[str] = Field(
         description="The bucket/container name delivered by the provider.",

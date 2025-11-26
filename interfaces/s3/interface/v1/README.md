@@ -1,4 +1,4 @@
-# `s3` (v1)
+# `s3/v1`
 
 ## Usage
 
@@ -8,6 +8,7 @@ This interface will be accomplished using the provider library `s3`, although ch
 
 
 ## What's different from `v0`?
+
 The `v1` of the `s3` interface is different from `v0` of the same interface in the following aspects:
 1) The `v1` shares the `secret-key` and `access-key` by encapsulating it into a Juju secret and sharing the secret URI in a field named `secret-extra` over the relation databag , as compared to `v0` sharing the `secret-key` and `access-key` as plaintext over the relation databag.
 2) Both provider and requirer sides of the `v1` interface also share an extra field `lib-version`, which is of format `{LIBAPI}.{LIBPATCH}`. This is supposed to notify the other side of the interface what version of the lib this side is currently on -- which could help the other side implement different behavior based on the version of lib in this side, if necessary.
@@ -57,12 +58,11 @@ Both the Requirer and the Provider must adhere to criteria to be compatible with
 
 ## Relation Data
 
+[\[Pydantic Schema\]](./schema.py)
+
 ### Provider
 
-[\[JSON Schema\]](./schemas/provider.json)
-
 The Provider provides credentials, endpoints, TLS info and database-specific fields. It should be placed in the **application** databag.
-
 
 #### Example
 ```yaml
@@ -90,8 +90,6 @@ secret-key: my-s3-secret-key
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer shares bucket name and / or a path in the **application** databag. The requirer also shares the version of S3 lib it uses, and a field named `requested-secrets` informing the provider of which fields it wants as encoded inside a secret, containing the value `["access-key", "secret-key"]`.
 
