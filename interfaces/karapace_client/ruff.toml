@@ -1,0 +1,12 @@
+extend = "../../pyproject.toml"
+
+[format]
+quote-style = "preserve"
+
+[lint.extend-per-file-ignores]
+"./**/schema.py" = [
+    "B904",  # must explicitly re-raise from e or None
+    "CPY",  # copyright
+    "D",  # docs
+    "E501",  # line too long
+]
