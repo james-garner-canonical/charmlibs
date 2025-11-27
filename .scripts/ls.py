@@ -355,8 +355,14 @@ def _lib_urls() -> dict[str, str]:
     for p in 'general-libs.csv', 'interface-libs.csv':
         with (_REPO_ROOT / '.docs' / 'reference' / p).open() as f:
             for row in csv.DictReader(f):
-                # TODO: ensure names are unique in CSVs
-                #assert row['name'] not in result
+                # Library names should be unique, but we currently have an entry for
+                # charms.data_platform_libs.data_interfaces for each interface it supports
+                # This doesn't break our lookups though, since they all have the same metadata
+                # (aside from the interface column)
+                assert (
+                    row['name'] not in result
+                    or row['name'] == 'charms.data_platform_libs.data_interfaces'
+                )
                 result[row['name']] = row['url']
     return result
 
