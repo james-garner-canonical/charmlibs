@@ -327,7 +327,6 @@ def _get_lib_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
 
 def _get_docs_url(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
-        logger.error(path)
         return _pyproject_toml(path, root=root)['project']['urls'].get('Documentation', '')
     assert category == 'interfaces'
     return f'https://documentation.ubuntu.com/charmlibs/reference/interfaces/{path.name}/'
