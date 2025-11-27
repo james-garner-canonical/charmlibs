@@ -545,8 +545,8 @@
     "lib": "charms.tempo_coordinator_k8s.tracing",
     "lib_url": "https://charmhub.io/tempo-coordinator-k8s/libraries/tracing",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tracing/",
-    "summary": "",
-    "description": ""
+    "summary": "Request endpoints for pushing trace data.",
+    "description": "The tracing interface supports push-based tracing.\nThe requirer publishes the list of protocols it wants to use to send traces.\nThe provider reples with an API URL and an endpoint for each protocol, omitting those it does not support.\n"
   },
   {
     "name": "vault-autounseal",
