@@ -302,7 +302,7 @@ def _get_version(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
 
 def _get_summary(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
-        return ''
+        return _get_description(category, root, path)
     assert category == 'interfaces'
     return _interface_yaml(path, root=root).get('summary', '').strip()
 
