@@ -314,8 +314,11 @@ def _get_description(category: str, root: pathlib.Path, path: pathlib.Path) -> s
 def _get_lib_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
         if path.name == '.package':
-            parts = path.parts[:-1]
+            # .package -> () -> 'charmlibs'
+            # interfaces/.package -> ('interfaces') -> 'charmlibs.interface'
+            parts, _ = path.parts
         else:
+            # For special cases like '.tutorial' -> ('tutorial') -> 'charmlibs.tutorial'
             parts = tuple(p.removeprefix('.') for p in path.parts)
         return '.'.join(('charmlibs', *parts)).replace('-', '_')
     assert category == 'interfaces'
