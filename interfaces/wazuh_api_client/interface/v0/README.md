@@ -30,9 +30,9 @@ The requirer isn't expected to provide any data.
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides credentials and endpoint addresses fields in the **application** databag.
 

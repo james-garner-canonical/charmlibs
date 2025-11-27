@@ -17,9 +17,9 @@ or consume the `kubeflow-dashboard-links` interface.  `kubeflow-dashboard-links`
 
 ## Relation Data
 
-### Requirer
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/requirer.json)
+### Requirer
 
 The requirer specifies zero or more sidebar items in the required format.
 

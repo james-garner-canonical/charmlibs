@@ -30,6 +30,7 @@ The provider is expected to share with requirers all the credentials and configu
 ## Relation Data
 
 [\[Pydantic Schema\]](./schema.py)
+
 ### Provider
 
 
@@ -48,8 +49,6 @@ The Provider shares the data necessary to connect to Azure Storage in the **appl
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer shares the container name in the **application** databag.
 

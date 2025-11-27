@@ -28,9 +28,9 @@ The following is the criteria that a Provider and Requirer need to adhere to be 
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides the result of the requirer request. It should be placed in the application databag.
 
@@ -53,8 +53,6 @@ Provider provides the result of the requirer request. It should be placed in the
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer request the details of one or more DNS records. It should be placed in the application databag.
 
