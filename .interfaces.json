@@ -543,7 +543,7 @@
     "name": "tracing",
     "version": "2",
     "lib": "charms.tempo_coordinator_k8s.tracing",
-    "lib_url": "",
+    "lib_url": "https://charmhub.io/tempo-coordinator-k8s/libraries/tracing",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tracing/",
     "summary": "",
     "description": ""
