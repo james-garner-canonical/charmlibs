@@ -103,7 +103,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v6
-      - name: Fail if .interfaces.json is not up-to-date.
+      - name: Was `just interfaces-json` run if interfaces were updated?
         run: |
           uvx --from rust-just just interfaces-json
           git diff --exit-code
