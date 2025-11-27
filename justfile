@@ -179,4 +179,5 @@ interfaces-json:
         --output docs_url \
         --output summary \
         --output description \
-        | jq > .interfaces.json
+        --json-indent 2 \
+        > .interfaces.json
