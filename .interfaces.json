@@ -2,513 +2,595 @@
   {
     "name": "auth_proxy",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/auth_proxy/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/auth_proxy/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "azure_service_principal",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/azure_service_principal/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/azure_service_principal/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "azure_storage",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/azure_storage/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/azure_storage/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "certificate_transfer",
     "version": "1",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/certificate_transfer/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/certificate_transfer/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "cloudflared-route",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/cloudflared-route/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/cloudflared-route/",
+    "summary": "",
+    "description": ""
+  },
+  {
+    "name": "connect_client",
+    "version": "0",
+    "lib": "",
+    "lib_url": "",
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/connect_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "cos_agent",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/cos_agent/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/cos_agent/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "database_backup",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/database_backup/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/database_backup/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "dns_record",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/dns_record/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/dns_record/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "etcd_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/etcd_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/etcd_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "filesystem_info",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/filesystem_info/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/filesystem_info/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_core_gnb",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_core_gnb/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_core_gnb/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_f1",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_f1/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_f1/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_gnb_identity",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_gnb_identity/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_gnb_identity/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_n2",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n2/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n2/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_n3",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n3/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n3/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_n4",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n4/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n4/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_nrf",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_nrf/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_nrf/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "fiveg_rfsim",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_rfsim/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_rfsim/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "forward_auth",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/forward_auth/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/forward_auth/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "grafana_auth",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/grafana_auth/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/grafana_auth/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "grafana_datasource",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/grafana_datasource/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/grafana_datasource/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "grafana_datasource_exchange",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/grafana_datasource_exchange/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/grafana_datasource_exchange/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "hydra_endpoints",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/hydra_endpoints/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/hydra_endpoints/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "ingress",
     "version": "2",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "ingress_per_unit",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress_per_unit/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress_per_unit/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "ip_router",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ip_router/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ip_router/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "jwt",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/jwt/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/jwt/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "k8s-service",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/k8s-service/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/k8s-service/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "kafka_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kafka_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kafka_client/",
+    "summary": "",
+    "description": ""
+  },
+  {
+    "name": "karapace_client",
+    "version": "0",
+    "lib": "",
+    "lib_url": "",
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/karapace_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "kratos_external_idp",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kratos_external_idp/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kratos_external_idp/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "kratos_info",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kratos_info/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kratos_info/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "kubeflow_dashboard_links",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kubeflow_dashboard_links/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kubeflow_dashboard_links/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "ldap",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ldap/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ldap/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "litmus_auth",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/litmus_auth/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/litmus_auth/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "login_ui_endpoints",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/login_ui_endpoints/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/login_ui_endpoints/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "milter",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/milter/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/milter/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "mimir_cluster",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/mimir_cluster/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/mimir_cluster/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "mongodb_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/mongodb_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/mongodb_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "mysql_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/mysql_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/mysql_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "nfs_share",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/nfs_share/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/nfs_share/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "nginx-route",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/nginx-route/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/nginx-route/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "oauth",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/oauth/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/oauth/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "opencti_connector",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/opencti_connector/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/opencti_connector/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "openfga",
     "version": "1",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/openfga/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/openfga/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "opensearch_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/opensearch_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/opensearch_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "postgresql_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/postgresql_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/postgresql_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "profiling",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/profiling/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/profiling/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "prometheus_remote_write",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/prometheus_remote_write/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/prometheus_remote_write/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "prometheus_scrape",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/prometheus_scrape/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/prometheus_scrape/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "pyroscope_cluster",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/pyroscope_cluster/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/pyroscope_cluster/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "s3",
-    "version": "0",
-    "description": "",
+    "version": "1",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/s3/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/s3/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "saml",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/saml/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/saml/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "sdcore_config",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/sdcore_config/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/sdcore_config/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "sdcore_management",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/sdcore_management/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/sdcore_management/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "smtp",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/smtp/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/smtp/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "spark_service_account",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/spark_service_account/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/spark_service_account/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "tempo_cluster",
     "version": "1",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tempo_cluster/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tempo_cluster/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "tls-certificates",
     "version": "1",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tls-certificates/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tls-certificates/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "tracing",
     "version": "2",
-    "description": "Request endpoints for pushing trace data.",
     "lib": "charms.tempo_coordinator_k8s.tracing",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tracing/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/tracing/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "vault-autounseal",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/vault-autounseal/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/vault-autounseal/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "vault-kv",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/vault-kv/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/vault-kv/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "velero_backup_config",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/velero_backup_config/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/velero_backup_config/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "wazuh_api_client",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/wazuh_api_client/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/wazuh_api_client/",
+    "summary": "",
+    "description": ""
   },
   {
     "name": "zookeeper",
     "version": "0",
-    "description": "",
     "lib": "",
     "lib_url": "",
-    "docs": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/zookeeper/"
+    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/zookeeper/",
+    "summary": "",
+    "description": ""
   }
 ]

@@ -60,9 +60,11 @@ class Info:
     path: str
     name: str = ''
     version: str = ''
-    description: str = ''
     lib: str = ''
     lib_url: str = ''
+    docs_url: str = ''
+    summary: str = ''
+    description: str = ''
 
     def to_dict(self, *fields: str) -> dict[str, str]:
         """Return dictionary containing only specified fields."""
@@ -79,11 +81,7 @@ def _main() -> None:
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        '--output',
-        action='append',
-        choices=['path', 'name', 'version', 'description', 'lib', 'lib_url', 'docs'],
-    )
+    group.add_argument('--output', action='append', choices=tuple(dataclasses.asdict(Info(''))))
     group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
     single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
@@ -166,8 +164,8 @@ def _ls(
                 info.lib = _get_lib_name(category, root, path)
             if 'lib_url' in output:
                 info.lib_url = _lib_urls().get(_get_lib_name(category, root, path), '')
-            if 'docs' in output:
-                info.docs = _get_docs_url(category, root, path)
+            if 'docs_url' in output:
+                info.docs_url = _get_docs_url(category, root, path)
             infos.append(info)
         return infos
 
@@ -297,6 +295,13 @@ def _get_version(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
         return _get_package_version(path, root=root)
     assert category == 'interfaces'
     return _get_interface_version(path, root=root)
+
+
+def _get_summary(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        return ''
+    assert category == 'interfaces'
+    return _interface_yaml(path, root=root).get('summary', '')
 
 
 def _get_description(category: str, root: pathlib.Path, path: pathlib.Path) -> str:

@@ -1,5 +1,5 @@
 name: tracing
-description: Request endpoints for pushing trace data.
+summary: Request endpoints for pushing trace data.
 version: 2
 status: published
 lib: charms.tempo_coordinator_k8s.tracing
