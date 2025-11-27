@@ -304,14 +304,14 @@ def _get_summary(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
         return ''
     assert category == 'interfaces'
-    return _interface_yaml(path, root=root).get('summary', '')
+    return _interface_yaml(path, root=root).get('summary', '').strip()
 
 
 def _get_description(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
-        return _pyproject_toml(path, root=root)['project']['description']
+        return _pyproject_toml(path, root=root)['project']['description'].strip()
     assert category == 'interfaces'
-    return _interface_yaml(path, root=root).get('description', '')
+    return _interface_yaml(path, root=root).get('description', '').strip()
 
 
 def _get_lib_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
@@ -325,19 +325,21 @@ def _get_lib_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
             parts = tuple(p.removeprefix('.') for p in path.parts)
         return '.'.join(('charmlibs', *parts)).replace('-', '_')
     assert category == 'interfaces'
-    return _interface_yaml(path, root=root).get('lib', '')
+    return _interface_yaml(path, root=root).get('lib', '').strip()
 
 
 def _get_docs_url(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
-        return _pyproject_toml(path, root=root)['project']['urls'].get('Documentation', '')
+        url = _pyproject_toml(path, root=root)['project']['urls'].get('Documentation', '')
+        return url.strip()
     assert category == 'interfaces'
     return f'https://documentation.ubuntu.com/charmlibs/reference/interfaces/{path.name}/'
 
 
 def _get_dist_name(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT) -> str:
     """Load distribution package name from pyproject.toml and normalize it."""
-    return _pyproject_toml(package, root=root)['project']['name']
+    name = _pyproject_toml(package, root=root)['project']['name']
+    return _normalize(name.strip())
 
 
 @functools.cache
