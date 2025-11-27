@@ -37,9 +37,9 @@ The Provider MUST adhere to the criteria, to be considered compatible with the i
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides client credentials and information about the external OP. It MUST be placed in the **application** databag.
 
@@ -58,8 +58,6 @@ Provider provides client credentials and information about the external OP. It M
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer provides a redirect_uri and provider_id for every provider. It should be placed in the **application** databag.
 

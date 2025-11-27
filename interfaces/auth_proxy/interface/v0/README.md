@@ -35,16 +35,13 @@ Both the requirer and the provider need to adhere to a certain set of criteria t
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 n/a
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
-
 
 #### Example
 

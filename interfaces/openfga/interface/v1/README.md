@@ -4,7 +4,7 @@
 
 This relation interface describes the expected behaviour of any charm claiming to be able to interact with a OpenFGA.
 
-In most cases, this will be accomplished using the [openfga library](https://github.com/canonical/openfga-operator/blob/main/charms/openfga-k8s/lib/charms/openfga_k8s/v0/openfga.py), although charm developers are free to provide alternative libraries as long as they fulfil the behavioural and schematic requirements described in this document.
+In most cases, this will be accomplished using the [openfga library](https://charmhub.io/openfga-k8s/libraries/openfga), although charm developers are free to provide alternative libraries as long as they fulfil the behavioural and schematic requirements described in this document.
 
 ## Direction
 
@@ -30,9 +30,9 @@ Both the Requirer and the Provider need to adhere to the following criteria to b
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider exposes `store_id`, `token_secret_id`, `token`, `grpc_api_url` and `http_api_url` fields in the **application** databag.
 
@@ -51,8 +51,6 @@ Provider exposes `store_id`, `token_secret_id`, `token`, `grpc_api_url` and `htt
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 The Requirer exposes the store name for which authorization is requested in the **application** databag.
 

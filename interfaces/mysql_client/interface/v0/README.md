@@ -54,9 +54,9 @@ If any side, Provider or Requirer doesn't support Juju Secrets, sensitive inform
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides credentials, endpoints, TLS info and database-specific fields. It should be placed in the **application** databag.
 
@@ -75,8 +75,6 @@ Provider provides credentials, endpoints, TLS info and database-specific fields.
 ```
 
 ### Requirer
-
-[\[JSON Schema\]](./schemas/requirer.json)
 
 Requirer provides database name. It should be placed in the **application** databag.
 

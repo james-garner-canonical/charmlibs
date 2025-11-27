@@ -36,9 +36,9 @@ The requirer and the provider must adhere to a certain set of criteria to be con
 
 ## Relation Data
 
-### Provider
+[\[Pydantic Schema\]](./schema.py)
 
-[\[JSON Schema\]](./schemas/provider.json)
+### Provider
 
 Provider provides the SAML configuration. It should be placed in the **application** databag.
 
