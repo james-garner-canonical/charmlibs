@@ -159,6 +159,8 @@ def _ls(
                 info.name = _get_name(category, root, path)
             if 'version' in output:
                 info.version = _get_version(category, root, path)
+            if 'summary' in output:
+                info.summary = _get_summary(category, root, path)
             if 'description' in output:
                 info.description = _get_description(category, root, path)
             if 'lib' in output:
