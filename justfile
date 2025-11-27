@@ -171,4 +171,12 @@ _integration package substrate label +flags:
 
 [doc("Make .interfaces.json file.")]
 interfaces-json:
-    .scripts/ls.py interfaces --output=name --output=version --output lib --output lib_url --output docs_url --output=summary --output=description | jq > .interfaces.json
+    .scripts/ls.py interfaces \
+        --output name \
+        --output version \
+        --output lib \
+        --output lib_url \
+        --output docs_url \
+        --output summary \
+        --output description \
+        | jq > .interfaces.json
