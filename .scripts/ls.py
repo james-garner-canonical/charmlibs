@@ -53,7 +53,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class Info:
     """Information about a specific package or interface."""
 
