@@ -2,6 +2,9 @@
 
 # /// script
 # requires-python = ">=3.11"
+# dependencies = [
+#     "PyYAML",
+# ]
 # ///
 
 # ruff: noqa: I001  # tomllib is first-party in 3.11+
@@ -29,7 +32,9 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import csv
 import dataclasses
+import functools
 import io
 import json
 import logging
@@ -40,19 +45,26 @@ import tarfile
 import tempfile
 import tomllib
 
+import yaml
+
 _REPO_ROOT = pathlib.Path(__file__).parent.parent
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(str(pathlib.Path(__file__).relative_to(_REPO_ROOT)))
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(kw_only=True)
 class Info:
     """Information about a specific package or interface."""
 
     path: str
     name: str = ''
     version: str = ''
+    lib: str = ''
+    lib_url: str = ''
+    docs_url: str = ''
+    summary: str = ''
+    description: str = ''
 
     def to_dict(self, *fields: str) -> dict[str, str]:
         """Return dictionary containing only specified fields."""
@@ -68,8 +80,11 @@ def _main() -> None:
     parser.add_argument('--exclude-examples', action='store_true')
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
+    parser.add_argument('--indent-json', action='store_true')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--output', action='append', choices=['path', 'name', 'version'])
+    group.add_argument(
+        '--output', action='append', choices=[f.name for f in dataclasses.fields(Info)]
+    )
     group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
     single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
@@ -89,7 +104,7 @@ def _main() -> None:
         )
     else:
         result = sorted(getattr(info, single_output) for info in infos)
-    print(json.dumps(result))
+    print(json.dumps(result, indent=2 if args.indent_json else None))
 
 
 def _ls(
@@ -137,19 +152,25 @@ def _ls(
         if old_ref:
             dirs = _changed_only(root, dirs, ref=old_ref)
             if only_if_version_changed:
-                return _get_changed_version_info(category, root, dirs, ref=old_ref)
-        # Otherwise calculate only the information needed.
+                dirs = _get_changed_versions_only(category, root, dirs, ref=old_ref)
+        # Calculate only the information needed.
         infos: list[Info] = []
         for path in dirs:
-            if not (root / path).exists():
-                continue
+            info = Info(path=str(path))
+            if 'name' in output:
+                info.name = _get_name(category, root, path)
             if 'version' in output:
-                info = _get_info(category, root, path)
-                assert info is not None  # we already skipped if the path doesn't exist
-            elif 'name' in output:
-                info = Info(path=str(path), name=_get_name(category, root, path))
-            else:
-                info = Info(path=str(path))
+                info.version = _get_version(category, root, path)
+            if 'summary' in output:
+                info.summary = _get_summary(category, root, path)
+            if 'description' in output:
+                info.description = _get_description(category, root, path)
+            if 'lib' in output:
+                info.lib = _get_lib_name(category, root, path)
+            if 'lib_url' in output:
+                info.lib_url = _lib_urls().get(_get_lib_name(category, root, path), '')
+            if 'docs_url' in output:
+                info.docs_url = _get_docs_url(category, root, path)
             infos.append(info)
         return infos
 
@@ -214,9 +235,9 @@ def _changed_only(root: pathlib.Path, dirs: list[pathlib.Path], ref: str) -> lis
     return [p for p in dirs if p in changes]
 
 
-def _get_changed_version_info(
+def _get_changed_versions_only(
     category: str, root: pathlib.Path, dirs: list[pathlib.Path], ref: str
-) -> list[Info]:
+) -> list[pathlib.Path]:
     """Returns only those packages that have had a version change between `ref` and current state.
 
     Takes a snapshot of the repo at `ref` for comparison.
@@ -225,24 +246,27 @@ def _get_changed_version_info(
     with _snapshot_repo(ref) as old_root:
         old_versions: dict[str, str] = {}
         for path in dirs:
-            info = _get_info(category, old_root, path)
-            if info is not None:
-                old_versions[info.name] = info.version
-    infos: list[Info] = []
+            if not (old_root / path).exists():
+                continue
+            name = _get_name(category, old_root, path)
+            version = _get_version(category, old_root, path)
+            old_versions[name] = version
+    changed: list[pathlib.Path] = []
     for path in dirs:
-        info = _get_info(category, root, path)
-        if info is None:
+        if not (root / path).exists():
             logger.debug('%s no longer exists!', path)
             continue
-        old_version = old_versions.get(info.name)
-        logger.info('%s (%s): %s -> %s', info.path, info.name, old_version, info.version)
-        if info.version == old_version:
+        name = _get_name(category, root, path)
+        old_version = old_versions.get(name)
+        new_version = _get_version(category, root, path)
+        logger.info('%s (%s): %s -> %s', path, name, old_version, new_version)
+        if new_version == old_version:
             logger.debug('Version unchanged')
-        elif 'dev' in info.version:
+        elif 'dev' in new_version:
             logger.debug('Skipping dev release.')
         else:
-            infos.append(info)
-    return infos
+            changed.append(path)
+    return changed
 
 
 @contextlib.contextmanager
@@ -263,37 +287,106 @@ def _snapshot_repo(ref: str | None):
         yield root
 
 
-def _get_info(category: str, root: pathlib.Path, path: pathlib.Path | str) -> Info | None:
-    """Return info for `root / package`, or `None` if it doesn't exist."""
-    if not (root / path).exists():
-        return None
-    logger.debug('Computing version for %s', path)
-    name = _get_name(category, root, path)
-    if category == 'packages':
-        script = f'import importlib.metadata; print(importlib.metadata.version("{name}"))'
-        cmd = ['uv', 'run', '--no-project', '--with', f'./{path}', 'python', '-c', script]
-        version = subprocess.check_output(cmd, cwd=root, text=True).strip()
-    else:
-        assert category == 'interfaces'
-        versions = [v.name for v in (root / path / 'interface').glob('v[0-9]*')]
-        version = max(versions, key=lambda v: int(v.removeprefix('v')))
-    info = Info(path=str(path), name=name, version=version)
-    logger.debug('Computed %s', info)
-    return info
-
-
-def _get_name(category: str, root: pathlib.Path, path: pathlib.Path | str) -> str:
+def _get_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     """Return package or interface name."""
     if category == 'packages':
-        return _get_dist_name(root / path)
+        return _get_dist_name(path, root=root)
     assert category == 'interfaces'
-    return (root / path).name
+    return path.name
 
 
-def _get_dist_name(package: pathlib.Path) -> str:
+def _get_version(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        return _get_package_version(path, root=root)
+    assert category == 'interfaces'
+    return _get_interface_version(path, root=root)
+
+
+def _get_summary(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        return _get_description(category, root, path)
+    assert category == 'interfaces'
+    return _interface_yaml(path, root=root).get('summary', '').strip()
+
+
+def _get_description(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        return _pyproject_toml(path, root=root)['project']['description'].strip()
+    assert category == 'interfaces'
+    return _interface_yaml(path, root=root).get('description', '').strip()
+
+
+def _get_lib_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        if path.name == '.package':
+            # .package -> () -> 'charmlibs'
+            # interfaces/.package -> ('interfaces') -> 'charmlibs.interface'
+            parts, _ = path.parts
+        else:
+            # For special cases like '.tutorial' -> ('tutorial') -> 'charmlibs.tutorial'
+            parts = tuple(p.removeprefix('.') for p in path.parts)
+        return '.'.join(('charmlibs', *parts)).replace('-', '_')
+    assert category == 'interfaces'
+    return _interface_yaml(path, root=root).get('lib', '').strip()
+
+
+def _get_docs_url(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        url = _pyproject_toml(path, root=root)['project']['urls'].get('Documentation', '')
+        return url.strip()
+    assert category == 'interfaces'
+    return f'https://documentation.ubuntu.com/charmlibs/reference/interfaces/{path.name}/'
+
+
+def _get_dist_name(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT) -> str:
     """Load distribution package name from pyproject.toml and normalize it."""
-    with (package / 'pyproject.toml').open('rb') as f:
-        return _normalize(tomllib.load(f)['project']['name'])
+    name = _pyproject_toml(package, root=root)['project']['name']
+    return _normalize(name.strip())
+
+
+@functools.cache
+def _get_package_version(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT) -> str:
+    name = _get_dist_name(package, root=root)
+    script = f'import importlib.metadata; print(importlib.metadata.version("{name}"))'
+    cmd = ['uv', 'run', '--no-project', '--with', root / package, 'python', '-c', script]
+    return subprocess.check_output(cmd, cwd=root, text=True).strip()
+
+
+@functools.cache
+def _get_interface_version(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT) -> str:
+    versions = [v.name for v in (root / path / 'interface').glob('v[0-9]*')]
+    return max((v.removeprefix('v') for v in versions), key=int)
+
+
+@functools.cache
+def _lib_urls() -> dict[str, str]:
+    result: dict[str, str] = {}
+    for p in 'general-libs.csv', 'interface-libs.csv':
+        with (_REPO_ROOT / '.docs' / 'reference' / p).open() as f:
+            for row in csv.DictReader(f):
+                # Library names should be unique, but we currently have an entry for
+                # charms.data_platform_libs.data_interfaces for each interface it supports
+                # This doesn't break our lookups though, since they all have the same metadata
+                # (aside from the interface column)
+                assert (
+                    row['name'] not in result
+                    or row['name'] == 'charms.data_platform_libs.data_interfaces'
+                )
+                result[row['name']] = row['url']
+    return result
+
+
+@functools.cache
+def _pyproject_toml(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT):
+    with (root / package / 'pyproject.toml').open('rb') as f:
+        return tomllib.load(f)
+
+
+@functools.cache
+def _interface_yaml(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT):
+    version = _get_interface_version(path, root=root)
+    with (root / path / 'interface' / f'v{version}' / 'interface.yaml').open() as f:
+        return yaml.safe_load(f)
 
 
 def _normalize(name: str) -> str:
