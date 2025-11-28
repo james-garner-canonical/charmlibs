@@ -80,7 +80,7 @@ def _main() -> None:
     parser.add_argument('--exclude-examples', action='store_true')
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
-    parser.add_argument('--json-indent', type=int, default=None)
+    parser.add_argument('--indent-json', action='store_true')
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         '--output', action='append', choices=[f.name for f in dataclasses.fields(Info)]
@@ -104,7 +104,7 @@ def _main() -> None:
         )
     else:
         result = sorted(getattr(info, single_output) for info in infos)
-    print(json.dumps(result, indent=args.json_indent))
+    print(json.dumps(result, indent=2 if args.indent_json else None))
 
 
 def _ls(
