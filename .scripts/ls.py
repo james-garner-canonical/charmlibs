@@ -82,7 +82,9 @@ def _main() -> None:
     parser.add_argument('--only-if-version-changed', action='store_true')
     parser.add_argument('--json-indent', type=int, default=None)
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--output', action='append', choices=tuple(dataclasses.asdict(Info(''))))
+    group.add_argument(
+        '--output', action='append', choices=[f.name for f in dataclasses.fields(Info)]
+    )
     group.add_argument('--name-only', action='store_true')
     args = parser.parse_args()
     single_output = 'name' if args.name_only else 'path'  # used if --output isn't specified
