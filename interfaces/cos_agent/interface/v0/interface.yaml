@@ -1,8 +1,14 @@
 name: cos_agent
 internal: true
-
 version: 0
 status: published
+lib: charms.grafana_agent.cos_agent
+summary: Machine-charm-specific interface for managing multiple observability-related data streams.
+description: |
+  The `cos_agent` interface allows charms to provide several observability-related data streams at once.
+  This includes metrics endpoints and various rules directories.
+
+  This interface is designed specifically for machine charms, where the requirer is typically the [grafana-agent](https://charmhub.io/grafana-agent) subordinate charm.
 
 providers:
   - name: zookeeper
