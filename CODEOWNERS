@@ -30,4 +30,18 @@
 /systemd/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
+/interfaces/cos_agent/ @canonical/observability
+/interfaces/grafana_auth/ @canonical/observability
+/interfaces/grafana_datasource/ @canonical/observability
+/interfaces/grafana_datasource_exchange/ @canonical/observability
+/interfaces/ingress/ @canonical/observability
+/interfaces/ingress_per_unit/ @canonical/observability
+/interfaces/litmus_auth/ @canonical/observability
+/interfaces/mimir_cluster/ @canonical/observability
+/interfaces/profiling/ @canonical/observability
+/interfaces/prometheus_remote_write/ @canonical/observability
+/interfaces/prometheus_scrape/ @canonical/observability
+/interfaces/pyroscope_cluster/ @canonical/observability
+/interfaces/tempo_cluster/ @canonical/observability
 /interfaces/tls-certificates/ @canonical/tls
+/interfaces/tracing/ @canonical/observability
