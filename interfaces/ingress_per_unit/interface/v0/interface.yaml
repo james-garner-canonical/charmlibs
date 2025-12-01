@@ -1,6 +1,12 @@
 name: ingress_per_unit
 version: 0
 status: published
+lib: charms.traefik_k8s.ingress_per_unit
+summary: Configure and provide ingress per unit.
+description: |
+  The `ingress` interface allows charms to request ingress for their workloads per unit.
+  Each requirer unit configures the hostname, model namespace, unit name, and port.
+  The provider responds with a mapping of ingress URLs per unit.
 
 providers:
   - name: traefik-k8s

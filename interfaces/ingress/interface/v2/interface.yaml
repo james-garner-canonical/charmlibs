@@ -1,6 +1,12 @@
 name: ingress
 version: 2
 status: published
+lib: charms.traefik_k8s.ingress
+summary: Configure and provide ingress.
+description: |
+  The `ingress` interface allows charms to request ingress for their workloads.
+  The requirer configures the hostname, model namespace, unit name, and port.
+  The provider responds with the ingress URL.
 
 providers:
   - name: traefik-k8s
