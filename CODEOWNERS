@@ -39,8 +39,8 @@
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/mimir_cluster/ @canonical/observability
 /interfaces/profiling/ @canonical/tracing-and-profiling
-/interfaces/prometheus_remote_write/ @canonical/observability
-/interfaces/prometheus_scrape/ @canonical/observability
+/interfaces/prometheus_remote_write/ @canonical/observability-core
+/interfaces/prometheus_scrape/ @canonical/observability-core
 /interfaces/pyroscope_cluster/ @canonical/tracing-and-profiling
 /interfaces/tempo_cluster/ @canonical/tracing-and-profiling
 /interfaces/tls-certificates/ @canonical/tls
