@@ -218,20 +218,20 @@
   {
     "name": "ingress",
     "version": "2",
-    "lib": "charms.traefik_k8s.ingress",
-    "lib_url": "https://charmhub.io/traefik-k8s/libraries/ingress",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress/",
-    "summary": "Configure and provide ingress.",
-    "description": "The `ingress` interface allows charms to request ingress for their workloads.\nThe requirer configures the hostname, model namespace, unit name, and port.\nThe provider responds with the ingress URL."
+    "summary": "",
+    "description": ""
   },
   {
     "name": "ingress_per_unit",
     "version": "0",
-    "lib": "charms.traefik_k8s.ingress_per_unit",
-    "lib_url": "https://charmhub.io/traefik-k8s/libraries/ingress_per_unit",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress_per_unit/",
-    "summary": "Configure and provide ingress per unit.",
-    "description": "The `ingress` interface allows charms to request ingress for their workloads per unit.\nEach requirer unit configures the hostname, model namespace, unit name, and port.\nThe provider responds with a mapping of ingress URLs per unit."
+    "summary": "",
+    "description": ""
   },
   {
     "name": "ip_router",
