@@ -36,12 +36,12 @@
 /interfaces/grafana_datasource_exchange/ @canonical/observability
 /interfaces/ingress/ @canonical/observability
 /interfaces/ingress_per_unit/ @canonical/observability
-/interfaces/litmus_auth/ @canonical/observability
+/interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/mimir_cluster/ @canonical/observability
-/interfaces/profiling/ @canonical/observability
+/interfaces/profiling/ @canonical/tracing-and-profiling
 /interfaces/prometheus_remote_write/ @canonical/observability
 /interfaces/prometheus_scrape/ @canonical/observability
-/interfaces/pyroscope_cluster/ @canonical/observability
-/interfaces/tempo_cluster/ @canonical/observability
+/interfaces/pyroscope_cluster/ @canonical/tracing-and-profiling
+/interfaces/tempo_cluster/ @canonical/tracing-and-profiling
 /interfaces/tls-certificates/ @canonical/tls
-/interfaces/tracing/ @canonical/observability
+/interfaces/tracing/ @canonical/tracing-and-profiling
