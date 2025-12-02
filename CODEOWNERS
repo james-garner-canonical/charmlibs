@@ -34,8 +34,6 @@
 /interfaces/grafana_auth/ @canonical/observability
 /interfaces/grafana_datasource/ @canonical/observability
 /interfaces/grafana_datasource_exchange/ @canonical/observability
-/interfaces/ingress/ @canonical/observability
-/interfaces/ingress_per_unit/ @canonical/observability
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/mimir_cluster/ @canonical/observability
 /interfaces/profiling/ @canonical/tracing-and-profiling
