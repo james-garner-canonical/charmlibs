@@ -60,7 +60,7 @@
     "lib_url": "https://charmhub.io/grafana-agent/libraries/cos_agent",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/cos_agent/",
     "summary": "Machine-charm-specific interface for managing multiple observability-related data streams.",
-    "description": "The `cos_agent` interface allows charms to provide several observability-related data streams at once.\nThis includes metrics endpoints and various rules directories.\n\nThis interface is designed specifically for machine charms, where the requirer is typically the [grafana-agent](https://charmhub.io/grafana-agent) subordinate charm."
+    "description": "The `cos_agent` interface allows machine charms to send telemetry \u2014 such as metrics, logs, dashboards, and alert rules \u2014 to Opentelemetry Colector or Grafana Agent charms.\n\nThis interface is designed specifically for machine charms, where the requirer is typically the [grafana-agent](https://charmhub.io/grafana-agent) and the [opentelemetry-collector](https://github.com/canonical/opentelemetry-collector-operator/) subordinate charms."
   },
   {
     "name": "database_backup",
@@ -447,7 +447,7 @@
     "lib_url": "https://charmhub.io/prometheus-k8s/libraries/prometheus_remote_write",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/prometheus_remote_write/",
     "summary": "Write Prometheus metrics to remote endpoint.",
-    "description": "The `prometheus_remote_write` endpoint supports writing Prometheus metrics to a remote endpoint.\nThe provider publishes one or more endpoints.\nThe requirer pushes metrics to the provided endpoints."
+    "description": "The `prometheus_remote_write` endpoint supports writing Prometheus metrics to a remote endpoint.\nThe provider publishes one or more endpoints, and emits alerts per rule files.\nThe requirer pushes metrics to the provided endpoints, and sends rule files to the provider."
   },
   {
     "name": "prometheus_scrape",
@@ -456,7 +456,7 @@
     "lib_url": "https://charmhub.io/prometheus-k8s/libraries/prometheus_scrape",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/prometheus_scrape/",
     "summary": "Configure Prometheus scraping jobs.",
-    "description": "The `prometheus_scrape` interface supports configuring Prometheus scrape jobs.\nThe provider specifies one or more scrape compatible metrics endpoints.\nThe requirer then scrapes the provider's metrics."
+    "description": "The `prometheus_scrape` interface supports configuring Prometheus scrape jobs and recording and alerting rules.\nThe provider specifies one or more scrape compatible metrics endpoints, and rule files.\nThe requirer then scrapes the provider's metrics and emits alerts per rule files."
   },
   {
     "name": "pyroscope_cluster",
