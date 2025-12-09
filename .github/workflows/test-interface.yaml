@@ -22,10 +22,10 @@ jobs:
     outputs:
       include: ${{ steps.include.outputs.result }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Define interface test matrix
         id: include
         run: |
@@ -43,10 +43,10 @@ jobs:
         include: ${{ fromJSON(needs.init.outputs.include) }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Run interface tests
         run: |
           set -xueo pipefail

@@ -35,13 +35,13 @@ jobs:
       integration-substrates: ${{ steps.integration-substrates.outputs.substrates }}
       integration-tags: ${{ steps.integration-tags.outputs.tags }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       - name: Check which Python versions this package supports
         id: python
@@ -106,12 +106,12 @@ jobs:
       matrix:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       - name: Run static analysis and other checks
         run: uvx --from rust-just just python=${{ matrix.python }} lint ${{ inputs.package }}
@@ -125,12 +125,12 @@ jobs:
       matrix:
         python: ${{ fromJson(needs.init.outputs.python) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       - name: Run unit tests
         run: uvx --from rust-just just python=${{ matrix.python }} unit ${{ inputs.package }}
@@ -143,7 +143,7 @@ jobs:
       matrix: ${{ fromJson(needs.init.outputs.functional-matrix) }}
     runs-on: ${{ matrix.ubuntu }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -159,7 +159,7 @@ jobs:
         run: go install github.com/canonical/pebble/cmd/${{ matrix.pebble }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       - name: Run functional tests
         if: matrix.sudo == 'no-sudo'
@@ -179,7 +179,7 @@ jobs:
         tag: ${{ fromJson(needs.init.outputs.integration-tags) }}
         substrate: ${{ fromJson(needs.init.outputs.integration-substrates) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -195,7 +195,7 @@ jobs:
         run: sudo concierge prepare --verbose --juju-channel=3/stable --charmcraft-channel=3.x/stable -p machine
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
 
       - name: Pack charms
         if: ${{ hashFiles(format('{0}/tests/integration/pack.sh', inputs.package)) != '' }}

@@ -23,7 +23,7 @@ jobs:
       interfaces: ${{ steps.interfaces.outputs.result }}
       publish: ${{ steps.publish.outputs.result }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -33,7 +33,7 @@ jobs:
         run: |
           set -xueo pipefail
           echo "result=$(git merge-base origin/${{ github.event.pull_request.base.ref }} HEAD)" >> "$GITHUB_OUTPUT"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Collect changed packages
         id: packages
         run: .github/get-changed.py packages ${{ steps.ref.outputs.result }}
@@ -99,10 +99,10 @@ jobs:
   interfaces-json-up-to-date:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Was `just interfaces-json` run if interfaces were updated?
         run: |
           uvx --from rust-just just interfaces-json
@@ -111,10 +111,10 @@ jobs:
   template-and-example-in-sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: |
           uvx --from rust-just just init --no-input
           rm -rf .example
@@ -128,10 +128,10 @@ jobs:
   template-and-interface-example-in-sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - working-directory: interfaces
         run: |
           uvx --from rust-just just interface init --no-input project_slug=example-interface
@@ -152,7 +152,7 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.init.outputs.publish) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -182,14 +182,14 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uvx zizmor@v1.11.0 --format=sarif . > results.sarif
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
           category: zizmor

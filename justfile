@@ -180,4 +180,4 @@ interfaces-json:
         --output summary \
         --output description \
         --indent-json \
-        > .interfaces.json
+        > interfaces/index.json
