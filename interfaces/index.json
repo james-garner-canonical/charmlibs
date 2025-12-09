@@ -318,7 +318,7 @@
     "name": "litmus_auth",
     "version": "0",
     "lib": "litmus-libs",
-    "lib_url": "",
+    "lib_url": "https://pypi.org/project/litmus-libs/",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/litmus_auth/",
     "summary": "Exchange gRPC server endpoints for communication between Litmus auth and backend charms.",
     "description": "The `litmus_auth` interface enables communication between Litmus auth and Litmus backend charms.\nBoth the provider and requirer publish their respective gPRC server's endpoint."
