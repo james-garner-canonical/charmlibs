@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import List
 from urllib.request import urlopen
 
 import charmlibs.apt as apt
@@ -153,7 +154,7 @@ def test_install_hardware_observer_ssacli():
     repo_id = apt._repo_to_identifier(apt.DebianRepository.from_repo_line(line, write_file=False))
     assert repo_id not in apt.RepositoryMapping()
     assert not shutil.which('ssacli')
-    key_files: list[str] = []  # just for cleanup
+    key_files: List[str] = []  # just for cleanup
     # steps
     for path in (
         KEY_DIR / 'HPEPUBLICKEY2048_KEY1.asc',

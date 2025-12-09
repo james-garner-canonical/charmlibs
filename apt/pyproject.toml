@@ -2,7 +2,7 @@
 name = "charmlibs-apt"
 description = "A Pythonic interface to manage `apt` packages."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 authors = [
     {name="The Charm Tech team at Canonical Ltd."},
 ]
