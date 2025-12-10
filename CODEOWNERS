@@ -25,5 +25,6 @@
 # charmlibs packages (alphabetical)
 /apt/ @canonical/charmlibs-maintainers
 /pathops/ @canonical/charmlibs-maintainers
+/snap/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
