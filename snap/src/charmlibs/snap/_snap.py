@@ -33,12 +33,13 @@ import typing
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from subprocess import CalledProcessError, CompletedProcess
 from typing import (
     Literal,
+    Mapping,
     NoReturn,
     TypedDict,
     TypeVar,
@@ -73,7 +74,7 @@ def _cache_init(func: Callable[_P, _T]) -> Callable[_P, _T]:
 
 # this is used for return types, so it (a) uses concrete types and (b) does not contain None
 # because setting snap config values to null removes the key so a null value can't be returned
-_JSONLeaf: TypeAlias = str | int | float | bool
+_JSONLeaf: TypeAlias = 'str | int | float | bool'
 JSONType: TypeAlias = 'dict[str, JSONType] | list[JSONType] | _JSONLeaf'
 # we also need a jsonable type for arguments,
 # which (a) uses abstract types and (b) may contain None
