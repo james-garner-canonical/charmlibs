@@ -3,7 +3,11 @@ name: Publish
 on:
   push:
     branches:
+      # NOTE: the workflow runs from the current branch
+      # only the branch name matching the current branch actually matters
+      # but we list them all to minimise the diff across branches
       - 'main'
+      - '*-maintenance'
   workflow_dispatch:
     inputs:
       package:
@@ -15,56 +19,63 @@ on:
         required: false
         type: boolean
 
+permissions: {}
+
 jobs:
   unify-inputs:
     runs-on: ubuntu-latest
     outputs:
-      packages: ${{ steps.main.outputs.packages }}
+      include: ${{ steps.main.outputs.include }}
       skip-juju:  ${{ steps.main.outputs.skip-juju }}
       repository-url:  ${{ steps.main.outputs.repository-url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - id: main
         run: uv run --no-project --script .github/unify-publish-inputs.py
 
-  tests:
+  test-package:
     needs: unify-inputs
-    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
+    if: ${{ needs.unify-inputs.outputs.include != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
-    uses: ./.github/workflows/tests.yaml
+        include: ${{ fromJSON(needs.unify-inputs.outputs.include) }}
+    uses: ./.github/workflows/test-package.yaml
     with:
       package: ${{ matrix.package }}
       skip-juju: ${{ fromJSON(needs.unify-inputs.outputs.skip-juju) }}
 
   build-n-publish:
-    needs: [unify-inputs,tests]
-    if: ${{ needs.unify-inputs.outputs.packages != '[]' }}
+    needs: [unify-inputs,test-package]
+    if: ${{ needs.unify-inputs.outputs.include != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJSON(needs.unify-inputs.outputs.packages) }}
+        include: ${{ fromJSON(needs.unify-inputs.outputs.include) }}
     name: Build and publish ${{ matrix.package }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       attestations: write
-      contents: read
+      contents: write  # needed to push tag
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true  # needed to push tag
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false  # avoid cache poisoning when publishing
       - name: Build
         run: uv build
         working-directory: ./${{ matrix.package }}
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2.4.0
+        uses: actions/attest-build-provenance@v3.0.0
         with:
           subject-path: '${{ matrix.package }}/dist/*'
       - name: Publish
@@ -73,3 +84,11 @@ jobs:
           packages-dir: ./${{ matrix.package }}/dist/
           repository-url: ${{ needs.unify-inputs.outputs.repository-url }}
           verbose: true
+      - name: Tag
+        if: ${{ matrix.tag }}
+        run: |
+          set -xueo pipefail
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ matrix.tag }}
+          git push origin ${{ matrix.tag }}
