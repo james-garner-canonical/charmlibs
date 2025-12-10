@@ -4,10 +4,16 @@ name: Docs
 on:
   push:
     branches:
-      - main
+      # NOTE: the workflow runs from the current branch
+      # only the branch name matching the current branch actually matters
+      # but we list them all to minimise the diff across branches
+      - 'main'
+      - '*-maintenance'
   pull_request:
   workflow_call:
   workflow_dispatch:
+
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,32 +28,33 @@ jobs:
       linkcheck-result: ${{ steps.linkcheck-step.outcome }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Spelling
         id: spellcheck-step
         if: success() || failure()
         continue-on-error: true
-        uses: canonical/documentation-workflows/spellcheck@main
+        uses: canonical/documentation-workflows/spellcheck@6f9c05eae99ca9fff05250810bba2a71a380ebd1  # main
         with:
           working-directory: .docs
       - name: Links
         id: linkcheck-step
         if: success() || failure()
-        uses: canonical/documentation-workflows/linkcheck@main
-        with:
-          working-directory: .docs
+        run: |
+          set -xueo pipefail
+          uvx --from rust-just just docs linkcheck ${{ github.event_name != 'pull_request' && '--tag check-github-links' || '' }}
       - name: Markdown lint
         id: markdown-step
         if: success() || failure()
-        uses: DavidAnson/markdownlint-cli2-action@v20
+        uses: DavidAnson/markdownlint-cli2-action@30a0e04f1870d58f8d717450cc6134995f993c63  # v21.0.0
         with:
           config: ".docs/.sphinx/.markdownlint.json"
       - name: Local Sphinx extensions static analysis

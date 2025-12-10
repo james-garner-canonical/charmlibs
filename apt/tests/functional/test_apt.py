@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import List
 from urllib.request import urlopen
 
+import pytest
+
 import charmlibs.apt as apt
 
 logger = logging.getLogger(__name__)
@@ -137,6 +139,7 @@ def test_install_higher_version_package_from_external_repository():
     assert not shutil.which('fish')
 
 
+@pytest.mark.xfail  # https://github.com/canonical/charmlibs/issues/282
 def test_install_hardware_observer_ssacli():
     """Test the ability to install a package used by the hardware-observer charm.
 
