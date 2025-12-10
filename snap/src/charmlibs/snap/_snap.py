@@ -33,7 +33,6 @@ import typing
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Iterable, Sequence
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from subprocess import CalledProcessError, CompletedProcess
@@ -49,6 +48,7 @@ import opentelemetry.trace
 
 if typing.TYPE_CHECKING:
     # avoid typing_extensions import at runtime
+    from collections.abc import Callable, Iterable, Sequence
     from typing import TypeAlias
 
     from typing_extensions import NotRequired, ParamSpec, Required, Self, Unpack
