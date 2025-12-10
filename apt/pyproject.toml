@@ -28,7 +28,7 @@ integration = []
 "Documentation" = "https://documentation.ubuntu.com/charmlibs/reference/charmlibs/apt/"
 "Repository" = "https://github.com/canonical/charmlibs"
 "Issues" = "https://github.com/canonical/charmlibs/issues"
-"Changelog" = "https://github.com/canonical/charmlibs/blob/main/apt/CHANGELOG.md"
+"Changelog" = "https://github.com/canonical/charmlibs/blob/20.04-maintenance/apt/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
