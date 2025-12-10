@@ -4,7 +4,11 @@ name: Docs
 on:
   push:
     branches:
-      - 20.04-maintenance
+      # NOTE: the workflow runs from the current branch
+      # only the branch name matching the current branch actually matters
+      # but we list them all to minimise the diff across branches
+      - 'main'
+      - '*-maintenance'
   pull_request:
   workflow_call:
   workflow_dispatch:
