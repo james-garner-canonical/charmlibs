@@ -1,5 +1,5 @@
 # default
-. @canonical/charmlibs-maintainers
+* @canonical/charmlibs-maintainers
 /interfaces/ @canonical/charmlibs-maintainers
 
 # codeowners
