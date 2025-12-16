@@ -246,9 +246,10 @@ def _get_changed_versions_only(
     with _snapshot_repo(ref) as old_root:
         old_versions: dict[str, str] = {}
         for path in dirs:
-            if not (old_root / path).exists():
+            try:
+                name = _get_name(category, old_root, path)
+            except FileNotFoundError:
                 continue
-            name = _get_name(category, old_root, path)
             version = _get_version(category, old_root, path)
             old_versions[name] = version
     changed: list[pathlib.Path] = []
