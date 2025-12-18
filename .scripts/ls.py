@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script --no-project
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # dependencies = [
 #     "PyYAML",
 # ]
@@ -284,7 +284,7 @@ def _snapshot_repo(ref: str | None):
         git = subprocess.run(['git', 'archive', ref], stdout=subprocess.PIPE, check=True)
         stream = io.BytesIO(git.stdout)
         with tarfile.open(fileobj=stream) as tar:
-            tar.extractall(path=root)  # noqa: S202
+            tar.extractall(path=root, filter='data')
         yield root
 
 
