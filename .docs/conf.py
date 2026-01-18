@@ -211,6 +211,7 @@ autodoc_default_options = {
         '__init__,'
         '__match_args__,'
         '__module__,'
+        '__new__,'
         '__orig_bases__,'
         '__parameters__,'
         '__protocol_attrs__,'
@@ -219,6 +220,7 @@ autodoc_default_options = {
         '__subclasshook__,'
         '__weakref__,'
         # string methods
+        '__format__,'
         '__repr__,'
         '__str__,'
         # comparison methods
@@ -227,6 +229,26 @@ autodoc_default_options = {
         '__gt__,'
         '__le__,'
         '__lt__,'
+        # pydantic
+        'model_config,'
+        '__class_vars__,'
+        '__private_attributes__,'
+        '__signature__,'
+        '__pydantic_complete__,'
+        '__pydantic_computed_fields__,'
+        '__pydantic_core_schema__,'
+        '__pydantic_custom_init__,'
+        '__pydantic_decorators__,'
+        '__pydantic_extra__,'
+        '__pydantic_fields__,'
+        '__pydantic_fields_set__,'
+        '__pydantic_generic_metadata__,'
+        '__pydantic_parent_namespace__,'
+        '__pydantic_post_init__,'
+        '__pydantic_private__,'
+        '__pydantic_serializer__,'
+        '__pydantic_setattr_handlers__,'
+        '__pydantic_validator__,'
     ),
     'undoc-members': None,
     'show-inheritance': None,
