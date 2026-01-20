@@ -25,9 +25,9 @@ The `charmlibs` namespace should only be used by packages published from the `ch
 But what packages should be included in this monorepo?
 
 `charmlibs` is for libraries that are likely to be useful to a wide range of charms.
-- For {ref}`general libraries <charm-libs-general>`, this means well-scoped libraries providing functionality that would be useful to multiple different charms (or libraries).
-Shared code for specific teams' patterns (or specific workloads) should instead be distributed by one of the other methods outlined in this document.
-- For {ref}`interface libraries <charm-libs-interface>`, this means libraries for public interfaces intended to be used by many different charms. This doesn't include interfaces that are intended for communication between (for example) a pair of tightly coupled charms.
+- For {ref}`general libraries <charm-libs-general>`, this means well-scoped libraries providing functionality that would be used by many different charms or libraries.
+`charmlibs` isn't for shared code for specific teams' patterns (or specific workloads). Instead, use one of the other distribution methods outlined in this document.
+- For {ref}`interface libraries <charm-libs-interface>`, this means libraries for public interfaces that would be used by many different charms. `charmlibs` isn't for interfaces that are intended for communication between (for example) a pair of tightly coupled charms.
 
 New libraries should have a specification with some cross-team buy-in before being added to `charmlibs`.
 Ideally, they would implement patterns that have already been tested in production.
