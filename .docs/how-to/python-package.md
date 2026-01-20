@@ -19,7 +19,7 @@ If none of those options work for you, then you might consider publishing them a
 Read on to learn more about your options for distributing Python packages.
 
 (charmlibs-inclusion)=
-## What packages should be published under the charmlibs namespace?
+## What can I publish under the charmlibs namespace?
 
 The `charmlibs` namespace should only be used by packages published from the `charmlibs` monorepo.
 But what packages should be included in this monorepo?
