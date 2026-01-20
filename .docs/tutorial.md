@@ -2,6 +2,10 @@
 
 In this tutorial you'll add a new library to the `charmlibs` monorepo.
 
+```{warning}
+Check if your library should be distributed via `charmlibs` by reading {ref}`charmlibs-inclusion`.
+```
+
 **What you'll need:**
 
 - Your development machine.
