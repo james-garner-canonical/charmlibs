@@ -33,7 +33,7 @@ New libraries should have a specification with some cross-team buy-in before bei
 Ideally, they would implement patterns that have already been tested in production.
 One path to publication that achieves this would be for charmers to develop new libraries as modules of their team-specific packages, use them in their charms, and then migrate them to `charmlibs` when they prove useful.
 
-An exception to the need for a specification would be when migrating the legacy, Charmhub-hosted libraries of existing, widely-used interfaces to `charmlibs`.
+You don't need a specification when migrating a legacy, Charmhub-hosted library of an existing, widely-used interface to `charmlibs`.
 
 To get started with a new `charmlibs` package, follow {doc}`the tutorial </tutorial>`.
 
