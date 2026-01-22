@@ -31,7 +31,7 @@ But what packages should be included in this monorepo?
 
 New libraries should have a specification with some cross-team buy-in before being added to `charmlibs`.
 Ideally, they would implement patterns that have already been tested in production.
-One path to publication that achieves this would be for charmers to develop new libraries as modules of their team-specific packages, use them in their charms, and then migrate them to `charmlibs` when they prove useful.
+For example, you could develop a new library as a sub-package of your team-specific package, use it in your charms, and then migrate it to `charmlibs` when it proves useful in production.
 
 You don't need a specification when migrating a legacy, Charmhub-hosted library of an existing, widely-used interface to `charmlibs`.
 
