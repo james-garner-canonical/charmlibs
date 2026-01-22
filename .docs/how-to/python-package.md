@@ -6,7 +6,7 @@ In future, using Charmhub to host and distribute charm libraries will be depreca
 
 For the purposes of library distribution, there are two kinds of charm libraries:
 
-1. Libraries of broad interest, intended to be used in a wide range of charms. All libraries for public interfaces fall into this category. These libraries comprise a key part of the charming ecosystem.
+1. Libraries of broad interest, intended to be used in a wide range of charms. All libraries for *public* interfaces fall into this category. These libraries comprise a key part of the charming ecosystem.
 
 2. Libraries that are domain specific and likely to be used exclusively by a single team. These libraries are considered implementation details of one or more charms.
 
@@ -16,9 +16,26 @@ Team-internal libraries should not be published on PyPI under the `charmlibs` na
 Instead, consider including such libraries in a shared team package for common code, distributing them as a `git` dependency, or including them as a local dependency (in a charm monorepo).
 If none of those options work for you, then you might consider publishing them as generic packages on PyPI.
 
-To get started with a new `charmlibs` package, follow {doc}`the tutorial </tutorial>`.
+Read on to learn more about your options for distributing Python packages.
 
-Read on to learn more about your other options for distributing Python packages.
+(charmlibs-inclusion)=
+## What can I publish under the charmlibs namespace?
+
+The `charmlibs` namespace should only be used by packages published from the `charmlibs` monorepo.
+But what packages should be included in this monorepo?
+
+`charmlibs` is for libraries that are likely to be useful to a wide range of charms.
+- For {ref}`general libraries <charm-libs-general>`, this means well-scoped libraries providing functionality that would be used by many different charms or libraries.
+`charmlibs` isn't for shared code for specific teams' patterns (or specific workloads). Instead, use one of the other distribution methods outlined in this document.
+- For {ref}`interface libraries <charm-libs-interface>`, this means libraries for public interfaces that would be used by many different charms. `charmlibs` isn't for interfaces that are intended for communication between (for example) a pair of tightly coupled charms.
+
+New libraries should have a specification with some cross-team buy-in before being added to `charmlibs`.
+Ideally, they would implement patterns that have already been tested in production.
+For example, you could develop a new library as a sub-package of your team-specific package, use it in your charms, and then migrate it to `charmlibs` when it proves useful in production.
+
+You don't need a specification when migrating a legacy, Charmhub-hosted library of an existing, widely-used interface to `charmlibs`.
+
+To get started with a new `charmlibs` package, follow {doc}`the tutorial </tutorial>`.
 
 (python-package-distribution)=
 ## Distribute your team's Python package
