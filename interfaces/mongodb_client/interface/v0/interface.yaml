@@ -1,6 +1,7 @@
 name: mongodb_client
 version: 0
 status: draft
+lib: charms.data_platform_libs.data_interfaces
 summary: Access MongoDB databases with unique credentials.
 description: |
   The `mongodb_client` interface allows charms to access MongoDB databases with unique, relation-specific credentials transmitted via Juju Secrets.

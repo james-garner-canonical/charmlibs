@@ -1,6 +1,7 @@
 name: etcd_client
 version: 0
 status: draft
+lib: charms.data_platform_libs.data_interfaces
 summary: Access etcd clusters with credentials and TLS configuration.
 description: |
   The `etcd_client` interface allows charms to access etcd clusters with user-specific credentials and TLS configuration.
