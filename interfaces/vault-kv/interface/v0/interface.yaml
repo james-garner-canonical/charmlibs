@@ -1,6 +1,10 @@
 name: vault-kv
 version: 0
 status: draft
+lib: charms.vault_k8s.vault_kv
+summary: ...
+description: |
+  ...
 
 providers: []
 requirers: []

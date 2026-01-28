@@ -1,6 +1,11 @@
 name: certificate_transfer
 version: 1
 status: draft
+lib: charms.certificate_transfer_interface.certificate_transfer
+summary: Receive public or CA certificates.
+description: |
+  The `certificate_transfer` interface allows charms to receive public and/or CA certificates.
+  The provider charm shares its certificates with the requirer.
 
 providers: []
 requirers: []
