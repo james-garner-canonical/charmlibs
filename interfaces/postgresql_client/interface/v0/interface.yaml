@@ -4,7 +4,7 @@ status: draft
 summary: Access PostgreSQL databases with unique credentials.
 description: |
   The `postgresql_client` interface allows charms to access PostgreSQL databases with unique, relation-specific credentials.
-  The provider charm creates database users and provides connection details, while the requirer charm requests a database name and optional custom entities with specific role permissions.
+  The provider charm creates database users and provides connection details, while the requirer charm requests a database name and optional custom entities with specific role permissions. Supports subordinate charms that provide external connectivity.
 
 providers:
   - name: postgresql-operator
