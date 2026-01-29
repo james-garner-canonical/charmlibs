@@ -1,6 +1,11 @@
 name: nfs_share
 version: 0
 status: draft
+lib: charms.storage_libs.nfs_interfaces
+summary: Mount NFS shares.
+description: |
+  The `nfs_share` interface allows charms to share information about NFS share endpoints.
+  The provider charm exports NFS share endpoints, while the requirer charm mounts them.
 
 providers:
   - name: nfs-server-proxy-operator

@@ -9,7 +9,7 @@ claiming to be able to interface with an NFS share provider or consumer.
 
 Charmed operators claiming to provide this interface must implement and
 support the [Network File System (NFS)](https://datatracker.ietf.org/doc/html/rfc5661)
-protcol. Providing charmed operators should support exporting NFS share
+protocol. Providing charmed operators should support exporting NFS share
 endpoints while Requiring charms should support mounting NFS shares. In most cases, 
 communication between Providers and Requirers will be accomplished using the 
 [nfs_interfaces](https://charmhub.io/storage-libs/libraries/nfs_interfaces) library,
