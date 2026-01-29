@@ -31,7 +31,7 @@
 /systemd/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
-/interfaces/cloudflared-route/ @canonical/is-charms
+/interfaces/cloudflared_route/ @canonical/is-charms
 /interfaces/cos_agent/ @canonical/observability
 /interfaces/dns_record/ @canonical/is-charms
 /interfaces/grafana_auth/ @canonical/observability
