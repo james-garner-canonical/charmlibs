@@ -625,8 +625,8 @@
     "lib": "charms.vault_k8s.vault_kv",
     "lib_url": "https://charmhub.io/vault-k8s/libraries/vault_kv",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/vault-kv/",
-    "summary": "...",
-    "description": "...",
+    "summary": "Securely share Vault credentials to interact with the Vault Key-Value (KV) backend.",
+    "description": "The `vault-kv` interface allows the charms to securely request and receive the credentials needed to interact with the Key-Value (KV) backend of Vault.\nThe requirer charm requests credentials, and the provider charm supplies them.",
     "status": "draft"
   },
   {
