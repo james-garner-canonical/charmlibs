@@ -102,11 +102,11 @@
   {
     "name": "filesystem_info",
     "version": "0",
-    "lib": "",
+    "lib": "charms.filesystem_client.filesystem_info",
     "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/filesystem_info/",
-    "summary": "",
-    "description": "",
+    "summary": "Export mount information about shared filesystems.",
+    "description": "The `filesystem_info` interface allows charms that export shared filesystems to expose the required mount information.\nThe provider charm exports mount information for the requirer charm.",
     "status": "draft"
   },
   {
@@ -408,16 +408,6 @@
     "summary": "",
     "description": "",
     "status": "published"
-  },
-  {
-    "name": "nfs_share",
-    "version": "0",
-    "lib": "",
-    "lib_url": "",
-    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/nfs_share/",
-    "summary": "",
-    "description": "",
-    "status": "draft"
   },
   {
     "name": "nginx-route",
