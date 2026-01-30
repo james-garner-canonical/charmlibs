@@ -410,16 +410,6 @@
     "status": "published"
   },
   {
-    "name": "nfs_share",
-    "version": "0",
-    "lib": "charms.storage_libs.nfs_interfaces",
-    "lib_url": "",
-    "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/nfs_share/",
-    "summary": "Mount NFS shares.",
-    "description": "The `nfs_share` interface allows charms to share information about NFS share endpoints.\nThe provider charm exports NFS share endpoints, while the requirer charm mounts them.",
-    "status": "draft"
-  },
-  {
     "name": "nginx-route",
     "version": "0",
     "lib": "",
