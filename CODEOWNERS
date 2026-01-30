@@ -39,7 +39,6 @@
 /interfaces/grafana_datasource_exchange/ @canonical/observability
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/mimir_cluster/ @canonical/observability
-/interfaces/nfs_share/ @canonical/hpc-team
 /interfaces/profiling/ @canonical/tracing-and-profiling
 /interfaces/prometheus_remote_write/ @canonical/observability-core
 /interfaces/prometheus_scrape/ @canonical/observability-core
