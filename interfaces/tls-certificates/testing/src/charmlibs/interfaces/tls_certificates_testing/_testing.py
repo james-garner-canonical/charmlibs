@@ -23,7 +23,9 @@ _PRIVATE_KEY = tls_certificates.PrivateKey(raw=_raw.KEY)
 _CA_CERT = tls_certificates.Certificate(raw=_raw.CERT)
 
 
-class _RemoteKwargs(typing.TypedDict, total=False):
+class _RelationKwargs(typing.TypedDict, total=False):
+    local_app_data: dict[str, str]
+    local_unit_data: dict[str, str]
     remote_app_data: dict[str, str]
     remote_units_data: dict[int, dict[str, str]]
 
@@ -37,29 +39,15 @@ def for_local_requirer(
     # interface 'conversation' args
     provider: bool = True,
 ) -> testing.Relation:
+    kwargs: _RelationKwargs = {}
     csrs = _make_csrs(certificate_requests)
     # local requirer
-    if mode is tls_certificates.Mode.APP:
-        local_app_data: dict[str, str] = _dump_requirer(csrs)
-        local_unit_data: dict[int, dict[str, str]] = {}  # shouldn't we let ops[testing] do its thing?
-    else:
-        local_app_data = {}
-        local_unit_data = _dump_requirer(csrs)
+    requirer_key = 'local_app_data' if mode is tls_certificates.Mode.APP else 'local_unit_data'
+    kwargs[requirer_key] = _dump_requirer(csrs)
     # remote provider
-    remote_kwargs: _RemoteKwargs = {}
     if provider:
-        remote_kwargs['remote_app_data'] = _dump_provider(csrs)
-        # ops[testing] will populate the Juju-provided unit keys
-    else:
-        remote_kwargs['remote_app_data'] = {}
-        remote_kwargs['remote_units_data'] = {}  # prevent ops[testing] from populating Juju keys -- but should we?
-    return testing.Relation(
-        name,
-        interface=_INTERFACE_NAME,
-        local_app_data=local_app_data,
-        local_unit_data=local_unit_data,
-        **remote_kwargs,
-    )
+        kwargs['remote_app_data'] = _dump_provider(csrs)
+    return testing.Relation(name, interface=_INTERFACE_NAME, **kwargs)
 
 
 def for_local_provider(
@@ -71,24 +59,17 @@ def for_local_provider(
     # interface 'conversation' args
     provider: bool = True,
 ) -> testing.Relation:
+    kwargs: _RelationKwargs = {}
     csrs = _make_csrs(certificate_requests)
     # remote requirer
-    remote_kwargs: _RemoteData = {}
     if mode is tls_certificates.Mode.APP:
-        remote_kwargs['remote_app_data'] = _dump_requirer(csrs)
-        # ops[testing] will populate the Juju-provided unit keys
+        kwargs['remote_app_data'] = _dump_requirer(csrs)
     else:
         remote_kwargs['remote_units_data'] = {0: _dump_requirer(csrs)}
     # local provider
-    local_app_data: dict[str, str] = {}
     if provider:
-        local_app_data = _dump_provider(csrs)
-    return testing.Relation(
-        name,
-        interface=_INTERFACE_NAME,
-        local_app_data=local_app_data,
-        **remote_kwargs,
-    )
+        kwargs['local_app_data'] = _dump_provider(csrs)
+    return testing.Relation(name, interface=_INTERFACE_NAME, **kwargs)
 
 
 def _make_csrs(
