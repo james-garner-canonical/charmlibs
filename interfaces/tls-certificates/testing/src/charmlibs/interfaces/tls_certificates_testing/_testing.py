@@ -33,6 +33,7 @@ class _RelationKwargs(typing.TypedDict, total=False):
 def for_local_requirer(
     # testing.Relation args
     name: str,
+    *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
     certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
@@ -53,6 +54,7 @@ def for_local_requirer(
 def for_local_provider(
     # testing.Relation args
     name: str,
+    *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
     certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
