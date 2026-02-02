@@ -67,7 +67,7 @@ def for_local_provider(
     if mode is tls_certificates.Mode.APP:
         kwargs["remote_app_data"] = _dump_requirer(csrs)
     else:
-        remote_kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
+        kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
     if provider:
         kwargs["local_app_data"] = _dump_provider(csrs)
@@ -107,7 +107,7 @@ def _dump_provider(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
                 ca=str(_CA_CERT),
                 chain=[],
             )
-            for provider_certificate in provider_certificates
+            for csr in csrs
         ]
     )
     ret: dict[str, str] = {}
