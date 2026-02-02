@@ -281,11 +281,15 @@ unit = [
 name = "charmlibs-interfaces-tls-certificates-testing"
 source = { editable = "testing" }
 dependencies = [
+    { name = "charmlibs-interfaces-tls-certificates" },
     { name = "ops", extra = ["testing"] },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ops", extras = ["testing"] }]
+requires-dist = [
+    { name = "charmlibs-interfaces-tls-certificates", editable = "." },
+    { name = "ops", extras = ["testing"] },
+]
 
 [package.metadata.requires-dev]
 lint = []
