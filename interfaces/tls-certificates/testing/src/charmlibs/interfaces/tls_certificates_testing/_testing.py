@@ -99,24 +99,21 @@ def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
 
 
 def _dump_provider(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -> dict[str, str]:
-    certs: list[tls_certificates._tls_certificates._Certificate] = []
-    for csr in csrs:
-        provider_certificate = tls_certificates.ProviderCertificate(
-            relation_id=0,
-            certificate=csr.sign(ca=_CA_CERT, ca_private_key=_PRIVATE_KEY, validity=datetime.timedelta(days=42)),
-            certificate_signing_request=csr,
-            ca=_CA_CERT,
-            chain=[],
-        )
-        certs.append(
+    provider = tls_certificates._tls_certificates._ProviderApplicationData(
+        certificates=[
             tls_certificates._tls_certificates._Certificate(
-                certificate=str(provider_certificate.certificate),
-                certificate_signing_request=str(provider_certificate.certificate_signing_request),
-                ca=str(provider_certificate.ca),
-                chain=[str(c) for c in provider_certificate.chain],
+                certificate=str(_sign(csr)),
+                certificate_signing_request=str(csr),
+                ca=str(_CA_CERT),
+                chain=[],
             )
-        )
-    provider = tls_certificates._tls_certificates._ProviderApplicationData(certificates=certs)
+            for provider_certificate in provider_certificates
+        ]
+    )
     ret: dict[str, str] = {}
     provider.dump(ret)
     return ret
+
+
+def _sign(csr: tls_certificates.CertificateSigningRequest) -> tls_certificates.Certificate:
+    return csr.sign(ca=_CA_CERT, ca_private_key=_PRIVATE_KEY, validity=datetime.timedelta(days=42))
