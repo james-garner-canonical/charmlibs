@@ -1,0 +1,139 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+"""Source code of ``tls_certificates_interface.tls_certificates`` v4.22."""
+
+from __future__ import annotations
+
+import datetime
+import pathlib
+import typing
+
+from charmlibs.interfaces import tls_certificates
+from ops import testing
+
+from . import _raw
+
+if typing.TYPE_CHECKING:
+    from typing import Iterable, Literal
+
+_INTERFACE_NAME = 'tls-certificates'
+_REQUEST = tls_certificates.CertificateRequestAttributes(common_name='example.com')
+_PRIVATE_KEY = tls_certificates.PrivateKey(raw=_raw.KEY)
+_CA_CERT = tls_certificates.Certificate(raw=_raw.CERT)
+
+
+class _RemoteKwargs(typing.TypedDict, total=False):
+    remote_app_data: dict[str, str]
+    remote_units_data: dict[int, dict[str, str]]
+
+
+def for_local_requirer(
+    # testing.Relation args
+    name: str,
+    # charmlibs.interfaces.tls_certificates args
+    mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
+    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
+    # interface 'conversation' args
+    provider: bool = True,
+) -> testing.Relation:
+    csrs = _make_csrs(certificate_requests)
+    # local requirer
+    if mode is tls_certificates.Mode.APP:
+        local_app_data: dict[str, str] = _dump_requirer(csrs)
+        local_unit_data: dict[int, dict[str, str]] = {}  # shouldn't we let ops[testing] do its thing?
+    else:
+        local_app_data = {}
+        local_unit_data = _dump_requirer(csrs)
+    # remote provider
+    remote_kwargs: _RemoteKwargs = {}
+    if provider:
+        remote_kwargs['remote_app_data'] = _dump_provider(csrs)
+        # ops[testing] will populate the Juju-provided unit keys
+    else:
+        remote_kwargs['remote_app_data'] = {}
+        remote_kwargs['remote_units_data'] = {}  # prevent ops[testing] from populating Juju keys -- but should we?
+    return testing.Relation(
+        name,
+        interface=_INTERFACE_NAME,
+        local_app_data=local_app_data,
+        local_unit_data=local_unit_data,
+        **remote_kwargs,
+    )
+
+
+def for_local_provider(
+    # testing.Relation args
+    name: str,
+    # charmlibs.interfaces.tls_certificates args
+    mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
+    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
+    # interface 'conversation' args
+    provider: bool = True,
+) -> testing.Relation:
+    csrs = _make_csrs(certificate_requests)
+    # remote requirer
+    remote_kwargs: _RemoteData = {}
+    if mode is tls_certificates.Mode.APP:
+        remote_kwargs['remote_app_data'] = _dump_requirer(csrs)
+        # ops[testing] will populate the Juju-provided unit keys
+    else:
+        remote_kwargs['remote_units_data'] = {0: _dump_requirer(csrs)}
+    # local provider
+    local_app_data: dict[str, str] = {}
+    if provider:
+        local_app_data = _dump_provider(csrs)
+    return testing.Relation(
+        name,
+        interface=_INTERFACE_NAME,
+        local_app_data=local_app_data,
+        **remote_kwargs,
+    )
+
+
+def _make_csrs(
+    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes]
+) -> list[tls_certificates.CertificateSigningRequest]:
+    return [
+        tls_certificates.CertificateSigningRequest.generate(attributes=r, private_key=_PRIVATE_KEY)
+        for r in certificate_requests
+    ]
+
+
+def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -> dict[str, str]:
+    requirer = tls_certificates._tls_certificates._RequirerData(
+        certificate_signing_requests=[
+            tls_certificates._tls_certificates._CertificateSigningRequest(
+                certificate_signing_request=str(csr).strip(),
+                ca=False,
+            )
+            for csr in csrs
+        ]
+    )
+    ret: dict[str, str] = {}
+    requirer.dump(ret)
+    return ret
+
+
+def _dump_provider(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -> dict[str, str]:
+    certs: list[tls_certificates._tls_certificates._Certificate] = []
+    for csr in csrs:
+        provider_certificate = tls_certificates.ProviderCertificate(
+            relation_id=0,
+            certificate=csr.sign(ca=_CA_CERT, ca_private_key=_PRIVATE_KEY, validity=datetime.timedelta(days=42)),
+            certificate_signing_request=csr,
+            ca=_CA_CERT,
+            chain=[],
+        )
+        certs.append(
+            tls_certificates._tls_certificates._Certificate(
+                certificate=str(provider_certificate.certificate),
+                certificate_signing_request=str(provider_certificate.certificate_signing_request),
+                ca=str(provider_certificate.ca),
+                chain=[str(c) for c in provider_certificate.chain],
+            )
+        )
+    provider = tls_certificates._tls_certificates._ProviderApplicationData(certificates=certs)
+    ret: dict[str, str] = {}
+    provider.dump(ret)
+    return ret
