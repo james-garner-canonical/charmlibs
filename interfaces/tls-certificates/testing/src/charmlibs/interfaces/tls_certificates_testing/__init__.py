@@ -21,6 +21,6 @@ from ._testing import (
 from ._version import __version__ as __version__
 
 __all__ = [
-    'for_local_provider',
-    'for_local_requirer',
+    "for_local_provider",
+    "for_local_requirer",
 ]

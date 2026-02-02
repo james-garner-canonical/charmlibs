@@ -6,19 +6,19 @@
 from __future__ import annotations
 
 import datetime
-import pathlib
 import typing
 
-from charmlibs.interfaces import tls_certificates
 from ops import testing
+
+from charmlibs.interfaces import tls_certificates
 
 from . import _raw
 
 if typing.TYPE_CHECKING:
-    from typing import Iterable, Literal
+    from collections.abc import Iterable
 
-_INTERFACE_NAME = 'tls-certificates'
-_REQUEST = tls_certificates.CertificateRequestAttributes(common_name='example.com')
+_INTERFACE_NAME = "tls-certificates"
+_REQUEST = tls_certificates.CertificateRequestAttributes(common_name="example.com")
 _PRIVATE_KEY = tls_certificates.PrivateKey(raw=_raw.KEY)
 _CA_CERT = tls_certificates.Certificate(raw=_raw.CERT)
 
@@ -43,11 +43,11 @@ def for_local_requirer(
     kwargs: _RelationKwargs = {}
     csrs = _make_csrs(certificate_requests)
     # local requirer
-    requirer_key = 'local_app_data' if mode is tls_certificates.Mode.APP else 'local_unit_data'
+    requirer_key = "local_app_data" if mode is tls_certificates.Mode.APP else "local_unit_data"
     kwargs[requirer_key] = _dump_requirer(csrs)
     # remote provider
     if provider:
-        kwargs['remote_app_data'] = _dump_provider(csrs)
+        kwargs["remote_app_data"] = _dump_provider(csrs)
     return testing.Relation(name, interface=_INTERFACE_NAME, **kwargs)
 
 
@@ -65,17 +65,17 @@ def for_local_provider(
     csrs = _make_csrs(certificate_requests)
     # remote requirer
     if mode is tls_certificates.Mode.APP:
-        kwargs['remote_app_data'] = _dump_requirer(csrs)
+        kwargs["remote_app_data"] = _dump_requirer(csrs)
     else:
-        remote_kwargs['remote_units_data'] = {0: _dump_requirer(csrs)}
+        remote_kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
     if provider:
-        kwargs['local_app_data'] = _dump_provider(csrs)
+        kwargs["local_app_data"] = _dump_provider(csrs)
     return testing.Relation(name, interface=_INTERFACE_NAME, **kwargs)
 
 
 def _make_csrs(
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes]
+    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes],
 ) -> list[tls_certificates.CertificateSigningRequest]:
     return [
         tls_certificates.CertificateSigningRequest.generate(attributes=r, private_key=_PRIVATE_KEY)
