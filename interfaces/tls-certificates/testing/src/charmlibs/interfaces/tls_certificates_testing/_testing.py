@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Source code of ``tls_certificates_interface.tls_certificates`` v4.22."""
@@ -10,7 +10,7 @@ import typing
 
 from ops import testing
 
-from charmlibs.interfaces import tls_certificates
+from charmlibs.interfaces import tls_certificates  # pyright: ignore[reportMissingTypeStubs]
 
 from . import _raw
 
@@ -66,7 +66,8 @@ def for_local_provider(
     # remote requirer
     if mode is tls_certificates.Mode.APP:
         kwargs["remote_app_data"] = _dump_requirer(csrs)
-    else:
+    if mode is tls_certificates.Mode.UNIT:  # can't use else or pyright loses track of the type
+        # TODO: try if X: kwargs = {'...': ...}
         kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
     if provider:

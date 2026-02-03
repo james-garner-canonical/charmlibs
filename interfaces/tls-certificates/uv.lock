@@ -292,6 +292,8 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+functional = []
+integration = []
 lint = []
 unit = []
 

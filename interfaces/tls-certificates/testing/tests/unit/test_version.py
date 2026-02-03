@@ -2,7 +2,8 @@
 # See LICENSE file for licensing details.
 
 
-from charmlibs.interfaces import tls_certificates, tls_certificates_testing
+import charmlibs.interfaces.tls_certificates as tls_certificates
+import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
 
 
 def test_versions_match():

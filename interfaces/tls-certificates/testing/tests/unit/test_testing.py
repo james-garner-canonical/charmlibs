@@ -3,7 +3,8 @@
 
 from ops import testing
 
-from charmlibs.interfaces import tls_certificates, tls_certificates_testing
+import charmlibs.interfaces.tls_certificates as tls_certificates
+import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
 
 JUJU_NETWORK_KEYS = {"egress-subnets", "ingress-address", "private-address"}
 

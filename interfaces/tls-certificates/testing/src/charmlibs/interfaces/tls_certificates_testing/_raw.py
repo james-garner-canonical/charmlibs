@@ -1,3 +1,6 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 KEY = """
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA2Fi2idTUy12iSq8l9ErCp3cnFcn81L+QO/wGAS5ie2oiEyXR
