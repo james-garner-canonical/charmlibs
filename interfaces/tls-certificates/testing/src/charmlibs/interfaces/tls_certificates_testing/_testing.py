@@ -43,12 +43,14 @@ def for_local_requirer(
     kwargs: _RelationKwargs = {}
     csrs = _make_csrs(certificate_requests)
     # local requirer
-    requirer_key = "local_app_data" if mode is tls_certificates.Mode.APP else "local_unit_data"
-    kwargs[requirer_key] = _dump_requirer(csrs)
+    if mode is tls_certificates.Mode.APP:
+        kwargs["local_app_data"] = _dump_requirer(csrs)
+    else:
+        kwargs["local_unit_data"] = _dump_requirer(csrs)
     # remote provider
     if provider:
         kwargs["remote_app_data"] = _dump_provider(csrs)
-    return testing.Relation(name, interface=_INTERFACE_NAME, **kwargs)
+    return _relation(name, kwargs=kwargs)
 
 
 def for_local_provider(
@@ -66,13 +68,12 @@ def for_local_provider(
     # remote requirer
     if mode is tls_certificates.Mode.APP:
         kwargs["remote_app_data"] = _dump_requirer(csrs)
-    if mode is tls_certificates.Mode.UNIT:  # can't use else or pyright loses track of the type
-        # TODO: try if X: kwargs = {'...': ...}
+    else:
         kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
     if provider:
         kwargs["local_app_data"] = _dump_provider(csrs)
-    return testing.Relation(name, interface=_INTERFACE_NAME, **kwargs)
+    return _relation(name, kwargs=kwargs)
 
 
 def _make_csrs(
@@ -118,3 +119,7 @@ def _dump_provider(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
 
 def _sign(csr: tls_certificates.CertificateSigningRequest) -> tls_certificates.Certificate:
     return csr.sign(ca=_CA_CERT, ca_private_key=_PRIVATE_KEY, validity=datetime.timedelta(days=42))
+
+
+def _relation(endpoint: str, kwargs: _RelationKwargs) -> testing.Relation:
+    return testing.Relation(endpoint, interface=_INTERFACE_NAME, **kwargs)
