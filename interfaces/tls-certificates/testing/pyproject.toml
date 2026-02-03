@@ -20,10 +20,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = [  # installed for `just lint interfaces/tls_certificates/testing`
+lint = [  # installed for `just lint interfaces/tls_certificates/testing` (alongside unit, functional, and integration)
 ]
 unit = [  # installed for `just unit interfaces/tls_certificates/testing`
 ]
+functional = [  # installed for `just functional interfaces/tls_certificates/testing`
+]
+integration = [  # installed for `just integration interfaces/tls_certificates/testing`
+]
+
 
 [project.urls]
 "Repository" = "https://github.com/canonical/charmlibs"
