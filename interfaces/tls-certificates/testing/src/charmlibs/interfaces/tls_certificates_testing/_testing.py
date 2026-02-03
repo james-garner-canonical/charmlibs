@@ -32,7 +32,7 @@ class _RelationKwargs(typing.TypedDict, total=False):
 
 def for_local_requirer(
     # testing.Relation args
-    name: str,
+    endpoint: str,
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
@@ -50,12 +50,12 @@ def for_local_requirer(
     # remote provider
     if provider:
         kwargs["remote_app_data"] = _dump_provider(csrs)
-    return _relation(name, kwargs=kwargs)
+    return _relation(endpoint, kwargs=kwargs)
 
 
 def for_local_provider(
     # testing.Relation args
-    name: str,
+    endpoint: str,
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
@@ -73,7 +73,7 @@ def for_local_provider(
     # local provider
     if provider:
         kwargs["local_app_data"] = _dump_provider(csrs)
-    return _relation(name, kwargs=kwargs)
+    return _relation(endpoint, kwargs=kwargs)
 
 
 def _make_csrs(
