@@ -2,12 +2,26 @@
 
 version: 2
 updates:
+  # Monthly updates to Github actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"  # This is hard-coded to the 1st of the month
     labels:
       - "dependencies"
+  # Monthly update to repo wide Python testing dependencies
+  # These are defined in /pyproject.toml and /test-requirements.txt
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+    groups:
+      test-deps:
+        patterns:
+          - "*"
+  # Daily security updates to individual Python packages
   - package-ecosystem: "pip"
     directories:
       - "/"
