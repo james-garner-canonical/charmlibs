@@ -34,6 +34,8 @@ REQUESTS = [
 class RequirerCharm(ops.CharmBase):
     """A minimal requirer charm for testing the TLS Certificates interface."""
 
+    certs: list[tls_certificates.Certificate] | None = None
+
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         # Define certificate requests
@@ -49,18 +51,20 @@ class RequirerCharm(ops.CharmBase):
         """Handle relation changed event with certificates."""
         # Check if we got certificates and update status
         certs, _private_key = self.certificates.get_assigned_certificates()
-        if certs:
-            assert {c.certificate.common_name for c in certs} == {r.common_name for r in REQUESTS}
-            self.unit.status = ops.ActiveStatus("TLS ready")
-        else:
+        if not certs:
             self.unit.status = ops.BlockedStatus("TLS certificates not available")
+            return
+        self.certs = [c.certificate for c in certs]  # imagine we do something with the certs here
+        self.unit.status = ops.ActiveStatus("TLS ready")
 
 
 def test_requirer_no_relation():
     """Test requirer charm without any relation - should be blocked."""
     ctx = ops.testing.Context(RequirerCharm, meta=META)
-    state_out = ctx.run(ctx.on.update_status(), ops.testing.State())
+    with ctx(ctx.on.update_status(), ops.testing.State()) as manager:
+        state_out = manager.run()
     assert isinstance(state_out.unit_status, ops.BlockedStatus)
+    assert manager.charm.certs is None
 
 
 def test_requirer_relation_empty():
@@ -68,8 +72,10 @@ def test_requirer_relation_empty():
     ctx = ops.testing.Context(RequirerCharm, meta=META)
     relation = ops.testing.Relation("certificates", interface="tls-certificates")
     state_in = ops.testing.State(relations=[relation])
-    state_out = ctx.run(ctx.on.update_status(), state=state_in)
-    assert isinstance(state_out.unit_status, ops.testing.BlockedStatus)
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        state_out = manager.run()
+    assert isinstance(state_out.unit_status, ops.BlockedStatus)
+    assert manager.charm.certs is None
 
 
 def test_requirer_relation_has_certs():
@@ -82,5 +88,8 @@ def test_requirer_relation_has_certs():
         endpoint="certificates", certificate_requests=REQUESTS
     )
     state_in = ops.testing.State(relations=[relation])
-    state_out = ctx.run(ctx.on.update_status(), state_in)
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        state_out = manager.run()
     assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
+    assert manager.charm.certs is not None
+    assert {c.common_name for c in manager.charm.certs} == {r.common_name for r in REQUESTS}

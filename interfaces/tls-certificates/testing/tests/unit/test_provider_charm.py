@@ -14,103 +14,70 @@
 
 """Tests for the TLS Certificates testing library from a provider charm perspective."""
 
-from typing import Any
-
 import ops
 import ops.testing
 
 import charmlibs.interfaces.tls_certificates as tls_certificates
 import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
+from charmlibs.interfaces.tls_certificates_testing._raw import KEY, CERT
+
+META = {
+    "name": "provider",
+    "provides": {"certificates": {"interface": "tls-certificates"}},
+}
 
 
 class ProviderCharm(ops.CharmBase):
     """A minimal provider charm for testing the TLS Certificates interface."""
 
+    requests: list[tls_certificates.CertificateSigningRequest] | None = None
+
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         self.certificates = tls_certificates.TLSCertificatesProvidesV4(self, "certificates")
-        framework.observe(self.on.start, self._on_start)
-        framework.observe(self.on.certificates_relation_joined, self._on_relation_joined)
-        framework.observe(self.on.certificates_relation_changed, self._on_relation_changed)
+        framework.observe(self.on.update_status, self._reconcile)
 
-    def _on_start(self, event: ops.StartEvent) -> None:
-        """Handle the start event by setting status to ready."""
-        self.unit.status = ops.ActiveStatus("ready")
-
-    def _on_relation_joined(self, event: ops.RelationJoinedEvent) -> None:
-        """Handle relation joined event."""
-        pass
-
-    def _on_relation_changed(self, event: ops.RelationChangedEvent) -> None:
-        """Handle relation changed event with certificate requests."""
-        # For this test, just acknowledge the request by providing dummy certificates
-        certificate_requests = self.certificates.get_certificate_requests(event.relation)
-        for csr in certificate_requests:
-            # Use simple strings as certificate values for testing
-            self.certificates.set_relation_certificate(
-                relation=event.relation,
-                certificate_signing_request=csr,
-                certificate="cert1",
-                ca="ca1",
-                chain=["chain1"],
-            )
-        # Set status after processing requests
-        self.unit.status = ops.ActiveStatus("ready")
+    def _reconcile(self, _: ops.EventBase) -> None:
+        requests = self.certificates.get_certificate_requests()
+        if not requests:
+            return
+        # imagine we do something with the requests here, like sign them and provide certs back
+        self.requests = [r.certificate_signing_request for r in requests]
 
 
 def test_provider_no_relation():
     """Test provider charm without any relation - should be ready."""
-    ctx = ops.testing.Context(
-        ProviderCharm,
-        meta={
-            "name": "provider",
-            "provides": {"certificates": {"interface": "tls-certificates"}},
-        },
-    )
-    with ctx(ctx.on.start(), ops.testing.State()) as manager:
+    ctx = ops.testing.Context(ProviderCharm, meta=META)
+    with ctx(ctx.on.update_status(), ops.testing.State()) as manager:
         manager.run()
-        assert manager.charm.unit.status == ops.ActiveStatus("ready")
+    assert manager.charm.requests is None
 
 
-def test_provider_relation_joined():
-    """Test provider charm when a requirer joins the relation."""
-    ctx = ops.testing.Context(
-        ProviderCharm,
-        meta={
-            "name": "provider",
-            "provides": {"certificates": {"interface": "tls-certificates"}},
-        },
-    )
-    relation = ops.testing.Relation("certificates", interface="tls-certificates", id=0)
+def test_provider_relation_empty():
+    """Test provider charm when the relation is empty - should be ready."""
+    ctx = ops.testing.Context(ProviderCharm, meta=META)
+    relation = ops.testing.Relation("certificates", interface="tls-certificates")
     state = ops.testing.State(relations=[relation])
+    with ctx(ctx.on.update_status(), state) as manager:
+        manager.run()
+    assert manager.charm.requests is None
 
-    # Trigger relation-joined event
-    state_out = ctx.run(ctx.on.relation_joined(relation), state)
-    # Just verify the charm can process the event without errors
 
-
-def test_provider_relation_changed_with_request():
+def test_provider_relation_has_request():
     """Test provider charm receiving a certificate request from a requirer.
 
     Uses the testing library to populate the relation with a certificate request.
     """
-    ctx = ops.testing.Context(
-        ProviderCharm,
-        meta={
-            "name": "provider",
-            "provides": {"certificates": {"interface": "tls-certificates"}},
-        },
-    )
-    # Use the testing library to create a relation with a requirer request
+    ctx = ops.testing.Context(ProviderCharm, meta=META)
+    requests = [
+        tls_certificates.CertificateRequestAttributes(common_name="example.com"),
+        tls_certificates.CertificateRequestAttributes(common_name="eggsample.com"),
+    ]
     relation = tls_certificates_testing.for_local_provider(
-        endpoint="certificates",
-        certificate_requests=[
-            tls_certificates.CertificateRequestAttributes(common_name="example.com")
-        ],
+        endpoint="certificates", certificate_requests=requests
     )
-    state = ops.testing.State(relations=[relation])
-
-    # Trigger relation-changed event
-    state_out = ctx.run(ctx.on.relation_changed(relation), state)
-    # Verify the charm processed the certificate request and is ready
-    assert state_out.unit_status == ops.ActiveStatus("ready")
+    state_in = ops.testing.State(relations=[relation])
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        manager.run()
+    assert manager.charm.requests is not None
+    assert {r.common_name for r in manager.charm.requests} == {r.common_name for r in requests}
