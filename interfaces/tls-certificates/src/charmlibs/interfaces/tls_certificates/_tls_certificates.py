@@ -56,7 +56,7 @@ class _OWASPLogEvent:
     level: str
     description: str
     type: str = "security"
-    labels: dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict[str, str])
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=False)
