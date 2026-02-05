@@ -78,7 +78,8 @@ def for_local_provider(
 
 
 def _make_csrs(
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes], key: tls_certificates.PrivateKey
+    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes],
+    key: tls_certificates.PrivateKey,
 ) -> list[tls_certificates.CertificateSigningRequest]:
     return [
         tls_certificates.CertificateSigningRequest.generate(attributes=r, private_key=key)

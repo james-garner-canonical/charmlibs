@@ -31,7 +31,7 @@ class Charm(ops.CharmBase):
 
 
 def test_versions_match_in_charm():
-    ctx = ops.testing.Context(Charm, meta={'name': 'charm'})
+    ctx = ops.testing.Context(Charm, meta={"name": "charm"})
     with ctx(ctx.on.start(), ops.testing.State()) as manager:
         manager.run()
         assert tls_certificates_testing.__version__ == manager.charm.tls_certificates_version
