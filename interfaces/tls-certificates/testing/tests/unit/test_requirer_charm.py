@@ -19,7 +19,6 @@ import ops.testing
 
 import charmlibs.interfaces.tls_certificates as tls_certificates
 import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
-from charmlibs.interfaces.tls_certificates_testing._raw import KEY
 
 META = {
     "name": "requirer",
@@ -43,7 +42,7 @@ class RequirerCharm(ops.CharmBase):
             charm=self,
             relationship_name="certificates",
             certificate_requests=REQUESTS,
-            private_key=tls_certificates.PrivateKey(raw=KEY),
+            private_key=tls_certificates_testing.DEFAULT_PRIVATE_KEY,
         )
         framework.observe(self.on.update_status, self._reconcile)
 

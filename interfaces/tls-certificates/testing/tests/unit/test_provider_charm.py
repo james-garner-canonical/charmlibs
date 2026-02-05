@@ -19,7 +19,6 @@ import ops.testing
 
 import charmlibs.interfaces.tls_certificates as tls_certificates
 import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
-from charmlibs.interfaces.tls_certificates_testing._raw import KEY, CERT
 
 META = {
     "name": "provider",
