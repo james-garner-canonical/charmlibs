@@ -10,7 +10,7 @@ import typing
 
 from ops import testing
 
-from charmlibs.interfaces import tls_certificates  # pyright: ignore[reportMissingTypeStubs]
+from charmlibs.interfaces import tls_certificates
 
 from . import _raw
 

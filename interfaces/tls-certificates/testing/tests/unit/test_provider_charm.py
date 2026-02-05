@@ -17,8 +17,11 @@
 import ops
 import ops.testing
 
-import charmlibs.interfaces.tls_certificates as tls_certificates
-import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
+# we skip sorting these imports because ruff wants to use:
+# from charmlibs.interfaces import tls_certificates, tls_certificates_testing
+# but this breaks pyright's ability to find the second and subsequent namespace package
+from charmlibs.interfaces import tls_certificates  # isort: skip
+from charmlibs.interfaces import tls_certificates_testing
 
 META = {
     "name": "provider",
