@@ -64,7 +64,7 @@ ansi_filter = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 def _cache_init(func: Callable[_P, _T]) -> Callable[_P, _T]:
     def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:
-        if _Cache.cache is None:
+        if _Cache.cache is None:  # pyright: ignore[reportUnnecessaryComparison]
             _Cache.cache = SnapCache()
         return func(*args, **kwargs)
 

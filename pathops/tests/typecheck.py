@@ -35,3 +35,13 @@ def typecheck_local_path_implemnents_protocol(path: LocalPath) -> None:
 
 def typecheck_local_path_is_pathlib_path(path: LocalPath) -> None:
     _requires_path(path)
+
+
+def typecheck_container_path_is_compatible_with_protocol() -> None:
+    class SubClass(ContainerPath, PathProtocol):  # pyright: ignore[reportUnusedClass]
+        pass
+
+
+def typecheck_local_path_is_compatible_with_protocol() -> None:
+    class SubClass(LocalPath, PathProtocol):  # pyright: ignore[reportUnusedClass]
+        pass
