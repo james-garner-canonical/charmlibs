@@ -1,8 +1,6 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Source code of ``tls_certificates_interface.tls_certificates`` v4.22."""
-
 from __future__ import annotations
 
 import datetime
