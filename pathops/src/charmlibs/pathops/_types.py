@@ -22,7 +22,7 @@ from . import _constants
 
 if typing.TYPE_CHECKING:
     import os
-    from collections.abc import Generator, Sequence
+    from collections.abc import Iterator, Sequence
 
     from typing_extensions import Self
 
@@ -244,7 +244,7 @@ class PathProtocol(typing.Protocol):
         """
         ...
 
-    def iterdir(self) -> Generator[Self]:
+    def iterdir(self) -> Iterator[Self]:
         """Yield objects of the same type corresponding to the directory's contents.
 
         There are no guarantees about the order of the children. The special entries
@@ -261,7 +261,7 @@ class PathProtocol(typing.Protocol):
     # NOTE: Not supported -- (Python 3.12) ``case_sensitive`` argument
     # NOTE: Not supported -- (Python 3.13) ``pattern`` can be path-like
     # NOTE: Not supported -- (Python 3.13) ``recurse_symlinks``
-    def glob(self, pattern: str) -> Generator[Self]:
+    def glob(self, pattern: str) -> Iterator[Self]:
         r"""Iterate over this directory and yield all paths matching the provided pattern.
 
         For example, ``path.glob('*.txt')``, ``path.glob('*/foo.txt')``.
