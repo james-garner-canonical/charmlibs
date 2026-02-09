@@ -28,7 +28,7 @@ from xml.etree import ElementTree
 ####################
 
 if typing.TYPE_CHECKING:
-    from typing import Iterable
+    from collections.abc import Iterable
 
     import sphinx.application
 
