@@ -23,7 +23,6 @@ Examples:
         app: {"store_name": "test-store-name"}
 """
 
-from typing import Dict, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, validator
@@ -38,14 +37,14 @@ class OpenFGAProviderData(BaseModel):
         description=("The URL of the HTTP API."),
         title="HTTP URL",
     )
-    token_secret_id: Optional[str] = Field(
+    token_secret_id: str | None = Field(
         description=(
             "Secret ID of the preshared token to be used to connect to the OpenFGA service."
         ),
         title="Secret ID of the OpenFGA token",
         default=None,
     )
-    token: Optional[str] = Field(
+    token: str | None = Field(
         description=(
             "The preshared token to be used to connect to the OpenFGA "
             "service, to be used when juju secrets are not available."
@@ -53,7 +52,7 @@ class OpenFGAProviderData(BaseModel):
         title="The OpenFGA token",
         default=None,
     )
-    store_id: Optional[str] = Field(
+    store_id: str | None = Field(
         description="ID of the authentication store that was created.",
         title="OpenFGA store ID",
         examples=["01GK13VYZK62Q1T0X55Q2BHYD6"],
@@ -61,7 +60,7 @@ class OpenFGAProviderData(BaseModel):
     )
 
     @validator("token_secret_id", pre=True)
-    def validate_token(cls, v: str, values: Dict) -> str:  # noqa: N805
+    def validate_token(cls, v: str, values: dict) -> str:  # noqa: N805
         """Validate token_secret_id arg."""
         if not v and not values["token"]:
             raise ValueError("invalid scheme: neither of token and token_secret_id were defined")

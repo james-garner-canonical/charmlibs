@@ -46,7 +46,6 @@ Examples:
             }
 """
 
-from typing import List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, IPvAnyAddress, IPvAnyNetwork
@@ -60,15 +59,15 @@ class Route(BaseModel):
 class IPNetwork(BaseModel):
     network: IPvAnyNetwork
     gateway: IPvAnyAddress
-    routes: Optional[List[Route]]
+    routes: list[Route] | None
 
 
 class IPRouterProviderAppData(BaseModel):
-    networks: List[IPNetwork]
+    networks: list[IPNetwork]
 
 
 class IPRouterRequirerAppData(BaseModel):
-    networks: List[IPNetwork]
+    networks: list[IPNetwork]
 
 
 class ProviderSchema(DataBagSchema):

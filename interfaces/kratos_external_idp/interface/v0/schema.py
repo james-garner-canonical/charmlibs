@@ -29,7 +29,6 @@ Examples:
 
 import textwrap
 from enum import Enum
-from typing import List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
@@ -69,9 +68,9 @@ class ExternalIdpProvider(BaseModel):
     client_secret: str
     secret_backend: SecretBackend = "relation"
     provider: Provider
-    scope: Optional[str]
-    provider_id: Optional[str]
-    jsonnet_mapper: Optional[str] = Field(
+    scope: str | None
+    provider_id: str | None
+    jsonnet_mapper: str | None = Field(
         description=(
             "A jsonnet file that will be used to map the external claims to Kratos' claims. "
             "For more info see https://www.ory.sh/docs/kratos/reference/jsonnet."
@@ -97,11 +96,11 @@ class ExternalIdpProvider(BaseModel):
             )
         ],
     )
-    tenant_id: Optional[str]
-    private_key: Optional[str]
-    private_key_id: Optional[str]
-    team_id: Optional[str]
-    issuer_url: Optional[str]
+    tenant_id: str | None
+    private_key: str | None
+    private_key_id: str | None
+    team_id: str | None
+    issuer_url: str | None
 
     @field_validator("tenant_id")
     def provider_must_be_microsoft(cls, v, info):
@@ -131,7 +130,7 @@ class ExternalIdpProvider(BaseModel):
 
 
 class KratosExternalIdpProviderData(BaseModel):
-    providers: List[ExternalIdpProvider]
+    providers: list[ExternalIdpProvider]
 
 
 class ProviderSchema(DataBagSchema):
@@ -166,7 +165,7 @@ class ExternalIdpRequirer(BaseModel):
 
 
 class KratosExternalIdpRequirerData(BaseModel):
-    providers: List[ExternalIdpRequirer]
+    providers: list[ExternalIdpRequirer]
 
 
 class RequirerSchema(DataBagSchema):

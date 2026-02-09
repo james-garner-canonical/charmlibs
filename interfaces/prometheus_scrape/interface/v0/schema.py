@@ -56,7 +56,6 @@ Examples:
         }
 """
 
-from typing import Dict, List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
@@ -69,25 +68,25 @@ class AlertRuleModel(BaseModel):
         alias="for",
         description="The duration for which the conditions must be true for the alert to be firing.",
     )
-    labels: Dict[str, str] = Field(description="Labels associated with the alert rule.")
-    annotations: Dict[str, str] = Field(description="Annotations associated with the alert rule.")
+    labels: dict[str, str] = Field(description="Labels associated with the alert rule.")
+    annotations: dict[str, str] = Field(description="Annotations associated with the alert rule.")
 
 
 class AlertGroupModel(BaseModel):
     name: str = Field(description="The name of the alert group.")
-    rules: List[AlertRuleModel] = Field(description="List of alert rules within the group.")
+    rules: list[AlertRuleModel] = Field(description="List of alert rules within the group.")
 
 
 class AlertRulesModel(BaseModel):
-    groups: List[AlertGroupModel] = Field(description="List of alert rule groups.")
+    groups: list[AlertGroupModel] = Field(description="List of alert rule groups.")
 
 
 class ScrapeStaticConfigModel(BaseModel):
     class Config:
         extra = "allow"
 
-    targets: List[str] = Field(description='List of scrape targets. Accepts wildcard ("*")')
-    labels: Optional[Dict[str, str]] = Field(
+    targets: list[str] = Field(description='List of scrape targets. Accepts wildcard ("*")')
+    labels: dict[str, str] | None = Field(
         description="Optional labels for the scrape targets", default=None
     )
 
@@ -96,12 +95,12 @@ class ScrapeJobModel(BaseModel):
     class Config:
         extra = "allow"
 
-    job_name: Optional[str] = Field(
+    job_name: str | None = Field(
         description="Name of the Prometheus scrape job, each job must be given a unique name &  should be a fixed string (e.g. hardcoded literal)",
         default=None,
     )
-    metrics_path: Optional[str] = Field(description="Path for metrics scraping.", default=None)
-    static_configs: List[ScrapeStaticConfigModel] = Field(
+    metrics_path: str | None = Field(description="Path for metrics scraping.", default=None)
+    static_configs: list[ScrapeStaticConfigModel] = Field(
         description="List of static configurations for scrape targets."
     )
 
@@ -122,7 +121,7 @@ class ApplicationDataModel(BaseModel):
         description="Alert rules provided by the charm. By default, loaded from "
         "`<charm_parent_dir>/prometheus_alert_rules`."
     )
-    scrape_jobs: Json[List[ScrapeJobModel]] = Field(
+    scrape_jobs: Json[list[ScrapeJobModel]] = Field(
         description="List of Prometheus scrape job configurations specifying metrics scraping targets."
     )
     scrape_metadata: Json[ScrapeMetadataModel] = Field(
@@ -142,7 +141,7 @@ class UnitDataModel(BaseModel):
         description="The name provided by the unit for Prometheus scraping. "
         "This name uniquely identifies the unit as a target for Prometheus to collect metrics data."
     )
-    prometheus_scrape_unit_path: Optional[str] = Field(
+    prometheus_scrape_unit_path: str | None = Field(
         description="An optional path provided by the unit for Prometheus scraping. "
         "It is present when the provider charm is backed by an Ingress or a Proxy."
     )

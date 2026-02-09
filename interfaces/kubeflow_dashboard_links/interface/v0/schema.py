@@ -17,7 +17,6 @@ Examples:
             ]
 """
 
-from typing import List
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel
@@ -50,4 +49,4 @@ class DashboardItem(BaseModel):
 class RequirerSchema(DataBagSchema):
     """Requirer schema for Ingress."""
 
-    app: List[DashboardItem]
+    app: list[DashboardItem]

@@ -6,14 +6,13 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-from typing import List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import AnyUrl, BaseModel, Field
 
 
 class LdapProviderData(BaseModel):
-    urls: List[AnyUrl] = Field(
+    urls: list[AnyUrl] = Field(
         description="List of LDAP URLs",
         title="LDAP URLs",
         example=["ldap://ldap.canonical.com:3893", "ldap://ldap.ubuntu.com:3893"],
@@ -45,10 +44,10 @@ class LdapProviderData(BaseModel):
 
 
 class LdapRequirerData(BaseModel):
-    user: Optional[str] = Field(
+    user: str | None = Field(
         description="The user name provided by the requirer charmed operator",
     )
-    group: Optional[str] = Field(
+    group: str | None = Field(
         description="The group name provided by the requirer charmed operator",
     )
 

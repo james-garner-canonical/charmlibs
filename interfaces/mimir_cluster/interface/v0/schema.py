@@ -42,7 +42,7 @@ class Scheme(str, enum.Enum):
 
 
 class MimirClusterProviderAppData(pydantic.BaseModel):
-    mimir_config: typing.Dict[str, typing.Any]
+    mimir_config: dict[str, typing.Any]
 
 
 class ProviderSchema(DataBagSchema):
@@ -68,7 +68,7 @@ class MimirClusterRequirerUnitData(pydantic.BaseModel):
 
 
 class MimirClusterRequirerAppData(pydantic.BaseModel):
-    roles: typing.List[MimirRole]
+    roles: list[MimirRole]
 
 
 class RequirerSchema(DataBagSchema):
