@@ -13,7 +13,6 @@ Examples:
         }
 """
 
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, IPvAnyAddress
 

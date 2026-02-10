@@ -5,7 +5,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, SecretStr
 
