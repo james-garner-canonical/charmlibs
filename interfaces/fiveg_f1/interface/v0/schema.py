@@ -26,10 +26,10 @@ Examples:
 """
 
 from dataclasses import dataclass
-from typing import Optional, conlist
+from typing import Optional
 
 from interface_tester.schema_base import DataBagSchema
-from pydantic import BaseModel, Field, IPvAnyAddress
+from pydantic import BaseModel, Field, IPvAnyAddress, conlist
 
 
 @dataclass
