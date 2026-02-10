@@ -16,6 +16,9 @@ on:
 
 permissions: {}
 
+env:
+  INTERFACE: ${{ inputs.interface }}
+
 jobs:
   init:
     runs-on: ubuntu-latest
@@ -29,14 +32,14 @@ jobs:
       - name: Check schema can be run
         run: |
           set -xueo pipefail
-          .scripts/ls.py interfaces --regex 'interfaces/${{ inputs.interface }}' --output schema_path \
+          .scripts/ls.py interfaces --regex "interfaces/$INTERFACE" --output schema_path \
             | jq -r '.[].schema_path' \
             | xargs uv run --no-project --with-requirements interface-test-requirements.txt
       - name: Define interface test matrix
         id: include
         run: |
           set -xueo pipefail
-          INCLUDE=$(.scripts/get-interface-test-targets.py interfaces/${{ inputs.interface }})
+          INCLUDE=$(.scripts/get-interface-test-targets.py "interfaces/$INTERFACE")
           echo "$INCLUDE" | jq  # logging
           echo "result=$INCLUDE" >> "$GITHUB_OUTPUT"
 
@@ -57,7 +60,7 @@ jobs:
         run: |
           set -xueo pipefail
           .scripts/run-interface-tests.py \
-            ${{ inputs.interface }} \
+            "$INTERFACE" \
             ${{ matrix.version }} \
             ${{ matrix.role }} \
             ${{ matrix.charm_name }} \
