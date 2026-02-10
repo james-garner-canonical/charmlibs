@@ -29,13 +29,15 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v7
-      - name: Check schema can be run
+      - name: Find schema path
+        id: schema
         run: |
           set -xueo pipefail
           SCHEMA=$(.scripts/ls.py interfaces --regex "interfaces/$INTERFACE" --output schema_path | jq -r '.[].schema_path')
-          if [[ -n "$SCHEMA" ]]; then
-            uv run --no-project --with-requirements interface-test-requirements.txt "$SCHEMA"
-          fi
+          echo "result=$SCHEMA" >> "$GITHUB_OUTPUT"
+      - name: Check schema can be run if it exists
+        if: steps.schema.outputs.result
+        run: uv run --no-project --with-requirements interface-test-requirements.txt "$SCHEMA"
       - name: Define interface test matrix
         id: include
         run: |
