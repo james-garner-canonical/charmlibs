@@ -37,7 +37,9 @@ jobs:
           echo "result=$SCHEMA" >> "$GITHUB_OUTPUT"
       - name: Check schema can be run if it exists
         if: steps.schema.outputs.result
-        run: uv run --no-project --with-requirements interface-test-requirements.txt '${{ steps.schema.outputs.result }}'
+        run: uv run --no-project --with-requirements interface-test-requirements.txt "$SCHEMA"
+        env:
+          SCHEMA: ${{ steps.schema.outputs.result }}
       - name: Define interface test matrix
         id: include
         run: |
