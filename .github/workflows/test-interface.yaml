@@ -26,6 +26,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v7
+      - name: Check schema can be run
+        run: |
+          set -xueo pipefail
+          .scripts/ls.py interfaces --regex 'interfaces/${{ inputs.interface }}' --output schema_path \
+            | jq -r '.[].schema_path' \
+            | xargs uv run --no-project --with-requirements interface-test-requirements.txt
       - name: Define interface test matrix
         id: include
         run: |
