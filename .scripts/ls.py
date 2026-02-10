@@ -66,6 +66,7 @@ class Info:
     summary: str = ''
     description: str = ''
     status: str = ''
+    schema_path: str = ''
 
     def to_dict(self, *fields: str) -> dict[str, str]:
         """Return dictionary containing only specified fields."""
@@ -82,6 +83,7 @@ def _main() -> None:
     parser.add_argument('--exclude-placeholders', action='store_true')
     parser.add_argument('--only-if-version-changed', action='store_true')
     parser.add_argument('--indent-json', action='store_true')
+    parser.add_argument('--regex', default=None)
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         '--output', action='append', choices=[f.name for f in dataclasses.fields(Info)]
@@ -96,6 +98,7 @@ def _main() -> None:
         include_examples=not args.exclude_examples,
         include_placeholders=not args.exclude_placeholders,
         only_if_version_changed=args.only_if_version_changed,
+        regex=args.regex,
         output=args.output or [single_output],
     )
     if args.output:
@@ -115,6 +118,7 @@ def _ls(
     only_if_version_changed: bool,
     include_examples: bool,
     include_placeholders: bool,
+    regex: str | None,
     output: list[str],
 ) -> list[Info]:
     """Return info about directories matching the category, filtered based on the other options.
@@ -132,6 +136,7 @@ def _ls(
             Typically included for testing, but excluded from docs and publishing.
         include_placeholders: Whether to include the namespace placeholder packages.
             Typically included for testing and publishing, but excluded from docs.
+        regex: Regular expression to match dirs on, or None to skip matching and include all.
         output: List of fields to include in the output, one or more of
             'name', 'path', or 'version'
     """
@@ -143,9 +148,9 @@ def _ls(
     with _snapshot_repo(new_ref) as root:
         # Collect packages or interfaces.
         if category == 'packages':
-            dirs = _packages(root, include=include)
+            dirs = _packages(root, include=include, regex=regex)
         elif category == 'interfaces':
-            dirs = _interfaces(root, include=include)
+            dirs = _interfaces(root, include=include, regex=regex)
         else:
             raise ValueError(f'Unknown value for `category` {category!r}')
         # Filter based on changes.
@@ -174,11 +179,13 @@ def _ls(
                 info.docs_url = _get_docs_url(category, root, path)
             if 'status' in output:
                 info.status = _get_status(category, root, path)
+            if 'schema_path' in output:
+                info.schema_path = _get_schema_path_str(category, root, path)
             infos.append(info)
         return infos
 
 
-def _packages(root: pathlib.Path, include: list[str]) -> list[pathlib.Path]:
+def _packages(root: pathlib.Path, include: list[str], regex: str | None) -> list[pathlib.Path]:
     """Iterate over package directories in the repository.
 
     Returns any directory starting with [a-z] from the root and from the 'interfaces'
@@ -189,7 +196,12 @@ def _packages(root: pathlib.Path, include: list[str]) -> list[pathlib.Path]:
     for r in root, root / 'interfaces':
         paths.update(r.glob(r'[a-z]*'))
         paths.update(r / i for i in include)
-    return sorted(path.relative_to(root) for path in paths if _is_package(path))
+    return sorted(
+        path.relative_to(root)
+        for path in paths
+        if (regex is None or re.fullmatch(regex, str(path.relative_to(root))))
+        and _is_package(path)
+    )
 
 
 def _is_package(path: pathlib.Path) -> bool:
@@ -200,7 +212,7 @@ def _is_package(path: pathlib.Path) -> bool:
     return 'project' in tomllib.loads(pyproject_toml.read_text())
 
 
-def _interfaces(root: pathlib.Path, include: list[str]) -> list[pathlib.Path]:
+def _interfaces(root: pathlib.Path, include: list[str], regex: str | None) -> list[pathlib.Path]:
     """Iterate over interface directories in the repository.
 
     Returns any directory starting with [a-z] from the interfaces sub-directory, as well as any
@@ -209,7 +221,12 @@ def _interfaces(root: pathlib.Path, include: list[str]) -> list[pathlib.Path]:
     interfaces_root = root / 'interfaces'
     paths: set[pathlib.Path] = {*interfaces_root.glob(r'[a-z]*')}
     paths.update(interfaces_root / path for path in include)
-    return sorted(path.relative_to(root) for path in paths if _is_interface(path))
+    return sorted(
+        path.relative_to(root)
+        for path in paths
+        if (regex is None or re.fullmatch(regex, str(path.relative_to(root))))
+        and _is_interface(path)
+    )
 
 
 def _is_interface(path: pathlib.Path) -> bool:
@@ -347,6 +364,13 @@ def _get_status(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
         return ''
     assert category == 'interfaces'
     return _interface_yaml(path, root=root).get('status', '').strip()
+
+
+def _get_schema_path_str(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
+    if category == 'packages':
+        return ''
+    assert category == 'interfaces'
+    return str(path / 'interface' / f'v{_get_interface_version(path, root=root)}' / 'schema.py')
 
 
 def _get_dist_name(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT) -> str:
