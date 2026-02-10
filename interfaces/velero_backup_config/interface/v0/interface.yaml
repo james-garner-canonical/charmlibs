@@ -33,4 +33,4 @@ providers:
       location: tests/interface_tests/conftest.py
       identifier: interface_tester
 
-maintainer: data-platform
+maintainer: analytics
