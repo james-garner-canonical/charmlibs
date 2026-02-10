@@ -201,7 +201,7 @@ def _interface_tests(target: _Target, keep_tempdir: bool = False) -> int:
         pytest = [
             'uvx',
             '--with=setuptools',
-            '--with-requirements={_REPO_ROOT / "interface-test-requirements.txt"}',
+            f'--with-requirements={_REPO_ROOT / "interface-test-requirements.txt"}',
             '--with-requirements=requirements.txt',
             'pytest',
             '-p',
