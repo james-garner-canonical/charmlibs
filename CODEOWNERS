@@ -38,6 +38,7 @@
 /interfaces/cos_agent/ @canonical/observability
 /interfaces/database_backup/ @canonical/data-platform
 /interfaces/etcd_client/ @canonical/data-platform-nosql
+/interfaces/filesystem_info/ @canonical/hpc-team
 /interfaces/grafana_auth/ @canonical/observability
 /interfaces/grafana_datasource/ @canonical/observability
 /interfaces/grafana_datasource_exchange/ @canonical/observability
@@ -59,6 +60,8 @@
 /interfaces/tls-certificates/ @canonical/tls
 /interfaces/tracing/ @canonical/tracing-and-profiling
 /interfaces/velero_backup_config/ @canonical/analytics
+/interfaces/vault-autounseal/ @canonical/tls
+/interfaces/vault-kv/ @canonical/tls
 
 # interfaces/index.json doesn't require CODEOWNERS review as its contents are validated in CI
 /interfaces/index.json
