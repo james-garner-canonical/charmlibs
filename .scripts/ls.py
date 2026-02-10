@@ -370,7 +370,8 @@ def _get_schema_path_str(category: str, root: pathlib.Path, path: pathlib.Path) 
     if category == 'packages':
         return ''
     assert category == 'interfaces'
-    return str(path / 'interface' / f'v{_get_interface_version(path, root=root)}' / 'schema.py')
+    schema = path / 'interface' / f'v{_get_interface_version(path, root=root)}' / 'schema.py'
+    return schema if schema.exists() else ''
 
 
 def _get_dist_name(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT) -> str:

@@ -32,9 +32,10 @@ jobs:
       - name: Check schema can be run
         run: |
           set -xueo pipefail
-          .scripts/ls.py interfaces --regex "interfaces/$INTERFACE" --output schema_path \
-            | jq -r '.[].schema_path' \
-            | xargs uv run --no-project --with-requirements interface-test-requirements.txt
+          SCHEMA=$(.scripts/ls.py interfaces --regex "interfaces/$INTERFACE" --output schema_path | jq -r '.[].schema_path')
+          if [[ -n "$SCHEMA" ]]; then
+            uv run --no-project --with-requirements interface-test-requirements.txt "$SCHEMA"
+          fi
       - name: Define interface test matrix
         id: include
         run: |
