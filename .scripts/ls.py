@@ -196,12 +196,9 @@ def _packages(root: pathlib.Path, include: list[str], regex: str | None) -> list
     for r in root, root / 'interfaces':
         paths.update(r.glob(r'[a-z]*'))
         paths.update(r / i for i in include)
-    return sorted(
-        path.relative_to(root)
-        for path in paths
-        if (regex is None or re.fullmatch(regex, str(path.relative_to(root))))
-        and _is_package(path)
-    )
+    if regex is not None:
+        paths = {path for path in paths if re.fullmatch(regex, str(path.relative_to(root)))}
+    return sorted(path.relative_to(root) for path in paths if _is_package(path))
 
 
 def _is_package(path: pathlib.Path) -> bool:
@@ -221,12 +218,9 @@ def _interfaces(root: pathlib.Path, include: list[str], regex: str | None) -> li
     interfaces_root = root / 'interfaces'
     paths: set[pathlib.Path] = {*interfaces_root.glob(r'[a-z]*')}
     paths.update(interfaces_root / path for path in include)
-    return sorted(
-        path.relative_to(root)
-        for path in paths
-        if (regex is None or re.fullmatch(regex, str(path.relative_to(root))))
-        and _is_interface(path)
-    )
+    if regex is not None:
+        paths = {path for path in paths if re.fullmatch(regex, str(path.relative_to(root)))}
+    return sorted(path.relative_to(root) for path in paths if _is_interface(path))
 
 
 def _is_interface(path: pathlib.Path) -> bool:
