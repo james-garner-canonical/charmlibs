@@ -19,20 +19,18 @@ Examples:
         app: <empty>
 """
 
-from typing import List, Optional
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class AuthProxyRequirer(BaseModel):
-    protected_urls: List[AnyHttpUrl] = Field(
+    protected_urls: list[AnyHttpUrl] = Field(
         description="List of urls to be protected by Identity and Access Proxy."
     )
-    allowed_endpoints: Optional[List[str]] = Field(
+    allowed_endpoints: list[str] | None = Field(
         description="List of endpoints that are allowed to bypass authentication."
     )
-    headers: Optional[List[str]] = Field(
+    headers: list[str] | None = Field(
         description="List of headers to be returned upon a successful authentication."
     )
 

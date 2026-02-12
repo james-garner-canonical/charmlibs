@@ -19,24 +19,22 @@ Examples:
         }
 """
 
-from typing import List, Optional
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
 
 
 class ForwardAuthProvider(BaseModel):
     decisions_address: str = Field(description="The internal decisions endpoint address.")
-    app_names: List[str] = Field(
+    app_names: list[str] = Field(
         description="List of names of applications requesting to be protected by Identity and Access Proxy."
     )
-    headers: Optional[List[str]] = Field(
+    headers: list[str] | None = Field(
         description="List of headers to copy from the authentication server response and set on forwarded requests."
     )
 
 
 class ForwardAuthRequirer(BaseModel):
-    ingress_app_names: Optional[List[str]] = Field(
+    ingress_app_names: list[str] | None = Field(
         description="List of names of applications that are related via ingress."
     )
 

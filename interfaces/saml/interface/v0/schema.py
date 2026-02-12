@@ -38,14 +38,12 @@ Examples:
              }
 """
 
-from typing import Optional
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class SamlProviderData(BaseModel):
-    metadata_url: Optional[AnyHttpUrl] = Field(
+    metadata_url: AnyHttpUrl | None = Field(
         description="URL to the IdP's metadata.",
         title="Metadata URL",
         examples=["https://login.ubuntu.com/saml/metadata"],
@@ -65,37 +63,37 @@ class SamlProviderData(BaseModel):
         title="SSO REDIRECT binding",
         examples=["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"],
     )
-    single_sign_on_service_post_url: Optional[AnyHttpUrl] = Field(
+    single_sign_on_service_post_url: AnyHttpUrl | None = Field(
         description="URL target of the IdP where the Authentication POST Request Message will be sent.",
         title="SSO POST response URL",
         examples=["https://login.ubuntu.com/saml/"],
     )
-    single_sign_on_service_post_binding: Optional[str] = Field(
+    single_sign_on_service_post_binding: str | None = Field(
         description="SAML protocol binding to be used when returning the POST <Response> message.",
         title="SSO POST binding",
         examples=["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Post"],
     )
-    single_logout_service_url: Optional[AnyHttpUrl] = Field(
+    single_logout_service_url: AnyHttpUrl | None = Field(
         description="URL Location where the <LogoutRequest> from the IdP will be sent (IdP-initiated logout).",
         title="SP Logout URL",
         examples=["https://example.com/logout"],
     )
-    single_logout_service_redirect_response_url: Optional[AnyHttpUrl] = Field(
+    single_logout_service_redirect_response_url: AnyHttpUrl | None = Field(
         description="URL Location where the REDIRECT <LogoutResponse> from the IdP will sent (SP-initiated logout, reply): only specify if different from url parameter.",
         title="SSO logout REDIRECT response URL",
         examples=["https://example.com/logout"],
     )
-    single_logout_service_redirect_binding: Optional[str] = Field(
+    single_logout_service_redirect_binding: str | None = Field(
         description="SAML protocol binding to be used when returning the REDIRECT <Response> message.",
         title="SSO logout REDIRECT binding",
         examples=["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"],
     )
-    single_logout_service_post_response_url: Optional[AnyHttpUrl] = Field(
+    single_logout_service_post_response_url: AnyHttpUrl | None = Field(
         description="URL Location where the POST <LogoutResponse> from the IdP will sent (SP-initiated logout, reply): only specify if different from url parameter.",
         title="SSO logout POST response URL",
         examples=["https://example.com/logout"],
     )
-    single_logout_service_post_binding: Optional[str] = Field(
+    single_logout_service_post_binding: str | None = Field(
         description="SAML protocol binding to be used when returning the POST <Response> message.",
         title="SSO logout POST binding",
         examples=["urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Post"],

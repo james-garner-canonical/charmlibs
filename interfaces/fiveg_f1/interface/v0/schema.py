@@ -26,7 +26,6 @@ Examples:
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, IPvAnyAddress, conlist
@@ -52,7 +51,7 @@ class PLMNConfig:
         ge=0,
         le=255,
     )
-    sd: Optional[int] = Field(
+    sd: int | None = Field(
         description="Slice Differentiator",
         default=None,
         examples=[1],
