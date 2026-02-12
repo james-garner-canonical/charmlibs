@@ -1687,6 +1687,7 @@ class TestTLSCertificatesRequiresV4:
         state_out = self.ctx.run(self.ctx.on.relation_changed(certificates_relation), state_in)
 
         self.ctx.run(self.ctx.on.action("get-request-errors"), state_out)
+        assert self.ctx.action_results is not None
         errors = self.ctx.action_results["errors"]
         assert len(errors) == 2
         assert errors[0]["code"] == 101
@@ -1716,6 +1717,7 @@ class TestTLSCertificatesRequiresV4:
 
         state_out = self.ctx.run(self.ctx.on.action("get-private-key-secret-id"), state_in)
 
+        assert self.ctx.action_results is not None
         result_secret_id = self.ctx.action_results["secret-id"]
         assert result_secret_id != ""
         assert result_secret_id.startswith("secret:")

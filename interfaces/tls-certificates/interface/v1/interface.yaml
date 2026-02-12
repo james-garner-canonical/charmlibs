@@ -1,6 +1,12 @@
-name: tls_certificates
+name: tls-certificates
 version: 1
 status: published
+lib: charmlibs.interfaces.tls_certificates
+summary: Securely request TLS certificates.
+description:
+  The `tls-certificates` interface allows charms to securely request and receive TLS certificates.
+  The requirer charm is responsible for its private key and defining its certificate signing requests (CSRs).
+  The provider charm delivers the certificate for each request, including the CA chain and CA certificate.
 
 providers: []
 requirers: []
