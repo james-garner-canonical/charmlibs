@@ -36,8 +36,8 @@
 /interfaces/grafana_auth/ @canonical/observability
 /interfaces/grafana_datasource/ @canonical/observability
 /interfaces/grafana_datasource_exchange/ @canonical/observability
-/interfaces/k8s-service/ @canonical/is-platform-services-kubeflow
-/interfaces/kubeflow_dashboard_links/ @canonical/is-platform-services-kubeflow
+/interfaces/k8s-service/ @canonical/mlops
+/interfaces/kubeflow_dashboard_links/ @canonical/mlops
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/mimir_cluster/ @canonical/observability
 /interfaces/profiling/ @canonical/tracing-and-profiling
