@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
@@ -19,10 +19,10 @@ class GrafanaSourceData(BaseModel):
     type: str = Field(
         description="Type of the datasource.", examples=['tempo', 'loki', 'prometheus']
     )
-    extra_fields: Optional[Json[Any]] = Field(
+    extra_fields: Json[Any] | None = Field(
         description="Any datasource-type-specific additional configuration."
     )
-    secure_extra_fields: Optional[Json[Any]] = Field(
+    secure_extra_fields: Json[Any] | None = Field(
         description="Any secure datasource-type-specific additional configuration."
     )
 
@@ -51,7 +51,7 @@ class ProviderSchema(DataBagSchema):
 class GrafanaSourceRequirerAppData(BaseModel):
     """Application databag model for the requirer side of this interface."""
 
-    datasource_uids: Json[Dict[str, str]]
+    datasource_uids: Json[dict[str, str]]
     grafana_uid: str = Field(
         description="UID of the requirer application.",
         examples=['foo-0000-0000-0000-0000-grafana-1'],

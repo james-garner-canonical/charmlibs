@@ -32,7 +32,7 @@ from ops.jujuversion import JujuVersion
 from ops.model import Application, ModelError, Relation, SecretNotFoundError, Unit
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, MutableMapping
+    from collections.abc import Collection, Mapping, MutableMapping
 
 # legacy Charmhub-hosted lib ID, used at runtime in this lib for labels
 LIBID = "afd8c2bccf834997afce12c2706d2ede"
@@ -56,12 +56,12 @@ class _OWASPLogEvent:
     level: str
     description: str
     type: str = "security"
-    labels: dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict[str, str])
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str]:
         log_event = dict(asdict(self), **self.labels)
         log_event.pop("labels", None)
         return {k: v for k, v in log_event.items() if v is not None}
@@ -126,7 +126,7 @@ class _DatabagModel(pydantic.BaseModel):
     """Pydantic config."""
 
     @classmethod
-    def load(cls, databag: MutableMapping):
+    def load(cls, databag: Mapping[str, str]):
         """Load this model from a Juju databag."""
         if IS_PYDANTIC_V1:
             return cls._load_v1(databag)
@@ -154,17 +154,17 @@ class _DatabagModel(pydantic.BaseModel):
             raise DataValidationError(msg) from e
 
     @classmethod
-    def _load_v1(cls, databag: MutableMapping):
+    def _load_v1(cls, databag: Mapping[str, str]):
         """Load implementation for pydantic v1."""
         if cls._NEST_UNDER:
-            return cls.parse_obj(json.loads(databag[cls._NEST_UNDER]))
+            return cls.parse_obj(json.loads(databag[cls._NEST_UNDER]))  # pyright: ignore[reportDeprecated]
 
         try:
             data = {
                 k: json.loads(v)
                 for k, v in databag.items()
                 # Don't attempt to parse model-external values
-                if k in {f.alias for f in cls.__fields__.values()}
+                if k in {f.alias for f in cls.__fields__.values()}  # pyright: ignore[reportDeprecated]
             }
         except json.JSONDecodeError as e:
             msg = f"invalid databag contents: expecting json. {databag}"
@@ -178,7 +178,7 @@ class _DatabagModel(pydantic.BaseModel):
             logger.debug(msg, exc_info=True)
             raise DataValidationError(msg) from e
 
-    def dump(self, databag: MutableMapping | None = None, clear: bool = True):
+    def dump(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
         """Write the contents of this model to Juju databag.
 
         Args:
@@ -208,7 +208,7 @@ class _DatabagModel(pydantic.BaseModel):
         databag.update({k: json.dumps(v) for k, v in dct.items()})
         return databag
 
-    def _dump_v1(self, databag: MutableMapping | None = None, clear: bool = True):
+    def _dump_v1(self, databag: MutableMapping[str, str] | None = None, clear: bool = True):
         """Dump implementation for pydantic v1."""
         if clear and databag:
             databag.clear()
@@ -217,10 +217,10 @@ class _DatabagModel(pydantic.BaseModel):
             databag = {}
 
         if self._NEST_UNDER:
-            databag[self._NEST_UNDER] = self.json(by_alias=True, exclude_defaults=True)
+            databag[self._NEST_UNDER] = self.json(by_alias=True, exclude_defaults=True)  # pyright: ignore[reportDeprecated]
             return databag
 
-        dct = json.loads(self.json(by_alias=True, exclude_defaults=True))
+        dct = json.loads(self.json(by_alias=True, exclude_defaults=True))  # pyright: ignore[reportDeprecated]
         databag.update({k: json.dumps(v) for k, v in dct.items()})
 
         return databag
@@ -1162,6 +1162,24 @@ class CertificateRequestAttributes:
             and self.additional_critical_extensions == other.additional_critical_extensions
         )
 
+    def __hash__(self) -> int:
+        """Return hash of the CertificateRequestAttributes object."""
+        return hash((
+            self.common_name,
+            frozenset(self.sans_dns) if self.sans_dns else None,
+            frozenset(self.sans_ip) if self.sans_ip else None,
+            frozenset(self.sans_oid) if self.sans_oid else None,
+            self.email_address,
+            self.organization,
+            self.organizational_unit,
+            self.country_name,
+            self.state_or_province_name,
+            self.locality_name,
+            self.is_ca,
+            self.add_unique_id_to_subject_name,
+            tuple(self.additional_critical_extensions),
+        ))
+
     def is_valid(self) -> bool:
         """Validate the attributes of the certificate request.
 
@@ -1251,7 +1269,7 @@ class CertificateAvailableEvent(EventBase):
         self.ca = ca
         self.chain = chain
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, str]:
         """Return snapshot."""
         return {
             "certificate": str(self.certificate),
@@ -1260,7 +1278,7 @@ class CertificateAvailableEvent(EventBase):
             "chain": json.dumps([str(certificate) for certificate in self.chain]),
         }
 
-    def restore(self, snapshot: dict):
+    def restore(self, snapshot: dict[str, str]):
         """Restore snapshot."""
         self.certificate = Certificate.from_string(snapshot["certificate"])
         self.certificate_signing_request = CertificateSigningRequest.from_string(
@@ -1288,7 +1306,7 @@ class CertificateDeniedEvent(EventBase):
         self.certificate_signing_request = certificate_signing_request
         self.error = error
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, str]:
         """Return snapshot."""
         error_json = self.error.json() if IS_PYDANTIC_V1 else self.error.model_dump_json()  # type: ignore[attr-defined]
         return {
@@ -1296,7 +1314,7 @@ class CertificateDeniedEvent(EventBase):
             "error": error_json,
         }
 
-    def restore(self, snapshot: dict):
+    def restore(self, snapshot: dict[str, str]):
         """Restore snapshot."""
         self.certificate_signing_request = CertificateSigningRequest.from_string(
             snapshot["certificate_signing_request"]
@@ -1537,7 +1555,7 @@ def generate_certificate(
 def _extract_subject_name_attributes(
     attributes: CertificateRequestAttributes,
 ) -> x509.Name | None:
-    subject_name_attributes = []
+    subject_name_attributes: list[x509.NameAttribute[str | bytes]] = []
     if attributes.common_name:
         subject_name_attributes.append(
             x509.NameAttribute(x509.NameOID.COMMON_NAME, attributes.common_name)
@@ -1588,7 +1606,7 @@ def _generate_certificate_request_extensions(
     authority_key_identifier: bytes,
     csr: x509.CertificateSigningRequest,
     is_ca: bool,
-) -> list[x509.Extension]:
+) -> list[x509.Extension[x509.ExtensionType]]:
     """Generate a list of certificate extensions from a CSR and other known information.
 
     Args:
@@ -1599,7 +1617,7 @@ def _generate_certificate_request_extensions(
     Returns:
         List[x509.Extension]: List of extensions
     """
-    cert_extensions_list: list[x509.Extension] = [
+    cert_extensions_list: list[x509.Extension[x509.ExtensionType]] = [
         x509.Extension(
             oid=ExtensionOID.AUTHORITY_KEY_IDENTIFIER,
             value=x509.AuthorityKeyIdentifier(
@@ -1656,7 +1674,7 @@ def _generate_certificate_request_extensions(
 
 def _generate_subject_alternative_name_extension(
     csr: x509.CertificateSigningRequest,
-) -> x509.Extension | None:
+) -> x509.Extension[x509.ExtensionType] | None:
     sans: list[x509.GeneralName] = []
     try:
         loaded_san_ext = csr.extensions.get_extension_for_class(x509.SubjectAlternativeName)
@@ -1793,6 +1811,7 @@ class TLSCertificatesRequiresV4(Object):
         self._cleanup_certificate_requests()
         self._send_certificate_requests()
         self._find_available_certificates()
+        self._renew_expiring_certificates()
 
     def _mode_is_valid(self, mode: Mode) -> bool:
         return mode in [Mode.UNIT, Mode.APP]
@@ -1906,6 +1925,51 @@ class TLSCertificatesRequiresV4(Object):
         secret = self.charm.model.get_secret(label=self._get_private_key_secret_label())
         private_key = secret.get_content(refresh=True)["private-key"]
         return PrivateKey.from_string(private_key)
+
+    def get_private_key_secret_id(self) -> str | None:
+        """Get the secret ID for the library-generated private key.
+
+        This method provides access to the Juju secret ID containing the private key.
+
+        Returns:
+            The secret ID as a string if a library-generated private key secret exists,
+            None otherwise.
+
+        Returns None in the following cases:
+            - The private key was provided via the `private_key` parameter (no secret exists)
+            - No private key has not been generated yet
+            - In APP mode, when called from a non-leader unit
+
+        Note:
+            The secret ID is an opaque identifier and does not reveal the private key material.
+            However, it should still be treated as sensitive metadata - avoid logging it or
+            placing it in public locations.
+
+            The returned ID is stable as long as the private key is not regenerated.
+            If regenerate_private_key() is called, a new secret may be created and this ID
+            may change.
+
+            The secret content or metadata must never be directly modified,
+            Any modifications may lead to unexpected behavior.
+        """
+        if self._private_key:
+            logger.debug("Private key was provided externally, no secret exists")
+            return None
+
+        if self.mode == Mode.APP and not self.model.unit.is_leader():
+            logger.warning("Only the leader can access the private key secret ID in APP mode")
+            return None
+
+        if not self._private_key_generated():
+            logger.debug("No private key secret has been generated yet")
+            return None
+
+        try:
+            secret = self.charm.model.get_secret(label=self._get_private_key_secret_label())
+            return secret.get_info().id
+        except SecretNotFoundError:
+            logger.warning("Private key secret not found")
+            return None
 
     def _ensure_private_key(self) -> None:
         """Make sure there is a private key to be used.
@@ -2330,6 +2394,32 @@ class TLSCertificatesRequiresV4(Object):
                 logger.info(
                     "Removed CSR from relation data because it did not match the private key"
                 )
+
+    def _renew_expiring_certificates(self) -> None:
+        """Renew certificates approaching expiry that haven't been renewed yet.
+
+        This acts as a safety net for cases where secret_expired failed to trigger or complete.
+        Checks certificates at a threshold slightly after the configured renewal time but before
+        expiry to prevent downtime.
+        """
+        now = datetime.now(timezone.utc)
+        safety_threshold = min(0.99, self.renewal_relative_time + 0.05)
+
+        assigned_certificates, _ = self.get_assigned_certificates()
+
+        for provider_certificate in assigned_certificates:
+            cert = provider_certificate.certificate
+            validity_start = cert.validity_start_time
+            validity_end = cert.expiry_time
+            validity_period = validity_end - validity_start
+            safety_renewal_time = validity_start + (validity_period * safety_threshold)
+
+            if now >= safety_renewal_time and now < validity_end:
+                logger.warning(
+                    "Certificate approaching expiry but not renewed - "
+                    "triggering renewal as safety net"
+                )
+                self._renew_certificate_request(provider_certificate.certificate_signing_request)
 
     def _tls_relation_created(self) -> bool:
         relation = self.model.get_relation(self.relationship_name)

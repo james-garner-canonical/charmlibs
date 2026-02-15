@@ -16,6 +16,9 @@ on:
 
 permissions: {}
 
+env:
+  INTERFACE: ${{ inputs.interface }}
+
 jobs:
   init:
     runs-on: ubuntu-latest
@@ -26,11 +29,22 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v7
+      - name: Find schema path
+        id: schema
+        run: |
+          set -xueo pipefail
+          SCHEMA=$(.scripts/ls.py interfaces --regex "interfaces/$INTERFACE" --output schema_path | jq -r '.[].schema_path')
+          echo "result=$SCHEMA" >> "$GITHUB_OUTPUT"
+      - name: Check schema can be run if it exists
+        if: steps.schema.outputs.result
+        run: uv run --no-project --with-requirements interface-test-requirements.txt "$SCHEMA"
+        env:
+          SCHEMA: ${{ steps.schema.outputs.result }}
       - name: Define interface test matrix
         id: include
         run: |
           set -xueo pipefail
-          INCLUDE=$(.scripts/get-interface-test-targets.py interfaces/${{ inputs.interface }})
+          INCLUDE=$(.scripts/get-interface-test-targets.py "interfaces/$INTERFACE")
           echo "$INCLUDE" | jq  # logging
           echo "result=$INCLUDE" >> "$GITHUB_OUTPUT"
 
@@ -51,7 +65,7 @@ jobs:
         run: |
           set -xueo pipefail
           .scripts/run-interface-tests.py \
-            ${{ inputs.interface }} \
+            "$INTERFACE" \
             ${{ matrix.version }} \
             ${{ matrix.role }} \
             ${{ matrix.charm_name }} \
