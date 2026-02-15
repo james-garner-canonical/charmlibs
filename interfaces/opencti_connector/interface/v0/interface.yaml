@@ -49,5 +49,5 @@ requirers:
     url: https://www.github.com/canonical/opencti-operator
 
 
-maintainer: identity
+maintainer: platform-engineering
 

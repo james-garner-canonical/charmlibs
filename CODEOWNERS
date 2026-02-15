@@ -41,6 +41,7 @@
 /interfaces/milter/ @canonical/platform-engineering
 /interfaces/mimir_cluster/ @canonical/observability
 /interfaces/nginx-route/ @canonical/platform-engineering
+/interfaces/opencti_connector/ @canonical/platform-engineering
 /interfaces/profiling/ @canonical/tracing-and-profiling
 /interfaces/prometheus_remote_write/ @canonical/observability-core
 /interfaces/prometheus_scrape/ @canonical/observability-core
