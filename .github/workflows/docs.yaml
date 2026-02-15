@@ -15,9 +15,10 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# Disable concurrency for convenience while the link checker is disabled.
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   docchecks:
@@ -45,12 +46,14 @@ jobs:
         uses: canonical/documentation-workflows/spellcheck@6f9c05eae99ca9fff05250810bba2a71a380ebd1  # main
         with:
           working-directory: .docs
-      - name: Links
-        id: linkcheck-step
-        if: success() || failure()
-        run: |
-          set -xueo pipefail
-          uvx --from rust-just just docs linkcheck ${{ github.event_name != 'pull_request' && '--tag check-github-links' || '' }}
+      # Disable link checking until we get a more robust solution.
+      # The current approach often fails due to rate limiting and timeouts.
+      # - name: Links
+      #   id: linkcheck-step
+      #   if: success() || failure()
+      #   run: |
+      #     set -xueo pipefail
+      #     uvx --from rust-just just docs linkcheck ${{ github.event_name != 'pull_request' && '--tag check-github-links' || '' }}
       - name: Markdown lint
         id: markdown-step
         if: success() || failure()

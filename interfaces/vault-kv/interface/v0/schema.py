@@ -5,7 +5,7 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
@@ -36,7 +36,7 @@ class AppVaultKvRequirerSchema(BaseModel):
     mount_suffix: str = Field(
         description="Suffix to append to the mount name to get the KV mount."
     )
-    wrap_ttl: Optional[int] = Field(
+    wrap_ttl: int | None = Field(
         default=None,
         title="Wrap TTL",
         description=(

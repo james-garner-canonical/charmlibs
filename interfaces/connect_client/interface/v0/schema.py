@@ -5,8 +5,6 @@ It exposes two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-from typing import List, Optional
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
 
@@ -25,7 +23,7 @@ class ConnectProviderData(BaseModel):
         examples=["secret://59060ecc-0495-4a80-8006-5f1fc13fd783/cjqub6vubg2s77p3nio0"],
         title="Credentials Secret Name",
     )
-    secret_tls: Optional[str] = Field(
+    secret_tls: str | None = Field(
         None,
         alias="secret-tls",
         description="The name of the TLS secret to use. Leaving this empty will configure a client with TLS disabled. The secret contains [tls,tls-ca].",
@@ -41,7 +39,7 @@ class ConnectRequirerData(BaseModel):
         examples=["http://10.1.1.200:8080/route/to/plugins", PLUGIN_URL_NOT_REQUIRED],
         title="Plugin URL",
     )
-    requested_secrets: List[str] = Field(
+    requested_secrets: list[str] = Field(
         alias="requested-secrets",
         description="Any provider field which should be transfered as Juju Secret",
         examples=[["username", "password", "tls-ca"]],
