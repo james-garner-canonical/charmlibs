@@ -16,4 +16,4 @@ requirers:
     url: https://github.com/canonical/postfix-relay-operator
 
 
-maintainer: is-charms
+maintainer: platform-engineering
