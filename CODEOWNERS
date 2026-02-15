@@ -36,10 +36,13 @@
 /interfaces/azure_service_principal/ @canonical/data-platform
 /interfaces/azure_storage/ @canonical/data-platform
 /interfaces/certificate_transfer/ @canonical/tls
+/interfaces/cloudflared_route/ @canonical/platform-engineering 
 /interfaces/connect_client/ @canonical/data-platform-bigdata
 /interfaces/cos_agent/ @canonical/observability
 /interfaces/cos_agent/ @canonical/observability
+/interfaces/cos_agent/ @canonical/observability
 /interfaces/database_backup/ @canonical/data-platform
+/interfaces/dns_record/ @canonical/platform-engineering
 /interfaces/etcd_client/ @canonical/data-platform-nosql
 /interfaces/filesystem_info/ @canonical/hpc-team
 /interfaces/forward_auth @canonical/identity
@@ -60,10 +63,14 @@
 /interfaces/ldap @canonical/identity
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/login_ui_endpoints @canonical/identity
+/interfaces/milter/ @canonical/platform-engineering
+/interfaces/mimir_cluster/ @canonical/observability
 /interfaces/mimir_cluster/ @canonical/observability
 /interfaces/mongodb_client/ @canonical/data-platform-nosql
 /interfaces/mysql_client/ @canonical/data-platform-mysql
+/interfaces/nginx-route/ @canonical/platform-engineering
 /interfaces/oauth @canonical/identity
+/interfaces/opencti_connector/ @canonical/platform-engineering
 /interfaces/openfga @canonical/identity
 /interfaces/opensearch_client/ @canonical/data-platform-nosql
 /interfaces/postgresql_client/ @canonical/data-platform-postgresql
@@ -72,13 +79,19 @@
 /interfaces/prometheus_scrape/ @canonical/observability-core
 /interfaces/pyroscope_cluster/ @canonical/tracing-and-profiling
 /interfaces/s3/ @canonical/data-platform
+/interfaces/saml/ @canonical/platform-engineering
 /interfaces/slo/ @canonical/tracing-and-profiling
+/interfaces/smtp/ @canonical/platform-engineering
+/interfaces/tempo_cluster/ @canonical/tracing-and-profiling
 /interfaces/tempo_cluster/ @canonical/tracing-and-profiling
 /interfaces/tls-certificates/ @canonical/tls
+/interfaces/tls-certificates/ @canonical/tls
+/interfaces/tracing/ @canonical/tracing-and-profiling
 /interfaces/tracing/ @canonical/tracing-and-profiling
 /interfaces/vault-autounseal/ @canonical/tls
 /interfaces/vault-kv/ @canonical/tls
 /interfaces/velero_backup_config/ @canonical/analytics
+/interfaces/wazuh_api_client/ @canonical/platform-engineering
 
 # interfaces/index.json doesn't require CODEOWNERS review as its contents are validated in CI
 /interfaces/index.json
