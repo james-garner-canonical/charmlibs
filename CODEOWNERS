@@ -51,10 +51,12 @@
 /interfaces/grafana_datasource_exchange/ @canonical/observability
 /interfaces/hydra_endpoints @canonical/identity
 /interfaces/jwt/ @canonical/data-platform
+/interfaces/k8s-service/ @canonical/mlops
 /interfaces/kafka_client/ @canonical/data-platform-bigdata
 /interfaces/karapace_client/ @canonical/data-platform-bigdata
 /interfaces/kratos_external_idp @canonical/identity
 /interfaces/kratos_info @canonical/identity
+/interfaces/kubeflow_dashboard_links/ @canonical/mlops
 /interfaces/ldap @canonical/identity
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
 /interfaces/login_ui_endpoints @canonical/identity
