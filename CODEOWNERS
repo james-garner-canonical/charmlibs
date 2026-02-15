@@ -62,7 +62,6 @@
 /interfaces/mongodb_client/ @canonical/data-platform-nosql
 /interfaces/mysql_client/ @canonical/data-platform-mysql
 /interfaces/oauth @canonical/identity
-/interfaces/opencti_connector @canonical/identity
 /interfaces/openfga @canonical/identity
 /interfaces/opensearch_client/ @canonical/data-platform-nosql
 /interfaces/postgresql_client/ @canonical/data-platform-postgresql
