@@ -28,29 +28,43 @@
 /passwd/ @canonical/charmlibs-maintainers
 /pathops/ @canonical/charmlibs-maintainers
 /snap/ @canonical/charmlibs-maintainers
+/sysctl/ @canonical/charmlibs-maintainers
 /systemd/ @canonical/charmlibs-maintainers
 
 # charmlibs.interfaces packages (alphabetical)
+/interfaces/auth_proxy @canonical/identity
 /interfaces/azure_service_principal/ @canonical/data-platform
 /interfaces/azure_storage/ @canonical/data-platform
 /interfaces/certificate_transfer/ @canonical/tls
 /interfaces/connect_client/ @canonical/data-platform-bigdata
 /interfaces/cos_agent/ @canonical/observability
+/interfaces/cos_agent/ @canonical/observability
 /interfaces/database_backup/ @canonical/data-platform
 /interfaces/etcd_client/ @canonical/data-platform-nosql
 /interfaces/filesystem_info/ @canonical/hpc-team
+/interfaces/forward_auth @canonical/identity
+/interfaces/grafana_auth/ @canonical/observability
 /interfaces/grafana_auth/ @canonical/observability
 /interfaces/grafana_datasource/ @canonical/observability
+/interfaces/grafana_datasource/ @canonical/observability
 /interfaces/grafana_datasource_exchange/ @canonical/observability
+/interfaces/grafana_datasource_exchange/ @canonical/observability
+/interfaces/hydra_endpoints @canonical/identity
 /interfaces/jwt/ @canonical/data-platform
+/interfaces/k8s-service/ @canonical/mlops
 /interfaces/kafka_client/ @canonical/data-platform-bigdata
 /interfaces/karapace_client/ @canonical/data-platform-bigdata
-/interfaces/k8s-service/ @canonical/mlops
+/interfaces/kratos_external_idp @canonical/identity
+/interfaces/kratos_info @canonical/identity
 /interfaces/kubeflow_dashboard_links/ @canonical/mlops
+/interfaces/ldap @canonical/identity
 /interfaces/litmus_auth/ @canonical/tracing-and-profiling
+/interfaces/login_ui_endpoints @canonical/identity
 /interfaces/mimir_cluster/ @canonical/observability
 /interfaces/mongodb_client/ @canonical/data-platform-nosql
 /interfaces/mysql_client/ @canonical/data-platform-mysql
+/interfaces/oauth @canonical/identity
+/interfaces/openfga @canonical/identity
 /interfaces/opensearch_client/ @canonical/data-platform-nosql
 /interfaces/postgresql_client/ @canonical/data-platform-postgresql
 /interfaces/profiling/ @canonical/tracing-and-profiling
@@ -58,12 +72,13 @@
 /interfaces/prometheus_scrape/ @canonical/observability-core
 /interfaces/pyroscope_cluster/ @canonical/tracing-and-profiling
 /interfaces/s3/ @canonical/data-platform
+/interfaces/slo/ @canonical/tracing-and-profiling
 /interfaces/tempo_cluster/ @canonical/tracing-and-profiling
 /interfaces/tls-certificates/ @canonical/tls
 /interfaces/tracing/ @canonical/tracing-and-profiling
-/interfaces/velero_backup_config/ @canonical/analytics
 /interfaces/vault-autounseal/ @canonical/tls
 /interfaces/vault-kv/ @canonical/tls
+/interfaces/velero_backup_config/ @canonical/analytics
 
 # interfaces/index.json doesn't require CODEOWNERS review as its contents are validated in CI
 /interfaces/index.json
