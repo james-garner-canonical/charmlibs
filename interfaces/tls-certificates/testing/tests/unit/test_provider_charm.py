@@ -14,42 +14,16 @@
 
 """Tests for the TLS Certificates testing library from a provider charm perspective."""
 
-import ops
 import ops.testing
 
-# we skip sorting these imports because ruff wants to use:
-# from charmlibs.interfaces import tls_certificates, tls_certificates_testing
-# but this breaks pyright's ability to find the second and subsequent namespace package
-from charmlibs.interfaces import tls_certificates  # isort: skip
-from charmlibs.interfaces import tls_certificates_testing
-
-META = {
-    "name": "provider",
-    "provides": {"certificates": {"interface": "tls-certificates"}},
-}
-
-
-class ProviderCharm(ops.CharmBase):
-    """A minimal provider charm for testing the TLS Certificates interface."""
-
-    requests: list[tls_certificates.CertificateSigningRequest] | None = None
-
-    def __init__(self, framework: ops.Framework):
-        super().__init__(framework)
-        self.certificates = tls_certificates.TLSCertificatesProvidesV4(self, "certificates")
-        framework.observe(self.on.update_status, self._reconcile)
-
-    def _reconcile(self, _: ops.EventBase) -> None:
-        requests = self.certificates.get_certificate_requests()
-        if not requests:
-            return
-        # imagine we do something with the requests here, like sign them and provide certs back
-        self.requests = [r.certificate_signing_request for r in requests]
+import provider_charm
+from charmlibs.interfaces import tls_certificates as tls_certificates
+from charmlibs.interfaces import tls_certificates_testing as tls_certificates_testing
 
 
 def test_provider_no_relation():
     """Test provider charm without any relation - should be ready."""
-    ctx = ops.testing.Context(ProviderCharm, meta=META)
+    ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
     with ctx(ctx.on.update_status(), ops.testing.State()) as manager:
         manager.run()
     assert manager.charm.requests is None
@@ -57,7 +31,7 @@ def test_provider_no_relation():
 
 def test_provider_relation_empty():
     """Test provider charm when the relation is empty - should be ready."""
-    ctx = ops.testing.Context(ProviderCharm, meta=META)
+    ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
     relation = ops.testing.Relation("certificates", interface="tls-certificates")
     state = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state) as manager:
@@ -70,7 +44,7 @@ def test_provider_relation_has_request():
 
     Uses the testing library to populate the relation with a certificate request.
     """
-    ctx = ops.testing.Context(ProviderCharm, meta=META)
+    ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
     requests = [
         tls_certificates.CertificateRequestAttributes(common_name="example.com"),
         tls_certificates.CertificateRequestAttributes(common_name="eggsample.com"),
