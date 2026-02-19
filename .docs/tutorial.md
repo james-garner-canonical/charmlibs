@@ -66,6 +66,11 @@ Get started by running `just init`, and provide the requested information intera
 - The minimum Python version you'll support (e.g. `3.10` or `3.12`) -- the default of `3.10` is perfectly fine here.
 - The author information to display on PyPI (e.g. `The <YOUR TEAM NAME> team at Canonical`).
 
+````{tip}
+If you're working on an interface library, run `just interface init` instead.
+This will create the library directory under the `interfaces/` directory and set it up to use the `charmlibs.interfaces` namespace.
+````
+
 This creates a new directory for your library, named accordingly.
 The library itself just sets `__version__` to `0.0.0.dev0`, and the tests just check the version.
 
