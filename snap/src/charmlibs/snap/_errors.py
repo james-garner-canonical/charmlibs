@@ -27,3 +27,7 @@ class SnapNotFoundError(SnapError):
 
 class SnapAlreadyInstalledError(SnapError):
     pass
+
+
+class SnapNeedsClassicError(SnapError):
+    pass
