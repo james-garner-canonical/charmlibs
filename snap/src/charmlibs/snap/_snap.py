@@ -52,6 +52,11 @@ def _raise(status_code: int, result: dict[str, str]) -> None:
             raise _errors.SnapAlreadyInstalledError(result.get('value'))
         if kind == 'option-not-found':
             raise KeyError(result.get('value'))
+    elif status_code == 404:
+        kind = result.get('kind')
+        if kind == 'snap-not-found':
+            raise _errors.SnapNotFoundError(result.get('value'))
+
 
 
 def _get(path: str, params: dict[str, Any] | None = None) -> Any:
