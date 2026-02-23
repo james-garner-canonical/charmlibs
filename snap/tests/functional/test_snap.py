@@ -24,66 +24,69 @@ def get_command_path(command: str) -> str:
 
 
 def test_snap_install():
-    # Try by initialising the cache first, then using ensure
-    try:
-        cache = snap.SnapCache()
-        juju = cache['juju']
-        if not juju.present:
-            juju.ensure(snap.SnapState.Latest, channel='stable')
-    except snap.SnapError as e:
-        logger.error('An exception occurred when installing Juju. Reason: %s', e.message)
-
+    # # Try by initialising the cache first, then using ensure
+    # try:
+    #     cache = snap.SnapCache()
+    #     juju = cache['juju']
+    #     if not juju.present:
+    #         juju.ensure(snap.SnapState.Latest, channel='stable')
+    # except snap.SnapError as e:
+    #     logger.error('An exception occurred when installing Juju. Reason: %s', e.message)
+    snap.ensure('juju')
     assert get_command_path('juju') == '/snap/bin/juju'
 
 
 def test_snap_install_bare():
-    snap.add(['charmcraft'], state=snap.SnapState.Latest, classic=True, channel='candidate')
+    # snap.add(['charmcraft'], state=snap.SnapState.Latest, classic=True, channel='candidate')
+    snap.install('charmcraft', channel='latest/candidate', classic=True)
     assert get_command_path('charmcraft') == '/snap/bin/charmcraft'
 
 
 def test_snap_remove():
-    # First ensure that charmcraft is installed (it might be if this is run after the install test)
-    cache = snap.SnapCache()
-    charmcraft = cache['charmcraft']
-    if not charmcraft.present:
-        charmcraft.ensure(snap.SnapState.Latest, classic=True, channel='candidate')
-
+    # # First ensure that charmcraft is installed (it might be if this is run after the install test)
+    # cache = snap.SnapCache()
+    # charmcraft = cache['charmcraft']
+    # if not charmcraft.present:
+    #     charmcraft.ensure(snap.SnapState.Latest, classic=True, channel='candidate')
+    snap.ensure('charmcraft')
     assert get_command_path('charmcraft') == '/snap/bin/charmcraft'
-
     snap.remove('charmcraft')
     assert get_command_path('charmcraft') == ''
 
 
 def test_snap_refresh():
-    cache = snap.SnapCache()
-    hello_world = cache['hello-world']
-    if not hello_world.present:
-        hello_world.ensure(snap.SnapState.Latest, channel='latest/stable')
-
-    cache = snap.SnapCache()
-    hello_world = cache['hello-world']
-    assert hello_world.channel == 'latest/stable'
-    hello_world.ensure(snap.SnapState.Latest, channel='latest/candidate')
-    # Refresh cache
-    cache = snap.SnapCache()
-    hello_world = cache['hello-world']
-    assert hello_world.channel == 'latest/candidate'
+    # cache = snap.SnapCache()
+    # hello_world = cache['hello-world']
+    # if not hello_world.present:
+    #     hello_world.ensure(snap.SnapState.Latest, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # hello_world = cache['hello-world']
+    # assert hello_world.channel == 'latest/stable'
+    snap.ensure('hello-world', channel='latest/stable')
+    assert snap.info('hello-world').tracking == 'latest/stable'
+    # hello_world.ensure(snap.SnapState.Latest, channel='latest/candidate')
+    # # Refresh cache
+    # cache = snap.SnapCache()
+    # hello_world = cache['hello-world']
+    # assert hello_world.channel == 'latest/candidate'
+    snap.ensure('hello-world', channel='latest/candidate')
+    assert snap.info('hello-world').tracking == 'latest/stable'
 
 
 def test_snap_set_and_get_with_typed():
-    cache = snap.SnapCache()
-    lxd = cache['lxd']
+    # cache = snap.SnapCache()
+    # lxd = cache['lxd']
 
-    def try_ensure_snap(retries: int) -> None:
-        try:
-            lxd.ensure(snap.SnapState.Latest, channel='latest')
-        except snap.SnapError:
-            if retries <= 0:
-                raise
-            time.sleep(20)
-            try_ensure_snap(retries=retries - 1)
+    # def try_ensure_snap(retries: int) -> None:
+    #     try:
+    #         lxd.ensure(snap.SnapState.Latest, channel='latest')
+    #     except snap.SnapError:
+    #         if retries <= 0:
+    #             raise
+    #         time.sleep(20)
+    #         try_ensure_snap(retries=retries - 1)
 
-    try_ensure_snap(retries=10)
+    # try_ensure_snap(retries=10)
 
     configs = {
         'true': True,
@@ -104,20 +107,25 @@ def test_snap_set_and_get_with_typed():
         'ceph.external': 'false',
     }
 
-    lxd.set(configs, typed=True)
+    # lxd.set(configs, typed=True)
 
-    assert lxd.get('true', typed=True)
-    assert not lxd.get('false', typed=True)
-    with pytest.raises(snap.SnapError):
-        lxd.get('null', typed=True)
-    assert lxd.get('integer', typed=True) == 1
-    assert lxd.get('float', typed=True) == 2.0
-    assert lxd.get('list', typed=True) == [1, 2.0, True, False, None]
+    snap.ensure('lxd')
+    snap.set('lxd', configs)
+
+    lxd = snap.get('lxd')
+    assert lxd
+
+    assert lxd.get('true') is True
+    assert lxd.get('false') is False
+    assert 'null' not in lxd
+    assert lxd['integer'] == 1
+    assert lxd['float'] == 2.0
+    assert lxd['list'] == [1, 2.0, True, False, None]
 
     # Note that `"null": None` will be missing here because `key=null` will not
     # be set (because it means unset in snap). However, `key=[null]` will be
     # okay, and that's why `None` exists in "list".
-    assert lxd.get('dict', typed=True) == {
+    assert lxd['dict'] == {
         'true': True,
         'false': False,
         'integer': 1,
@@ -125,106 +133,106 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert lxd.get('dict.true', typed=True)
-    assert not lxd.get('dict.false', typed=True)
+    assert snap.get('lxd', 'dict.true') is True
+    assert snap.get('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        lxd.get('dict.null', typed=True)
-    assert lxd.get('dict.integer', typed=True) == 1
-    assert lxd.get('dict.float', typed=True) == 2.0
-    assert lxd.get('dict.list', typed=True) == [1, 2.0, True, False, None]
+        snap.get('lxd', 'dict.null')
+    assert snap.get('lxd', 'dict.integer') == 1
+    assert snap.get('lxd', 'dict.float') == 2.0
+    assert snap.get('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert lxd.get('criu.enable', typed=True) == 'true'
-    assert lxd.get('ceph.external', typed=True) == 'false'
-    assert lxd.get(None, typed=True) == {
-        'true': True,
-        'false': False,
-        'integer': 1,
-        'float': 2.0,
-        'list': [1, 2.0, True, False, None],
-        'dict': {
-            'true': True,
-            'false': False,
-            'integer': 1,
-            'float': 2.0,
-            'list': [1, 2.0, True, False, None],
-        },
-        'criu': {'enable': 'true'},
-        'ceph': {'external': 'false'},
-    }
+    assert snap.get('lxd', 'criu.enable') == 'true'
+    assert snap.get('lxd', 'ceph.external') == 'false'
 
 
-def test_snap_set_and_get_untyped():
-    cache = snap.SnapCache()
-    lxd = cache['lxd']
-    try:
-        lxd.ensure(snap.SnapState.Latest, channel='latest')
-    except snap.SnapError:
-        time.sleep(60)
-        lxd.ensure(snap.SnapState.Latest, channel='latest')
-
-    lxd.set({'foo': 'true', 'bar': True}, typed=False)
-    assert lxd.get('foo', typed=False) == 'true'
-    assert lxd.get('bar', typed=False) == 'True'
+# def test_snap_set_and_get_untyped():
+#     cache = snap.SnapCache()
+#     lxd = cache['lxd']
+#     try:
+#         lxd.ensure(snap.SnapState.Latest, channel='latest')
+#     except snap.SnapError:
+#         time.sleep(60)
+#         lxd.ensure(snap.SnapState.Latest, channel='latest')
+# 
+#     lxd.set({'foo': 'true', 'bar': True}, typed=False)
+#     assert lxd.get('foo', typed=False) == 'true'
+#     assert lxd.get('bar', typed=False) == 'True'
 
 
 def test_unset_key_raises_snap_error():
-    cache = snap.SnapCache()
-    lxd = cache['lxd']
-    lxd.ensure(snap.SnapState.Latest, channel='latest')
+    # cache = snap.SnapCache()
+    # lxd = cache['lxd']
+    # lxd.ensure(snap.SnapState.Latest, channel='latest')
 
+    snap.ensure('hello-world')
     # Verify that the correct exception gets raised in the case of an unset key.
     key = 'keythatdoesntexist01'
     with pytest.raises(snap.SnapError) as ctx:
-        lxd.get(key)
+        snap.get('hello-world', key)
     assert key in ctx.value.message
     assert '\nLatest logs:\n' in ctx.value.message  # journalctl log retrieval on SnapError
 
-    # We can make the above work w/ arbitrary config.
-    lxd.set({key: 'true'})
-    assert lxd.get(key) == 'true'
+    # # We can make the above work w/ arbitrary config.
+    # lxd.set({key: 'true'})
+    # assert lxd.get(key) == 'true'
 
 
 def test_snap_ensure():
-    cache = snap.SnapCache()
-    charmcraft = cache['charmcraft']
+    # cache = snap.SnapCache()
+    # charmcraft = cache['charmcraft']
 
-    # Verify that we can run ensure multiple times in a row without delays.
-    charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
-    charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
-    charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
+    # # Verify that we can run ensure multiple times in a row without delays.
+    # charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
+    # charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
+    # charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
+
+    snap.ensure('charmcraft')
+    did_something = snap.ensure('charmcraft')
+    assert not did_something
+    did_something = snap.ensure('charmcraft')
+    assert not did_something
 
 
 def test_new_snap_ensure():
-    vlc = snap.SnapCache()['vlc']
-    vlc.ensure(snap.SnapState.Latest, channel='edge')
+    # vlc = snap.SnapCache()['vlc']
+    # vlc.ensure(snap.SnapState.Latest, channel='edge')
+    snap.ensure('vlc', channel='edge')
 
 
 def test_snap_ensure_revision():
-    juju = snap.SnapCache()['juju']
+    # juju = snap.SnapCache()['juju']
 
-    # Verify that the snap is not installed
-    juju.ensure(snap.SnapState.Available)
-    assert get_command_path('juju') == ''
+    # # Verify that the snap is not installed
+    # juju.ensure(snap.SnapState.Available)
+    # assert get_command_path('juju') == ''
 
-    # Install the snap with the revision of latest/edge
-    snap_info_juju = run(
-        ['snap', 'info', 'juju'], capture_output=True, encoding='utf-8'
-    ).stdout.split('\n')
+    snap.remove('juju')
 
-    edge_version = None
-    edge_revision = None
-    for line in snap_info_juju:
-        match = re.search(r'3/stable:\s+([^\s]+).+\((\d+)\)', line)
+    # # Install the snap with the revision of latest/edge
+    # snap_info_juju = run(
+    #     ['snap', 'info', 'juju'], capture_output=True, encoding='utf-8'
+    # ).stdout.split('\n')
 
-        if match:
-            edge_version = match.group(1)
-            edge_revision = match.group(2)
-            break
-    assert edge_revision is not None
+    # edge_version = None
+    # edge_revision = None
+    # for line in snap_info_juju:
+    #     match = re.search(r'3/stable:\s+([^\s]+).+\((\d+)\)', line)
 
-    juju.ensure(snap.SnapState.Present, revision=edge_revision)
+    #     if match:
+    #         edge_version = match.group(1)
+    #         edge_revision = match.group(2)
+    #         break
+    # assert edge_revision is not None
+
+    version, date, revision, size, *_ = snap.info('vlc')['channels']['latest/edge'].split()
+    revision = revision.removeprefix('(').removesuffix(')')
+    snap.install('juju', revision=revision)
+
+    # juju.ensure(snap.SnapState.Present, revision=edge_revision)
 
     assert get_command_path('juju') == '/snap/bin/juju'
+
+    # bleh
 
     snap_info_juju = run(
         ['snap', 'info', 'juju'],

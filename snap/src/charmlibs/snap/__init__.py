@@ -52,47 +52,29 @@ As an example of installing several Snaps and checking details::
         logger.error("An exception occurred when installing snaps. Reason: %s" % e.message)
 """
 
-from ._snap import (
-    Error,
-    JSONAble,
-    JSONType,
-    MetaCache,
-    Snap,
-    SnapAPIError,
-    SnapCache,
-    SnapClient,
+from ._errors import (
     SnapError,
+    SnapAPIError,
     SnapNotFoundError,
-    SnapService,
-    SnapServiceDict,
-    SnapState,
-    add,
-    ansi_filter,
+)
+from ._functions import (
     ensure,
-    hold_refresh,
-    install_local,
+)
+from ._snap import (
+    info,
+    get,
+    set,
+    unset,
+    alias,
+    connect,
+    install,
     remove,
+    refresh,
+    start,
+    stop,
+    restart,
 )
 from ._version import __version__ as __version__
 
 __all__ = [
-    'Error',
-    'JSONAble',
-    'JSONType',
-    'MetaCache',
-    'Snap',
-    'SnapAPIError',
-    'SnapCache',
-    'SnapClient',
-    'SnapError',
-    'SnapNotFoundError',
-    'SnapService',
-    'SnapServiceDict',
-    'SnapState',
-    'add',
-    'ansi_filter',
-    'ensure',
-    'hold_refresh',
-    'install_local',
-    'remove',
 ]
