@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import _errors
-from . import _snap
+from . import _errors, _snap
 
 
 def ensure(snap: str, channel: str | None = None, revision: int | None = None):
     if channel is not None and revision is not None:
-        raise ValueError("Only one of channel or revision may be specified")
+        raise ValueError('Only one of channel or revision may be specified')
     try:
         info = _snap.info(snap)
     except _errors.SnapNotFoundError:
@@ -27,4 +26,3 @@ def ensure(snap: str, channel: str | None = None, revision: int | None = None):
         _snap.install(snap, channel=channel, revision=revision)
     elif info['channel'] != channel and info['revision'] != str(revision):
         _snap.refresh(snap, channel=channel, revision=revision)
-

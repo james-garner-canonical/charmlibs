@@ -58,7 +58,6 @@ def _raise(status_code: int, result: dict[str, str]) -> None:
             raise _errors.SnapNotFoundError(result.get('value'))
 
 
-
 def _get(path: str, params: dict[str, Any] | None = None) -> Any:
     """GET request, returns result directly."""
     result = _request('GET', path, params=params)
