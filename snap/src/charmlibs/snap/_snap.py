@@ -165,7 +165,9 @@ def disconnect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -
 
 
 # Install/Remove/Refresh
-def install(name: str, channel: str | None = None, revision: int | None = None, classic: bool = False) -> dict:
+def install(
+    name: str, channel: str | None = None, revision: int | None = None, classic: bool = False
+) -> dict:
     """Install a snap. Waits for completion."""
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
