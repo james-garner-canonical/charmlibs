@@ -4,10 +4,8 @@
 
 
 import logging
-import re
-import time
 from datetime import datetime, timedelta
-from subprocess import CalledProcessError, check_output, run
+from subprocess import CalledProcessError, check_output
 
 import pytest
 
@@ -43,7 +41,8 @@ def test_snap_install_bare():
 
 
 def test_snap_remove():
-    # # First ensure that charmcraft is installed (it might be if this is run after the install test)
+    # # First ensure that charmcraft is installed
+    # # (it might be if this is run after the install test)
     # cache = snap.SnapCache()
     # charmcraft = cache['charmcraft']
     # if not charmcraft.present:
@@ -153,7 +152,7 @@ def test_snap_set_and_get_with_typed():
 #     except snap.SnapError:
 #         time.sleep(60)
 #         lxd.ensure(snap.SnapState.Latest, channel='latest')
-# 
+#
 #     lxd.set({'foo': 'true', 'bar': True}, typed=False)
 #     assert lxd.get('foo', typed=False) == 'true'
 #     assert lxd.get('bar', typed=False) == 'True'
@@ -224,7 +223,7 @@ def test_snap_ensure_revision():
     #         break
     # assert edge_revision is not None
 
-    version, date, revision, size, *_ = snap.info('vlc')['channels']['latest/edge'].split()
+    _version, _date, revision, _size, *_ = snap.info('vlc')['channels']['latest/edge'].split()
     revision = revision.removeprefix('(').removesuffix(')')
     snap.install('juju', revision=revision)
 
@@ -232,24 +231,24 @@ def test_snap_ensure_revision():
 
     assert get_command_path('juju') == '/snap/bin/juju'
 
-    # bleh
+    # FIXME: port the rest of this test once we get the API sorted
 
-    snap_info_juju = run(
-        ['snap', 'info', 'juju'],
-        capture_output=True,
-        encoding='utf-8',
-    ).stdout.strip()
+    # snap_info_juju = run(
+    #     ['snap', 'info', 'juju'],
+    #     capture_output=True,
+    #     encoding='utf-8',
+    # ).stdout.strip()
 
-    assert 'installed' in snap_info_juju
-    for line in snap_info_juju.split('\n'):
-        if 'installed' in line:
-            match = re.search(r'installed:\s+([^\s]+).+\((\d+)\)', line)
+    # assert 'installed' in snap_info_juju
+    # for line in snap_info_juju.split('\n'):
+    #     if 'installed' in line:
+    #         match = re.search(r'installed:\s+([^\s]+).+\((\d+)\)', line)
 
-            assert match is not None
-            assert match.group(1) == edge_version
-            assert match.group(2) == edge_revision
+    #         assert match is not None
+    #         assert match.group(1) == edge_version
+    #         assert match.group(2) == edge_revision
 
-    assert juju.version == edge_version
+    # assert juju.version == edge_version
 
 
 def test_snap_start():

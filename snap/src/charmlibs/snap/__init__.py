@@ -53,28 +53,44 @@ As an example of installing several Snaps and checking details::
 """
 
 from ._errors import (
-    SnapError,
     SnapAPIError,
+    SnapError,
     SnapNotFoundError,
 )
 from ._functions import (
     ensure,
 )
 from ._snap import (
-    info,
-    get,
-    set,
-    unset,
     alias,
     connect,
+    get,
+    info,
     install,
-    remove,
     refresh,
+    remove,
+    restart,
+    set,  # noqa: A004
     start,
     stop,
-    restart,
+    unset,
 )
 from ._version import __version__ as __version__
 
 __all__ = [
+    'SnapAPIError',
+    'SnapError',
+    'SnapNotFoundError',
+    'alias',
+    'connect',
+    'ensure',
+    'get',
+    'info',
+    'install',
+    'refresh',
+    'remove',
+    'restart',
+    'set',
+    'start',
+    'stop',
+    'unset',
 ]
