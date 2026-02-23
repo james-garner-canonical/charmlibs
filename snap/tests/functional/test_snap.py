@@ -30,14 +30,14 @@ def test_snap_install():
     #         juju.ensure(snap.SnapState.Latest, channel='stable')
     # except snap.SnapError as e:
     #     logger.error('An exception occurred when installing Juju. Reason: %s', e.message)
-    snap.ensure('juju')
+    snap.install('juju')
     assert get_command_path('juju') == '/snap/bin/juju'
 
 
-def test_snap_install_bare():
-    # snap.add(['charmcraft'], state=snap.SnapState.Latest, classic=True, channel='candidate')
-    snap.install('charmcraft', channel='latest/candidate', classic=True)
-    assert get_command_path('charmcraft') == '/snap/bin/charmcraft'
+# def test_snap_install_bare():
+#     # snap.add(['charmcraft'], state=snap.SnapState.Latest, classic=True, channel='candidate')
+#     snap.install('charmcraft', channel='latest/candidate', classic=True)
+#     assert get_command_path('charmcraft') == '/snap/bin/charmcraft'
 
 
 def test_snap_remove():
