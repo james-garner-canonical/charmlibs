@@ -165,11 +165,15 @@ def disconnect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -
 
 
 # Install/Remove/Refresh
-def install(name: str, channel: str | None = None, classic: bool = False) -> dict:
+def install(name: str, channel: str | None = None, revision: int | None = None, classic: bool = False) -> dict:
     """Install a snap. Waits for completion."""
+    if channel is not None and revision is not None:
+        raise ValueError('Only one of channel or revision may be specified')
     data = {'action': 'install'}
     if channel:
         data['channel'] = channel
+    if revision:
+        data['revision'] = str(revision)
     if classic:
         data['classic'] = True
     change_id = _post(f'/v2/snaps/{name}', body=data)
@@ -185,11 +189,15 @@ def remove(name: str, purge: bool = False) -> dict:
     return _wait(change_id)
 
 
-def refresh(name: str, channel: str | None = None) -> dict:
+def refresh(name: str, channel: str | None = None, revision: int | None = None) -> dict:
     """Refresh a snap. Waits for completion."""
+    if channel is not None and revision is not None:
+        raise ValueError('Only one of channel or revision may be specified')
     data = {'action': 'refresh'}
     if channel:
         data['channel'] = channel
+    if revision:
+        data['revision'] = str(revision)
     change_id = _post(f'/v2/snaps/{name}', body=data)
     return _wait(change_id)
 
