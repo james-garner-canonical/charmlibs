@@ -32,36 +32,35 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# we need the powerful snapd socket
+# defined in the snap application itself under dirs/dirs.go as SnapdSocket
 _SOCKET_PATH = '/run/snapd.socket'
 
 
-class _NotProvidedFlag:
+class _NotProvided:
     pass
 
 
-_not_provided = _NotProvidedFlag()
+_NOT_PROVIDED = _NotProvided()
 
 
 class _UnixSocketConnection(http.client.HTTPConnection):
     """Implementation of HTTPConnection that connects to a named Unix socket."""
 
-    def __init__(
-        self, host: str, socket_path: str, timeout: _NotProvidedFlag | float = _not_provided
-    ):
-        if timeout is _not_provided:
+    def __init__(self, host: str, socket_path: str, timeout: _NotProvided | float = _NOT_PROVIDED):
+        if isinstance(timeout, _NotProvided):
             super().__init__(host)
         else:
-            assert isinstance(timeout, (int, float)), timeout  # type guard for pyright
             super().__init__(host, timeout=timeout)
-        self.socket_path = socket_path
+        self._socket_path = socket_path
 
     def connect(self):
         """Override connect to use Unix socket (instead of TCP socket)."""
         if not hasattr(socket, 'AF_UNIX'):
             raise NotImplementedError(f'Unix sockets not supported on {sys.platform}')
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(self.socket_path)
-        if self.timeout is not _not_provided:
+        self.sock.connect(self._socket_path)
+        if not isinstance(self.timeout, _NotProvided):
             self.sock.settimeout(self.timeout)
 
 
@@ -70,22 +69,24 @@ class _UnixSocketHandler(urllib.request.AbstractHTTPHandler):
 
     def __init__(self, socket_path: str):
         super().__init__()
-        self.socket_path = socket_path
+        self._socket_path = socket_path
 
     def http_open(self, req: urllib.request.Request):
         """Override http_open to use a Unix socket connection (instead of TCP)."""
         return self.do_open(
             _UnixSocketConnection,  # type:ignore
             req,
-            socket_path=self.socket_path,
+            socket_path=self._socket_path,
         )
 
 
 def _request(
     method: str,
     path: str,
+    *,
     query: dict[str, Any] | None = None,
     body: dict[str, Any] | None = None,
+    log: bool = True,
 ) -> dict[str, Any] | list[dict[str, Any]]:
     """Make a JSON request to the server with the given HTTP method and path.
 
@@ -94,6 +95,8 @@ def _request(
     as the HTTP body (with Content-Type: "application/json"). The resulting
     body is decoded from JSON.
     """
+    if log:
+        logger.debug('_request(%r, %r, query=%r, body=%r)', method, path, query, body)
     headers = {'Accept': 'application/json'}
     data = None
     if body is not None:
@@ -103,8 +106,10 @@ def _request(
     raw_resp: dict[str, Any] = json.loads(response.read())
     _raise_if_error(raw_resp)
     if raw_resp['type'] == 'async':
-        return _wait_for_change(change_id=raw_resp['change'])
-    return raw_resp['result']
+        result = _wait_for_change(change_id=raw_resp['change'])
+    else:
+        result = raw_resp['result']
+    return result
 
 
 def _request_raw(
@@ -152,11 +157,12 @@ def _wait_for_change(change_id: str, timeout: float = 300) -> dict[str, Any]:
 
     The poll time is 100 milliseconds, the same as in snap clients.
     """
+    logger.debug('_wait_for_change(%r, timeout=%r)', change_id, timeout)
     deadline = time.time() + timeout
     while True:
         if time.time() > deadline:
             raise TimeoutError(f'timeout waiting for snap change {change_id}')
-        response = _request('GET', f'/v2/changes/{change_id}')
+        response = _request('GET', f'/v2/changes/{change_id}', log=False)
         assert isinstance(response, dict)
         match response['status']:
             case 'Do' | 'Doing':
