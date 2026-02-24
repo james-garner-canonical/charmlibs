@@ -32,6 +32,7 @@ class SnapInfo:
     channel: str
     revision: int
     version: str
+    classic: bool
 
     @classmethod
     def _from_dict(cls, info_dict: dict[str, Any]) -> Self:
@@ -40,6 +41,7 @@ class SnapInfo:
             channel=info_dict['channel'],
             revision=int(info_dict['revision']),
             version=info_dict['version'],
+            classic=info_dict['confinement'] == 'classic',
         )
 
 

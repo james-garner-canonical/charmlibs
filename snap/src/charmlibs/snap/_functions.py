@@ -15,7 +15,9 @@
 from . import _errors, _snap
 
 
-def ensure(snap: str, channel: str | None = None, revision: int | None = None):
+def ensure(
+    snap: str, channel: str | None = None, revision: int | None = None, classic: bool = False
+) -> None:
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
     try:
@@ -23,6 +25,9 @@ def ensure(snap: str, channel: str | None = None, revision: int | None = None):
     except _errors.SnapNotFoundError:
         info = None
     if info is None:
-        _snap.install(snap, channel=channel, revision=revision)
-    elif info['channel'] != channel and info['revision'] != str(revision):
+        _snap.install(snap, channel=channel, revision=revision, classic=classic)
+    elif info.classic != classic:
+        _snap.remove(snap)
+        _snap.install(snap, channel=channel, revision=revision, classic=classic)
+    elif info.channel != channel and info.revision != revision:
         _snap.refresh(snap, channel=channel, revision=revision)

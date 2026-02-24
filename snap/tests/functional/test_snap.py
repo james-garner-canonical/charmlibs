@@ -62,14 +62,14 @@ def test_snap_refresh():
     # hello_world = cache['hello-world']
     # assert hello_world.channel == 'latest/stable'
     snap.ensure('hello-world', channel='latest/stable')
-    assert snap.info('hello-world').tracking == 'latest/stable'
+    assert snap.info('hello-world').channel == 'latest/stable'
     # hello_world.ensure(snap.SnapState.Latest, channel='latest/candidate')
     # # Refresh cache
     # cache = snap.SnapCache()
     # hello_world = cache['hello-world']
     # assert hello_world.channel == 'latest/candidate'
     snap.ensure('hello-world', channel='latest/candidate')
-    assert snap.info('hello-world').tracking == 'latest/stable'
+    assert snap.info('hello-world').channel == 'latest/candidate'
 
 
 def test_snap_set_and_get_with_typed():

@@ -23,8 +23,12 @@ dependencies = [
 lint = [  # installed for `just lint snap` (unit, functional, and integration are also installed)
     "typing_extensions",
 ]
-unit = []
-functional = []
+unit = [
+    "pytest",
+]
+functional = [
+    "pytest",
+]
 integration = []
 
 [project.urls]
