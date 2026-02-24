@@ -61,22 +61,22 @@ def list_snaps() -> list[SnapInfo]:
 
 
 # Configuration
-def get(name: str, keys: Iterable[str] | None = None) -> dict[str, Any]:
+def get(snap: str, *keys: str) -> dict[str, Any]:
     """Get snap configuration."""
     params = {'keys': ','.join(keys)} if keys else None
-    config = _client.get(f'/v2/snaps/{name}/conf', query=params)
+    config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
     assert isinstance(config, dict)
     return config
 
 
-def set(name: str, config: dict[str, Any]) -> None:  # noqa: A001
+def set(snap: str, config: dict[str, Any]) -> None:  # noqa: A001
     """Set snap configuration."""
-    _client.put(f'/v2/snaps/{name}/conf', body=config)
+    _client.put(f'/v2/snaps/{snap}/conf', body=config)
 
 
-def unset(name: str, keys: Iterable[str]) -> None:
+def unset(snap: str, key: str, *keys: str) -> None:
     """Unset snap configuration keys."""
-    _client.put(f'/v2/snaps/{name}/conf', body=dict.fromkeys(keys))
+    _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 
 
 # Aliases
