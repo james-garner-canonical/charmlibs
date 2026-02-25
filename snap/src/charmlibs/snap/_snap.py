@@ -190,7 +190,9 @@ def remove(snap: str, purge: bool = False, missing_ok: bool = False) -> None:
             raise
 
 
-def refresh(snap: str, channel: str | None = None, revision: int | None = None, no_updates_ok: bool = False) -> bool:
+def refresh(
+    snap: str, channel: str | None = None, revision: int | None = None, no_updates_ok: bool = False
+) -> bool:
     """Refresh a snap."""
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
