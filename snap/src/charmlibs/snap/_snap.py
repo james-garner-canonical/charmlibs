@@ -102,7 +102,7 @@ def get(snap: str, *keys: str) -> dict[str, Any]:
     return config
 
 
-def get_key(snap: str, key: str) -> Any:
+def get_one(snap: str, key: str) -> Any:
     """Get a single snap configuration key."""
     config = get(snap, key)
     return config[key]
@@ -160,7 +160,7 @@ def disconnect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -
 
 
 def install(
-    name: str, channel: str | None = None, revision: int | None = None, classic: bool = False
+    snap: str, channel: str | None = None, revision: int | None = None, classic: bool = False
 ) -> None:
     """Install a snap."""
     if channel is not None and revision is not None:
@@ -172,22 +172,22 @@ def install(
         data['revision'] = str(revision)
     if classic:
         data['classic'] = True
-    _client.post(f'/v2/snaps/{name}', body=data)
+    _client.post(f'/v2/snaps/{snap}', body=data)
 
 
-def remove(name: str, purge: bool = False, missing_ok: bool = False) -> None:
+def remove(snap: str, purge: bool = False, missing_ok: bool = False) -> None:
     """Remove a snap."""
     data: dict[str, Any] = {'action': 'remove'}
     if purge:
         data['purge'] = True
     try:
-        _client.post(f'/v2/snaps/{name}', body=data)
+        _client.post(f'/v2/snaps/{snap}', body=data)
     except _errors.SnapNotInstalledError:
         if not missing_ok:
             raise
 
 
-def refresh(name: str, channel: str | None = None, revision: int | None = None) -> None:
+def refresh(snap: str, channel: str | None = None, revision: int | None = None) -> None:
     """Refresh a snap."""
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
@@ -196,7 +196,7 @@ def refresh(name: str, channel: str | None = None, revision: int | None = None) 
         data['channel'] = channel
     if revision:
         data['revision'] = str(revision)
-    _client.post(f'/v2/snaps/{name}', body=data)
+    _client.post(f'/v2/snaps/{snap}', body=data)
 
 
 # Services

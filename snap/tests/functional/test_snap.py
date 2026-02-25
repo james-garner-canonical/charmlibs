@@ -132,16 +132,16 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert snap.get_key('lxd', 'dict.true') is True
-    assert snap.get_key('lxd', 'dict.false') is False
+    assert snap.get_one('lxd', 'dict.true') is True
+    assert snap.get_one('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        snap.get_key('lxd', 'dict.null')
-    assert snap.get_key('lxd', 'dict.integer') == 1
-    assert snap.get_key('lxd', 'dict.float') == 2.0
-    assert snap.get_key('lxd', 'dict.list') == [1, 2.0, True, False, None]
+        snap.get_one('lxd', 'dict.null')
+    assert snap.get_one('lxd', 'dict.integer') == 1
+    assert snap.get_one('lxd', 'dict.float') == 2.0
+    assert snap.get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert snap.get_key('lxd', 'criu.enable') == 'true'
-    assert snap.get_key('lxd', 'ceph.external') == 'false'
+    assert snap.get_one('lxd', 'criu.enable') == 'true'
+    assert snap.get_one('lxd', 'ceph.external') == 'false'
 
 
 # def test_snap_set_and_get_untyped():
@@ -179,7 +179,7 @@ def test_unset_key_raises_snap_error():
     # lxd.set({key: 'true'})
     # assert lxd.get(key) == 'true'
     snap.set('hello-world', {key: 'true'})
-    assert snap.get_key('hello-world', key) == 'true'
+    assert snap.get_one('hello-world', key) == 'true'
 
 
 def test_snap_ensure():
