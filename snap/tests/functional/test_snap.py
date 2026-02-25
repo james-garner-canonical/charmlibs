@@ -191,10 +191,12 @@ def test_snap_ensure():
     # charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
     # charmcraft.ensure(snap.SnapState.Latest, channel='latest/stable')
 
-    snap.ensure('charmcraft')
-    did_something = snap.ensure('charmcraft')
+    snap.ensure('charmcraft', classic=True)
+    did_something = snap.ensure('charmcraft', classic=True)
     assert not did_something
-    did_something = snap.ensure('charmcraft')
+    with pytest.raises(ValueError):
+        snap.ensure('charmcraft')  # classic=False
+    did_something = snap.ensure('charmcraft', classic=True)
     assert not did_something
 
 
@@ -264,18 +266,22 @@ def test_snap_start():
     # kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
 
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
+    services = snap._snap.list_services('kube-proxy')
+    assert services
+    daemon = next(s for s in services if s['name'] == 'daemon')
+    assert daemon.get('active')
 
     # assert kp.services
     # kp.start()
     # assert kp.services['daemon']['active'] is not False
 
+    snap.stop('kube-proxy', 'daemon')
     services = snap._snap.list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
 
     snap.start('kube-proxy', 'daemon')
-
     services = snap._snap.list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
