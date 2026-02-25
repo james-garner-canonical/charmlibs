@@ -325,7 +325,8 @@ def list_interfaces(snap: str | None = None) -> list[dict[str, Any]]:
     if snap is None:
         return interfaces
     return [
-        i for i in interfaces
+        i
+        for i in interfaces
         if any(p['snap'] == snap for p in i.get('plugs', []))
         or any(s['snap'] == snap for s in i.get('slots', []))
     ]

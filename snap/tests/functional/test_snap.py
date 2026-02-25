@@ -377,9 +377,8 @@ def test_snap_hold_refresh():
         # Newer snapd versions emit RFC3339 timestamps with timezone offsets, but we don't
         # need to handle them here since they're covered by fromisoformat in Python 3.11+.
         dt, ms = info.hold.removesuffix('Z').split('.')
-        hold = (
-            datetime.datetime.fromisoformat(dt).astimezone()
-            + datetime.timedelta(microseconds=int(ms[:6]))
+        hold = datetime.datetime.fromisoformat(dt).astimezone() + datetime.timedelta(
+            microseconds=int(ms[:6])
         )
     assert hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
 
