@@ -14,7 +14,7 @@
 
 import logging
 
-from . import _errors, _snap
+from . import _snap
 
 logger = logging.getLogger(__name__)
 

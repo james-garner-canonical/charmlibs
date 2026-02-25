@@ -47,6 +47,7 @@ class SnapInfo:
 
 # Info/List
 
+
 @typing.overload
 def info(snap: str, *, missing_ok: Literal[False] = False) -> SnapInfo: ...
 @typing.overload
@@ -92,6 +93,7 @@ def channels(snap: str) -> dict[str, SnapInfo]:
 
 # Configuration
 
+
 def get(snap: str, *keys: str) -> dict[str, Any]:
     """Get snap configuration."""
     params = {'keys': ','.join(keys)} if keys else None
@@ -118,6 +120,7 @@ def unset(snap: str, key: str, *keys: str) -> None:
 
 # Aliases
 
+
 def alias(snap: str, app: str, alias_name: str) -> None:
     """Create an alias for a snap app."""
     data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
@@ -131,6 +134,7 @@ def unalias(snap: str, alias_name: str) -> None:
 
 
 # Interfaces
+
 
 def connect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -> None:
     """Connect a plug to a slot."""
@@ -153,6 +157,7 @@ def disconnect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -
 
 
 # Install/Remove/Refresh
+
 
 def install(
     name: str, channel: str | None = None, revision: int | None = None, classic: bool = False
@@ -196,6 +201,7 @@ def refresh(name: str, channel: str | None = None, revision: int | None = None) 
 
 # Services
 
+
 def start(service: str, *services: str) -> None:
     """Start snap services."""
     data: dict[str, Any] = {'action': 'start', 'names': [service, *services]}
@@ -217,6 +223,7 @@ def restart(service: str, *services: str) -> None:
 
 
 # List stuff, won't be part of the public API
+
 
 def list_snaps() -> list[SnapInfo]:
     """List all installed snaps."""

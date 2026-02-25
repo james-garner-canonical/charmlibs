@@ -265,14 +265,14 @@ def test_snap_start():
 
     services = snap._snap.list_services('kube-proxy')
     assert services
-    daemon = next((s for s in services if s['name'] == 'daemon'))
+    daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
 
     snap.start('kube-proxy', 'daemon')
 
     services = snap._snap.list_services('kube-proxy')
     assert services
-    daemon = next((s for s in services if s['name'] == 'daemon'))
+    daemon = next(s for s in services if s['name'] == 'daemon')
     assert daemon['active']
 
     with pytest.raises(snap.SnapError):
@@ -293,7 +293,7 @@ def test_snap_stop():
 
     snap.stop('kube-proxy', 'daemon', disable=True)
     services = snap._snap.list_services('kube-proxy')
-    daemon = next((s for s in services if s['name'] == 'daemon'))
+    daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
     assert not daemon.get('enabled')
 
