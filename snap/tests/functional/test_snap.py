@@ -205,7 +205,7 @@ def test_snap_ensure_revision():
     # juju.ensure(snap.SnapState.Available)
     # assert get_command_path('juju') == ''
 
-    snap.remove('juju')
+    snap.remove('juju', missing_ok=True)
 
     # # Install the snap with the revision of latest/edge
     # snap_info_juju = run(
@@ -223,15 +223,13 @@ def test_snap_ensure_revision():
     #         break
     # assert edge_revision is not None
 
-    _version, _date, revision, _size, *_ = snap.info('vlc')['channels']['latest/edge'].split()
-    revision = revision.removeprefix('(').removesuffix(')')
-    snap.install('juju', revision=revision)
+    channels = snap.channels('juju')
+    edge = channels['latest/edge']
+    snap.install('juju', revision=edge.revision)
 
     # juju.ensure(snap.SnapState.Present, revision=edge_revision)
 
     assert get_command_path('juju') == '/snap/bin/juju'
-
-    # FIXME: port the rest of this test once we get the API sorted
 
     # snap_info_juju = run(
     #     ['snap', 'info', 'juju'],
@@ -249,6 +247,9 @@ def test_snap_ensure_revision():
     #         assert match.group(2) == edge_revision
 
     # assert juju.version == edge_version
+
+    info = snap.info('juju')
+    assert info.revision == edge.revision
 
 
 def test_snap_start():

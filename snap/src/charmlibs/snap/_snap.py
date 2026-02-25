@@ -18,7 +18,7 @@ import dataclasses
 import typing
 from typing import Any
 
-from . import _client
+from . import _client, _errors
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -29,10 +29,10 @@ if typing.TYPE_CHECKING:
 @dataclasses.dataclass
 class SnapInfo:
     name: str
+    classic: bool
     channel: str
     revision: int
     version: str
-    classic: bool
 
     @classmethod
     def _from_dict(cls, info_dict: dict[str, Any]) -> Self:
@@ -47,10 +47,37 @@ class SnapInfo:
 
 # Info/List
 def info(name: str) -> SnapInfo:
-    """Get information about a snap."""
+    """Get information about an installed snap."""
     info_dict = _client.get(f'/v2/snaps/{name}')
     assert isinstance(info_dict, dict)
     return SnapInfo._from_dict(info_dict)
+
+
+def channels(snap: str) -> dict[str, SnapInfo]:
+    """List information about all channels of a snap available in the store."""
+    results = _client.get('/v2/find', query={'name': snap})
+    assert isinstance(results, list)
+    # API returns a list of results, or an error if there are no matches.
+    # We'll have one result for an exact name match.
+    result, *_ = results
+    # A result has information like this:
+    # {
+    #     # ...
+    #     'channels': {
+    #         # ...
+    #         'latest/stable': {
+    #             'revision': '226',
+    #             'confinement': 'classic',
+    #             'version': '07258626',
+    #             'channel': 'latest/stable',
+    #             'epoch': {'read': [0], 'write': [0]},
+    #             'size': 352374784,
+    #             'released-at': '2026-02-19T23:54:26.844384Z'
+    #         },
+    #     },
+    # }
+    channels = result['channels']
+    return {k: SnapInfo._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}
 
 
 def list_snaps() -> list[SnapInfo]:
@@ -137,12 +164,16 @@ def install(
     _client.post(f'/v2/snaps/{name}', body=data)
 
 
-def remove(name: str, purge: bool = False) -> None:
+def remove(name: str, purge: bool = False, missing_ok: bool = False) -> None:
     """Remove a snap."""
     data: dict[str, Any] = {'action': 'remove'}
     if purge:
         data['purge'] = True
-    _client.post(f'/v2/snaps/{name}', body=data)
+    try:
+        _client.post(f'/v2/snaps/{name}', body=data)
+    except _errors.SnapNotInstalledError:
+        if not missing_ok:
+            raise
 
 
 def refresh(name: str, channel: str | None = None, revision: int | None = None) -> None:

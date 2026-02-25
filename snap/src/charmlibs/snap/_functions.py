@@ -21,7 +21,18 @@ logger = logging.getLogger(__name__)
 
 def ensure(
     snap: str, *, channel: str | None = None, revision: int | None = None, classic: bool = False
-) -> None:
+) -> bool:
+    """Ensure that the specified snap is installed with the specified channel or revision.
+
+    If neither is specified, ensure that it is installed at all, or install latest/stable if not.
+
+    Returns:
+        True if any action was taken (install or refresh), False otherwise.
+
+    Raises:
+        ValueError: if both channel and revision are specified,
+            or if the snap is already installed with a different value for classic.
+    """
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
     try:
@@ -32,17 +43,20 @@ def ensure(
     if info is None:
         logger.debug('ensure:Snap %r is not installed: installing ...', snap)
         _snap.install(snap, channel=channel, revision=revision, classic=classic)
-    elif info.classic != classic:
+        return True
+    if info.classic != classic:
         msg = f'Snap {snap!r} is installed with classic={info.classic} but requested classic={classic}; this is most likely an error'  # noqa: E501
         logger.info('ensure:%s -> aborting', msg)
         raise ValueError(msg)
-    elif (
-        channel is not None
-        and _utils.normalize_channel(info.channel) != _utils.normalize_channel(channel)
-    ) or (revision is not None and info.revision != revision):
+    different_channel = channel is not None and (
+        _utils.normalize_channel(info.channel) != _utils.normalize_channel(channel)
+    )
+    different_revision = revision is not None and info.revision != revision
+    if different_channel or different_revision:
         msg = 'ensure:Snap %r is installed with channel=%r and revision=%d but requested (channel=%r, revision=%r): refreshing ...'  # noqa: E501
         logger.debug(msg, snap, info.channel, info.revision, channel, revision)
         _snap.refresh(snap, channel=channel, revision=revision)
-    else:
-        msg = 'ensure:Snap %r is already installed with classic=%s, channel=%r and revision=%d'
-        logger.debug(msg, snap, info.classic, info.channel, info.revision)
+        return True
+    msg = 'ensure:Snap %r is already installed with classic=%s, channel=%r and revision=%d'
+    logger.debug(msg, snap, info.classic, info.channel, info.revision)
+    return False

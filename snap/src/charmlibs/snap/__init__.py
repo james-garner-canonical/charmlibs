@@ -62,6 +62,7 @@ from ._functions import (
 )
 from ._snap import (
     alias,
+    channels,
     connect,
     get,
     info,
@@ -81,6 +82,7 @@ __all__ = [
     'SnapError',
     'SnapNotFoundError',
     'alias',
+    'channels',
     'connect',
     'ensure',
     'get',
