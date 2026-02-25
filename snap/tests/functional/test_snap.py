@@ -12,7 +12,12 @@ import pytest
 
 from charmlibs import snap
 
-logger = logging.getLogger(__name__)
+# enable debug logging from snap library during tests
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+snap_logger = logging.getLogger(snap.__name__)
+snap_logger.setLevel(logging.DEBUG)
+snap_logger.addHandler(handler)
 
 
 def get_command_path(command: str) -> str:
@@ -403,7 +408,7 @@ def test_snap_connect():
     # vlc = cache['vlc']
     # vlc.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
 
-    snap.ensure('vlc', classic=True, channel='latest/stable')
+    snap.ensure('vlc')
 
     # try:
     #     vlc.connect('jack1')
