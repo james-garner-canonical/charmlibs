@@ -46,6 +46,7 @@ class SnapInfo:
 
 
 # Info/List
+
 @typing.overload
 def info(snap: str, *, missing_ok: Literal[False] = False) -> SnapInfo: ...
 @typing.overload
@@ -89,20 +90,20 @@ def channels(snap: str) -> dict[str, SnapInfo]:
     return {k: SnapInfo._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}
 
 
-def list_snaps() -> list[SnapInfo]:
-    """List all installed snaps."""
-    info_dicts = _client.get('/v2/snaps')
-    assert isinstance(info_dicts, list)
-    return [SnapInfo._from_dict(info_dict) for info_dict in info_dicts]
-
-
 # Configuration
+
 def get(snap: str, *keys: str) -> dict[str, Any]:
     """Get snap configuration."""
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
     assert isinstance(config, dict)
     return config
+
+
+def get_key(snap: str, key: str) -> Any:
+    """Get a single snap configuration key."""
+    config = get(snap, key)
+    return config[key]
 
 
 def set(snap: str, config: dict[str, Any]) -> None:  # noqa: A001
@@ -116,6 +117,7 @@ def unset(snap: str, key: str, *keys: str) -> None:
 
 
 # Aliases
+
 def alias(snap: str, app: str, alias_name: str) -> None:
     """Create an alias for a snap app."""
     data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
@@ -128,14 +130,8 @@ def unalias(snap: str, alias_name: str) -> None:
     _client.post('/v2/aliases', body=data)
 
 
-def list_aliases() -> Mapping[str, Iterable[str]]:
-    """List all aliases."""
-    aliases = _client.get('/v2/aliases')
-    assert isinstance(aliases, dict)
-    return aliases
-
-
 # Interfaces
+
 def connect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -> None:
     """Connect a plug to a slot."""
     data = {
@@ -157,6 +153,7 @@ def disconnect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -
 
 
 # Install/Remove/Refresh
+
 def install(
     name: str, channel: str | None = None, revision: int | None = None, classic: bool = False
 ) -> None:
@@ -198,22 +195,41 @@ def refresh(name: str, channel: str | None = None, revision: int | None = None) 
 
 
 # Services
-def start(services: Iterable[str]) -> None:
+
+def start(service: str, *services: str) -> None:
     """Start snap services."""
-    data = {'action': 'start', 'names': list(services)}
+    data: dict[str, Any] = {'action': 'start', 'names': [service, *services]}
     _client.post('/v2/apps', body=data)
 
 
-def stop(services: Iterable[str]) -> None:
+def stop(service: str, *services: str, disable: bool = False) -> None:
     """Stop snap services."""
-    data = {'action': 'stop', 'names': list(services)}
+    data: dict[str, Any] = {'action': 'stop', 'names': [service, *services]}
+    if disable:
+        data['disable'] = True
     _client.post('/v2/apps', body=data)
 
 
-def restart(services: Iterable[str]) -> None:
+def restart(service: str, *services: str) -> None:
     """Restart snap services."""
-    data = {'action': 'restart', 'names': list(services)}
+    data: dict[str, Any] = {'action': 'restart', 'names': [service, *services]}
     _client.post('/v2/apps', body=data)
+
+
+# List stuff, won't be part of the public API
+
+def list_snaps() -> list[SnapInfo]:
+    """List all installed snaps."""
+    info_dicts = _client.get('/v2/snaps')
+    assert isinstance(info_dicts, list)
+    return [SnapInfo._from_dict(info_dict) for info_dict in info_dicts]
+
+
+def list_aliases() -> Mapping[str, Iterable[str]]:
+    """List all aliases."""
+    aliases = _client.get('/v2/aliases')
+    assert isinstance(aliases, dict)
+    return aliases
 
 
 def list_services(snap: str | None = None) -> list[dict[str, Any]]:

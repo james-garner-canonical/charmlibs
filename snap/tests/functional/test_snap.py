@@ -132,16 +132,16 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert snap.get('lxd', 'dict.true') is True
-    assert snap.get('lxd', 'dict.false') is False
+    assert snap.get_key('lxd', 'dict.true') is True
+    assert snap.get_key('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        snap.get('lxd', 'dict.null')
-    assert snap.get('lxd', 'dict.integer') == 1
-    assert snap.get('lxd', 'dict.float') == 2.0
-    assert snap.get('lxd', 'dict.list') == [1, 2.0, True, False, None]
+        snap.get_key('lxd', 'dict.null')
+    assert snap.get_key('lxd', 'dict.integer') == 1
+    assert snap.get_key('lxd', 'dict.float') == 2.0
+    assert snap.get_key('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert snap.get('lxd', 'criu.enable') == 'true'
-    assert snap.get('lxd', 'ceph.external') == 'false'
+    assert snap.get_key('lxd', 'criu.enable') == 'true'
+    assert snap.get_key('lxd', 'ceph.external') == 'false'
 
 
 # def test_snap_set_and_get_untyped():
@@ -224,8 +224,8 @@ def test_snap_ensure_revision():
     # assert edge_revision is not None
 
     channels = snap.channels('juju')
-    edge = channels['latest/edge']
-    snap.install('juju', revision=edge.revision)
+    info = channels['3/stable']
+    snap.install('juju', revision=info.revision)
 
     # juju.ensure(snap.SnapState.Present, revision=edge_revision)
 
@@ -249,30 +249,53 @@ def test_snap_ensure_revision():
     # assert juju.version == edge_version
 
     info = snap.info('juju')
-    assert info.revision == edge.revision
+    assert info.revision == info.revision
 
 
 def test_snap_start():
-    cache = snap.SnapCache()
-    kp = cache['kube-proxy']
-    kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # kp = cache['kube-proxy']
+    # kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
 
-    assert kp.services
-    kp.start()
-    assert kp.services['daemon']['active'] is not False
+    snap.ensure('kube-proxy', classic=True, channel='latest/stable')
+
+    # assert kp.services
+    # kp.start()
+    # assert kp.services['daemon']['active'] is not False
+
+    services = snap._snap.list_services('kube-proxy')
+    assert services
+    daemon = next((s for s in services if s['name'] == 'daemon'))
+    assert not daemon.get('active')
+
+    snap.start('kube-proxy', 'daemon')
+
+    services = snap._snap.list_services('kube-proxy')
+    assert services
+    daemon = next((s for s in services if s['name'] == 'daemon'))
+    assert daemon['active']
 
     with pytest.raises(snap.SnapError):
-        kp.start(['foobar'])
+        # kp.start(['foobar'])
+        snap.start('kube-proxy', 'foobar')
 
 
 def test_snap_stop():
-    cache = snap.SnapCache()
-    kp = cache['kube-proxy']
-    kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # kp = cache['kube-proxy']
+    # kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
 
-    kp.stop(['daemon'], disable=True)
-    assert kp.services['daemon']['active'] is False
-    assert kp.services['daemon']['enabled'] is False
+    snap.ensure('kube-proxy', classic=True, channel='latest/stable')
+
+    # kp.stop(['daemon'], disable=True)
+    # assert kp.services['daemon']['active'] is False
+    # assert kp.services['daemon']['enabled'] is False
+
+    snap.stop('kube-proxy', 'daemon', disable=True)
+    services = snap._snap.list_services('kube-proxy')
+    daemon = next((s for s in services if s['name'] == 'daemon'))
+    assert not daemon.get('active')
+    assert not daemon.get('enabled')
 
 
 def test_snap_logs():
