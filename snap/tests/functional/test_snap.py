@@ -169,11 +169,17 @@ def test_unset_key_raises_snap_error():
     with pytest.raises(snap.SnapError) as ctx:
         snap.get('hello-world', key)
     assert key in ctx.value.message
-    assert '\nLatest logs:\n' in ctx.value.message  # journalctl log retrieval on SnapError
+
+    # FIXME: We should probably continue to offer this functionality since it was requested not long ago
+    # but I don't think we should be including the latest logs in the error message by default, since it can be very expensive to retrieve them and is not usually relevant to the error.
+    # Maybe we could use an env var, require an option, or have a separate method for retrieving logs explicitly on error.
+    # assert '\nLatest logs:\n' in ctx.value.message  # journalctl log retrieval on SnapError
 
     # # We can make the above work w/ arbitrary config.
     # lxd.set({key: 'true'})
     # assert lxd.get(key) == 'true'
+    snap.set('hello-world', {key: 'true'})
+    assert snap.get_key('hello-world', key) == 'true'
 
 
 def test_snap_ensure():
