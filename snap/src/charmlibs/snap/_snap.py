@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import dataclasses
 import typing
-from typing import Any
+from typing import Any, Literal
 
 from . import _client, _errors
 
@@ -46,9 +46,18 @@ class SnapInfo:
 
 
 # Info/List
-def info(name: str) -> SnapInfo:
+@typing.overload
+def info(snap: str, *, missing_ok: Literal[False] = False) -> SnapInfo: ...
+@typing.overload
+def info(snap: str, *, missing_ok: Literal[True]) -> SnapInfo | None: ...
+def info(snap: str, *, missing_ok: bool = False) -> SnapInfo | None:
     """Get information about an installed snap."""
-    info_dict = _client.get(f'/v2/snaps/{name}')
+    try:
+        info_dict = _client.get(f'/v2/snaps/{snap}')
+    except _errors.SnapNotInstalledError:
+        if missing_ok:
+            return None
+        raise
     assert isinstance(info_dict, dict)
     return SnapInfo._from_dict(info_dict)
 

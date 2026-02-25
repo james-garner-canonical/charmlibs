@@ -35,11 +35,8 @@ def ensure(
     """
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
-    try:
-        logger.debug('ensure:Querying info for snap %r', snap)
-        info = _snap.info(snap)
-    except _errors.SnapNotFoundError:
-        info = None
+    logger.debug('ensure:Querying info for snap %r', snap)
+    info = _snap.info(snap, missing_ok=True)
     if info is None:
         logger.debug('ensure:Snap %r is not installed: installing ...', snap)
         _snap.install(snap, channel=channel, revision=revision, classic=classic)
