@@ -163,11 +163,11 @@ def test_unset_key_raises_snap_error():
     # lxd = cache['lxd']
     # lxd.ensure(snap.SnapState.Latest, channel='latest')
 
-    snap.ensure('hello-world')
+    snap.ensure('lxd')
     # Verify that the correct exception gets raised in the case of an unset key.
     key = 'keythatdoesntexist01'
     with pytest.raises(snap.SnapError) as ctx:
-        snap.get('hello-world', key)
+        snap.get('lxd', key)
     assert key in ctx.value.message
 
     # FIXME: We should probably continue to offer this functionality as it was requested recently.
@@ -181,8 +181,8 @@ def test_unset_key_raises_snap_error():
     # # We can make the above work w/ arbitrary config.
     # lxd.set({key: 'true'})
     # assert lxd.get(key) == 'true'
-    snap.set('hello-world', {key: 'true'})
-    assert snap.get_one('hello-world', key) == 'true'
+    snap.set('lxd', {key: 'true'})
+    assert snap.get_one('lxd', key) == 'true'
 
 
 def test_snap_ensure():
