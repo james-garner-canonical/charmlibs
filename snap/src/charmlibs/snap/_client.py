@@ -159,7 +159,7 @@ def _request_raw(
     return reply
 
 
-def _wait_for_change(change_id: str, timeout: float = 300) -> dict[str, Any]:
+def _wait_for_change(change_id: str, timeout: float = 600) -> dict[str, Any]:
     """Wait for an async change to complete.
 
     The poll time is 100 milliseconds, the same as in snap clients.
