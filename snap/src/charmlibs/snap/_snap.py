@@ -139,21 +139,20 @@ def unalias(alias_name: str) -> None:
 # Interfaces
 
 
-def connect(snap: str, plug: str, target: str | None = None, slot: str | None = None, /) -> None:
+def connect(plug_snap: str, plug: str, slot_snap: str | None = None, slot: str | None = None, /) -> None:
     """Connect a snap and plug, to a target snap and slot."""
-    data = {'action': 'connect', 'plugs': [{'snap': snap, 'plug': plug}]}
-    if target is not None:
-        target_dict = {'snap': target}
-        if slot is not None:
-            target_dict['slot'] = slot
-        data['slots'] = [target_dict]
+    data = {
+        'action': 'connect',
+        'plugs': [{'snap': plug_snap, 'plug': plug}],
+        'slots': [{'snap': slot_snap or '', 'slot': slot or ''}],
+    }
     _client.post('/v2/interfaces', body=data)
 
 
 def disconnect(
-    snap: str,
+    plug_or_slot_snap: str,
     plug_or_slot: str,
-    target: str | None = None,
+    slot_snap: str | None = None,
     slot: str | None = None,
     /,
     *,
@@ -161,15 +160,15 @@ def disconnect(
 ) -> None:
     """Disconnect a plug from a slot."""
     data: dict[str, Any] = {'action': 'disconnect'}
-    if target is None:
+    if slot_snap is None:
         assert slot is None
         # Called with 2 arguments, treat as as snap disconnect <snap>:<slot>
         data['plugs'] = [{'snap': '', 'plug': ''}]
-        data['slots'] = [{'snap': snap, 'slot': plug_or_slot}]
+        data['slots'] = [{'snap': plug_or_slot_snap, 'slot': plug_or_slot}]
     else:
         # Called with 3 or 4 arguments, treat as snap disconnect <snap>:<plug> <snap>:<slot>
-        data['plugs'] = [{'snap': snap, 'plug': plug_or_slot}]
-        data['slots'] = [{'snap': target, 'slot': slot or ''}]
+        data['plugs'] = [{'snap': plug_or_slot_snap, 'plug': plug_or_slot}]
+        data['slots'] = [{'snap': slot_snap, 'slot': slot or ''}]
     if forget:
         data['forget'] = True
     _client.post('/v2/interfaces', body=data)
