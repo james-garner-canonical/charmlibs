@@ -14,7 +14,7 @@
 
 import logging
 
-from . import _errors, _snap, _utils
+from . import _errors, _snap
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def ensure(
         logger.info('ensure:%s -> aborting', msg)
         raise ValueError(msg)
     different_channel = channel is not None and (
-        _utils.normalize_channel(info.channel) != _utils.normalize_channel(channel)
+        _normalize_channel(info.channel) != _normalize_channel(channel)
     )
     different_revision = revision is not None and info.revision != revision
     if different_channel or different_revision:
@@ -60,3 +60,19 @@ def ensure(
     msg = 'ensure:Snap %r is already installed with classic=%s, channel=%r and revision=%d'
     logger.debug(msg, snap, info.classic, info.channel, info.revision)
     return False
+
+
+def _normalize_channel(channel: str) -> str:
+    """Normalize a snap channel string to the form "track/risk".
+
+    Channels may be specified as track or risk only, or as "track/risk" or "track/risk/branch".
+    Snapd uses default values internally, but will record the *requested* value in the snap info.
+    This function normalizes channels with no "/" to the form "track/risk" for easier comparison.
+    """
+    if '/' not in channel:
+        if channel not in ('edge', 'beta', 'candidate', 'stable'):
+            # track only, append default risk
+            return f'{channel}/stable'
+        # risk only, prepend default track
+        return f'latest/{channel}'
+    return channel
