@@ -56,7 +56,7 @@ def info(snap: str, *, missing_ok: bool = False) -> SnapInfo | None:
     """Get information about an installed snap."""
     try:
         info_dict = _client.get(f'/v2/snaps/{snap}')
-    except _errors.SnapNotInstalledError:
+    except _errors.SnapNotFoundError:
         if missing_ok:
             return None
         raise
