@@ -139,7 +139,9 @@ def unalias(alias_name: str) -> None:
 # Interfaces
 
 
-def connect(plug_snap: str, plug: str, slot_snap: str | None = None, slot: str | None = None, /) -> None:
+def connect(
+    plug_snap: str, plug: str, slot_snap: str | None = None, slot: str | None = None, /
+) -> None:
     """Connect a snap and plug, to a target snap and slot."""
     data = {
         'action': 'connect',
