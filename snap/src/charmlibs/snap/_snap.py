@@ -130,9 +130,9 @@ def alias(snap: str, app: str, alias_name: str) -> None:
     _client.post('/v2/aliases', body=data)
 
 
-def unalias(snap: str, alias_name: str) -> None:
+def unalias(alias_name: str) -> None:
     """Remove an alias."""
-    data = {'action': 'unalias', 'snap': snap, 'alias': alias_name}
+    data = {'action': 'unalias', 'alias': alias_name}
     _client.post('/v2/aliases', body=data)
 
 

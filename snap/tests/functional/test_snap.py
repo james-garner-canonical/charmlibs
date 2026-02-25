@@ -436,9 +436,12 @@ def test_snap_connect():
 
 
 def test_alias():
-    cache = snap.SnapCache()
-    lxd = cache['lxd']
-    lxd.alias('lxc', 'testlxc')
+    # cache = snap.SnapCache()
+    # lxd = cache['lxd']
+
+    snap.ensure('lxd')
+    snap.alias('lxd', 'lxc', 'testlxc')
+
     result = check_output(['snap', 'aliases'], text=True)
     found = any(line.split() == ['lxd.lxc', 'testlxc', 'manual'] for line in result.splitlines())
     assert found, result
