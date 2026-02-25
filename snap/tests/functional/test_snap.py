@@ -400,14 +400,18 @@ def test_snap_unhold_refresh():
 
 
 def test_snap_connect():
-    cache = snap.SnapCache()
-    vlc = cache['vlc']
-    vlc.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # vlc = cache['vlc']
+    # vlc.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
 
-    try:
-        vlc.connect('jack1')
-    except CalledProcessError as e:
-        pytest.fail(e.stderr)
+    snap.ensure('vlc', classic=True, channel='latest/stable')
+
+    # try:
+    #     vlc.connect('jack1')
+    # except CalledProcessError as e:
+    #     pytest.fail(e.stderr)
+
+    snap.connect('vlc', 'jack1')
 
 
 # we don't plan to implement global hold refresh
