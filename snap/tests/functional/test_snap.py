@@ -40,6 +40,7 @@ def test_snap_install():
     assert get_command_path('juju') == '/snap/bin/juju'
 
 
+# redundant
 # def test_snap_install_bare():
 #     # snap.add(['charmcraft'], state=snap.SnapState.Latest, classic=True, channel='candidate')
 #     snap.install('charmcraft', channel='latest/candidate', classic=True)
@@ -415,7 +416,7 @@ def test_snap_connect():
     # except CalledProcessError as e:
     #     pytest.fail(e.stderr)
 
-    snap.connect('vlc', 'jack1')
+    snap.connect('vlc', 'mount-observe')
 
 
 # we don't plan to implement global hold refresh
