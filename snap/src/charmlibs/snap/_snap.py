@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import typing
 from typing import Any, Literal
 
@@ -33,6 +34,7 @@ class SnapInfo:
     channel: str
     revision: int
     version: str
+    hold: str | None
 
     @classmethod
     def _from_dict(cls, info_dict: dict[str, Any]) -> Self:
@@ -42,6 +44,7 @@ class SnapInfo:
             revision=int(info_dict['revision']),
             version=info_dict['version'],
             classic=info_dict['confinement'] == 'classic',
+            hold=info_dict.get('hold'),
         )
 
 
@@ -187,7 +190,7 @@ def remove(snap: str, purge: bool = False, missing_ok: bool = False) -> None:
             raise
 
 
-def refresh(snap: str, channel: str | None = None, revision: int | None = None) -> None:
+def refresh(snap: str, channel: str | None = None, revision: int | None = None, no_updates_ok: bool = False) -> bool:
     """Refresh a snap."""
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
@@ -196,7 +199,37 @@ def refresh(snap: str, channel: str | None = None, revision: int | None = None) 
         data['channel'] = channel
     if revision:
         data['revision'] = str(revision)
+    try:
+        _client.post(f'/v2/snaps/{snap}', body=data)
+    except _errors.SnapNoUpdatesAvailableError:
+        if not no_updates_ok:
+            raise
+
+
+# Hold/Unhold
+
+
+def hold(snap: str, duration: datetime.timedelta | int | float | None = None) -> None:
+    """Hold a snap to prevent it from being automatically refreshed.
+
+    Does not prevent manual refreshes.
+    """
+    # https://forum.snapcraft.io/t/snapd-rest-api/17954
+    if duration is None:
+        until = 'forever'
+    else:
+        if isinstance(duration, datetime.timedelta):
+            delta = duration
+        else:
+            delta = datetime.timedelta(seconds=duration)
+        until = (datetime.datetime.now(datetime.timezone.utc) + delta).isoformat()
+    data = {'action': 'hold', 'hold-level': 'general', 'time': until}
     _client.post(f'/v2/snaps/{snap}', body=data)
+
+
+def unhold(snap: str) -> None:
+    """Unhold a snap to allow it to be refreshed."""
+    _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
 
 
 # Services

@@ -67,6 +67,10 @@ class SnapNeedsClassicError(SnapError):
     pass
 
 
+class SnapNoUpdatesAvailableError(SnapError):
+    pass
+
+
 class SnapOptionNotFoundError(SnapError):
     pass
 

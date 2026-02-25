@@ -3,8 +3,8 @@
 # See LICENSE file for licensing details.
 
 
+import datetime
 import logging
-from datetime import timedelta
 from subprocess import CalledProcessError, check_output
 
 import pytest
@@ -354,21 +354,35 @@ def test_snap_restart():
 
 
 def test_snap_hold_refresh():
-    cache = snap.SnapCache()
-    hw = cache['hello-world']
-    hw.ensure(snap.SnapState.Latest, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # hw = cache['hello-world']
+    # hw.ensure(snap.SnapState.Latest, channel='latest/stable')
 
-    hw.hold(duration=timedelta(hours=24))
-    assert hw.held
+    snap.ensure('hello-world', channel='latest/stable')
+
+    # hw.hold(duration=timedelta(hours=24))
+    # assert hw.held
+
+    snap.hold('hello-world', duration=datetime.timedelta(days=2))
+    info = snap.info('hello-world')
+    assert info.hold is not None
+    hold = datetime.datetime.fromisoformat(info.hold)
+    assert hold - datetime.datetime.now() > datetime.timedelta(days=1)
 
 
 def test_snap_unhold_refresh():
-    cache = snap.SnapCache()
-    hw = cache['hello-world']
-    hw.ensure(snap.SnapState.Latest, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # hw = cache['hello-world']
+    # hw.ensure(snap.SnapState.Latest, channel='latest/stable')
 
-    hw.unhold()
-    assert not hw.held
+    snap.ensure('hello-world', channel='latest/stable')
+
+    # hw.unhold()
+    # assert not hw.held
+
+    snap.unhold('hello-world')
+    info = snap.info('hello-world')
+    assert info.hold is None
 
 
 def test_snap_connect():

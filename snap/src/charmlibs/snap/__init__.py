@@ -66,6 +66,7 @@ from ._snap import (
     connect,
     get,
     get_one,
+    hold,
     info,
     install,
     refresh,
@@ -74,6 +75,7 @@ from ._snap import (
     set,  # noqa: A004
     start,
     stop,
+    unhold,
     unset,
 )
 from ._version import __version__ as __version__
@@ -88,6 +90,7 @@ __all__ = [
     'ensure',
     'get',
     'get_one',
+    'hold',
     'info',
     'install',
     'refresh',
@@ -96,5 +99,6 @@ __all__ = [
     'set',
     'start',
     'stop',
+    'unhold',
     'unset',
 ]
