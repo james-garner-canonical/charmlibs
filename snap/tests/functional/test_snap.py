@@ -367,7 +367,7 @@ def test_snap_hold_refresh():
     info = snap.info('hello-world')
     assert info.hold is not None
     hold = datetime.datetime.fromisoformat(info.hold)
-    assert hold - datetime.datetime.now() > datetime.timedelta(days=1)
+    assert hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
 
 
 def test_snap_unhold_refresh():
