@@ -139,23 +139,39 @@ def unalias(snap: str, alias_name: str) -> None:
 # Interfaces
 
 
-def connect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -> None:
-    """Connect a plug to a slot."""
-    data = {
-        'action': 'connect',
-        'plugs': [{'snap': plug_snap, 'plug': plug_name}],
-        'slots': [{'snap': slot_snap, 'slot': slot_name}],
-    }
+def connect(snap: str, plug: str, target: str | None = None, slot: str | None = None, /) -> None:
+    """Connect a snap and plug, to a target snap and slot."""
+    data = {'action': 'connect', 'plugs': [{'snap': snap, 'plug': plug}]}
+    if target is not None:
+        target_dict = {'snap': target}
+        if slot is not None:
+            target_dict['slot'] = slot
+        data['slots'] = [target_dict]
     _client.post('/v2/interfaces', body=data)
 
 
-def disconnect(plug_snap: str, plug_name: str, slot_snap: str, slot_name: str) -> None:
+def disconnect(
+    snap: str,
+    plug_or_slot: str,
+    target: str | None = None,
+    slot: str | None = None,
+    /,
+    *,
+    forget: bool = False,
+) -> None:
     """Disconnect a plug from a slot."""
-    data = {
-        'action': 'disconnect',
-        'plugs': [{'snap': plug_snap, 'plug': plug_name}],
-        'slots': [{'snap': slot_snap, 'slot': slot_name}],
-    }
+    data: dict[str, Any] = {'action': 'disconnect'}
+    if target is None:
+        assert slot is None
+        # Called with 2 arguments, treat as as snap disconnect <snap>:<slot>
+        data['plugs'] = [{'snap': '', 'plug': ''}]
+        data['slots'] = [{'snap': snap, 'slot': plug_or_slot}]
+    else:
+        # Called with 3 or 4 arguments, treat as snap disconnect <snap>:<plug> <snap>:<slot>
+        data['plugs'] = [{'snap': snap, 'plug': plug_or_slot}]
+        data['slots'] = [{'snap': target, 'slot': slot or ''}]
+    if forget:
+        data['forget'] = True
     _client.post('/v2/interfaces', body=data)
 
 
@@ -293,9 +309,23 @@ def list_aliases() -> Mapping[str, Iterable[str]]:
 
 def list_services(snap: str | None = None) -> list[dict[str, Any]]:
     """List snap services."""
-    params = {'select': 'service'}
+    query = {'select': 'service'}
     if snap:
-        params['names'] = snap
-    services = _client.get('/v2/apps', query=params)
+        query['names'] = snap
+    services = _client.get('/v2/apps', query=query)
     assert isinstance(services, list)
     return services
+
+
+def list_interfaces(snap: str | None = None) -> list[dict[str, Any]]:
+    """List snap interfaces."""
+    query = {'select': 'all', 'slots': 'true', 'plugs': 'true'}
+    interfaces = _client.get('/v2/interfaces', query=query)
+    assert isinstance(interfaces, list)
+    if snap is None:
+        return interfaces
+    return [
+        i for i in interfaces
+        if any(p['snap'] == snap for p in i.get('plugs', []))
+        or any(s['snap'] == snap for s in i.get('slots', []))
+    ]
