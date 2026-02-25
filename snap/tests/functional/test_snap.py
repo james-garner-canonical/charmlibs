@@ -4,7 +4,7 @@
 
 
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from subprocess import CalledProcessError, check_output
 
 import pytest
@@ -170,9 +170,12 @@ def test_unset_key_raises_snap_error():
         snap.get('hello-world', key)
     assert key in ctx.value.message
 
-    # FIXME: We should probably continue to offer this functionality since it was requested not long ago
-    # but I don't think we should be including the latest logs in the error message by default, since it can be very expensive to retrieve them and is not usually relevant to the error.
-    # Maybe we could use an env var, require an option, or have a separate method for retrieving logs explicitly on error.
+    # FIXME: We should probably continue to offer this functionality as it was requested recently.
+    # but I don't think we should be including the latest logs in the error message by default,
+    # since it can be very expensive to retrieve them and is not usually relevant to the error.
+    # Maybe we could use an env var, require an option, or have a separate method
+    # for retrieving logs explicitly that charms can use in error cases.
+
     # assert '\nLatest logs:\n' in ctx.value.message  # journalctl log retrieval on SnapError
 
     # # We can make the above work w/ arbitrary config.
@@ -311,28 +314,43 @@ def test_snap_stop():
 
 
 def test_snap_logs():
-    cache = snap.SnapCache()
-    kp = cache['kube-proxy']
-    kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # kp = cache['kube-proxy']
+    # kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
+
+    snap.ensure('kube-proxy', classic=True, channel='latest/stable')
 
     # Terrible means of populating logs
-    kp.start()
-    kp.stop()
-    kp.start()
-    kp.stop()
+    # kp.start()
+    # kp.stop()
+    # kp.start()
+    # kp.stop()
 
-    assert len(kp.logs(num_lines=15).splitlines()) >= 4
+    before = snap._snap.logs('kube-proxy', num_lines=10)
+
+    snap.start('kube-proxy')
+    snap.stop('kube-proxy')
+    snap.start('kube-proxy')
+    snap.stop('kube-proxy')
+
+    # assert len(kp.logs(num_lines=15).splitlines()) >= 4
+
+    after = snap._snap.logs('kube-proxy', num_lines=10)
+    assert len(before) == 10 or len(after) > len(before)
 
 
 def test_snap_restart():
-    cache = snap.SnapCache()
-    kp = cache['kube-proxy']
-    kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
+    # cache = snap.SnapCache()
+    # kp = cache['kube-proxy']
+    # kp.ensure(snap.SnapState.Latest, classic=True, channel='latest/stable')
 
-    try:
-        kp.restart()
-    except CalledProcessError as e:
-        pytest.fail(e.stderr)
+    # try:
+    #     kp.restart()
+    # except CalledProcessError as e:
+    #     pytest.fail(e.stderr)
+
+    snap.ensure('kube-proxy', classic=True, channel='latest/stable')
+    snap.restart('kube-proxy')
 
 
 def test_snap_hold_refresh():
@@ -364,24 +382,26 @@ def test_snap_connect():
         pytest.fail(e.stderr)
 
 
-def test_hold_refresh():
-    hold_date = (datetime.now() + timedelta(days=90)).strftime('%Y-%m-%d')
-    snap.hold_refresh()
-    result = check_output(['snap', 'refresh', '--time'])
-    assert f'hold: {hold_date}' in result.decode()
-
-
-def test_forever_hold_refresh():
-    snap.hold_refresh(forever=True)
-    result = check_output(['snap', 'get', 'system', 'refresh.hold'])
-    assert 'forever' in result.decode()
-
-
-def test_reset_hold_refresh():
-    snap.hold_refresh()
-    snap.hold_refresh(0)
-    result = check_output(['snap', 'refresh', '--time'])
-    assert 'hold: ' not in result.decode()
+# we don't plan to implement global hold refresh
+#
+# def test_hold_refresh():
+#     hold_date = (datetime.now() + timedelta(days=90)).strftime('%Y-%m-%d')
+#     snap.hold_refresh()
+#     result = check_output(['snap', 'refresh', '--time'])
+#     assert f'hold: {hold_date}' in result.decode()
+#
+#
+# def test_forever_hold_refresh():
+#     snap.hold_refresh(forever=True)
+#     result = check_output(['snap', 'get', 'system', 'refresh.hold'])
+#     assert 'forever' in result.decode()
+#
+#
+# def test_reset_hold_refresh():
+#     snap.hold_refresh()
+#     snap.hold_refresh(0)
+#     result = check_output(['snap', 'refresh', '--time'])
+#     assert 'hold: ' not in result.decode()
 
 
 def test_alias():

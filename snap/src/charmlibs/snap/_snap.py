@@ -227,7 +227,19 @@ def restart(snap: str, *services: str) -> None:
     _client.post('/v2/apps', body=data)
 
 
-# List stuff, won't be part of the public API
+# logs
+
+
+def logs(*snaps: str, num_lines: int = 10) -> list[dict[str, Any]]:
+    query: dict[str, Any] = {'n': num_lines}
+    if snaps:
+        query['names'] = ','.join(snaps)
+    result = _client.get('/v2/logs', query=query)
+    assert isinstance(result, list)
+    return result
+
+
+# List stuff, probably won't be part of the public API
 
 
 def list_snaps() -> list[SnapInfo]:

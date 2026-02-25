@@ -103,12 +103,19 @@ def _request(
         data = json.dumps(body).encode('utf-8')
         headers['Content-Type'] = 'application/json'
     response = _request_raw(method, path, query, headers, data)
-    raw_resp: dict[str, Any] = json.loads(response.read())
-    _raise_if_error(raw_resp)
-    if raw_resp['type'] == 'async':
-        result = _wait_for_change(change_id=raw_resp['change'])
+    response_bytes = response.read()
+    if path == '/v2/logs':
+        return [
+            json.loads(s)
+            for line in response_bytes.split(b'\n\x1e')
+            if (s := line.decode().strip())
+        ]
+    response_dict = json.loads(response_bytes)
+    _raise_if_error(response_dict)
+    if response_dict['type'] == 'async':
+        result = _wait_for_change(change_id=response_dict['change'])
     else:
-        result = raw_resp['result']
+        result = response_dict['result']
     return result
 
 
@@ -129,7 +136,7 @@ def _request_raw(
     opener = urllib.request.OpenerDirector()
     opener.add_handler(_UnixSocketHandler(_SOCKET_PATH))
     # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
-    opener.add_handler(urllib.request.HTTPRedirectHandler())
+    # opener.add_handler(urllib.request.HTTPRedirectHandler())
     # opener.add_handler(urllib.request.HTTPErrorProcessor())
     request = urllib.request.Request(url, method=method, data=data, headers=dict(headers))  # noqa: S310
     reply = opener.open(request, timeout=30.0)
