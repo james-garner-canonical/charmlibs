@@ -202,25 +202,27 @@ def refresh(snap: str, channel: str | None = None, revision: int | None = None) 
 # Services
 
 
-def start(snap: str, service: str, *services: str) -> None:
+def start(snap: str, *services: str, enable: bool = False) -> None:
     """Start snap services."""
-    names = [f'{snap}.{s}' for s in (service, *services)]
+    names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'start', 'names': names}
+    if enable:
+        data['enable'] = True
     _client.post('/v2/apps', body=data)
 
 
-def stop(snap: str, service: str, *services: str, disable: bool = False) -> None:
+def stop(snap: str, *services: str, disable: bool = False) -> None:
     """Stop snap services."""
-    names = [f'{snap}.{s}' for s in (service, *services)]
+    names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'stop', 'names': names}
     if disable:
         data['disable'] = True
     _client.post('/v2/apps', body=data)
 
 
-def restart(snap: str, service: str, *services: str) -> None:
+def restart(snap: str, *services: str) -> None:
     """Restart snap services."""
-    names = [f'{snap}.{s}' for s in (service, *services)]
+    names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'restart', 'names': names}
     _client.post('/v2/apps', body=data)
 
