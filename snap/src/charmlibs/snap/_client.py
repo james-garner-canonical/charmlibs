@@ -110,13 +110,16 @@ def _request(
             for line in response_bytes.split(b'\n\x1e')
             if (s := line.decode().strip())
         ]
-    response_dict = json.loads(response_bytes)
-    _raise_if_error(response_dict)
-    if response_dict['type'] == 'async':
-        result = _wait_for_change(change_id=response_dict['change'])
-    else:
-        result = response_dict['result']
-    return result
+    response_dict: dict[str, Any] = json.loads(response_bytes)
+    assert isinstance(response_dict, dict)
+    match response_dict['type']:
+        case 'error':
+            error_type = _error_type_from_result(response_dict['result'])
+            raise _make_error(error_type, response_dict)
+        case 'async':
+            return _wait_for_change(change_id=response_dict['change'])
+        case _:
+            return response_dict['result']
 
 
 def _request_raw(
@@ -185,23 +188,33 @@ def _wait_for_change(change_id: str, timeout: float = 600) -> dict[str, Any]:
                 raise _errors.SnapChangeError._from_change_dict(response)
 
 
-def _raise_if_error(response: dict[str, Any]) -> None:
-    if response['type'] != 'error':
-        return
-    result = response['result']
+def _error_type_from_result(result: dict[str, Any]) -> type[_errors.SnapError]:
     match result.get('kind'):
         case 'snap-already-installed':
-            raise _errors.SnapAlreadyInstalledError._from_response(response)
+            return _errors.SnapAlreadyInstalledError
         case 'option-not-found':
-            raise _errors.SnapOptionNotFoundError._from_response(response)
+            return _errors.SnapOptionNotFoundError
         case 'snap-needs-classic':
-            raise _errors.SnapNeedsClassicError._from_response(response)
+            return _errors.SnapNeedsClassicError
         case 'snap-not-found' | 'snap-not-installed':
-            raise _errors.SnapNotFoundError._from_response(response)
+            return _errors.SnapNotFoundError
         case 'snap-no-update-available':
-            raise _errors.SnapNoUpdatesAvailableError._from_response(response)
+            return _errors.SnapNoUpdatesAvailableError
         case _:
-            raise _errors.SnapAPIError._from_response(response)
+            return _errors.SnapAPIError
+
+
+def _make_error(
+    error_type: type[_errors.SnapError], response: dict[str, Any]
+) -> _errors.SnapError:
+    result = response.get('result', {})
+    return error_type(
+        message=result.get('message', ''),
+        kind=result.get('kind', ''),
+        value=result.get('value', ''),
+        code=response.get('status-code'),
+        status=response.get('status'),
+    )
 
 
 def get(path: str, query: dict[str, Any] | None = None):

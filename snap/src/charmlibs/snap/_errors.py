@@ -35,17 +35,6 @@ class SnapError(Exception):
     def __repr__(self) -> str:
         return f'{type(self).__name__}({self.message!r}, kind={self.kind!r}, value={self.value!r}, code={self.code!r}, status={self.status!r})'  # noqa: E501
 
-    @classmethod
-    def _from_response(cls, response: dict[str, Any]) -> Self:
-        result = response.get('result', {})
-        return cls(
-            message=result.get('message', ''),
-            kind=result.get('kind', ''),
-            value=result.get('value', ''),
-            code=response.get('status-code'),
-            status=response.get('status'),
-        )
-
 
 class SnapAPIError(SnapError):
     """Raised when the snapd API returns an error that doesn't match a more specific type."""
