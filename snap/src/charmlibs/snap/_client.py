@@ -195,10 +195,8 @@ def _raise_if_error(response: dict[str, Any]) -> None:
             raise _errors.SnapOptionNotFoundError._from_response(response)
         case 'snap-needs-classic':
             raise _errors.SnapNeedsClassicError._from_response(response)
-        case 'snap-not-found':
+        case 'snap-not-found' | 'snap-not-installed':
             raise _errors.SnapNotFoundError._from_response(response)
-        case 'snap-not-installed':
-            raise _errors.SnapNotInstalledError._from_response(response)
         case 'snap-no-update-available':
             raise _errors.SnapNoUpdatesAvailableError._from_response(response)
         case _:

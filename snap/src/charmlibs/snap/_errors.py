@@ -59,10 +59,6 @@ class SnapNotFoundError(SnapError):
     pass
 
 
-class SnapNotInstalledError(SnapError):
-    pass
-
-
 class SnapNeedsClassicError(SnapError):
     pass
 
