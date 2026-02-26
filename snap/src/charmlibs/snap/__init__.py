@@ -53,9 +53,14 @@ As an example of installing several Snaps and checking details::
 """
 
 from ._errors import (
+    SnapAlreadyInstalledError,
     SnapAPIError,
+    SnapChangeError,
     SnapError,
+    SnapNeedsClassicError,
     SnapNotFoundError,
+    SnapNoUpdatesAvailableError,
+    SnapOptionNotFoundError,
 )
 from ._functions import (
     ensure,
@@ -82,9 +87,14 @@ from ._version import __version__ as __version__
 
 __all__ = [
     'SnapAPIError',
+    'SnapAlreadyInstalledError',
+    'SnapChangeError',
     'SnapError',
     'SnapInfo',
+    'SnapNeedsClassicError',
+    'SnapNoUpdatesAvailableError',
     'SnapNotFoundError',
+    'SnapOptionNotFoundError',
     'alias',
     'config_get_many',
     'config_get_one',
