@@ -140,7 +140,7 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
 
     The poll time is 100 milliseconds, the same as in snap clients.
     """
-    logger.debug('_wait_for_change(%r, timeout=%r)', change_id)
+    logger.debug('_wait_for_change(%r)', change_id)
     deadline = time.time() + 600  # 10 minute timeout
     while True:
         if time.time() > deadline:
