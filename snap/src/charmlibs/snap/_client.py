@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Get, post, and put requests to the snapd REST API.
+
+Synchronous results are returned directly, as basic Python types decoded from JSON.
+Async operations are waited on until completion and then the final result is returned.
+Errors are converted into :class:`SnapError` exceptions, with specific subclasses where possible.
+"""
+
 from __future__ import annotations
 
 import json

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Snap operations implemented as direct calls to the snapd REST API."""
+
 from __future__ import annotations
 
 import dataclasses

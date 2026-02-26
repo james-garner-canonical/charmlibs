@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Logical error types for responses from the snapd API."""
+
 from __future__ import annotations
 
 

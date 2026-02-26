@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""High level helper functions that build on top of the basic snap operations."""
+
 import logging
 
 from . import _snap
