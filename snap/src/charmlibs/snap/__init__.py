@@ -53,9 +53,9 @@ As an example of installing several Snaps and checking details::
 """
 
 from ._errors import (
-    SnapAPIError,
     SnapError,
     SnapNotFoundError,
+    SnapResponseError,
 )
 from ._functions import (
     ensure,
@@ -81,9 +81,9 @@ from ._snap import (
 from ._version import __version__ as __version__
 
 __all__ = [
-    'SnapAPIError',
     'SnapError',
     'SnapNotFoundError',
+    'SnapResponseError',
     'alias',
     'channels',
     'config_get_many',

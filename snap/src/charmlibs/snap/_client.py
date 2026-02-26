@@ -104,22 +104,58 @@ def _request(
         headers['Content-Type'] = 'application/json'
     response = _request_raw(method, path, query=query, headers=headers, data=data)
     response_bytes = response.read()
-    if path == '/v2/logs':
-        return [
-            json.loads(s)
-            for line in response_bytes.split(b'\n\x1e')
-            if (s := line.decode().strip())
-        ]
-    response_dict: dict[str, Any] = json.loads(response_bytes)
-    assert isinstance(response_dict, dict)
-    match response_dict['type']:
-        case 'error':
-            error_type = _error_type_from_result(response_dict['result'])
-            raise _make_error(error_type, response_dict)
-        case 'async':
-            return _wait_for_change(change_id=response_dict['change'])
-        case _:
-            return response_dict['result']
+    try:
+        # /v2/logs returns a stream of JSON objects separated by \n\x1e
+        if path == '/v2/logs':
+            return [
+                json.loads(s)
+                for line in response_bytes.split(b'\n\x1e')
+                if (s := line.decode().strip())
+            ]
+        # otherwise we expect a single JSON object
+        response_dict: dict[str, Any] = json.loads(response_bytes)
+    except json.JSONDecodeError as e:
+        raise _errors.SnapResponseError(
+            message=f'Invalid JSON in response for path {path!r}: {e}',
+            kind='',
+            value=response_bytes.decode(errors='replace'),
+            code=None,
+            status=None,
+        ) from None
+    if not isinstance(response_dict, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+        raise _errors.SnapResponseError(
+            message=f"Unexpected response type {type(response_dict).__name__!r} for path {path!r}, expected a 'dict'",  # noqa: E501
+            kind='',
+            value=str(response_dict),
+            code=None,
+            status=None,
+        )
+    response_type = response_dict.get('type')
+    if response_type is None:
+        raise _errors.SnapResponseError(
+            message=f'Missing response type for path {path!r}',
+            kind='',
+            value=str(response_dict),
+            code=None,
+            status=None,
+        )
+    try:
+        match response_type:
+            case 'error':
+                error_type = _error_type_from_result(response_dict['result'])
+                raise _make_error(error_type, response_dict)
+            case 'async':
+                return _wait_for_change(change_id=response_dict['change'])
+            case _:
+                return response_dict['result']
+    except KeyError as e:
+        raise _errors.SnapResponseError(
+            message=f'Missing expected key {e} in response for path {path!r}',
+            kind='',
+            value=str(response_dict),
+            code=None,
+            status=None,
+        ) from None
 
 
 def _request_raw(
@@ -174,7 +210,14 @@ def _wait_for_change(change_id: str, timeout: float = 600) -> dict[str, Any]:
         if time.time() > deadline:
             raise TimeoutError(f'timeout waiting for snap change {change_id}')
         response = _request('GET', f'/v2/changes/{change_id}', log=False)
-        assert isinstance(response, dict)
+        if not isinstance(response, dict):
+            raise _errors.SnapResponseError(
+                message=f'Unexpected response type {type(response).__name__} while waiting for change {change_id}',  # noqa: E501
+                kind='',
+                value=str(response),
+                code=None,
+                status=None,
+            )
         match response.get('status'):
             case 'Do' | 'Doing':
                 time.sleep(0.1)
@@ -208,7 +251,7 @@ def _error_type_from_result(result: dict[str, Any]) -> type[_errors.SnapError]:
         case 'snap-no-update-available':
             return _errors.SnapNoUpdatesAvailableError
         case _:
-            return _errors.SnapAPIError
+            return _errors.SnapError
 
 
 def _make_error(
