@@ -21,6 +21,7 @@ import socket
 import sys
 import time
 import typing
+import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any
@@ -88,7 +89,7 @@ def _request(
     body: dict[str, Any] | None = None,
     log: bool = True,
 ) -> dict[str, Any] | list[dict[str, Any]]:
-    """Make a JSON request to the server with the given HTTP method and path.
+    """Make a JSON request to the snapd server with the given HTTP method and path.
 
     If query dict is provided, it is encoded and appended as a query string
     to the URL. If body dict is provided, it is serialied as JSON and used
@@ -157,7 +158,7 @@ def _request_raw(
     headers: dict[str, Any] | None = None,
     data: bytes | Generator[bytes, Any, Any] | None = None,
 ) -> http.client.HTTPResponse:
-    """Make a request to the Pebble server; return the raw HTTPResponse object."""
+    """Make a request to the snapd server; return the raw HTTPResponse object."""
     assert path.startswith('/')
     url = f'http://localhost{path}'
     if query:
@@ -170,24 +171,13 @@ def _request_raw(
     # opener.add_handler(urllib.request.HTTPRedirectHandler())
     # opener.add_handler(urllib.request.HTTPErrorProcessor())
     request = urllib.request.Request(url, method=method, data=data, headers=dict(headers))  # noqa: S310
-    reply = opener.open(request, timeout=30.0)
-    # try:
-    #     reply = opener.open(request, timeout=30.0)
-    # except urllib.error.HTTPError as e:
-    #     try:
-    #         response: dict[str, Any] = json.loads(e.read())
-    #     except (OSError, ValueError, KeyError) as e2:
-    #         # Will only happen on read error or if we receive invalid JSON.
-    #         response = {'message': f'{type(e2).__name__} - {e2}'}
-    #     response['status-code'] = e.code
-    #     response['status'] = e.reason
-    #     raise _errors.SnapAPIError._from_response(response) from None
-    # except urllib.error.URLError as e:
-    #     if e.args and isinstance(e.args[0], FileNotFoundError):
-    #         msg = f'Could not connect to server: socket not found at {_SOCKET_PATH!r}'
-    #         raise ConnectionError(msg) from None
-    #     raise ConnectionError(e.reason) from e
-    return reply
+    try:
+        return opener.open(request, timeout=30.0)
+    except urllib.error.URLError as e:
+        if e.args and isinstance(e.args[0], FileNotFoundError):
+            msg = f'Could not connect to server: socket not found at {_SOCKET_PATH!r}'
+            raise ConnectionError(msg) from None
+        raise ConnectionError(e.reason) from e
 
 
 def _wait_for_change(change_id: str, timeout: float = 600) -> dict[str, Any]:
