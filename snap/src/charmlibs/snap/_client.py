@@ -135,16 +135,16 @@ def _request_raw(
         raise ConnectionError(e.reason) from e
 
 
-def _wait_for_change(change_id: str, timeout: float = 600) -> dict[str, Any]:
+def _wait_for_change(change_id: str) -> dict[str, Any]:
     """Wait for an async change to complete.
 
     The poll time is 100 milliseconds, the same as in snap clients.
     """
-    logger.debug('_wait_for_change(%r, timeout=%r)', change_id, timeout)
-    deadline = time.time() + timeout
+    logger.debug('_wait_for_change(%r, timeout=%r)', change_id)
+    deadline = time.time() + 600  # 10 minute timeout
     while True:
         if time.time() > deadline:
-            raise TimeoutError(f'timeout waiting for snap change {change_id}')
+            raise TimeoutError(f'timeout waiting for snap change: {change_id}')
         response = _request('GET', f'/v2/changes/{change_id}', log=False)
         if not isinstance(response, dict):
             raise _errors.SnapAPIError(
