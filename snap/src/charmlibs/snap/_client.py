@@ -14,11 +14,8 @@
 
 from __future__ import annotations
 
-import http.client
 import json
 import logging
-import socket
-import sys
 import time
 import typing
 import urllib.error
@@ -26,9 +23,10 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
-from . import _errors
+from . import _errors, _socket_handler
 
 if typing.TYPE_CHECKING:
+    import http.client
     from collections.abc import Generator
 
 logger = logging.getLogger(__name__)
@@ -36,49 +34,6 @@ logger = logging.getLogger(__name__)
 # we need the powerful snapd socket
 # defined in the snap application itself under dirs/dirs.go as SnapdSocket
 _SOCKET_PATH = '/run/snapd.socket'
-
-
-class _NotProvided:
-    pass
-
-
-_NOT_PROVIDED = _NotProvided()
-
-
-class _UnixSocketConnection(http.client.HTTPConnection):
-    """Implementation of HTTPConnection that connects to a named Unix socket."""
-
-    def __init__(self, host: str, socket_path: str, timeout: _NotProvided | float = _NOT_PROVIDED):
-        if isinstance(timeout, _NotProvided):
-            super().__init__(host)
-        else:
-            super().__init__(host, timeout=timeout)
-        self._socket_path = socket_path
-
-    def connect(self):
-        """Override connect to use Unix socket (instead of TCP socket)."""
-        if not hasattr(socket, 'AF_UNIX'):
-            raise NotImplementedError(f'Unix sockets not supported on {sys.platform}')
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(self._socket_path)
-        if not isinstance(self.timeout, _NotProvided):
-            self.sock.settimeout(self.timeout)
-
-
-class _UnixSocketHandler(urllib.request.AbstractHTTPHandler):
-    """Implementation of HTTPHandler that uses a named Unix socket."""
-
-    def __init__(self, socket_path: str):
-        super().__init__()
-        self._socket_path = socket_path
-
-    def http_open(self, req: urllib.request.Request):
-        """Override http_open to use a Unix socket connection (instead of TCP)."""
-        return self.do_open(
-            _UnixSocketConnection,  # type:ignore
-            req,
-            socket_path=self._socket_path,
-        )
 
 
 def _request(
@@ -166,7 +121,7 @@ def _request_raw(
     if headers is None:
         headers = {}
     opener = urllib.request.OpenerDirector()
-    opener.add_handler(_UnixSocketHandler(_SOCKET_PATH))
+    opener.add_handler(_socket_handler.UnixSocketHandler(_SOCKET_PATH))
     # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
     # opener.add_handler(urllib.request.HTTPRedirectHandler())
     # opener.add_handler(urllib.request.HTTPErrorProcessor())
