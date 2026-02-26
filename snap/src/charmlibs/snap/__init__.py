@@ -72,6 +72,7 @@ from ._snap import (
     config_set,
     config_unset,
     connect,
+    disconnect,
     hold,
     info,
     install,
@@ -80,6 +81,7 @@ from ._snap import (
     restart,
     start,
     stop,
+    unalias,
     unhold,
 )
 from ._version import __version__ as __version__
@@ -99,6 +101,7 @@ __all__ = [
     'config_set',
     'config_unset',
     'connect',
+    'disconnect',
     'ensure',
     'hold',
     'info',
@@ -108,5 +111,6 @@ __all__ = [
     'restart',
     'start',
     'stop',
+    'unalias',
     'unhold',
 ]
