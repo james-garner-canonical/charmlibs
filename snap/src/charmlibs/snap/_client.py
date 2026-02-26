@@ -117,30 +117,21 @@ def _request(
     except json.JSONDecodeError as e:
         raise _errors.SnapResponseError(
             message=f'Invalid JSON in response for path {path!r}: {e}',
-            kind='',
+            kind='charmlibs-snap',
             value=response_bytes.decode(errors='replace'),
-            code=None,
-            status=None,
+            code=response.status,
+            status=response.reason,
         ) from None
     if not isinstance(response_dict, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise _errors.SnapResponseError(
             message=f"Unexpected response type {type(response_dict).__name__!r} for path {path!r}, expected a 'dict'",  # noqa: E501
-            kind='',
+            kind='charmlibs-snap',
             value=str(response_dict),
-            code=None,
-            status=None,
-        )
-    response_type = response_dict.get('type')
-    if response_type is None:
-        raise _errors.SnapResponseError(
-            message=f'Missing response type for path {path!r}',
-            kind='',
-            value=str(response_dict),
-            code=None,
-            status=None,
+            code=response.status,
+            status=response.reason,
         )
     try:
-        match response_type:
+        match response_dict['type']:
             case 'error':
                 error_type = _error_type_from_result(response_dict['result'])
                 raise _make_error(error_type, response_dict)
@@ -151,10 +142,10 @@ def _request(
     except KeyError as e:
         raise _errors.SnapResponseError(
             message=f'Missing expected key {e} in response for path {path!r}',
-            kind='',
+            kind='charmlibs-snap',
             value=str(response_dict),
-            code=None,
-            status=None,
+            code=response.status,
+            status=response.reason,
         ) from None
 
 
