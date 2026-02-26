@@ -161,7 +161,7 @@ def list_snaps() -> list[SnapInfo]:
 # /v2/snaps/{snap}/conf
 
 
-def config_get_many(snap: str, *keys: str) -> dict[str, Any]:
+def config_get(snap: str, *keys: str) -> dict[str, Any]:
     """Get snap configuration."""
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
@@ -171,7 +171,7 @@ def config_get_many(snap: str, *keys: str) -> dict[str, Any]:
 
 def config_get_one(snap: str, key: str) -> Any:
     """Get a single snap configuration key."""
-    config = config_get_many(snap, key)
+    config = config_get(snap, key)
     return config[key]
 
 
