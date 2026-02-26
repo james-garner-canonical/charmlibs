@@ -16,7 +16,6 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "opentelemetry-api",
-    "requests-unixsocket",  # FIXME: drop dependency in favour of stdlib + custom helper
 ]
 
 [dependency-groups]
