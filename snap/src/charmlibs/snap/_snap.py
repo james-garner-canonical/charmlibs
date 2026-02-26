@@ -180,8 +180,13 @@ def disconnect(
 
 
 def install(
-    snap: str, channel: str | None = None, revision: int | None = None, classic: bool = False
-) -> None:
+    snap: str,
+    *,
+    channel: str | None = None,
+    revision: int | None = None,
+    classic: bool = False,
+    installed_ok: bool = False,
+) -> bool:
     """Install a snap."""
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
@@ -192,19 +197,27 @@ def install(
         data['revision'] = str(revision)
     if classic:
         data['classic'] = True
-    _client.post(f'/v2/snaps/{snap}', body=data)
+    try:
+        _client.post(f'/v2/snaps/{snap}', body=data)
+    except _errors.SnapAlreadyInstalledError:
+        if installed_ok:
+            return False
+        raise
+    return True
 
 
-def remove(snap: str, purge: bool = False, missing_ok: bool = False) -> None:
+def remove(snap: str, *, purge: bool = False, missing_ok: bool = False) -> bool:
     """Remove a snap."""
     data: dict[str, Any] = {'action': 'remove'}
     if purge:
         data['purge'] = True
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapNotInstalledError:
-        if not missing_ok:
-            raise
+    except _errors.SnapNotFoundError:
+        if missing_ok:
+            return False
+        raise
+    return True
 
 
 def refresh(
@@ -221,8 +234,10 @@ def refresh(
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
     except _errors.SnapNoUpdatesAvailableError:
-        if not no_updates_ok:
-            raise
+        if no_updates_ok:
+            return False
+        raise
+    return True
 
 
 # Hold/Unhold
