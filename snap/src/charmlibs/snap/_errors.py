@@ -31,7 +31,12 @@ class SnapError(Exception):
 
 
 class SnapAPIError(SnapError):
-    """Raised manually when the snapd API returns a response we don't understand."""
+    """Raised manually when the snapd API returns a response we don't understand.
+
+    Callers will not be able to resolve this error directly, but may want to catch it for logging,
+    or to trigger retries if the error may be transient. If retries are not successful,
+    user intervention may be required.
+    """
 
 
 class SnapAlreadyInstalledError(SnapError):
