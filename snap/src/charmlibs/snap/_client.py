@@ -116,7 +116,7 @@ def _request(
         # otherwise we expect a single JSON object
         response_dict: dict[str, Any] = json.loads(response_bytes)
     except json.JSONDecodeError as e:
-        raise _errors.SnapResponseError(
+        raise _errors.SnapAPIError(
             message=f'Invalid JSON in response for path {path!r}: {e}',
             kind='charmlibs-snap',
             value=response_bytes.decode(errors='replace'),
@@ -124,7 +124,7 @@ def _request(
             status=response.reason,
         ) from None
     if not isinstance(response_dict, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
-        raise _errors.SnapResponseError(
+        raise _errors.SnapAPIError(
             message=f"Unexpected response type {type(response_dict).__name__!r} for path {path!r}, expected a 'dict'",  # noqa: E501
             kind='charmlibs-snap',
             value=str(response_dict),
@@ -141,7 +141,7 @@ def _request(
             case _:
                 return response_dict['result']
     except KeyError as e:
-        raise _errors.SnapResponseError(
+        raise _errors.SnapAPIError(
             message=f'Missing expected key {e} in response for path {path!r}',
             kind='charmlibs-snap',
             value=str(response_dict),
@@ -192,9 +192,9 @@ def _wait_for_change(change_id: str, timeout: float = 600) -> dict[str, Any]:
             raise TimeoutError(f'timeout waiting for snap change {change_id}')
         response = _request('GET', f'/v2/changes/{change_id}', log=False)
         if not isinstance(response, dict):
-            raise _errors.SnapResponseError(
+            raise _errors.SnapAPIError(
                 message=f'Unexpected response type {type(response).__name__} while waiting for change {change_id}',  # noqa: E501
-                kind='',
+                kind='charmlibs-snap',
                 value=str(response),
                 code=None,
                 status=None,

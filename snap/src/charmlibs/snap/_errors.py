@@ -30,7 +30,7 @@ class SnapError(Exception):
         return f'{type(self).__name__}({self.message!r}, kind={self.kind!r}, value={self.value!r}, code={self.code!r}, status={self.status!r})'  # noqa: E501
 
 
-class SnapResponseError(SnapError):
+class SnapAPIError(SnapError):
     """Raised manually when the snapd API returns a response we don't understand."""
 
 
