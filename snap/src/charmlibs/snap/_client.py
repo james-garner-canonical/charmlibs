@@ -102,7 +102,7 @@ def _request(
     if body is not None:
         data = json.dumps(body).encode('utf-8')
         headers['Content-Type'] = 'application/json'
-    response = _request_raw(method, path, query, headers, data)
+    response = _request_raw(method, path, query=query, headers=headers, data=data)
     response_bytes = response.read()
     if path == '/v2/logs':
         return [
@@ -122,6 +122,7 @@ def _request(
 def _request_raw(
     method: str,
     path: str,
+    *,
     query: dict[str, Any] | None = None,
     headers: dict[str, Any] | None = None,
     data: bytes | Generator[bytes, Any, Any] | None = None,
