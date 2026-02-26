@@ -27,6 +27,9 @@ if typing.TYPE_CHECKING:
     from typing_extensions import Self
 
 
+# /v2/snaps/{snap}
+
+
 @dataclasses.dataclass
 class SnapInfo:
     name: str
@@ -48,9 +51,6 @@ class SnapInfo:
         )
 
 
-# Info/List
-
-
 @typing.overload
 def info(snap: str, *, missing_ok: Literal[False] = False) -> SnapInfo: ...
 @typing.overload
@@ -65,118 +65,6 @@ def info(snap: str, *, missing_ok: bool = False) -> SnapInfo | None:
         raise
     assert isinstance(info_dict, dict)
     return SnapInfo._from_dict(info_dict)
-
-
-def channels(snap: str) -> dict[str, SnapInfo]:
-    """List information about all channels of a snap available in the store."""
-    results = _client.get('/v2/find', query={'name': snap})
-    assert isinstance(results, list)
-    # API returns a list of results, or an error if there are no matches.
-    # We'll have one result for an exact name match.
-    result, *_ = results
-    # A result has information like this:
-    # {
-    #     # ...
-    #     'channels': {
-    #         # ...
-    #         'latest/stable': {
-    #             'revision': '226',
-    #             'confinement': 'classic',
-    #             'version': '07258626',
-    #             'channel': 'latest/stable',
-    #             'epoch': {'read': [0], 'write': [0]},
-    #             'size': 352374784,
-    #             'released-at': '2026-02-19T23:54:26.844384Z'
-    #         },
-    #     },
-    # }
-    channels = result['channels']
-    return {k: SnapInfo._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}
-
-
-# Configuration
-
-
-def config_get_many(snap: str, *keys: str) -> dict[str, Any]:
-    """Get snap configuration."""
-    params = {'keys': ','.join(keys)} if keys else None
-    config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
-    assert isinstance(config, dict)
-    return config
-
-
-def config_get_one(snap: str, key: str) -> Any:
-    """Get a single snap configuration key."""
-    config = config_get_many(snap, key)
-    return config[key]
-
-
-def config_set(snap: str, config: dict[str, Any]) -> None:
-    """Set snap configuration."""
-    _client.put(f'/v2/snaps/{snap}/conf', body=config)
-
-
-def config_unset(snap: str, key: str, *keys: str) -> None:
-    """Unset snap configuration keys."""
-    _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
-
-
-# Aliases
-
-
-def alias(snap: str, app: str, alias_name: str) -> None:
-    """Create an alias for a snap app."""
-    data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
-    _client.post('/v2/aliases', body=data)
-
-
-def unalias(alias_name: str) -> None:
-    """Remove an alias."""
-    data = {'action': 'unalias', 'alias': alias_name}
-    _client.post('/v2/aliases', body=data)
-
-
-# Interfaces
-
-
-def connect(
-    plug_snap: str, plug: str, slot_snap: str | None = None, slot: str | None = None, /
-) -> None:
-    """Connect a snap and plug, to a target snap and slot."""
-    data = {
-        'action': 'connect',
-        'plugs': [{'snap': plug_snap, 'plug': plug}],
-        'slots': [{'snap': slot_snap or '', 'slot': slot or ''}],
-    }
-    _client.post('/v2/interfaces', body=data)
-
-
-def disconnect(
-    plug_or_slot_snap: str,
-    plug_or_slot: str,
-    slot_snap: str | None = None,
-    slot: str | None = None,
-    /,
-    *,
-    forget: bool = False,
-) -> None:
-    """Disconnect a plug from a slot."""
-    data: dict[str, Any] = {'action': 'disconnect'}
-    if slot_snap is None:
-        assert slot is None
-        # Called with 2 arguments, treat as as snap disconnect <snap>:<slot>
-        data['plugs'] = [{'snap': '', 'plug': ''}]
-        data['slots'] = [{'snap': plug_or_slot_snap, 'slot': plug_or_slot}]
-    else:
-        # Called with 3 or 4 arguments, treat as snap disconnect <snap>:<plug> <snap>:<slot>
-        data['plugs'] = [{'snap': plug_or_slot_snap, 'plug': plug_or_slot}]
-        data['slots'] = [{'snap': slot_snap, 'slot': slot or ''}]
-    if forget:
-        data['forget'] = True
-    _client.post('/v2/interfaces', body=data)
-
-
-# Install/Remove/Refresh
 
 
 def install(
@@ -240,9 +128,6 @@ def refresh(
     return True
 
 
-# Hold/Unhold
-
-
 def hold(snap: str, duration: datetime.timedelta | int | float | None = None) -> None:
     """Hold a snap to prevent it from being automatically refreshed.
 
@@ -266,7 +151,63 @@ def unhold(snap: str) -> None:
     _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
 
 
-# Services
+def list_snaps() -> list[SnapInfo]:
+    """List all installed snaps."""
+    info_dicts = _client.get('/v2/snaps')
+    assert isinstance(info_dicts, list)
+    return [SnapInfo._from_dict(info_dict) for info_dict in info_dicts]
+
+
+# /v2/snaps/{snap}/conf
+
+
+def config_get_many(snap: str, *keys: str) -> dict[str, Any]:
+    """Get snap configuration."""
+    params = {'keys': ','.join(keys)} if keys else None
+    config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
+    assert isinstance(config, dict)
+    return config
+
+
+def config_get_one(snap: str, key: str) -> Any:
+    """Get a single snap configuration key."""
+    config = config_get_many(snap, key)
+    return config[key]
+
+
+def config_set(snap: str, config: dict[str, Any]) -> None:
+    """Set snap configuration."""
+    _client.put(f'/v2/snaps/{snap}/conf', body=config)
+
+
+def config_unset(snap: str, key: str, *keys: str) -> None:
+    """Unset snap configuration keys."""
+    _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
+
+
+# /v2/aliases
+
+
+def alias(snap: str, app: str, alias_name: str) -> None:
+    """Create an alias for a snap app."""
+    data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
+    _client.post('/v2/aliases', body=data)
+
+
+def unalias(alias_name: str) -> None:
+    """Remove an alias."""
+    data = {'action': 'unalias', 'alias': alias_name}
+    _client.post('/v2/aliases', body=data)
+
+
+def list_aliases() -> Mapping[str, Iterable[str]]:
+    """List all aliases."""
+    aliases = _client.get('/v2/aliases')
+    assert isinstance(aliases, dict)
+    return aliases
+
+
+# /v2/apps
 
 
 def services_start(snap: str, *services: str, enable: bool = False) -> None:
@@ -294,35 +235,6 @@ def services_restart(snap: str, *services: str) -> None:
     _client.post('/v2/apps', body=data)
 
 
-# logs
-
-
-def logs(*snaps: str, num_lines: int = 10) -> list[dict[str, Any]]:
-    query: dict[str, Any] = {'n': num_lines}
-    if snaps:
-        query['names'] = ','.join(snaps)
-    result = _client.get('/v2/logs', query=query)
-    assert isinstance(result, list)
-    return result
-
-
-# List stuff, probably won't be part of the public API
-
-
-def list_snaps() -> list[SnapInfo]:
-    """List all installed snaps."""
-    info_dicts = _client.get('/v2/snaps')
-    assert isinstance(info_dicts, list)
-    return [SnapInfo._from_dict(info_dict) for info_dict in info_dicts]
-
-
-def list_aliases() -> Mapping[str, Iterable[str]]:
-    """List all aliases."""
-    aliases = _client.get('/v2/aliases')
-    assert isinstance(aliases, dict)
-    return aliases
-
-
 def list_services(snap: str | None = None) -> list[dict[str, Any]]:
     """List snap services."""
     query = {'select': 'service'}
@@ -331,6 +243,76 @@ def list_services(snap: str | None = None) -> list[dict[str, Any]]:
     services = _client.get('/v2/apps', query=query)
     assert isinstance(services, list)
     return services
+
+
+# /v2/find
+
+
+def list_channels(snap: str) -> dict[str, SnapInfo]:
+    """List information about all channels of a snap available in the store."""
+    results = _client.get('/v2/find', query={'name': snap})
+    assert isinstance(results, list)
+    # API returns a list of results, or an error if there are no matches.
+    # We'll have one result for an exact name match.
+    result, *_ = results
+    # A result has information like this:
+    # {
+    #     # ...
+    #     'channels': {
+    #         # ...
+    #         'latest/stable': {
+    #             'revision': '226',
+    #             'confinement': 'classic',
+    #             'version': '07258626',
+    #             'channel': 'latest/stable',
+    #             'epoch': {'read': [0], 'write': [0]},
+    #             'size': 352374784,
+    #             'released-at': '2026-02-19T23:54:26.844384Z'
+    #         },
+    #     },
+    # }
+    channels = result['channels']
+    return {k: SnapInfo._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}
+
+
+# /v2/interfaces
+
+
+def connect(
+    plug_snap: str, plug: str, slot_snap: str | None = None, slot: str | None = None, /
+) -> None:
+    """Connect a snap and plug, to a target snap and slot."""
+    data = {
+        'action': 'connect',
+        'plugs': [{'snap': plug_snap, 'plug': plug}],
+        'slots': [{'snap': slot_snap or '', 'slot': slot or ''}],
+    }
+    _client.post('/v2/interfaces', body=data)
+
+
+def disconnect(
+    plug_or_slot_snap: str,
+    plug_or_slot: str,
+    slot_snap: str | None = None,
+    slot: str | None = None,
+    /,
+    *,
+    forget: bool = False,
+) -> None:
+    """Disconnect a plug from a slot."""
+    data: dict[str, Any] = {'action': 'disconnect'}
+    if slot_snap is None:
+        assert slot is None
+        # Called with 2 arguments, treat as as snap disconnect <snap>:<slot>
+        data['plugs'] = [{'snap': '', 'plug': ''}]
+        data['slots'] = [{'snap': plug_or_slot_snap, 'slot': plug_or_slot}]
+    else:
+        # Called with 3 or 4 arguments, treat as snap disconnect <snap>:<plug> <snap>:<slot>
+        data['plugs'] = [{'snap': plug_or_slot_snap, 'plug': plug_or_slot}]
+        data['slots'] = [{'snap': slot_snap, 'slot': slot or ''}]
+    if forget:
+        data['forget'] = True
+    _client.post('/v2/interfaces', body=data)
 
 
 def list_interfaces(snap: str | None = None, connected_only: bool = False) -> list[dict[str, Any]]:
@@ -378,3 +360,15 @@ def list_slots(snap: str, connected_only: bool = False) -> list[Slot]:
         for s in i.get('slots', [])
         if s['snap'] == snap
     ]
+
+
+# /v2/logs
+
+
+def logs(*snaps: str, num_lines: int = 10) -> list[dict[str, Any]]:
+    query: dict[str, Any] = {'n': num_lines}
+    if snaps:
+        query['names'] = ','.join(snaps)
+    result = _client.get('/v2/logs', query=query)
+    assert isinstance(result, list)
+    return result

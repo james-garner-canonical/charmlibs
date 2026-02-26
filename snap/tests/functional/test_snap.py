@@ -241,7 +241,7 @@ def test_snap_ensure_revision():
     #         break
     # assert edge_revision is not None
 
-    channels = snap._snap.channels('juju')
+    channels = snap._snap.list_channels('juju')
     info = channels['3/stable']
     snap.install('juju', revision=info.revision)
 
