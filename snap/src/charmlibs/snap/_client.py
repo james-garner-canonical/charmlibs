@@ -122,8 +122,9 @@ def _request_raw(
         headers = {}
     opener = urllib.request.OpenerDirector()
     opener.add_handler(_socket_handler.UnixSocketHandler(_SOCKET_PATH))
+    opener.add_handler(urllib.request.HTTPRedirectHandler())
+    # We need to handle HTTP errors ourselves, since the response body contains meaningful info.
     # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
-    # opener.add_handler(urllib.request.HTTPRedirectHandler())
     # opener.add_handler(urllib.request.HTTPErrorProcessor())
     request = urllib.request.Request(url, method=method, data=data, headers=dict(headers))  # noqa: S310
     try:
