@@ -285,13 +285,13 @@ def test_snap_start():
     # kp.start()
     # assert kp.services['daemon']['active'] is not False
 
-    snap.services_stop('kube-proxy', 'daemon')
+    snap.stop('kube-proxy', 'daemon')
     services = snap._snap.list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
 
-    snap.services_start('kube-proxy', 'daemon')
+    snap.start('kube-proxy', 'daemon')
     services = snap._snap.list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
@@ -299,7 +299,7 @@ def test_snap_start():
 
     with pytest.raises(snap.SnapError):
         # kp.start(['foobar'])
-        snap.services_start('kube-proxy', 'foobar')
+        snap.start('kube-proxy', 'foobar')
 
 
 def test_snap_stop():
@@ -313,7 +313,7 @@ def test_snap_stop():
     # assert kp.services['daemon']['active'] is False
     # assert kp.services['daemon']['enabled'] is False
 
-    snap.services_stop('kube-proxy', 'daemon', disable=True)
+    snap.stop('kube-proxy', 'daemon', disable=True)
     services = snap._snap.list_services('kube-proxy')
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
@@ -335,10 +335,10 @@ def test_snap_logs():
 
     before = snap._snap.logs('kube-proxy', num_lines=10)
 
-    snap.services_start('kube-proxy')
-    snap.services_stop('kube-proxy')
-    snap.services_start('kube-proxy')
-    snap.services_stop('kube-proxy')
+    snap.start('kube-proxy')
+    snap.stop('kube-proxy')
+    snap.start('kube-proxy')
+    snap.stop('kube-proxy')
 
     # assert len(kp.logs(num_lines=15).splitlines()) >= 4
 
@@ -357,7 +357,7 @@ def test_snap_restart():
     #     pytest.fail(e.stderr)
 
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
-    snap.services_restart('kube-proxy')
+    snap.restart('kube-proxy')
 
 
 def test_snap_hold_refresh():

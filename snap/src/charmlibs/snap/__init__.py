@@ -77,9 +77,9 @@ from ._snap import (
     install,
     refresh,
     remove,
-    services_restart,
-    services_start,
-    services_stop,
+    restart,
+    start,
+    stop,
     unhold,
 )
 from ._version import __version__ as __version__
@@ -105,8 +105,8 @@ __all__ = [
     'install',
     'refresh',
     'remove',
-    'services_restart',
-    'services_start',
-    'services_stop',
+    'restart',
+    'start',
+    'stop',
     'unhold',
 ]
