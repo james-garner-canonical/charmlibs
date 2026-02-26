@@ -14,12 +14,6 @@
 
 from __future__ import annotations
 
-import typing
-from typing import Any
-
-if typing.TYPE_CHECKING:
-    from typing_extensions import Self
-
 
 class SnapError(Exception):
     def __init__(
@@ -61,13 +55,4 @@ class SnapOptionNotFoundError(SnapError):
 
 
 class SnapChangeError(SnapError):
-    @classmethod
-    def _from_change_dict(cls, change_dict: dict[str, Any]) -> Self:
-        # e.g. {'id': '54', 'kind': 'alias', 'summary': 'Setup alias "foo" => "s" for snap "firefox"', 'status': 'Error', 'tasks': [{'id': '932', 'kind': 'alias', 'summary': 'Setup manual alias "foo" => "s" for snap "firefox"', 'status': 'Error', 'log': ['2026-02-24T15:42:28+13:00 ERROR cannot enable alias "foo" for "firefox", target application "s" does not exist'], 'progress': {'label': '', 'done': 1, 'total': 1}, 'spawn-time': '2026-02-24T15:42:28.408659003+13:00', 'ready-time': '2026-02-24T15:42:28.439434757+13:00', 'data': {'affected-snaps': ['firefox']}}], 'ready': True, 'err': 'cannot perform the following tasks:\n- Setup manual alias "foo" => "s" for snap "firefox" (cannot enable alias "foo" for "firefox", target application "s" does not exist)', 'spawn-time': '2026-02-24T15:42:28.408698036+13:00', 'ready-time': '2026-02-24T15:42:28.439435568+13:00'}  # noqa: E501
-        return cls(
-            message=change_dict.get('err', ''),
-            kind=change_dict.get('kind', ''),
-            value=change_dict.get('id', ''),
-            code=None,
-            status=change_dict.get('status'),
-        )
+    pass
