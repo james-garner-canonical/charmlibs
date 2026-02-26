@@ -20,6 +20,7 @@ Manually manage snap installation with :func:`install`, :func:`refresh`, and :fu
 Use :func:`info` to query the current state of an installed snap.
 
 Also manage:
+
 - Automatic refreshes with :func:`hold` and :func:`unhold`.
 - Services with :func:`start`, :func:`stop`, and :func:`restart`.
 - Config with :func:`config_get`, :func:`config_set`, and :func:`config_unset`.
