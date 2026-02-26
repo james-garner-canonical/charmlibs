@@ -97,7 +97,7 @@ def channels(snap: str) -> dict[str, SnapInfo]:
 # Configuration
 
 
-def get(snap: str, *keys: str) -> dict[str, Any]:
+def config_get_many(snap: str, *keys: str) -> dict[str, Any]:
     """Get snap configuration."""
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
@@ -105,18 +105,18 @@ def get(snap: str, *keys: str) -> dict[str, Any]:
     return config
 
 
-def get_one(snap: str, key: str) -> Any:
+def config_get_one(snap: str, key: str) -> Any:
     """Get a single snap configuration key."""
-    config = get(snap, key)
+    config = config_get_many(snap, key)
     return config[key]
 
 
-def set(snap: str, config: dict[str, Any]) -> None:  # noqa: A001
+def config_set(snap: str, config: dict[str, Any]) -> None:
     """Set snap configuration."""
     _client.put(f'/v2/snaps/{snap}/conf', body=config)
 
 
-def unset(snap: str, key: str, *keys: str) -> None:
+def config_unset(snap: str, key: str, *keys: str) -> None:
     """Unset snap configuration keys."""
     _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 

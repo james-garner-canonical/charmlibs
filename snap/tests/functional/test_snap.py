@@ -116,9 +116,9 @@ def test_snap_set_and_get_with_typed():
     # lxd.set(configs, typed=True)
 
     snap.ensure('lxd')
-    snap.set('lxd', configs)
+    snap.config_set('lxd', configs)
 
-    lxd = snap.get('lxd')
+    lxd = snap.config_get_many('lxd')
     assert lxd
 
     assert lxd.get('true') is True
@@ -139,16 +139,16 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert snap.get_one('lxd', 'dict.true') is True
-    assert snap.get_one('lxd', 'dict.false') is False
+    assert snap.config_get_one('lxd', 'dict.true') is True
+    assert snap.config_get_one('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        snap.get_one('lxd', 'dict.null')
-    assert snap.get_one('lxd', 'dict.integer') == 1
-    assert snap.get_one('lxd', 'dict.float') == 2.0
-    assert snap.get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
+        snap.config_get_one('lxd', 'dict.null')
+    assert snap.config_get_one('lxd', 'dict.integer') == 1
+    assert snap.config_get_one('lxd', 'dict.float') == 2.0
+    assert snap.config_get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert snap.get_one('lxd', 'criu.enable') == 'true'
-    assert snap.get_one('lxd', 'ceph.external') == 'false'
+    assert snap.config_get_one('lxd', 'criu.enable') == 'true'
+    assert snap.config_get_one('lxd', 'ceph.external') == 'false'
 
 
 # def test_snap_set_and_get_untyped():
@@ -174,7 +174,7 @@ def test_unset_key_raises_snap_error():
     # Verify that the correct exception gets raised in the case of an unset key.
     key = 'keythatdoesntexist01'
     with pytest.raises(snap.SnapError) as ctx:
-        snap.get('lxd', key)
+        snap.config_get_many('lxd', key)
     assert key in ctx.value.message
 
     # FIXME: We should probably continue to offer this functionality as it was requested recently.
@@ -188,8 +188,8 @@ def test_unset_key_raises_snap_error():
     # # We can make the above work w/ arbitrary config.
     # lxd.set({key: 'true'})
     # assert lxd.get(key) == 'true'
-    snap.set('lxd', {key: 'true'})
-    assert snap.get_one('lxd', key) == 'true'
+    snap.config_set('lxd', {key: 'true'})
+    assert snap.config_get_one('lxd', key) == 'true'
 
 
 def test_snap_ensure():

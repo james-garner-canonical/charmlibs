@@ -63,9 +63,11 @@ from ._functions import (
 from ._snap import (
     alias,
     channels,
+    config_get_many,
+    config_get_one,
+    config_set,
+    config_unset,
     connect,
-    get,
-    get_one,
     hold,
     info,
     install,
@@ -74,9 +76,7 @@ from ._snap import (
     services_restart,
     services_start,
     services_stop,
-    set,  # noqa: A004
     unhold,
-    unset,
 )
 from ._version import __version__ as __version__
 
@@ -86,10 +86,12 @@ __all__ = [
     'SnapNotFoundError',
     'alias',
     'channels',
+    'config_get_many',
+    'config_get_one',
+    'config_set',
+    'config_unset',
     'connect',
     'ensure',
-    'get',
-    'get_one',
     'hold',
     'info',
     'install',
@@ -98,7 +100,5 @@ __all__ = [
     'services_restart',
     'services_start',
     'services_stop',
-    'set',
     'unhold',
-    'unset',
 ]
