@@ -62,7 +62,6 @@ from ._functions import (
 )
 from ._snap import (
     alias,
-    channels,
     config_get_many,
     config_get_one,
     config_set,
@@ -85,7 +84,6 @@ __all__ = [
     'SnapError',
     'SnapNotFoundError',
     'alias',
-    'channels',
     'config_get_many',
     'config_get_one',
     'config_set',
