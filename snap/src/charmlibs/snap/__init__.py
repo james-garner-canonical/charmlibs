@@ -71,10 +71,10 @@ from ._snap import (
     install,
     refresh,
     remove,
-    restart,
+    services_restart,
+    services_start,
+    services_stop,
     set,  # noqa: A004
-    start,
-    stop,
     unhold,
     unset,
 )
@@ -95,10 +95,10 @@ __all__ = [
     'install',
     'refresh',
     'remove',
-    'restart',
+    'services_restart',
+    'services_start',
+    'services_stop',
     'set',
-    'start',
-    'stop',
     'unhold',
     'unset',
 ]

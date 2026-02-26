@@ -254,7 +254,7 @@ def unhold(snap: str) -> None:
 # Services
 
 
-def start(snap: str, *services: str, enable: bool = False) -> None:
+def services_start(snap: str, *services: str, enable: bool = False) -> None:
     """Start snap services."""
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'start', 'names': names}
@@ -263,7 +263,7 @@ def start(snap: str, *services: str, enable: bool = False) -> None:
     _client.post('/v2/apps', body=data)
 
 
-def stop(snap: str, *services: str, disable: bool = False) -> None:
+def services_stop(snap: str, *services: str, disable: bool = False) -> None:
     """Stop snap services."""
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'stop', 'names': names}
@@ -272,7 +272,7 @@ def stop(snap: str, *services: str, disable: bool = False) -> None:
     _client.post('/v2/apps', body=data)
 
 
-def restart(snap: str, *services: str) -> None:
+def services_restart(snap: str, *services: str) -> None:
     """Restart snap services."""
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'restart', 'names': names}
