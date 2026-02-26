@@ -61,6 +61,7 @@ from ._functions import (
     ensure,
 )
 from ._snap import (
+    SnapInfo,
     alias,
     config_get_many,
     config_get_one,
@@ -82,6 +83,7 @@ from ._version import __version__ as __version__
 __all__ = [
     'SnapAPIError',
     'SnapError',
+    'SnapInfo',
     'SnapNotFoundError',
     'alias',
     'config_get_many',
