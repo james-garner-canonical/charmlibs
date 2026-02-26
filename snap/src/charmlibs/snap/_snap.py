@@ -333,9 +333,9 @@ def list_services(snap: str | None = None) -> list[dict[str, Any]]:
     return services
 
 
-def list_interfaces(snap: str | None = None) -> list[dict[str, Any]]:
+def list_interfaces(snap: str | None = None, connected_only: bool = False) -> list[dict[str, Any]]:
     """List snap interfaces."""
-    query = {'select': 'all', 'slots': 'true', 'plugs': 'true'}
+    query = {'select': 'connected' if connected_only else 'all', 'slots': 'true', 'plugs': 'true'}
     interfaces = _client.get('/v2/interfaces', query=query)
     assert isinstance(interfaces, list)
     if snap is None:
@@ -345,4 +345,36 @@ def list_interfaces(snap: str | None = None) -> list[dict[str, Any]]:
         for i in interfaces
         if any(p['snap'] == snap for p in i.get('plugs', []))
         or any(s['snap'] == snap for s in i.get('slots', []))
+    ]
+
+
+@dataclasses.dataclass
+class Plug:
+    interface: str
+    plug: str
+
+
+def list_plugs(snap: str, connected_only: bool = False) -> list[Plug]:
+    interfaces = list_interfaces(snap, connected_only=connected_only)
+    return [
+        Plug(interface=i['name'], plug=p['plug'])
+        for i in interfaces
+        for p in i.get('plugs', [])
+        if p['snap'] == snap
+    ]
+
+
+@dataclasses.dataclass
+class Slot:
+    interface: str
+    slot: str
+
+
+def list_slots(snap: str, connected_only: bool = False) -> list[Slot]:
+    interfaces = list_interfaces(snap, connected_only=connected_only)
+    return [
+        Slot(interface=i['name'], slot=s['slot'])
+        for i in interfaces
+        for s in i.get('slots', [])
+        if s['snap'] == snap
     ]
