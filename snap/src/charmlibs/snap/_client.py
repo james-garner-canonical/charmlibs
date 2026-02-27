@@ -74,11 +74,21 @@ def _request(
     try:
         # /v2/logs returns a stream of JSON objects separated by \n\x1e
         if path == '/v2/logs':
-            return [
+            logs = [
                 json.loads(s)
                 for line in response_bytes.split(b'\n\x1e')
                 if (s := line.decode().strip())
             ]
+            if len(logs) == 1 and logs[0].get('type') == 'error':
+                # still a stream as above but only a single object; like this:
+                # [{'type': 'error',
+                #  'status-code': 404,
+                #  'status': 'Not Found',
+                #  'result': {'message': 'snap "code" has no services',
+                #   'kind': 'app-not-found'}}]
+                response_dict = logs[0]
+            else:
+                return logs
         # otherwise we expect a single JSON object
         response_dict: dict[str, Any] = json.loads(response_bytes)
     except json.JSONDecodeError as e:

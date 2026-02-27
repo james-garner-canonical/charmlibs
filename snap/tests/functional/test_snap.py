@@ -91,16 +91,16 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert snap._snapd.config_get_one('lxd', 'dict.true') is True
-    assert snap._snapd.config_get_one('lxd', 'dict.false') is False
+    assert snap._snapd._config_get_one('lxd', 'dict.true') is True
+    assert snap._snapd._config_get_one('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        snap._snapd.config_get_one('lxd', 'dict.null')
-    assert snap._snapd.config_get_one('lxd', 'dict.integer') == 1
-    assert snap._snapd.config_get_one('lxd', 'dict.float') == 2.0
-    assert snap._snapd.config_get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
+        snap._snapd._config_get_one('lxd', 'dict.null')
+    assert snap._snapd._config_get_one('lxd', 'dict.integer') == 1
+    assert snap._snapd._config_get_one('lxd', 'dict.float') == 2.0
+    assert snap._snapd._config_get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert snap._snapd.config_get_one('lxd', 'criu.enable') == 'true'
-    assert snap._snapd.config_get_one('lxd', 'ceph.external') == 'false'
+    assert snap._snapd._config_get_one('lxd', 'criu.enable') == 'true'
+    assert snap._snapd._config_get_one('lxd', 'ceph.external') == 'false'
 
 
 def test_unset_key_raises_snap_error():
@@ -121,7 +121,7 @@ def test_unset_key_raises_snap_error():
 
     # We can make the above work w/ arbitrary config.
     snap.config_set('lxd', {key: 'true'})
-    assert snap._snapd.config_get_one('lxd', key) == 'true'
+    assert snap._snapd._config_get_one('lxd', key) == 'true'
 
 
 def test_snap_ensure():
@@ -141,7 +141,7 @@ def test_new_snap_ensure():
 def test_snap_ensure_revision():
     snap.remove('juju', missing_ok=True)
 
-    channels = snap._snapd.list_channels('juju')
+    channels = snap._snapd._list_channels('juju')
     info = channels['3/stable']
     snap.install('juju', revision=info.revision)
 
@@ -153,19 +153,19 @@ def test_snap_ensure_revision():
 
 def test_snap_start():
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
-    services = snap._snapd.list_services('kube-proxy')
+    services = snap._snapd._list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert daemon.get('active')
 
     snap.stop('kube-proxy', 'daemon')
-    services = snap._snapd.list_services('kube-proxy')
+    services = snap._snapd._list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
 
     snap.start('kube-proxy', 'daemon')
-    services = snap._snapd.list_services('kube-proxy')
+    services = snap._snapd._list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert daemon['active']
@@ -177,7 +177,7 @@ def test_snap_start():
 def test_snap_stop():
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
     snap.stop('kube-proxy', 'daemon', disable=True)
-    services = snap._snapd.list_services('kube-proxy')
+    services = snap._snapd._list_services('kube-proxy')
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
     assert not daemon.get('enabled')
@@ -186,7 +186,7 @@ def test_snap_stop():
 def test_snap_logs():
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
 
-    before = snap._snapd.logs('kube-proxy', num_lines=10)
+    before = snap.logs('kube-proxy', num_lines=10)
 
     # Terrible means of populating logs
     snap.start('kube-proxy')
@@ -194,8 +194,15 @@ def test_snap_logs():
     snap.start('kube-proxy')
     snap.stop('kube-proxy')
 
-    after = snap._snapd.logs('kube-proxy', num_lines=10)
+    after = snap.logs('kube-proxy', num_lines=10)
     assert len(before) == 10 or len(after) > len(before)
+
+
+def test_snap_logs_no_services():
+    snap.ensure('vlc')
+    with pytest.raises(snap.SnapError) as ctx:
+        snap.logs('vlc')
+    assert ctx.value.kind == 'app-not-found'
 
 
 def test_snap_restart():

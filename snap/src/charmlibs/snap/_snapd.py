@@ -49,6 +49,9 @@ class SnapInfo:
             revision=int(info_dict['revision']),
             version=info_dict['version'],
             classic=info_dict['confinement'] == 'classic',
+            # TODO: should we convert hold to a datetime.datetime?
+            # see the functional tests for the code that would be involved
+            # depends on both the Python version and the snapd version
             hold=info_dict.get('hold'),
         )
 
@@ -87,6 +90,12 @@ def install(
         data['revision'] = str(revision)
     if classic:
         data['classic'] = True
+    # TODO: we could drop the installed_ok arg and adopt one of two approaches:
+    # 1) installed_ok=True: use boolean return value to indicate whether installation took place
+    #     this has the benefit of dropping SnapAlreadyInstalledError from the public API
+    # 2) installed_ok=False: always raise SnapAlreadyInstalledError if snap is already installed
+    #     simpler signature but potential try/except boilerplate for callers
+    # the same applies to remove's missing_ok and refresh's no_updates_ok
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
     except _errors.SnapAlreadyInstalledError:
@@ -155,7 +164,7 @@ def unhold(snap: str) -> None:
     _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
 
 
-def list_snaps() -> list[SnapInfo]:
+def _list_snaps() -> list[SnapInfo]:  # pyright: ignore[reportUnusedFunction]
     """List all installed snaps."""
     info_dicts = _client.get('/v2/snaps')
     assert isinstance(info_dicts, list)
@@ -173,7 +182,7 @@ def config_get(snap: str, *keys: str) -> dict[str, Any]:
     return config
 
 
-def config_get_one(snap: str, key: str) -> Any:
+def _config_get_one(snap: str, key: str) -> Any:  # pyright: ignore[reportUnusedFunction]
     """Get a single snap configuration key."""
     config = config_get(snap, key)
     return config[key]
@@ -204,7 +213,7 @@ def unalias(alias_name: str) -> None:
     _client.post('/v2/aliases', body=data)
 
 
-def list_aliases() -> Mapping[str, Iterable[str]]:
+def _list_aliases() -> Mapping[str, Iterable[str]]:  # pyright: ignore[reportUnusedFunction]
     """List all aliases."""
     aliases = _client.get('/v2/aliases')
     assert isinstance(aliases, dict)
@@ -239,7 +248,7 @@ def restart(snap: str, *services: str) -> None:
     _client.post('/v2/apps', body=data)
 
 
-def list_services(snap: str | None = None) -> list[dict[str, Any]]:
+def _list_services(snap: str | None = None) -> list[dict[str, Any]]:  # pyright: ignore[reportUnusedFunction]
     """List snap services."""
     query = {'select': 'service'}
     if snap:
@@ -252,7 +261,7 @@ def list_services(snap: str | None = None) -> list[dict[str, Any]]:
 # /v2/find
 
 
-def list_channels(snap: str) -> dict[str, SnapInfo]:
+def _list_channels(snap: str) -> dict[str, SnapInfo]:  # pyright: ignore[reportUnusedFunction]
     """List information about all channels of a snap available in the store."""
     results = _client.get('/v2/find', query={'name': snap})
     assert isinstance(results, list)
@@ -319,7 +328,7 @@ def disconnect(
     _client.post('/v2/interfaces', body=data)
 
 
-def list_interfaces(snap: str | None = None, connected_only: bool = False) -> list[dict[str, Any]]:
+def _list_interfaces(snap: str | None = None, connected_only: bool = False) -> list[dict[str, Any]]:
     """List snap interfaces."""
     query = {'select': 'connected' if connected_only else 'all', 'slots': 'true', 'plugs': 'true'}
     interfaces = _client.get('/v2/interfaces', query=query)
@@ -335,15 +344,15 @@ def list_interfaces(snap: str | None = None, connected_only: bool = False) -> li
 
 
 @dataclasses.dataclass
-class Plug:
+class _Plug:
     interface: str
     plug: str
 
 
-def list_plugs(snap: str, connected_only: bool = False) -> list[Plug]:
-    interfaces = list_interfaces(snap, connected_only=connected_only)
+def _list_plugs(snap: str, connected_only: bool = False) -> list[_Plug]:  # pyright: ignore[reportUnusedFunction]
+    interfaces = _list_interfaces(snap, connected_only=connected_only)
     return [
-        Plug(interface=i['name'], plug=p['plug'])
+        _Plug(interface=i['name'], plug=p['plug'])
         for i in interfaces
         for p in i.get('plugs', [])
         if p['snap'] == snap
@@ -351,15 +360,15 @@ def list_plugs(snap: str, connected_only: bool = False) -> list[Plug]:
 
 
 @dataclasses.dataclass
-class Slot:
+class _Slot:
     interface: str
     slot: str
 
 
-def list_slots(snap: str, connected_only: bool = False) -> list[Slot]:
-    interfaces = list_interfaces(snap, connected_only=connected_only)
+def _list_slots(snap: str, connected_only: bool = False) -> list[_Slot]:  # pyright: ignore[reportUnusedFunction]
+    interfaces = _list_interfaces(snap, connected_only=connected_only)
     return [
-        Slot(interface=i['name'], slot=s['slot'])
+        _Slot(interface=i['name'], slot=s['slot'])
         for i in interfaces
         for s in i.get('slots', [])
         if s['snap'] == snap
@@ -375,4 +384,12 @@ def logs(*snaps: str, num_lines: int = 10) -> list[dict[str, Any]]:
         query['names'] = ','.join(snaps)
     result = _client.get('/v2/logs', query=query)
     assert isinstance(result, list)
+    # TODO: logs entries are objects like this:
+    # {'timestamp': '2026-02-27T03:01:19.488008Z',
+    #  'message': 'QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}',  # noqa: E501
+    #  'sid': 'multipassd',
+    #  'pid': '135506'}]
+    # We should either add a LogEntry dataclass for this rather than returning the raw dicts,
+    # or we could 'simplify' the return type to list[str] by adopting the snap CLI's format:
+    # 2026-02-27T16:01:19+13:00 multipassd[135506]: QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}
     return result
