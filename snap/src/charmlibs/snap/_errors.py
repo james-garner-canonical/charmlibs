@@ -62,4 +62,15 @@ class SnapOptionNotFoundError(SnapError):
 
 
 class SnapChangeError(SnapError):
-    pass
+    def __init__(
+        self,
+        message: str,
+        *,
+        kind: str,
+        value: str,
+        code: int | None,
+        status: str | None,
+        change_id: str | None,
+    ):
+        super().__init__(message, kind=kind, value=value, code=code, status=status)
+        self.change_id = change_id
