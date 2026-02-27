@@ -328,7 +328,9 @@ def disconnect(
     _client.post('/v2/interfaces', body=data)
 
 
-def _list_interfaces(snap: str | None = None, connected_only: bool = False) -> list[dict[str, Any]]:
+def _list_interfaces(
+    snap: str | None = None, connected_only: bool = False
+) -> list[dict[str, Any]]:
     """List snap interfaces."""
     query = {'select': 'connected' if connected_only else 'all', 'slots': 'true', 'plugs': 'true'}
     interfaces = _client.get('/v2/interfaces', query=query)
@@ -391,5 +393,5 @@ def logs(*snaps: str, num_lines: int = 10) -> list[dict[str, Any]]:
     #  'pid': '135506'}]
     # We should either add a LogEntry dataclass for this rather than returning the raw dicts,
     # or we could 'simplify' the return type to list[str] by adopting the snap CLI's format:
-    # 2026-02-27T16:01:19+13:00 multipassd[135506]: QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}
+    # 2026-02-27T16:01:19+13:00 multipassd[135506]: QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}  # noqa: E501
     return result
