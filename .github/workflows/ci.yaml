@@ -73,7 +73,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any tests failed
-        if: ${{ needs.package.result != 'success' && needs.package.result != 'skipped' }}
+        if: >
+          ${{
+            needs.package.result != 'success'
+            && needs.package.result != 'skipped'
+          }}
         run: |
           echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
