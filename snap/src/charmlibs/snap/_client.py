@@ -201,7 +201,6 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                     value=response.get('id', ''),
                     code=None,
                     status=response.get('status'),
-                    change_id=change_id,
                 )
 
 
