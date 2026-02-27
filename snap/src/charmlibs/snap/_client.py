@@ -64,10 +64,11 @@ def _request(
     if log:
         logger.debug('_request(%r, %r, query=%r, body=%r)', method, path, query, body)
     headers = {'Accept': 'application/json'}
-    data = None
     if body is not None:
         data = json.dumps(body).encode('utf-8')
         headers['Content-Type'] = 'application/json'
+    else:
+        data = None
     response = _request_raw(method, path, query=query, headers=headers, data=data)
     response_bytes = response.read()
     try:
@@ -205,6 +206,7 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
 
 def _error_type_from_result(result: dict[str, Any]) -> type[_errors.SnapError]:
     match result.get('kind'):
+        # TODO: custom exceptions for more error kinds
         case 'snap-already-installed':
             return _errors.SnapAlreadyInstalledError
         case 'option-not-found':
