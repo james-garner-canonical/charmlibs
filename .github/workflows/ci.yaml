@@ -99,7 +99,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any interface tests failed
-        if: ${{ needs.interface.result != 'success' && needs.interface.result != 'skipped' }}
+        if: |
+          ${{
+            needs.interface.result != 'success'
+            && needs.interface.result != 'skipped'
+          }}
         run: |
           echo '${{ toJSON(needs) }}' | jq  # logging
           exit 1
