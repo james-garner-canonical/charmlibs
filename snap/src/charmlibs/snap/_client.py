@@ -41,6 +41,9 @@ logger = logging.getLogger(__name__)
 # we need the powerful snapd socket
 # defined in the snap application itself under dirs/dirs.go as SnapdSocket
 _SOCKET_PATH = '/run/snapd.socket'
+# TODO: a user facing way to set timeout? e.g. charmlibs.snap.set_timeouts(request=60, change=1800)
+_REQUEST_TIMEOUT = 30
+_CHANGE_TIMEOUT = 600  # 10 minutes in seconds
 
 
 def _request(
@@ -122,20 +125,21 @@ def _request_raw(
 ) -> http.client.HTTPResponse:
     """Make a request to the snapd server; return the raw HTTPResponse object."""
     assert path.startswith('/')
-    url = f'http://localhost{path}'
-    if query:
-        url = f'{url}?{urllib.parse.urlencode(query, doseq=True)}'
-    if headers is None:
-        headers = {}
+    request = urllib.request.Request(
+        f'http://localhost{path}'
+        + (f'?{urllib.parse.urlencode(query, doseq=True)}' if query else ''),
+        method=method,
+        headers=headers or {},
+        data=data,
+    )
     opener = urllib.request.OpenerDirector()
     opener.add_handler(_socket_handler.UnixSocketHandler(_SOCKET_PATH))
     opener.add_handler(urllib.request.HTTPRedirectHandler())
     # We need to handle HTTP errors ourselves, since the response body contains meaningful info.
     # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
     # opener.add_handler(urllib.request.HTTPErrorProcessor())
-    request = urllib.request.Request(url, method=method, data=data, headers=dict(headers))  # noqa: S310
     try:
-        return opener.open(request, timeout=30.0)
+        return opener.open(request, timeout=_REQUEST_TIMEOUT)
     except urllib.error.URLError as e:
         if e.args and isinstance(e.args[0], FileNotFoundError):
             msg = f'Could not connect to server: socket not found at {_SOCKET_PATH!r}'
@@ -149,7 +153,7 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
     The poll time is 100 milliseconds, the same as in snap clients.
     """
     logger.debug('_wait_for_change(%r)', change_id)
-    deadline = time.time() + 600  # 10 minute timeout
+    deadline = time.time() + _CHANGE_TIMEOUT
     while True:
         if time.time() > deadline:
             raise TimeoutError(f'timeout waiting for snap change: {change_id}')
