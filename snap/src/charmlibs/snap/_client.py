@@ -46,6 +46,21 @@ _REQUEST_TIMEOUT = 30
 _CHANGE_TIMEOUT = 600  # 10 minutes in seconds
 
 
+def get(path: str, query: dict[str, Any] | None = None):
+    """GET request to snapd REST API."""
+    return _request('GET', path, query=query)
+
+
+def post(path: str, body: dict[str, Any] | None = None):
+    """POST request to snapd REST API."""
+    return _request('POST', path, body=body)
+
+
+def put(path: str, body: dict[str, Any] | None = None):
+    """PUT request to snapd REST API."""
+    return _request('PUT', path, body=body)
+
+
 def _request(
     method: str,
     path: str,
@@ -242,18 +257,3 @@ def _make_error(
         code=response.get('status-code'),
         status=response.get('status'),
     )
-
-
-def get(path: str, query: dict[str, Any] | None = None):
-    """GET request, returns result directly."""
-    return _request('GET', path, query=query)
-
-
-def post(path: str, body: dict[str, Any] | None = None):
-    """POST request, returns change ID for async operations."""
-    return _request('POST', path, body=body)
-
-
-def put(path: str, body: dict[str, Any] | None = None):
-    """PUT request, returns result directly."""
-    return _request('PUT', path, body=body)
