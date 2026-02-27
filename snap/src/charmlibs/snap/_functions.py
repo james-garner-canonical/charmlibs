@@ -16,7 +16,7 @@
 
 import logging
 
-from . import _snap
+from . import _snapd
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +38,15 @@ def ensure(
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
     logger.debug('ensure:Querying info for snap %r', snap)
-    info = _snap.info(snap, missing_ok=True)
+    info = _snapd.info(snap, missing_ok=True)
     if info is None:
         logger.debug('ensure:Snap %r is not installed: installing ...', snap)
-        _snap.install(snap, channel=channel, revision=revision, classic=classic)
+        _snapd.install(snap, channel=channel, revision=revision, classic=classic)
         return True
     if info.classic != classic:
+        # FIXME: different snap revisions can have different confinement so maybe we should just
+        # refresh if classic doesn't match and let snapd error if the confinement is wrong
+        # https://forum.snapcraft.io/t/changing-confinement-of-a-snap-in-the-store-from-strict-to-classic/1093  # noqa: E501
         msg = f'Snap {snap!r} is installed with classic={info.classic} but requested classic={classic}; this is most likely an error'  # noqa: E501
         logger.info('ensure:%s -> aborting', msg)
         raise ValueError(msg)
@@ -54,7 +57,7 @@ def ensure(
     if different_channel or different_revision:
         msg = 'ensure:Snap %r is installed with channel=%r and revision=%d but requested (channel=%r, revision=%r): refreshing ...'  # noqa: E501
         logger.debug(msg, snap, info.channel, info.revision, channel, revision)
-        _snap.refresh(snap, channel=channel, revision=revision)
+        _snapd.refresh(snap, channel=channel, revision=revision)
         return True
     msg = 'ensure:Snap %r is already installed with classic=%s, channel=%r and revision=%d'
     logger.debug(msg, snap, info.classic, info.channel, info.revision)

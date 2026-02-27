@@ -57,7 +57,7 @@ from ._errors import (
 from ._functions import (
     ensure,
 )
-from ._snap import (
+from ._snapd import (
     SnapInfo,
     alias,
     config_get,

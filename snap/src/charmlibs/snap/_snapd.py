@@ -115,6 +115,8 @@ def refresh(
 ) -> bool:
     """Refresh a snap."""
     if channel is not None and revision is not None:
+        # TODO: revision silently takes precedence over channel if both are passed to snapd
+        # should we do the same, or continue making it an error to specify both?
         raise ValueError('Only one of channel or revision may be specified')
     data = {'action': 'refresh'}
     if channel:
