@@ -44,8 +44,12 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Ensure package uv.lock is up-to-date
-        run: uv lock --check
         working-directory: ${{ inputs.package }}
+        run: |
+          case "$(basename "$PWD")" in
+            ".example"|".tutorial") echo "Examples don't have a uv.lock file, skipping ..." ;;
+            *) uv lock --check ;;
+          esac
 
       - name: Check which Python versions this package supports
         id: python
