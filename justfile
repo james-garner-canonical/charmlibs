@@ -8,7 +8,7 @@ python := '3.10'
 # for integration tests, e.g. `just tag=24.04 pack-k8s` `just tag=foo integration-machine`
 tag := env('CHARMLIBS_TAG', '')
 
-_uv_run_with_test_requirements := 'uv run --locked --with-requirements ' + quote(join(justfile_dir(), 'test-requirements.txt')) + ' --python ' + python
+_uv_run_with_test_requirements := 'uv run --with-requirements ' + quote(join(justfile_dir(), 'test-requirements.txt')) + ' --python ' + python
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
 _short_help:
@@ -85,7 +85,8 @@ static package *args:
     #!/usr/bin/env -S bash -xueo pipefail
     shift 1  # drop $1 (package) from $@ it's just *args
     cd '{{package}}'
-    {{_uv_run_with_test_requirements}} \
+    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
+    {{_uv_run_with_test_requirements}} $LOCKED \
         --group lint --group unit --group functional --group integration \
         --with pytest-interface-tester \
         pyright --pythonversion='{{python}}' "${@}"
@@ -115,12 +116,13 @@ functional package +flags='-rA':
 _coverage package test_suite +flags:
     #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}'
+    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
     DATA_FILE=".report/coverage-$(basename {{test_suite}})-{{python}}.db"
-    {{_uv_run_with_test_requirements}} --group {{test_suite}} \
+    {{_uv_run_with_test_requirements}} $LOCKED --group {{test_suite}} \
         coverage run --data-file="$DATA_FILE" --source='src' \
         -m pytest --tb=native -vv {{flags}} 'tests/{{test_suite}}'
-    {{_uv_run_with_test_requirements}} --group {{test_suite}} \
+    {{_uv_run_with_test_requirements}} $LOCKED --group {{test_suite}} \
         coverage report --data-file="$DATA_FILE"
 
 [doc("Combine `coverage` reports, e.g. `just python=3.10 combine-coverage pathops`.")]
@@ -128,6 +130,7 @@ combine-coverage package:
     #!/usr/bin/env -S bash -xueo pipefail
     : 'Collect the coverage data files that exist for this package.'
     cd '{{package}}'
+    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
     data_files=()
     for test_id in unit functional juju; do
         data_file=".report/coverage-$test_id-{{python}}.db"
@@ -139,11 +142,11 @@ combine-coverage package:
     export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
     DATA_FILE='.report/coverage-all-{{python}}.db'
     HTML_DIR='.report/htmlcov-all-{{python}}'
-    {{_uv_run_with_test_requirements}} coverage combine --keep --data-file="$DATA_FILE" "${data_files[@]}"
-    {{_uv_run_with_test_requirements}} coverage xml --data-file="$DATA_FILE" -o '.report/coverage-all-{{python}}.xml'
+    {{_uv_run_with_test_requirements}} $LOCKED coverage combine --keep --data-file="$DATA_FILE" "${data_files[@]}"
+    {{_uv_run_with_test_requirements}} $LOCKED coverage xml --data-file="$DATA_FILE" -o '.report/coverage-all-{{python}}.xml'
     rm -rf "$HTML_DIR"  # let coverage create html directory from scratch
-    {{_uv_run_with_test_requirements}} coverage html --data-file="$DATA_FILE" --show-contexts --directory="$HTML_DIR"
-    {{_uv_run_with_test_requirements}} coverage report --data-file="$DATA_FILE"
+    {{_uv_run_with_test_requirements}} $LOCKED coverage html --data-file="$DATA_FILE" --show-contexts --directory="$HTML_DIR"
+    {{_uv_run_with_test_requirements}} $LOCKED coverage report --data-file="$DATA_FILE"
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
 pack-k8s package *args: (_pack package 'k8s' args)
@@ -167,7 +170,8 @@ integration-machine package +flags='-rA': (_integration package 'machine' 'not k
 _integration package substrate label +flags:
     #!/usr/bin/env -S bash -xueo pipefail
     cd '{{package}}'
-    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG='{{tag}}' {{_uv_run_with_test_requirements}} --group integration \
+    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
+    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG='{{tag}}' {{_uv_run_with_test_requirements}} $LOCKED --group integration \
         pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
 
 [doc("Make .interfaces.json file.")]
