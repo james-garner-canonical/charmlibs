@@ -15,7 +15,7 @@ Then run `just` from anywhere in the repository for usage.
 
 Run `just init` to create a new general library, or `just interface init` for a new interface library.
 We recommend following the [tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` monorepo.
-If you're migrating a library that was published elswhere, read the [how-to guide for migrating an existing library to this repository](https://documentation.ubuntu.com/charmlibs/how-to/migrate/).
+If you're migrating a library that was published elsewhere, read the [how-to guide for migrating an existing library to this repository](https://documentation.ubuntu.com/charmlibs/how-to/migrate/).
 
 # Working on an existing library
 
