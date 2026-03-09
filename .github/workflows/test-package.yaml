@@ -43,6 +43,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
+      - name: Ensure package uv.lock is up-to-date
+        working-directory: ${{ inputs.package }}
+        run: |
+          case "$(basename "$PWD")" in
+            ".example"|".tutorial") echo "Examples don't have a uv.lock file, skipping ..." ;;
+            *) uv lock --check ;;
+          esac
+
       - name: Check which Python versions this package supports
         id: python
         run: uv run --no-project --script .github/get-supported-python-versions.py ${{ inputs.package }}
