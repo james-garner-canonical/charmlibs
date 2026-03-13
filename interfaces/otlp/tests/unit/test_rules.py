@@ -1,0 +1,219 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+"""Feature: Rules aggregation and forwarding."""
+
+import json
+from typing import Any
+
+import ops
+import pytest
+from cosl.utils import LZMABase64
+from ops import testing
+from ops.testing import Model, Relation, State
+
+from charmlibs.interfaces.otlp._otlp import OtlpRequirerAppData, _RulesModel
+
+MODEL = Model('otelcol', uuid='f4d59020-c8e7-4053-8044-a2c1e5591c7f')
+OTELCOL_LABELS = {
+    'juju_model': 'otelcol',
+    'juju_model_uuid': 'f4d59020-c8e7-4053-8044-a2c1e5591c7f',
+    'juju_application': 'opentelemetry-collector-k8s',
+    'juju_charm': 'opentelemetry-collector-k8s',
+}
+LOGQL_ALERT = {
+    'name': 'otelcol_f4d59020_charm_x_foo_alerts',
+    'rules': [
+        {
+            'alert': 'HighLogVolume',
+            'expr': 'count_over_time({job=~".+"}[30s]) > 100',
+            'labels': {'severity': 'high'},
+        },
+    ],
+}
+LOGQL_RECORD = {
+    'name': 'otelcol_f4d59020_charm_x_foobar_alerts',
+    'rules': [
+        {
+            'record': 'log:error_rate:rate5m',
+            'expr': 'sum by (service) (rate({job=~".+"} | json | level="error" [5m]))',
+            'labels': {'severity': 'high'},
+        }
+    ],
+}
+PROMQL_ALERT = {
+    'name': 'otelcol_f4d59020_charm_x_bar_alerts',
+    'rules': [
+        {
+            'alert': 'Workload Missing',
+            'expr': 'up{job=~".+"} == 0',
+            'for': '0m',
+            'labels': {'severity': 'critical'},
+        },
+    ],
+}
+PROMQL_RECORD = {
+    'name': 'otelcol_f4d59020_charm_x_barfoo_alerts',
+    'rules': [
+        {
+            'record': 'code:prometheus_http_requests_total:sum',
+            'expr': 'sum by (code) (prometheus_http_requests_total{job=~".+"})',
+            'labels': {'severity': 'high'},
+        }
+    ],
+}
+ALL_RULES = {
+    'logql': {'groups': [LOGQL_ALERT, LOGQL_RECORD]},
+    'promql': {'groups': [PROMQL_ALERT, PROMQL_RECORD]},
+}
+METADATA = {
+    'model': 'otelcol',
+    'model_uuid': 'f4d59020-c8e7-4053-8044-a2c1e5591c7f',
+    'application': 'opentelemetry-collector-k8s',
+    'charm': 'opentelemetry-collector-k8s',
+    'unit': 'opentelemetry-collector-k8s/0',
+}
+
+
+def _decompress(rules: str | None) -> dict[str, Any]:
+    if not rules:
+        return {}
+    return json.loads(LZMABase64.decompress(rules))
+
+
+def test_new_rule_is_ignored_by_databag_model() -> None:
+    # GIVEN the requirer offers a new rule type
+    # * the provider does not support this new rule type
+    # WHEN validating the requirer databag model, which the provider uses to access rules
+    # THEN the validation succeeds
+    requirer_databag = OtlpRequirerAppData.model_validate({
+        'rules': {'promql': {}, 'new_rule': {}},
+        'metadata': METADATA,
+    })
+    assert requirer_databag
+    assert isinstance(requirer_databag.rules, _RulesModel)
+    # AND the new rule type is ignored
+    assert 'new_rule' not in requirer_databag.rules.model_dump()
+
+
+def test_missing_rule_type_defaults() -> None:
+    # GIVEN the requirer offers a new rule type
+    # * the provider does not support this new rule type
+    # WHEN validating the requirer databag model, which the provider uses to access rules
+    # THEN the validation succeeds
+    requirer_databag = OtlpRequirerAppData.model_validate({'rules': {}, 'metadata': METADATA})
+    assert requirer_databag
+    assert isinstance(requirer_databag.rules, _RulesModel)
+    # AND the new rule type is ignored
+    assert 'promql' in requirer_databag.rules.model_dump()
+    assert 'logql' in requirer_databag.rules.model_dump()
+
+
+def test_rules_compression(otlp_dual_ctx: testing.Context[ops.CharmBase]) -> None:
+    # GIVEN receive-otlp and send-otlp relations
+    databag: dict[str, str] = {
+        'rules': json.dumps(ALL_RULES, sort_keys=True),
+        'metadata': json.dumps(METADATA),
+    }
+    receiver = Relation('receive-otlp', remote_app_data=databag)
+    sender = Relation('send-otlp', remote_app_data={'endpoints': '[]'})
+    state = State(relations=[receiver, sender], leader=True, model=MODEL)
+
+    # WHEN any event executes the reconciler
+    state_out = otlp_dual_ctx.run(otlp_dual_ctx.on.update_status(), state=state)
+
+    for relation in list(state_out.relations):
+        if relation.endpoint != 'send-otlp':
+            continue
+        rules = relation.local_app_data.get('rules', None)
+        assert rules is not None
+
+        # THEN the databag contains a compressed set of rules
+        assert isinstance(rules, str)
+        assert rules.startswith('"/')  # JSON-encoded LMZABase64 string
+        decompressed = _decompress(json.loads(rules))
+        assert decompressed
+        assert isinstance(decompressed, dict)
+        assert set(ALL_RULES.keys()).issubset(decompressed.keys())
+
+
+@pytest.mark.parametrize(
+    'forwarding_enabled, rules, expected_group_counts',
+    [
+        # format , databag_groups, generic_groups, total
+        # logql  , (2)           , (0)           , (2)
+        # promql , (2)           , (1)           , (3)
+        (
+            True,
+            {
+                'logql': {'groups': [LOGQL_ALERT, LOGQL_RECORD]},
+                'promql': {'groups': [PROMQL_ALERT, PROMQL_RECORD]},
+            },
+            {'logql': 2, 'promql': 3},
+        ),
+        # format , databag_groups, generic_groups, total
+        # logql  , (0)           , (0)           , (0)
+        # promql , (2)           , (1)           , (3)
+        (
+            True,
+            {'logql': {}, 'promql': {'groups': [PROMQL_ALERT, PROMQL_RECORD]}},
+            {'logql': 0, 'promql': 3},
+        ),
+        # format , databag_groups, generic_groups, total
+        # logql  , (2)           , (0)           , (2)
+        # promql , (0)           , (1)           , (1)
+        (
+            True,
+            {'logql': {'groups': [LOGQL_ALERT, LOGQL_RECORD]}, 'promql': {}},
+            {'logql': 2, 'promql': 1},
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    'metadata',
+    [METADATA, {}],
+    ids=['with_metadata', 'without_metadata'],
+)
+def test_forwarding_otlp_rule_counts(
+    otlp_dual_ctx: testing.Context[ops.CharmBase],
+    forwarding_enabled: bool,
+    rules: dict[str, Any],
+    expected_group_counts: dict[str, int],
+    metadata: dict[str, Any],
+) -> None:
+    # GIVEN forwarding of rules is enabled
+    # * a receive-otlp with rules in the databag
+    # * two send-otlp relations
+    databag = {'rules': json.dumps(rules), 'metadata': json.dumps(metadata)}
+    receiver = Relation('receive-otlp', remote_app_data=databag)
+    sender_1 = Relation('send-otlp', remote_app_data={'endpoints': '[]'})
+    sender_2 = Relation('send-otlp', remote_app_data={'endpoints': '[]'})
+    state = State(
+        relations=[receiver, sender_1, sender_2],
+        leader=True,
+        model=MODEL,
+        config={'forward_alert_rules': forwarding_enabled},
+    )
+
+    # WHEN any event executes the reconciler
+    state_out = otlp_dual_ctx.run(otlp_dual_ctx.on.update_status(), state=state)
+
+    for relation in list(state_out.relations):
+        if relation.endpoint != 'send-otlp':
+            continue
+
+        decompressed = _decompress(relation.local_app_data.get('rules'))
+        assert decompressed
+        requirer_databag: OtlpRequirerAppData = OtlpRequirerAppData.model_validate({
+            'rules': decompressed,
+            'metadata': {},
+        })
+
+        # THEN all expected rules exist in the databag
+        # * databag_groups are included/forwarded
+        assert (
+            len(requirer_databag.rules.logql.get('groups', [])) == expected_group_counts['logql']
+        )
+        assert (
+            len(requirer_databag.rules.promql.get('groups', [])) == expected_group_counts['promql']
+        )
