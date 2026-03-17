@@ -79,6 +79,7 @@ jobs:
         env:
           PYTHON: ${{ steps.python.outputs.min_version }}
         run: |
+          set -x  # print lines before executing them
           substrates=()
           for substrate in k8s machine; do
             set +e  # don't abort if the next process has a non-zero exit code
