@@ -52,10 +52,14 @@ def _parse_args() -> pathlib.Path:
 
 def _main(package: pathlib.Path) -> None:
     versions = _get_supported_python_versions(package=package)
-    line = f'versions={json.dumps(versions)}'
-    print(line)
+    lines = [
+        f'versions={json.dumps(versions)}',
+        f'min_version={versions[0]}',
+    ]
     with pathlib.Path(os.environ['GITHUB_OUTPUT']).open('a') as f:
-        print(line, file=f)
+        for line in lines:
+            print(line)  # logging
+            print(line, file=f)
 
 
 def _get_supported_python_versions(package: pathlib.Path) -> list[str]:
