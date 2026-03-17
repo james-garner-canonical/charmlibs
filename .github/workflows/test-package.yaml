@@ -84,8 +84,7 @@ jobs:
           substrates=()
           for substrate in k8s machine; do
             set +e  # don't abort if the next process has a non-zero exit code
-            uvx --from rust-just just python="$PYTHON" \
-                integration-$substrate "$PACKAGE" --collect-only -q
+            uvx --from rust-just just python="$PYTHON" integration-$substrate "$PACKAGE" --collect-only -q
             case $? in
                 0) substrates+=($substrate);;
                 5) echo "No tests for $substrate";;
