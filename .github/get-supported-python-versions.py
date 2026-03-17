@@ -39,7 +39,7 @@ import tomli
 VERSIONS = [
     '3.10',  # Ubuntu 22.04  (ops 3)
     '3.12',  # Ubuntu 24.04
-    '3.14',  # latest Python release
+    '3.13',  # latest Python release
 ]
 
 
