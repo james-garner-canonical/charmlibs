@@ -218,4 +218,6 @@ jobs:
         env:
           PACKAGE: ${{ inputs.package }}
           PYTHON: ${{ needs.init.outputs.min_python_version }}
-        run: uvx --from rust-just just python="$PYTHON" tag='${{ matrix.tag }}' integration-${{ matrix.substrate }} "$PACKAGE"
+          RECIPE: integration-${{ matrix.substrate }}
+          TAG: ${{ matrix.tag }}
+        run: uvx --from rust-just just python="$PYTHON" tag="$TAG" "$RECIPE" "$PACKAGE"
