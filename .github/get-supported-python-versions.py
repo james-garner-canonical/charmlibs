@@ -36,10 +36,12 @@ import pathlib
 import packaging.specifiers
 import tomli
 
+# The Python versions encoded here should be updated to reflect Ubuntu LTS releases.
+# The latest Python stable release (if different) should also be included.
 VERSIONS = [
     '3.10',  # Ubuntu 22.04  (ops 3)
     '3.12',  # Ubuntu 24.04
-    '3.13',  # latest Python release
+    '3.14',  # Ubuntu 26.04
 ]
 
 
