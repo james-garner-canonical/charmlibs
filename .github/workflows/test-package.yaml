@@ -31,6 +31,7 @@ jobs:
     outputs:
       tests: ${{ steps.tests.outputs.tests }}
       python: ${{ steps.python.outputs.versions }}
+      min_python_version: ${{ steps.python.outputs.min_version }}
       functional-matrix: ${{ steps.functional.outputs.matrix }}
       integration-substrates: ${{ steps.integration-substrates.outputs.substrates }}
       integration-tags: ${{ steps.integration-tags.outputs.tags }}
@@ -214,4 +215,6 @@ jobs:
         run: uvx --from rust-just just tag='${{ matrix.tag }}' pack-${{ matrix.substrate }} ${{ inputs.package }}
 
       - name: Run Juju integration tests
-        run: uvx --from rust-just just tag='${{ matrix.tag }}' integration-${{ matrix.substrate }} ${{ inputs.package }}
+        env:
+          PYTHON: ${{ needs.init.outputs.min_python_version }}
+        run: uvx --from rust-just just python="$PYTHON" tag='${{ matrix.tag }}' integration-${{ matrix.substrate }} ${{ inputs.package }}
