@@ -44,7 +44,7 @@ _TYPES = frozenset({
 
 # <type>[optional scope][optional !]: <description>
 _PATTERN = re.compile(
-    r'^(?P<type>[a-z]+)'
+    r'^(?P<type>[A-Za-z]+)'  # lower-case only, but let this be validated by _TYPES
     r'(?:\((?P<scope>[^()]+)\))?'
     r'(?P<breaking>!)?'
     r': '
@@ -74,7 +74,8 @@ def _main() -> None:
         print(
             f'Invalid type {commit_type!r} in PR title.\n'
             f'Valid types: {", ".join(sorted(_TYPES))}\n'
-            f'Got: {title!r}',
+            f'Got: {title!r}'
+            'Read more: https://github.com/canonical/charmlibs/blob/main/CONTRIBUTING.md#pull-requests',
             file=sys.stderr,
         )
         sys.exit(1)
