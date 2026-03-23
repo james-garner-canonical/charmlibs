@@ -20,7 +20,6 @@ For user-facing documentation, see the package-level docstring in __init__.py.
 """
 
 import copy
-import hashlib
 import json
 import logging
 from collections import OrderedDict
@@ -329,6 +328,7 @@ class OtlpProvider:
             following the OfficialRuleFileFormat from cos-lib.
         """
         rules_map: dict[str, dict[str, Any]] = {}
+        # Instantiate AlertRules with topology to ensure that rules always have an identifier
         rules_obj = AlertRules(query_type, self._topology)
         for relation in self._charm.model.relations[self._relation_name]:
             if not relation.data[relation.app]:
@@ -351,26 +351,7 @@ class OtlpProvider:
             )
             if result.errmsg and self._charm.unit.is_leader():
                 relation.data[self._charm.app]['event'] = json.dumps({'errors': result.errmsg})
-
-            # If an identifier does not exist, we generate a deterministic hash
-            # derived from the rules content so the rules can still be recorded
-            # for this relation. This avoids dropping rules when the upstream
-            # requirer metadata does not provide an identifier.
-            identifier = result.identifier
-            if identifier is None:
-                try:
-                    rules_json = json.dumps(result.rules, sort_keys=True)
-                except (TypeError, ValueError):
-                    rules_json = repr(result.rules)
-
-                content_hash = hashlib.sha256(rules_json.encode('utf-8')).hexdigest()[:12]
-                identifier = content_hash
-                logger.debug(
-                    'No identifier from injected rules for relation %s; generated hash %s',
-                    relation.id,
-                    identifier,
-                )
-
-            rules_map[identifier] = result.rules
+            if result.identifier:
+                rules_map[result.identifier] = result.rules
 
         return rules_map
