@@ -16,7 +16,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Check PR title
+      - run: python3 .github/check-conventional-pr-title.py
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: python3 .github/check-conventional-pr-title.py
