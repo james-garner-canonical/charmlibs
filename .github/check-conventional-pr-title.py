@@ -63,7 +63,8 @@ def _main() -> None:
         print(
             f'PR title does not follow Conventional Commits format.\n'
             f'Expected: <type>[(<scope>)][!]: <description>\n'
-            f'Got: {title!r}',
+            f'Got: {title!r}\n'
+            'Read more: https://github.com/canonical/charmlibs/blob/main/CONTRIBUTING.md#pull-requests',
             file=sys.stderr,
         )
         sys.exit(1)
