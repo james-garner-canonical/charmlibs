@@ -25,6 +25,8 @@ lint = [  # installed for `just lint interfaces/example-interface/testing` (unit
 ]
 unit = [  # installed for `just unit interfaces/example-interface/testing`
 ]
+functional = []  # group required by CI, but functional tests aren't recommended for testing packages
+integration = []  # group required by CI, but integration tests aren't recommended for testing packages
 
 [project.urls]
 "Repository" = "https://github.com/canonical/charmlibs"

@@ -25,6 +25,8 @@ lint = [  # installed for `just lint {{ cookiecutter.__path_prefix }}{{ cookiecu
 ]
 unit = [  # installed for `just unit {{ cookiecutter.__path_prefix }}{{ cookiecutter.project_slug }}/testing`
 ]
+functional = []  # group required by CI, but functional tests aren't recommended for testing packages
+integration = []  # group required by CI, but integration tests aren't recommended for testing packages
 
 [project.urls]
 "Repository" = "https://github.com/canonical/charmlibs"
