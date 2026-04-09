@@ -18,12 +18,16 @@ dependencies = [
     # "ops",
 ]
 
+[project.optional-dependencies]
+testing = ["charmlibs-interfaces-example-interface-testing==0.0.0.dev0"]
+
 [dependency-groups]
 lint = [  # installed for `just lint interfaces/example-interface` (unit, functional, and integration are also installed)
     # "typing_extensions",
 ]
 unit = [  # installed for `just unit interfaces/example-interface`
     "ops[testing]",
+    "charmlibs-interfaces-example-interface[testing]",
 ]
 functional = [  # installed for `just functional interfaces/example-interface`
 ]
@@ -44,6 +48,9 @@ packages = ["src/charmlibs"]
 
 [tool.hatch.version]
 path = "src/charmlibs/interfaces/example_interface/_version.py"
+
+[tool.uv.sources]
+charmlibs-interfaces-example-interface-testing = { path = "testing", editable = true }
 
 [tool.ruff]
 extend = "../../pyproject.toml"
