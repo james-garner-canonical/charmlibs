@@ -1,21 +1,20 @@
 (how-to-provide-data-for-charm-tests)=
 # How to provide relation test data for charms
 
-This guide describes how charm interface libraries should provide test data for charm unit tests.
-The goal is to let charm tests set up realistic relation state without needing to know the interface databag format.
+This guide describes how charm interface libraries should provide sample relation data for charm unit tests.
+By providing test data, charm libraries prevent charms from needing to know about the underlying relation data format.
+Instead, they only need to know about the library's public API and its testing API.
 
-In `charmlibs`, this is done by publishing a separate testing package for your library.
-That package should expose functions that return fully populated `ops.testing.Relation` objects.
-
-> Read more: {ref}`charmlibs-tests`
+Test data is published via a separate testing package for each interface library.
+The test package exposes functions that return fully populated `ops.testing.Relation` objects ready for use in state-transition tests.
 
 ## Create a separate testing package
 
 Testing code should be distributed separately from runtime library code.
-For a library at `<library>`, create a `testing` subdirectory:
+The package should be defined in a `testing` subdirectory, like this:
 
 ```
-<library>/
+interfaces/<name>/
 ├── src/charmlibs/interfaces/<name>/
 │   └── __init__.py
 ├── pyproject.toml
@@ -27,35 +26,38 @@ For a library at `<library>`, create a `testing` subdirectory:
 
 Use these naming conventions:
 
-- Distribution package: `charmlibs-interfaces-<name>-testing`
-- Import package: `charmlibs.interfaces.<name>_testing`
+- Distribution package: `charmlibs-interfaces-<hyphenated-interface-name>-testing`
+- Import package: `charmlibs.interfaces.<underscored_interface_name>_testing`
 
-## Wire versions and dependencies
+## Expose a testing extra and link the package versions
 
-The library package and its testing package should depend on exact versions of each other.
+The library and its testing package should depend on exact versions of each other.
+Charms should specify the version of the library that they need in their dependencies.
+In their testing dependencies, they should require the testing package, but not specify any version constraints.
 This ensures that charm tests always get testing helpers that match the library implementation.
 
-In `<library>/pyproject.toml`:
+Assuming an interface library is currently on version 1.2.3, the dependencies in the library's `pyproject.toml` file should look like this:
 
 ```toml
 [project.optional-dependencies]
-testing = ["charmlibs-interfaces-my-interface-testing==1.2.3"]
+testing = ["charmlibs-interfaces-<name>-testing==1.2.3"]
 
 [tool.uv.sources]
 charmlibs-interfaces-my-interface-testing = { path = "testing", editable = true }
 
 [dependency-groups]
 unit = [
-    "charmlibs-interfaces-my-interface[testing]",
+    # If the library's unit tests use the testing package:
+    "charmlibs-interfaces-<name>[testing]",
 ]
 ```
 
-In `<library>/testing/pyproject.toml`:
+The dependencies in `testing/pyproject.toml` file should then look like this:
 
 ```toml
 [project]
 dependencies = [
-    "charmlibs-interfaces-my-interface==1.2.3",
+    "charmlibs-interfaces-<name>==1.2.3",
 ]
 
 [tool.uv.sources]
@@ -64,7 +66,7 @@ charmlibs-interfaces-my-interface = { path = "..", editable = true }
 
 ```{important}
 Keep the library and testing package versions identical.
-Releasing either one implies releasing the other.
+Releasing either one always implies releasing the other.
 ```
 
 ## Implement the required testing API
@@ -74,42 +76,22 @@ Your testing package must provide these two functions:
 - `relation_for_provider`
 - `relation_for_requirer`
 
-These functions should return an `ops.testing.Relation` with sensible default data for common charm tests.
+Both functions must follow these rules:
 
-### Function requirements
-
-Both functions should follow these rules:
-
-1. The first argument should be `endpoint`, and should be callable positionally.
-2. Any additional arguments should be optional.
-3. If the interface is request-response, include a `response` argument that defaults to `True`.
+1. The first argument must be `endpoint`, the charm's endpoint name for this relation. This argument must be required, and must be able to be provided positionally.
+2. Any additional arguments must be optional and keyword-only. Defaults should represent a typical valid relation, not just empty databags.
 4. Return a fully formed `ops.testing.Relation` object.
+3. If the interface is request-response, include a `response` argument that defaults to `True`. If called with `response=False`, only the side of the relation that writes first should be populated.
 
-For request-response interfaces, `response=False` should populate only the side that a charm expects to read first.
+If your interface needs helper utilities, include them in the testing package and document the intended usage.
 
-## Choose useful defaults
-
-Defaults should represent a typical valid conversation, not just empty databags.
-
-In most charm tests, you'll want to model one of these states:
-
-1. Empty relation: use a plain `Relation(...)` in the charm test.
-2. Remote side populated: call `relation_for_<role>(..., response=False)` when relevant.
-3. Both sides populated: call `relation_for_<role>(...)` with default arguments.
-
-If your interface needs helper utilities (for example, generating test payloads), include them in the testing package and document the intended usage.
-
-## Make sure the data is coherent
-
-Some libraries need remote response data to match local request data.
+One case where helpers are useful is if your library needs remote response data to match local request data.
 For example, response payloads might need to correspond to IDs, keys, or other values generated by the charm under test.
-
 In these cases, provide a testing API that makes this easy and explicit.
-Where needed, also provide test doubles or helper functions that charm tests can patch in.
 
 ## Example usage in charm tests
 
-Charm developers should depend on the library's `testing` extra and import from the testing namespace package:
+Charm developers should depend on the library's `testing` extra and import from the testing package:
 
 ```python
 from charmlibs.interfaces import my_interface_testing
@@ -118,22 +100,6 @@ relation = my_interface_testing.relation_for_requirer("my-endpoint")
 ```
 
 ```{tip}
-Charm tests should usually depend on `charmlibs-interfaces-<name>[testing]` (not directly on the testing distribution package).
-This keeps test helpers automatically aligned with the library version in use.
+Charms should always depend on `charmlibs-interfaces-<name>[testing]`, not directly on `charmlibs-interfaces-<name>-testing`.
+This ensures that the testing package version always matches the library itself.
 ```
-
-## Validate your package
-
-From the repository root, run:
-
-```bash
-just unit <library>
-just lint <library>
-```
-
-Your testing package should also be covered by your library tests.
-At minimum, include tests that verify:
-
-- `relation_for_provider(endpoint)` is callable with just endpoint.
-- `relation_for_requirer(endpoint)` is callable with just endpoint.
-- Both functions return `ops.testing.Relation`.
