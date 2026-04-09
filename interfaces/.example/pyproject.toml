@@ -36,8 +36,10 @@ integration = [  # installed for `just integration interfaces/example-interface`
 ]
 
 [project.urls]
-"Repository" = "https://github.com/canonical/charmlibs"
+"Documentation" = "https://documentation.ubuntu.com/charmlibs/reference/charmlibs/interfaces/example-interface"
+"Repository" = "https://github.com/canonical/charmlibs/tree/main/interfaces/example-interface"
 "Issues" = "https://github.com/canonical/charmlibs/issues"
+"Changelog" = "https://github.com/canonical/charmlibs/blob/main/interfaces/example-interface/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling"]
