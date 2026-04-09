@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from ops import testing
 
-from charmlibs.interfaces import {{ cookiecutter.__pkg }}
+# from charmlibs.interfaces import {{ cookiecutter.__pkg }}
 
 _INTERFACE_NAME = '{{ cookiecutter.project_slug }}'
 

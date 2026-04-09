@@ -32,7 +32,7 @@ def test_provider_no_relation():
 def test_provider_relation_default():
     """Test provider charm when the relation is populated with defaults."""
     ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
-    relation = example_interface_testing.relation_for_provider("endpoint")
+    relation = example_interface_testing.relation_for_provider('endpoint')
     state = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state) as manager:
         manager.run()
@@ -43,7 +43,7 @@ def test_provider_relation_variant():
     """Test provider charm when the relation is populated with some non-default argument."""
     ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
     relation = example_interface_testing.relation_for_provider(
-        "endpoint",  # FIXME: Add some non-default arguments.
+        'endpoint',  # FIXME: Add some non-default arguments.
     )
     state_in = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state_in) as manager:

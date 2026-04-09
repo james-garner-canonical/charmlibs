@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from ops import testing
 
-from charmlibs.interfaces import example_interface
+# from charmlibs.interfaces import example_interface
 
 _INTERFACE_NAME = 'example-interface'
 

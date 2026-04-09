@@ -16,11 +16,11 @@
 
 import ops
 
-from charmlibs.interfaces import example_interface
+# from charmlibs.interfaces import example_interface
 
 META = {
-    "name": "provider",
-    "provides": {"endpoint": {"interface": "cookiecutter.project_slug"}},
+    'name': 'provider',
+    'provides': {'endpoint': {'interface': 'cookiecutter.project_slug'}},
 }
 
 
@@ -29,7 +29,7 @@ class ProviderCharm(ops.CharmBase):
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        # self.lib_obj = example_interface.<...>Provider(self, "endpoint", ...)
+        # self.lib_obj = example_interface.<...>Provider(self, 'endpoint', ...)
         framework.observe(self.on.update_status, self._reconcile)
 
     def _reconcile(self, _: ops.EventBase) -> None:

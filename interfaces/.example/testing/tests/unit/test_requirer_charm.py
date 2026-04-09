@@ -32,7 +32,7 @@ def test_requirer_no_relation():
 def test_requirer_relation_default():
     """Test requirer charm when the relation is populated with defaults."""
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-    relation = example_interface_testing.relation_for_requirer("endpoint")
+    relation = example_interface_testing.relation_for_requirer('endpoint')
     state = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state) as manager:
         manager.run()
@@ -43,7 +43,7 @@ def test_requirer_relation_variant():
     """Test requirer charm when the relation is populated with some non-default argument."""
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
     relation = example_interface_testing.relation_for_requirer(
-        "endpoint",  # FIXME: Add some non-default arguments.
+        'endpoint',  # FIXME: Add some non-default arguments.
     )
     state_in = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state_in) as manager:

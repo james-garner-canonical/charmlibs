@@ -20,6 +20,6 @@ from ._version import __version__ as __version__
 __all__ = [
     # only the names listed in __all__ are imported when executing:
     # from {{ cookiecutter.__import_pkg }} import *
-    "relation_for_provider",
-    "relation_for_requirer",
+    'relation_for_provider',
+    'relation_for_requirer',
 ]
