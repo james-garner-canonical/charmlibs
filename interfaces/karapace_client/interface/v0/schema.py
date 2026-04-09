@@ -6,7 +6,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 """
 
 from enum import Enum
-from typing import Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, field_validator
@@ -44,7 +43,7 @@ class KarapaceProviderData(BaseModel):
         title="Karapace server endpoints",
     )
 
-    entity_name: Optional[str] = Field(
+    entity_name: str | None = Field(
         None,
         alias="entity-name",
         description="Name for the requested custom entity",
@@ -52,7 +51,7 @@ class KarapaceProviderData(BaseModel):
         title="Entity name",
     )
 
-    entity_password: Optional[str] = Field(
+    entity_password: str | None = Field(
         None,
         alias="entity-password",
         description="Password for the requested custom entity",
@@ -70,7 +69,7 @@ class KarapaceRequirerData(BaseModel):
         title="Subject name",
     )
 
-    extra_user_roles: Optional[str] = Field(
+    extra_user_roles: str | None = Field(
         default="admin",
         alias="extra-user-roles",
         description="Any extra user roles requested by the requirer",
@@ -78,7 +77,7 @@ class KarapaceRequirerData(BaseModel):
         title="Extra user roles",
     )
 
-    extra_group_roles: Optional[str] = Field(
+    extra_group_roles: str | None = Field(
         None,
         alias="extra-group-roles",
         description="Any extra group roles requested by the requirer",
@@ -86,7 +85,7 @@ class KarapaceRequirerData(BaseModel):
         title="Extra group roles",
     )
 
-    entity_type: Optional[str] = Field(
+    entity_type: str | None = Field(
         None,
         alias="entity-type",
         description="Type of the requested entity (user / group)",
@@ -94,7 +93,7 @@ class KarapaceRequirerData(BaseModel):
         title="Entity type",
     )
 
-    entity_permissions: Optional[str] = Field(
+    entity_permissions: str | None = Field(
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",

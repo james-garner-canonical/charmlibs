@@ -5,8 +5,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-from typing import List, Optional
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
 
@@ -38,28 +36,28 @@ class MongoDBProviderData(BaseModel):
         title="Database endpoints",
     )
 
-    uris: Optional[str] = Field(
+    uris: str | None = Field(
         None,
         description="A list of connection strings in URI format used to connect to the database",
         examples=["mongodb://user:pass@host1:port,host2:port/authDBname?replset=rs0"],
         title="Database URIs",
     )
 
-    replset: Optional[str] = Field(
+    replset: str | None = Field(
         None,
         description="The name of the replication set",
         examples=["rs0"],
         title="ReplSet",
     )
 
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None,
         description="The version of the database engine",
         examples=["8.0.27-18"],
         title="Version",
     )
 
-    entity_name: Optional[str] = Field(
+    entity_name: str | None = Field(
         None,
         alias="entity-name",
         description="Name for the requested custom entity",
@@ -67,7 +65,7 @@ class MongoDBProviderData(BaseModel):
         title="Entity name",
     )
 
-    entity_password: Optional[str] = Field(
+    entity_password: str | None = Field(
         None,
         alias="entity-password",
         description="Password for the requested custom entity",
@@ -85,14 +83,14 @@ class MongoDBRequirerData(BaseModel):
         title="Database name",
     )
 
-    requested_secrets: List[str] = Field(
+    requested_secrets: list[str] = Field(
         alias="requested-secrets",
         description="Any provider field which should be transferred as Juju Secret",
         examples=[["username", "password"]],
         title="Requested secrets",
     )
 
-    extra_user_roles: Optional[str] = Field(
+    extra_user_roles: str | None = Field(
         None,
         alias="extra-user-roles",
         description="Any extra user roles requested by the requirer",
@@ -100,7 +98,7 @@ class MongoDBRequirerData(BaseModel):
         title="Extra user roles",
     )
 
-    extra_group_roles: Optional[str] = Field(
+    extra_group_roles: str | None = Field(
         None,
         alias="extra-group-roles",
         description="Any extra group roles requested by the requirer",
@@ -108,7 +106,7 @@ class MongoDBRequirerData(BaseModel):
         title="Extra group roles",
     )
 
-    entity_type: Optional[str] = Field(
+    entity_type: str | None = Field(
         None,
         alias="entity-type",
         description="Type of the requested entity (user / group)",
@@ -116,7 +114,7 @@ class MongoDBRequirerData(BaseModel):
         title="Entity type",
     )
 
-    entity_permissions: Optional[str] = Field(
+    entity_permissions: str | None = Field(
         None,
         alias="entity-permissions",
         description="List of permissions to assign to the custom entity, in JSON format",

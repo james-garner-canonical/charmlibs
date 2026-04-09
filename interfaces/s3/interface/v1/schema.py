@@ -1,7 +1,6 @@
 """Schemas for v1 of the s3 interface."""
 
 from enum import Enum, IntEnum
-from typing import List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
@@ -20,7 +19,7 @@ class S3APIVersion(IntEnum):
 class S3ProviderAppData(BaseModel):
     """Data expected on the provider side for the s3 v1 interface."""
 
-    bucket: Optional[str] = Field(
+    bucket: str | None = Field(
         description="The bucket/container name delivered by the provider.",
         examples=["minio"],
         title="Bucket name",
@@ -43,53 +42,53 @@ class S3ProviderAppData(BaseModel):
         title="Credentials Secret ID",
     )
 
-    path: Optional[str] = Field(
+    path: str | None = Field(
         description="The path inside the bucket/container to store objects.",
         examples=["my/path/"],
         title="Path",
     )
 
-    endpoint: Optional[str] = Field(
+    endpoint: str | None = Field(
         description="The endpoint used to connect to the object storage.",
         examples=["https://minio-endpoint/"],
         title="Endpoint URL",
     )
 
-    region: Optional[str] = Field(
+    region: str | None = Field(
         description="The region used to connect to the object storage.",
         examples=["us-east-1"],
         title="Region",
     )
 
-    s3_uri_style: Optional[S3URIStyleEnum] = Field(
+    s3_uri_style: S3URIStyleEnum | None = Field(
         alias="s3-uri-style",
         description="The S3 protocol specific bucket path lookup type.",
         examples=["path", "host"],
         title="S3 URI Style",
     )
 
-    storage_class: Optional[str] = Field(
+    storage_class: str | None = Field(
         alias="storage-class",
         description="Storage Class for objects uploaded to the object storage.",
         examples=["glacier"],
         title="Storage Class",
     )
 
-    tls_ca_chain: Optional[List[str]] = Field(
+    tls_ca_chain: list[str] | None = Field(
         alias="tls-ca-chain",
         description="The complete CA chain, which can be used for HTTPS validation.",
         examples=[["base64-encoded-ca-chain=="]],
         title="TLS CA Chain",
     )
 
-    s3_api_version: Optional[S3APIVersion] = Field(
+    s3_api_version: S3APIVersion | None = Field(
         alias="s3-api-version",
         description="S3 protocol specific API signature.",
         examples=[2, 4],
         title="S3 API signature",
     )
 
-    attributes: Optional[List[str]] = Field(
+    attributes: list[str] | None = Field(
         description="The custom metadata (HTTP headers).",
         examples=[
             [
@@ -104,7 +103,7 @@ class S3ProviderAppData(BaseModel):
 class S3RequirerAppData(BaseModel):
     """Data expected on the requirer side for the s3 v1 interface."""
 
-    bucket: Optional[str] = Field(
+    bucket: str | None = Field(
         description="The name of the bucket/container requested by the requirer.",
         examples=["minio"],
         title="Bucket",
@@ -117,7 +116,7 @@ class S3RequirerAppData(BaseModel):
         title="S3 lib version",
     )
 
-    path: Optional[str] = Field(
+    path: str | None = Field(
         description="The path inside the bucket/container to store objects.",
         examples=["my/path/"],
         title="Path",

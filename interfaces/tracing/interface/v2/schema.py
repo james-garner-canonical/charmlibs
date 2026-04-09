@@ -30,7 +30,6 @@ Examples:
 """
 
 import enum
-from typing import List
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, ConfigDict, Field, Json
@@ -85,14 +84,14 @@ class Receiver(BaseModel):
 
 
 class TracingProviderData(BaseModel):
-    receivers: Json[List[Receiver]] = Field(
+    receivers: Json[list[Receiver]] = Field(
         ...,
         description="A list of enabled receivers in the form of the protocol they use and their resolvable server url.",
     )
 
 
 class TracingRequirerData(BaseModel):
-    receivers: Json[List[str]] = Field(
+    receivers: Json[list[str]] = Field(
         ..., description="List of protocols that the requirer wishes to use."
     )
 

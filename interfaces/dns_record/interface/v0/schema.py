@@ -47,7 +47,6 @@ Examples:
 """
 
 from enum import Enum
-from typing import List
 from uuid import UUID
 
 from interface_tester.schema_base import DataBagSchema
@@ -115,7 +114,7 @@ class DnsProviderData(BaseModel):
 class DNSRecordProvider(BaseModel):
     """List statuses for the DNS records informed by the requirer."""
 
-    dns_entries: List[DnsProviderData] = Field(
+    dns_entries: list[DnsProviderData] = Field(
         name="DNS entries",
         description="List of statuses for the DNS records requested by the requirer.",
     )
@@ -164,7 +163,7 @@ class RequirerEntries(BaseModel):
 class DNSRecordRequirer(BaseModel):
     """List of domains for the provider to manage."""
 
-    dns_entries: List[RequirerEntries] = Field(
+    dns_entries: list[RequirerEntries] = Field(
         name="DNS entries", description="List of DNS records for the provider to manage."
     )
 

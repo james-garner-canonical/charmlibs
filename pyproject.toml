@@ -28,7 +28,7 @@ exclude_also = [
 # Linting tools configuration
 [tool.ruff]
 line-length = 99
-target-version = "py38"
+target-version = "py310"
 exclude = [
     # These are the default values of ruff's exclude
     # they're duplicated here instead of using extend-exclude

@@ -6,7 +6,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 """
 
 from enum import Enum
-from typing import Dict, List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
@@ -28,38 +27,38 @@ class PyroscopeClusterProviderAppData(BaseModel):
         "workload version supports; for example see: "
         "https://grafana.com/docs/pyroscope/latest/configuration/#configure-pyroscope."
     )
-    loki_endpoints: Optional[Json[Dict[str, str]]] = Field(
+    loki_endpoints: Json[dict[str, str]] | None = Field(
         default=None,
         description="List of loki-push-api endpoints to which the worker node can push any logs it generates.",
     )
-    charm_tracing_receivers: Optional[Json[Dict[str, str]]] = Field(
+    charm_tracing_receivers: Json[dict[str, str]] | None = Field(
         default=None,
         description="Endpoints to which the the worker can push charm traces to.",
     )
-    workload_tracing_receivers: Optional[Json[Dict[str, str]]] = Field(
+    workload_tracing_receivers: Json[dict[str, str]] | None = Field(
         default=None,
         description="Endpoints to which the the worker can push workload traces to.",
     )
-    remote_write_endpoints: Optional[Json[List[RemoteWriteEndpoint]]] = Field(
+    remote_write_endpoints: Json[list[RemoteWriteEndpoint]] | None = Field(
         default=None,
         description="Endpoints to which the workload (and the worker charm) can push metrics to.",
     )
-    worker_ports: Optional[Json[List[int]]] = Field(
+    worker_ports: Json[list[int]] | None = Field(
         default=None,
         description="Ports that the worker should open. "
         "If not provided, the worker will open all the legacy ones.",
     )
-    ca_cert: Optional[Json[str]] = Field(
+    ca_cert: Json[str] | None = Field(
         default=None, description="CA certificate for tls encryption."
     )
-    server_cert: Optional[Json[str]] = Field(
+    server_cert: Json[str] | None = Field(
         default=None, description="Server certificate for tls encryption."
     )
-    privkey_secret_id: Optional[Json[str]] = Field(
+    privkey_secret_id: Json[str] | None = Field(
         default=None,
         description="Private key used by the coordinator, for tls encryption.",
     )
-    s3_tls_ca_chain: Optional[str] = Field(
+    s3_tls_ca_chain: str | None = Field(
         default=None,
         description="CA chain to use to validate traffic with the s3 endpoint.",
     )
@@ -69,8 +68,8 @@ class _Topology(BaseModel):
     """JujuTopology as defined by cos-lib."""
 
     application: str
-    charm_name: Optional[str]
-    unit: Optional[str]
+    charm_name: str | None
+    unit: str | None
 
 
 class PyroscopeClusterRequirerUnitData(BaseModel):

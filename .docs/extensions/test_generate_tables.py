@@ -51,7 +51,7 @@ def test_rst_rows(rows: list[tuple[str, ...]]):
     for i, row in enumerate(table_rows):
         table_cells = row.findall('.//td')
         assert len(table_cells) == len(rows[i])
-        for table_cell, cell in zip(table_cells, rows[i]):
+        for table_cell, cell in zip(table_cells, rows[i], strict=True):
             assert table_cell.text == cell
 
 

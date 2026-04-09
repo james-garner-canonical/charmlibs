@@ -25,8 +25,6 @@ Examples:
               port: 5678
 """
 
-from typing import List
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
 
@@ -47,7 +45,7 @@ class Receiver(BaseModel):
 
 class TracingProviderData(BaseModel):
     host: str = Field(..., description="Hostname of the tracing server.", examples=["example.com"])
-    receivers: Json[List[Receiver]] = Field(
+    receivers: Json[list[Receiver]] = Field(
         ..., description="List of the receivers that this server has enabled, and their ports."
     )
 
@@ -61,6 +59,6 @@ class ProviderSchema(DataBagSchema):
 class RequirerSchema(DataBagSchema):
     """Requirer schema for Tracing."""
 
-    protocols: Json[List[str]] = Field(
+    protocols: Json[list[str]] = Field(
         ..., description="List of protocols that the requirer wishes to use."
     )

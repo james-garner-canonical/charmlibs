@@ -22,7 +22,6 @@ Examples:
 """
 
 from enum import Enum
-from typing import Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
@@ -58,17 +57,17 @@ class SmtpProviderData(BaseModel):
         title="Port",
         examples=[25, 587, 465],
     )
-    user: Optional[str] = Field(
+    user: str | None = Field(
         description="SMTP user.",
         title="User",
         examples=["some_user"],
     )
-    password: Optional[str] = Field(
+    password: str | None = Field(
         description="SMTP password. Populated instead of password_id when secrets are not supported.",
         title="Password",
         examples=["somepasswd"],
     )
-    password_id: Optional[str] = Field(
+    password_id: str | None = Field(
         description="Juju secret ID for the SMTP password. Populated instead of password when secrets are supported.",
         title="Password ID",
         examples=["secret:123213123123123123123"],
@@ -83,7 +82,7 @@ class SmtpProviderData(BaseModel):
         title="Transport security",
         examples=[TransportSecurity.NONE],
     )
-    domain: Optional[str] = Field(
+    domain: str | None = Field(
         description="The MAIL FROM domain for the outgoing email.",
         title="Domain",
         examples=["example.com"],

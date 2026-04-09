@@ -5,8 +5,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 - RequirerSchema
 """
 
-from typing import List
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, SecretStr
 
@@ -40,7 +38,7 @@ class AzureServicePrincipalProviderAppData(BaseModel):
 
 
 class AzureServicePrincipalRequirerAppData(BaseModel):
-    requested_secrets: List[str] = Field(
+    requested_secrets: list[str] = Field(
         alias="requested-secrets",
         description="Any provider field which should be transfered as a Juju secret",
         examples=[["client-id", "client-secret"]],

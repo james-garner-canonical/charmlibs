@@ -1,5 +1,3 @@
-from typing import List
-
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
 
@@ -17,7 +15,7 @@ class GrafanaDatasource(BaseModel):
 class GrafanaSourceAppData(BaseModel):
     """Application databag model for the requirer side of this interface."""
 
-    datasources: Json[List[GrafanaDatasource]]
+    datasources: Json[list[GrafanaDatasource]]
 
 
 class ProviderSchema(DataBagSchema):

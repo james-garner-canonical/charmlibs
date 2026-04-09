@@ -6,7 +6,6 @@ It must expose two interfaces.schema_base.DataBagSchema subclasses called:
 """
 
 from enum import Enum
-from typing import Dict, List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field, Json
@@ -21,38 +20,38 @@ class TempoClusterProviderAppData(BaseModel):
         "workload version supports; for example see: "
         "https://grafana.com/docs/tempo/latest/configuration/#configure-tempo."
     )
-    loki_endpoints: Optional[Json[Dict[str, str]]] = Field(
+    loki_endpoints: Json[dict[str, str]] | None = Field(
         default=None,
         description="List of loki-push-api endpoints to which the worker node can push any logs it generates.",
     )
-    ca_cert: Optional[Json[str]] = Field(
+    ca_cert: Json[str] | None = Field(
         default=None, description="CA certificate for tls encryption."
     )
-    server_cert: Optional[Json[str]] = Field(
+    server_cert: Json[str] | None = Field(
         default=None, description="Server certificate for tls encryption."
     )
-    s3_tls_ca_cert: Optional[Json[str]] = Field(
+    s3_tls_ca_cert: Json[str] | None = Field(
         default=None, description="CA certificate for the s3 bucket API."
     )
-    privkey_secret_id: Optional[Json[str]] = Field(
+    privkey_secret_id: Json[str] | None = Field(
         default=None,
         description="ID of a Juju secret that holds the private key used by the coordinator for TLS encryption.",
     )
-    remote_write_endpoints: Optional[Json[List[Dict[str, str]]]] = Field(
+    remote_write_endpoints: Json[list[dict[str, str]]] | None = Field(
         default=None,
         description="Endpoints to which the workload (and the worker charm) can push metrics to.",
     )
-    charm_tracing_receivers: Optional[Json[Dict[str, str]]] = Field(
+    charm_tracing_receivers: Json[dict[str, str]] | None = Field(
         default=None,
         description="Endpoints to which the worker node can push its charm traces to."
         "It is a mapping from protocol names such as `zipkin`, `otlp_grpc`, `otlp_http`.",
     )
-    workload_tracing_receivers: Optional[Json[Dict[str, str]]] = Field(
+    workload_tracing_receivers: Json[dict[str, str]] | None = Field(
         default=None,
         description="Endpoints to which the worker node can push its workload traces to."
         "It is a mapping from protocol names such as `zipkin`, `otlp_grpc`, `otlp_http`.",
     )
-    worker_ports: Optional[Json[List[int]]] = Field(
+    worker_ports: Json[list[int]] | None = Field(
         default=None,
         description="Ports that the worker should open on its pod.",
     )
@@ -62,8 +61,8 @@ class _Topology(BaseModel):
     """JujuTopology as defined by cos-lib."""
 
     application: str
-    charm_name: Optional[str]
-    unit: Optional[str]
+    charm_name: str | None
+    unit: str | None
 
 
 class TempoClusterRequirerUnitData(BaseModel):

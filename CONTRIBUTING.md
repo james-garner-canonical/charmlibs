@@ -13,7 +13,9 @@ Then run `just` from anywhere in the repository for usage.
 
 # Adding a new library
 
-Follow the [tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` monorepo, or read the [how-to guide for migrating an existing library to this repository](https://documentation.ubuntu.com/charmlibs/how-to/migrate/).
+Run `just init` to create a new general library, or `just interface init` for a new interface library.
+We recommend following the [tutorial](https://documentation.ubuntu.com/charmlibs/tutorial) to learn how to add your library to the `charmlibs` monorepo.
+If you're migrating a library that was published elsewhere, read the [how-to guide for migrating an existing library to this repository](https://documentation.ubuntu.com/charmlibs/how-to/migrate/).
 
 # Working on an existing library
 
@@ -32,3 +34,12 @@ Read more:
 
 - [The different types of tests](https://documentation.ubuntu.com/charmlibs/explanation/charmlibs-tests/).
 - [Publishing packages](https://documentation.ubuntu.com/charmlibs/explanation/charmlibs-publishing/).
+
+# Pull requests
+
+Pull request titles must follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+When a PR affects a single library, use the distribution package name without the leading `charmlibs-` as the conventional commit scope.
+
+For example:
+`feat(pathops): ...` or `chore(interfaces-tls-certificates): ...`.

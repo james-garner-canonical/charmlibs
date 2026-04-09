@@ -26,7 +26,6 @@ Examples:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Field
@@ -52,7 +51,7 @@ class PLMNConfig:
         ge=0,
         le=255,
     )
-    sd: Optional[int] = Field(
+    sd: int | None = Field(
         description="Slice Differentiator",
         default=None,
         examples=[1],
@@ -68,7 +67,7 @@ class FivegCoreGnbProviderAppData(BaseModel):
         ge=1,
         le=16777215,
     )
-    plmns: List[PLMNConfig]
+    plmns: list[PLMNConfig]
 
 
 class FivegCoreGnbRequirerAppData(BaseModel):

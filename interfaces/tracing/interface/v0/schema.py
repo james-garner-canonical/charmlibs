@@ -23,7 +23,6 @@ Examples:
 """
 
 from enum import Enum
-from typing import List
 
 from interface_tester.schema_base import DataBagSchema
 from pydantic import BaseModel, Json
@@ -45,7 +44,7 @@ class Ingester(BaseModel):
 
 class TracingProviderData(BaseModel):
     host: str
-    ingesters: Json[List[Ingester]]
+    ingesters: Json[list[Ingester]]
 
 
 class ProviderSchema(DataBagSchema):
