@@ -11,24 +11,16 @@ _INTERFACE_NAME = '{{ cookiecutter.project_slug }}'
 
 
 def relation_for_requirer(
-    # testing.Relation args:
     endpoint: str,
     # *,  # Additional arguments must be keyword only.
-    # {{ cookiecutter.__pkg }} args:
-    # ...
-    # interface 'conversation' args:
-    # response: bool = True,
+    # response: bool = True,  # Request-response interfaces default to populating both sides.
 ) -> testing.Relation:
     return testing.Relation(endpoint, interface=_INTERFACE_NAME)
 
 
 def relation_for_provider(
-    # testing.Relation args:
     endpoint: str,
     # *,  # Additional arguments must be keyword only.
-    # {{ cookiecutter.__pkg }} args:
-    # ...
-    # interface 'conversation' args:
-    # response: bool = True,
+    # response: bool = True,  # Request-response interfaces default to populating both sides.
 ) -> testing.Relation:
     return testing.Relation(endpoint, interface=_INTERFACE_NAME)
