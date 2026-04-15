@@ -20,7 +20,7 @@ import ops
 
 META = {
     'name': 'requirer',
-    'requires': {'endpoint': {'interface': 'cookiecutter.project_slug'}},
+    'requires': {'endpoint': {'interface': '{{ cookiecutter.project_slug }}'}},
 }
 
 

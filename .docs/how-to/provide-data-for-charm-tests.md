@@ -1,16 +1,16 @@
 (how-to-provide-data-for-charm-tests)=
-# How to provide relation test data for charms
+# How to provide relation data for charm tests
 
 This guide describes how charm interface libraries should provide sample relation data for charm unit tests.
 By providing test data, charm libraries prevent charms from needing to know about the underlying relation data format.
-Instead, they only need to know about the library's public API and its testing API.
+Instead, charms only need to know about the library's public API and its testing API.
 
-Test data is published via a separate testing package for each interface library.
-The test package exposes functions that return fully populated `ops.testing.Relation` objects ready for use in state-transition tests.
+As the author of an interface library, you should provide a separate testing package for your library.
+The testing package should expose functions that return fully populated `ops.testing.Relation` objects ready for use in state-transition tests.
 
 ## Create a separate testing package
 
-Testing code should be distributed separately from runtime library code.
+Your library's testing package should be distributed separately from runtime library code.
 The package should be defined in a `testing` subdirectory, like this:
 
 ```
@@ -31,10 +31,9 @@ Use these naming conventions:
 
 ## Expose a testing extra and link the package versions
 
-The library and its testing package should depend on exact versions of each other.
-Charms should specify the version of the library that they need in their dependencies.
-In their testing dependencies, they should require the testing package, but not specify any version constraints.
-This ensures that charm tests always get testing helpers that match the library implementation.
+Keep the library and testing package versions identical.
+Releasing either one always implies releasing the other.
+Also, the library and its testing package should depend on exact versions of each other.
 
 Assuming an interface library is currently on version 1.2.3, the dependencies in the library's `pyproject.toml` file should look like this:
 
@@ -64,14 +63,10 @@ dependencies = [
 charmlibs-interfaces-my-interface = { path = "..", editable = true }
 ```
 
-```{important}
-Keep the library and testing package versions identical.
-Releasing either one always implies releasing the other.
-```
 
 ## Implement the required testing API
 
-Your testing package must provide these two functions:
+Your testing package must provide these functions:
 
 - `relation_for_provider`
 - `relation_for_requirer`
@@ -91,7 +86,9 @@ In these cases, provide a testing API that makes this easy and explicit.
 
 ## Example usage in charm tests
 
-Charm developers should depend on the library's `testing` extra and import from the testing package:
+Charms should specify the version of the library that they need in their dependencies.
+In their testing dependencies, they should require the library's `testing` extra, but not specify any version constraints:
+
 
 ```python
 from charmlibs.interfaces import my_interface_testing

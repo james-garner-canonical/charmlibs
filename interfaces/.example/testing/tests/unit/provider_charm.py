@@ -20,7 +20,7 @@ import ops
 
 META = {
     'name': 'provider',
-    'provides': {'endpoint': {'interface': 'cookiecutter.project_slug'}},
+    'provides': {'endpoint': {'interface': 'example-interface'}},
 }
 
 

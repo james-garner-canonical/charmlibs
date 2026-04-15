@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The {{ cookiecutter.__import_pkg }} package."""
+"""The {{ cookiecutter.__import_pkg }}_testing package."""
 
 from ._testing import relation_for_provider, relation_for_requirer
 from ._version import __version__ as __version__
 
 __all__ = [
     # only the names listed in __all__ are imported when executing:
-    # from {{ cookiecutter.__import_pkg }} import *
+    # from {{ cookiecutter.__import_pkg }}_testing import *
     'relation_for_provider',
     'relation_for_requirer',
 ]
