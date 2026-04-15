@@ -26,7 +26,7 @@ def test_provider_no_relation():
     ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
     with ctx(ctx.on.update_status(), ops.testing.State()) as manager:
         manager.run()
-    # Assert something about the charm.
+    # FIXME: Assert something about the charm.
 
 
 def test_provider_relation_default():
@@ -36,16 +36,16 @@ def test_provider_relation_default():
     state = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state) as manager:
         manager.run()
-    # Assert something about the charm's use of the library object.
+    # FIXME: Assert something about the charm's use of the library object.
 
 
 def test_provider_relation_variant():
     """Test provider charm when the relation is populated with some non-default argument."""
     ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
     relation = {{ cookiecutter.__pkg }}_testing.relation_for_provider(
-        'endpoint',  # FIXME: Add some non-default arguments.
+        'endpoint',  # FIXME: Test a variant by providing some non-default arguments.
     )
     state_in = ops.testing.State(relations=[relation])
     with ctx(ctx.on.update_status(), state_in) as manager:
         manager.run()
-    # Assert something about the charm's use of the library object.
+    # FIXME: Assert something about the charm's use of the library object.
