@@ -44,7 +44,7 @@
 /interfaces/etcd_client/ @canonical/data-nosql
 /interfaces/filesystem_info/ @canonical/hpc-team
 /interfaces/forward_auth @canonical/identity
-/interfaces/gateway_metadata/ @canonical/service-mesh
+/interfaces/gateway-metadata/ @canonical/service-mesh
 /interfaces/grafana_auth/ @canonical/observability
 /interfaces/grafana_datasource/ @canonical/observability
 /interfaces/grafana_datasource_exchange/ @canonical/observability
