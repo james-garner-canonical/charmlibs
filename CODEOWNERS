@@ -237,6 +237,10 @@
 /interfaces/vault-kv/interface/ @canonical/tls
 /interfaces/vault-kv/ruff.toml @canonical/tls
 
+# /interfaces/valkey_client/
+/interfaces/valkey_client/interface/ @canonical/data-nosql
+/interfaces/valkey_client/ruff.toml @canonical/data-nosql
+
 # /interfaces/k8s_backup_target/
 /interfaces/k8s_backup_target/ @canonical/analytics
 
