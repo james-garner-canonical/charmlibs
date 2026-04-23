@@ -64,7 +64,11 @@ class TestTLSCertificatesRequiresV4:
     def private_key_secret_exists(self, secrets: Iterable[Secret], label: str) -> bool:
         return any(secret.label == label for secret in secrets)
 
-    def certificate_secret_exists(self, secrets: Iterable[Secret]) -> bool:
+    def certificate_secret_exists(
+        self, secrets: Iterable[Secret], label: str | None = None
+    ) -> bool:
+        if label:
+            return any(secret.label == label for secret in secrets)
         return any(
             secret.label.startswith(f"{LIBID}-certificate") for secret in secrets if secret.label
         )
@@ -1022,6 +1026,96 @@ class TestTLSCertificatesRequiresV4:
             with pytest.raises(TLSCertificatesError):
                 charm: DummyTLSCertificatesRequirerCharm = manager.charm
                 charm.certificates.regenerate_private_key()
+
+    def test_given_library_generated_key_when_import_valid_private_key_then_key_is_imported(
+        self,
+    ):
+        initial_private_key = "initial library generated key"
+        external_private_key = generate_private_key()
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+        )
+
+        state_in = testing.State(
+            relations={certificates_relation},
+            config={"common_name": "example.com"},
+            secrets={
+                Secret(
+                    {"private-key": initial_private_key},
+                    label=f"{LIBID}-private-key-0-{certificates_relation.endpoint}",
+                    owner="unit",
+                )
+            },
+        )
+
+        state_out = self.ctx.run(
+            self.ctx.on.action(
+                "import-private-key", params={"private-key": str(external_private_key)}
+            ),
+            state_in,
+        )
+
+        secret = state_out.get_secret(
+            label=f"{LIBID}-private-key-0-{certificates_relation.endpoint}"
+        )
+        assert secret.latest_content is not None
+        assert secret.latest_content["private-key"] == str(external_private_key)
+        assert secret.latest_content["private-key"] != initial_private_key
+
+    def test_given_weak_private_key_when_import_private_key_then_raises_error(self):
+        """Test that importing a weak private key raises TLSCertificatesError."""
+        weak_key = PrivateKey.from_string(generate_private_key(key_size=1024))
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+        )
+
+        state_in = testing.State(
+            relations={certificates_relation},
+            config={"common_name": "example.com"},
+            secrets={
+                Secret(
+                    {"private-key": "initial-key"},
+                    label=f"{LIBID}-private-key-0-{certificates_relation.endpoint}",
+                    owner="unit",
+                )
+            },
+        )
+
+        with self.ctx(self.ctx.on.update_status(), state_in) as manager:
+            charm: DummyTLSCertificatesRequirerCharm = manager.charm
+
+            with pytest.raises(TLSCertificatesError, match="Invalid private key"):
+                charm.certificates.import_private_key(weak_key)
+
+    def test_given_private_key_from_charm_when_import_private_key_then_raises_error(self):
+        """Test that import raises error when private key was passed via charm config."""
+        external_private_key = PrivateKey.from_string(generate_private_key())
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+        )
+
+        state_in = testing.State(
+            relations={certificates_relation},
+            config={
+                "common_name": "example.com",
+                "private_key": get_private_string_key_from_file(),
+            },
+        )
+
+        with self.ctx(self.ctx.on.update_status(), state_in) as manager:
+            charm: DummyTLSCertificatesRequirerCharm = manager.charm
+
+            with pytest.raises(TLSCertificatesError, match="Private key is passed by the charm"):
+                charm.certificates.import_private_key(external_private_key)
 
     def test_given_certificate_is_provided_when_get_certificate_then_certificate_is_returned(self):
         private_key = generate_private_key()
@@ -2131,3 +2225,204 @@ class TestTLSCertificatesRequiresV4:
         assert len(csrs_data) == 1
         assert csrs_data[0]["certificate_signing_request"] == str(csr)
         mock_generate_csr.assert_not_called()
+
+    def test_given_non_leader_unit_when_relation_broken_then_unit_secrets_are_cleaned_up(self):
+        private_key = generate_private_key()
+
+        context = testing.Context(
+            charm_type=DummyTLSCertificatesRequirerCharm,
+            meta=METADATA,
+            config=METADATA["config"],
+            actions=METADATA["actions"],
+        )
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+        )
+
+        private_key_secret = Secret(
+            {"private-key": str(private_key)},
+            label=f"{LIBID}-private-key-0-{certificates_relation.endpoint}",
+            owner="unit",
+        )
+
+        state_in = testing.State(
+            config={"common_name": "example.com"},
+            relations={certificates_relation},
+            secrets={private_key_secret},
+        )
+
+        state_out = context.run(context.on.relation_broken(certificates_relation), state_in)
+
+        assert not self.private_key_secret_exists(
+            state_out.secrets,
+            f"{LIBID}-private-key-0-{certificates_relation.endpoint}",
+        )
+
+    def test_given_leader_unit_when_relation_broken_then_unit_and_app_secrets_are_cleaned_up(self):
+        private_key = generate_private_key()
+
+        context = testing.Context(
+            charm_type=DummyTLSCertificatesRequirerCharm,
+            meta=METADATA,
+            config=METADATA["config"],
+            actions=METADATA["actions"],
+        )
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+        )
+
+        private_key_secret = Secret(
+            {"private-key": str(private_key)},
+            label=f"{LIBID}-private-key-{certificates_relation.endpoint}",
+            owner="app",
+        )
+
+        state_in = testing.State(
+            config={"common_name": "example.com"},
+            relations={certificates_relation},
+            secrets={private_key_secret},
+            leader=True,
+        )
+
+        with patch.object(
+            DummyTLSCertificatesRequirerCharm, "_app_or_unit", return_value=Mode.APP
+        ):
+            state_out = context.run(context.on.relation_broken(certificates_relation), state_in)
+
+        assert not self.private_key_secret_exists(
+            state_out.secrets,
+            f"{LIBID}-private-key-{certificates_relation.endpoint}",
+        )
+
+    def test_given_non_leader_unit_when_relation_broken_then_app_secrets_are_not_cleaned_up(self):
+        private_key = generate_private_key()
+
+        context = testing.Context(
+            charm_type=DummyTLSCertificatesRequirerCharm,
+            meta=METADATA,
+            config=METADATA["config"],
+            actions=METADATA["actions"],
+        )
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+        )
+
+        private_key_secret = Secret(
+            {"private-key": str(private_key)},
+            label=f"{LIBID}-private-key-{certificates_relation.endpoint}",
+            owner="app",
+        )
+
+        state_in = testing.State(
+            config={"common_name": "example.com"},
+            relations={certificates_relation},
+            secrets={private_key_secret},
+            leader=False,
+        )
+
+        with patch.object(
+            DummyTLSCertificatesRequirerCharm, "_app_or_unit", return_value=Mode.APP
+        ):
+            state_out = context.run(context.on.relation_broken(certificates_relation), state_in)
+
+        assert self.private_key_secret_exists(
+            state_out.secrets,
+            f"{LIBID}-private-key-{certificates_relation.endpoint}",
+        )
+
+    def test_given_certificate_secrets_when_relation_broken_then_secrets_are_cleaned_up(self):
+        private_key = generate_private_key()
+        csr = generate_csr(
+            private_key=private_key,
+            common_name="example.com",
+        )
+
+        provider_private_key = generate_private_key()
+        provider_ca_certificate = generate_ca(
+            private_key=provider_private_key,
+            common_name="ca.example.com",
+        )
+        certificate = generate_certificate(
+            ca=provider_ca_certificate,
+            ca_key=provider_private_key,
+            csr=csr,
+            validity=datetime.timedelta(days=365),
+        )
+
+        context = testing.Context(
+            charm_type=DummyTLSCertificatesRequirerCharm,
+            meta=METADATA,
+            config=METADATA["config"],
+            actions=METADATA["actions"],
+        )
+
+        certificates_relation = testing.Relation(
+            endpoint="certificates",
+            interface="tls-certificates",
+            remote_app_name="certificate-provider",
+            local_unit_data={
+                "certificate_signing_requests": json.dumps([
+                    {
+                        "certificate_signing_request": str(csr),
+                        "ca": False,
+                    }
+                ])
+            },
+            remote_app_data={
+                "certificates": json.dumps([
+                    {
+                        "certificate": str(certificate),
+                        "certificate_signing_request": str(csr),
+                        "ca": str(provider_ca_certificate),
+                        "chain": [str(certificate), str(provider_ca_certificate)],
+                    }
+                ]),
+            },
+        )
+
+        private_key_secret = Secret(
+            {"private-key": str(private_key)},
+            label=f"{LIBID}-private-key-0-{certificates_relation.endpoint}",
+            owner="unit",
+        )
+
+        csr_obj = CertificateSigningRequest.from_string(str(csr))
+        csr_hash = csr_obj.get_sha256_hex()
+        certificate_secret_label = (
+            f"{LIBID}-certificate-0-{certificates_relation.endpoint}-{csr_hash}"
+        )
+
+        certificate_secret = Secret(
+            {"certificate": str(certificate), "csr": str(csr)},
+            label=certificate_secret_label,
+            owner="unit",
+        )
+
+        state_in = testing.State(
+            config={"common_name": "example.com"},
+            relations={certificates_relation},
+            secrets={private_key_secret, certificate_secret},
+        )
+
+        with patch(
+            "charmlibs.interfaces.tls_certificates._tls_certificates."
+            "TLSCertificatesRequiresV4._list_secrets"
+        ) as mock_list_secrets:
+            mock_list_secrets.return_value = [certificate_secret.id]
+            state_out = context.run(context.on.relation_broken(certificates_relation), state_in)
+
+        assert not self.private_key_secret_exists(
+            state_out.secrets,
+            f"{LIBID}-private-key-0-{certificates_relation.endpoint}",
+        )
+
+        assert not any(secret.label == certificate_secret_label for secret in state_out.secrets)
