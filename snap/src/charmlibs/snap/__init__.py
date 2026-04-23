@@ -58,7 +58,7 @@ from ._functions import (
     ensure,
 )
 from ._snapd import (
-    SnapInfo,
+    Info,
     alias,
     config_get,
     config_set,
@@ -84,7 +84,7 @@ __all__ = [
     'SnapAlreadyInstalledError',
     'SnapChangeError',
     'SnapError',
-    'SnapInfo',
+    'Info',
     'SnapNeedsClassicError',
     'SnapNoUpdatesAvailableError',
     'SnapNotFoundError',

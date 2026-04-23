@@ -33,7 +33,7 @@ if typing.TYPE_CHECKING:
 
 
 @dataclasses.dataclass
-class SnapInfo:
+class Info:
     name: str
     classic: bool
     channel: str
@@ -57,10 +57,10 @@ class SnapInfo:
 
 
 @typing.overload
-def info(snap: str, *, missing_ok: Literal[False] = False) -> SnapInfo: ...
+def info(snap: str, *, missing_ok: Literal[False] = False) -> Info: ...
 @typing.overload
-def info(snap: str, *, missing_ok: Literal[True]) -> SnapInfo | None: ...
-def info(snap: str, *, missing_ok: bool = False) -> SnapInfo | None:
+def info(snap: str, *, missing_ok: Literal[True]) -> Info | None: ...
+def info(snap: str, *, missing_ok: bool = False) -> Info | None:
     """Get information about an installed snap."""
     try:
         info_dict = _client.get(f'/v2/snaps/{snap}')
@@ -69,7 +69,7 @@ def info(snap: str, *, missing_ok: bool = False) -> SnapInfo | None:
             return None
         raise
     assert isinstance(info_dict, dict)
-    return SnapInfo._from_dict(info_dict)
+    return Info._from_dict(info_dict)
 
 
 def install(
@@ -164,11 +164,11 @@ def unhold(snap: str) -> None:
     _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
 
 
-def _list_snaps() -> list[SnapInfo]:  # pyright: ignore[reportUnusedFunction]
+def _list_snaps() -> list[Info]:  # pyright: ignore[reportUnusedFunction]
     """List all installed snaps."""
     info_dicts = _client.get('/v2/snaps')
     assert isinstance(info_dicts, list)
-    return [SnapInfo._from_dict(info_dict) for info_dict in info_dicts]
+    return [Info._from_dict(info_dict) for info_dict in info_dicts]
 
 
 # /v2/snaps/{snap}/conf
@@ -261,7 +261,7 @@ def _list_services(snap: str | None = None) -> list[dict[str, Any]]:  # pyright:
 # /v2/find
 
 
-def _list_channels(snap: str) -> dict[str, SnapInfo]:  # pyright: ignore[reportUnusedFunction]
+def _list_channels(snap: str) -> dict[str, Info]:  # pyright: ignore[reportUnusedFunction]
     """List information about all channels of a snap available in the store."""
     results = _client.get('/v2/find', query={'name': snap})
     assert isinstance(results, list)
@@ -285,7 +285,7 @@ def _list_channels(snap: str) -> dict[str, SnapInfo]:  # pyright: ignore[reportU
     #     },
     # }
     channels = result['channels']
-    return {k: SnapInfo._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}
+    return {k: Info._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}
 
 
 # /v2/interfaces
