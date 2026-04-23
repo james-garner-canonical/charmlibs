@@ -51,7 +51,6 @@ from ._errors import (
     SnapError,
     SnapNeedsClassicError,
     SnapNotFoundError,
-    SnapNoUpdatesAvailableError,
     SnapOptionNotFoundError,
 )
 from ._functions import (
@@ -86,7 +85,6 @@ __all__ = [
     'SnapError',
     'Info',
     'SnapNeedsClassicError',
-    'SnapNoUpdatesAvailableError',
     'SnapNotFoundError',
     'SnapOptionNotFoundError',
     'alias',

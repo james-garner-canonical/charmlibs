@@ -241,7 +241,7 @@ def _error_type_from_result(result: dict[str, Any]) -> type[_errors.SnapError]:
         case 'snap-not-found' | 'snap-not-installed':
             return _errors.SnapNotFoundError
         case 'snap-no-update-available':
-            return _errors.SnapNoUpdatesAvailableError
+            return _errors._SnapNoUpdatesAvailableError
         case _:
             return _errors.SnapError
 

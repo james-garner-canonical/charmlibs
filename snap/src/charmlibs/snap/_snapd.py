@@ -78,9 +78,14 @@ def install(
     channel: str | None = None,
     revision: int | None = None,
     classic: bool = False,
-    installed_ok: bool = False,
-) -> bool:
-    """Install a snap."""
+) -> None:
+    """Install a snap.
+
+    Raises:
+        ValueError: if both channel and revision are specified.
+        SnapAlreadyInstalledError: if the snap is already installed.
+        SnapError: (or a subtype) if the snap could not be installed as requested.
+    """
     if channel is not None and revision is not None:
         raise ValueError('Only one of channel or revision may be specified')
     data: dict[str, Any] = {'action': 'install'}
@@ -90,42 +95,31 @@ def install(
         data['revision'] = str(revision)
     if classic:
         data['classic'] = True
-    # TODO: we could drop the installed_ok arg and adopt one of two approaches:
-    # 1) installed_ok=True: use boolean return value to indicate whether installation took place
-    #     this has the benefit of dropping SnapAlreadyInstalledError from the public API
-    # 2) installed_ok=False: always raise SnapAlreadyInstalledError if snap is already installed
-    #     simpler signature but potential try/except boilerplate for callers
-    # the same applies to remove's missing_ok and refresh's no_updates_ok
-    try:
-        _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapAlreadyInstalledError:
-        if installed_ok:
-            return False
-        raise
-    return True
+    _client.post(f'/v2/snaps/{snap}', body=data)
 
 
-def remove(snap: str, *, purge: bool = False, missing_ok: bool = False) -> bool:
-    """Remove a snap."""
+def remove(snap: str, *, purge: bool = False) -> None:
+    """Remove a snap.
+
+    Raises:
+        SnapNotFoundError: if the snap is not installed.
+        SnapError: (or a subtype) if the snap could not be removed as requested.
+    """
     data: dict[str, Any] = {'action': 'remove'}
     if purge:
         data['purge'] = True
-    try:
-        _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapNotFoundError:
-        if missing_ok:
-            return False
-        raise
-    return True
+    _client.post(f'/v2/snaps/{snap}', body=data)
 
 
-def refresh(
-    snap: str, channel: str | None = None, revision: int | None = None, no_updates_ok: bool = False
-) -> bool:
-    """Refresh a snap."""
+def refresh(snap: str, channel: str | None = None, revision: int | None = None) -> None:
+    """Refresh a snap.
+
+    Raises:
+        ValueError: if both channel and revision are specified.
+        SnapError: (or a subtype) if the snap could not be refreshed as requested.
+    """
     if channel is not None and revision is not None:
-        # TODO: revision silently takes precedence over channel if both are passed to snapd
-        # should we do the same, or continue making it an error to specify both?
+        # Note: If we passed both, revision would silently take precedence over channel.
         raise ValueError('Only one of channel or revision may be specified')
     data = {'action': 'refresh'}
     if channel:
@@ -134,11 +128,8 @@ def refresh(
         data['revision'] = str(revision)
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapNoUpdatesAvailableError:
-        if no_updates_ok:
-            return False
-        raise
-    return True
+    except _errors._SnapNoUpdatesAvailableError:
+        pass  # Follow the snap CLI's lead and suppress this error.
 
 
 def hold(snap: str, duration: datetime.timedelta | int | float | None = None) -> None:

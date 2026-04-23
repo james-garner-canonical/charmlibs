@@ -53,8 +53,12 @@ class SnapNeedsClassicError(SnapError):
     pass
 
 
-class SnapNoUpdatesAvailableError(SnapError):
-    pass
+class _SnapNoUpdatesAvailableError(SnapError):  # pyright: ignore[reportUnusedClass]
+    """Raised via the API when a refresh is attempted but no updates are available.
+
+    This class is private because the public refresh function suppresses this error,
+    following the snap CLI's lead.
+    """
 
 
 class SnapOptionNotFoundError(SnapError):

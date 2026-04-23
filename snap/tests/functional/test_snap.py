@@ -139,7 +139,8 @@ def test_new_snap_ensure():
 
 
 def test_snap_ensure_revision():
-    snap.remove('juju', missing_ok=True)
+    if snap.info('juju', missing_ok=True) is not None:
+        snap.remove('juju')
 
     channels = snap._snapd._list_channels('juju')
     info = channels['3/stable']
