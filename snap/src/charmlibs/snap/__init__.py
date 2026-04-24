@@ -59,11 +59,9 @@ from ._functions import (
 from ._snapd import (
     Info,
     alias,
-    config_get,
-    config_set,
-    config_unset,
     connect,
     disconnect,
+    get,
     hold,
     info,
     install,
@@ -71,10 +69,12 @@ from ._snapd import (
     refresh,
     remove,
     restart,
+    set,  # noqa: A004
     start,
     stop,
     unalias,
     unhold,
+    unset,
 )
 from ._version import __version__ as __version__
 
@@ -88,12 +88,10 @@ __all__ = [
     'SnapNotFoundError',
     'SnapOptionNotFoundError',
     'alias',
-    'config_get',
-    'config_set',
-    'config_unset',
     'connect',
     'disconnect',
     'ensure',
+    'get',
     'hold',
     'info',
     'install',
@@ -101,8 +99,10 @@ __all__ = [
     'refresh',
     'remove',
     'restart',
+    'set',
     'start',
     'stop',
     'unalias',
     'unhold',
+    'unset',
 ]

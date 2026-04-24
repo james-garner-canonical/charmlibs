@@ -186,7 +186,7 @@ def _list_snaps() -> list[Info]:  # pyright: ignore[reportUnusedFunction]
 # /v2/snaps/{snap}/conf
 
 
-def config_get(snap: str, *keys: str) -> dict[str, Any]:
+def get(snap: str, *keys: str) -> dict[str, Any]:
     """Get snap configuration."""
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
@@ -194,18 +194,18 @@ def config_get(snap: str, *keys: str) -> dict[str, Any]:
     return config
 
 
-def _config_get_one(snap: str, key: str) -> Any:  # pyright: ignore[reportUnusedFunction]
+def _get_one(snap: str, key: str) -> Any:  # pyright: ignore[reportUnusedFunction]
     """Get a single snap configuration key."""
-    config = config_get(snap, key)
+    config = get(snap, key)
     return config[key]
 
 
-def config_set(snap: str, config: dict[str, Any]) -> None:
+def set(snap: str, config: dict[str, Any]) -> None:  # noqa: A001 (shadowing a Python builtin)
     """Set snap configuration."""
     _client.put(f'/v2/snaps/{snap}/conf', body=config)
 
 
-def config_unset(snap: str, key: str, *keys: str) -> None:
+def unset(snap: str, key: str, *keys: str) -> None:
     """Unset snap configuration keys."""
     _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 

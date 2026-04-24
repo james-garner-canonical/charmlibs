@@ -67,9 +67,9 @@ def test_snap_set_and_get_with_typed():
     }
 
     snap.ensure('lxd')
-    snap.config_set('lxd', configs)
+    snap.set('lxd', configs)
 
-    lxd = snap.config_get('lxd')
+    lxd = snap.get('lxd')
     assert lxd
 
     assert lxd.get('true') is True
@@ -90,16 +90,16 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert snap._snapd._config_get_one('lxd', 'dict.true') is True
-    assert snap._snapd._config_get_one('lxd', 'dict.false') is False
+    assert snap._snapd._get_one('lxd', 'dict.true') is True
+    assert snap._snapd._get_one('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        snap._snapd._config_get_one('lxd', 'dict.null')
-    assert snap._snapd._config_get_one('lxd', 'dict.integer') == 1
-    assert snap._snapd._config_get_one('lxd', 'dict.float') == 2.0
-    assert snap._snapd._config_get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
+        snap._snapd._get_one('lxd', 'dict.null')
+    assert snap._snapd._get_one('lxd', 'dict.integer') == 1
+    assert snap._snapd._get_one('lxd', 'dict.float') == 2.0
+    assert snap._snapd._get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert snap._snapd._config_get_one('lxd', 'criu.enable') == 'true'
-    assert snap._snapd._config_get_one('lxd', 'ceph.external') == 'false'
+    assert snap._snapd._get_one('lxd', 'criu.enable') == 'true'
+    assert snap._snapd._get_one('lxd', 'ceph.external') == 'false'
 
 
 def test_unset_key_raises_snap_error():
@@ -107,7 +107,7 @@ def test_unset_key_raises_snap_error():
     # Verify that the correct exception gets raised in the case of an unset key.
     key = 'keythatdoesntexist01'
     with pytest.raises(snap.SnapError) as ctx:
-        snap.config_get('lxd', key)
+        snap.get('lxd', key)
     assert key in ctx.value.message
 
     # FIXME: We should probably continue to offer this functionality as it was requested recently.
@@ -119,8 +119,8 @@ def test_unset_key_raises_snap_error():
     # assert '\nLatest logs:\n' in ctx.value.message  # journalctl log retrieval on SnapError
 
     # We can make the above work w/ arbitrary config.
-    snap.config_set('lxd', {key: 'true'})
-    assert snap._snapd._config_get_one('lxd', key) == 'true'
+    snap.set('lxd', {key: 'true'})
+    assert snap._snapd._get_one('lxd', key) == 'true'
 
 
 def test_snap_ensure():
