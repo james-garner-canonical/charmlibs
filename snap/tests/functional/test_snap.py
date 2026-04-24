@@ -5,7 +5,6 @@
 
 import datetime
 import logging
-import sys
 from subprocess import CalledProcessError, check_output
 
 import pytest
@@ -217,19 +216,7 @@ def test_snap_hold_refresh():
     snap.hold('hello-world', duration=datetime.timedelta(days=2))
     info = snap.info('hello-world')
     assert info.hold is not None
-    if sys.version_info >= (3, 11):
-        hold = datetime.datetime.fromisoformat(info.hold)
-    else:
-        # Python 3.10 can't parse the fractional seconds with fromisoformat.
-        # We parse the format manually here for Ubuntu 22.04 tests.
-        #
-        # The snapd version that comes with Ubuntu 22.04 emits Z-suffixed timestamps.
-        # Newer snapd versions emit RFC3339 timestamps with timezone offsets, but we don't
-        # need to handle them here since they're covered by fromisoformat in Python 3.11+.
-        dt, ms = info.hold.removesuffix('Z').split('.')
-        hold = datetime.datetime.fromisoformat(dt).astimezone() + datetime.timedelta(
-            microseconds=int(ms[:6])
-        )
+    hold = snap._snapd._parse_timestamp(info.hold)
     assert hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
 
 
