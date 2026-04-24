@@ -30,7 +30,7 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
-from . import _errors, _socket_handler
+from . import _client_sockets, _errors
 
 if typing.TYPE_CHECKING:
     import http.client
@@ -158,7 +158,7 @@ def _request_raw(
         data=data,
     )
     opener = urllib.request.OpenerDirector()
-    opener.add_handler(_socket_handler.UnixSocketHandler(_SOCKET_PATH))
+    opener.add_handler(_client_sockets.UnixSocketHandler(_SOCKET_PATH))
     opener.add_handler(urllib.request.HTTPRedirectHandler())
     # We need to handle HTTP errors ourselves, since the response body contains meaningful info.
     # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
