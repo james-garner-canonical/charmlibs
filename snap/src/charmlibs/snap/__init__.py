@@ -58,7 +58,6 @@ from ._functions import (
 )
 from ._snapd import (
     Info,
-    alias,
     connect,
     disconnect,
     hold,
@@ -70,8 +69,11 @@ from ._snapd import (
     restart,
     start,
     stop,
-    unalias,
     unhold,
+)
+from ._snapd_aliases import (
+    alias,
+    unalias,
 )
 from ._snapd_conf import (
     get,

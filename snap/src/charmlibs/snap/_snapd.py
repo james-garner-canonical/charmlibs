@@ -26,8 +26,6 @@ from typing import Any, Literal
 from . import _client, _errors
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
-
     from typing_extensions import Self
 
 
@@ -181,28 +179,6 @@ def _list_snaps() -> list[Info]:  # pyright: ignore[reportUnusedFunction]
     info_dicts = _client.get('/v2/snaps')
     assert isinstance(info_dicts, list)
     return [Info._from_dict(info_dict) for info_dict in info_dicts]
-
-
-# /v2/aliases
-
-
-def alias(snap: str, app: str, alias_name: str) -> None:
-    """Create an alias for a snap app."""
-    data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
-    _client.post('/v2/aliases', body=data)
-
-
-def unalias(alias_name: str) -> None:
-    """Remove an alias."""
-    data = {'action': 'unalias', 'alias': alias_name}
-    _client.post('/v2/aliases', body=data)
-
-
-def _list_aliases() -> Mapping[str, Iterable[str]]:  # pyright: ignore[reportUnusedFunction]
-    """List all aliases."""
-    aliases = _client.get('/v2/aliases')
-    assert isinstance(aliases, dict)
-    return aliases
 
 
 # /v2/apps
