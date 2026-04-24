@@ -61,7 +61,6 @@ from ._snapd import (
     alias,
     connect,
     disconnect,
-    get,
     hold,
     info,
     install,
@@ -69,11 +68,14 @@ from ._snapd import (
     refresh,
     remove,
     restart,
-    set,  # noqa: A004
     start,
     stop,
     unalias,
     unhold,
+)
+from ._snapd_conf import (
+    get,
+    set,  # noqa: A004 (shadowing a Python builtin)
     unset,
 )
 from ._version import __version__ as __version__

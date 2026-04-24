@@ -90,16 +90,16 @@ def test_snap_set_and_get_with_typed():
         'list': [1, 2.0, True, False, None],
     }
 
-    assert snap._snapd._get_one('lxd', 'dict.true') is True
-    assert snap._snapd._get_one('lxd', 'dict.false') is False
+    assert snap._snapd_conf._get_one('lxd', 'dict.true') is True
+    assert snap._snapd_conf._get_one('lxd', 'dict.false') is False
     with pytest.raises(snap.SnapError):
-        snap._snapd._get_one('lxd', 'dict.null')
-    assert snap._snapd._get_one('lxd', 'dict.integer') == 1
-    assert snap._snapd._get_one('lxd', 'dict.float') == 2.0
-    assert snap._snapd._get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
+        snap._snapd_conf._get_one('lxd', 'dict.null')
+    assert snap._snapd_conf._get_one('lxd', 'dict.integer') == 1
+    assert snap._snapd_conf._get_one('lxd', 'dict.float') == 2.0
+    assert snap._snapd_conf._get_one('lxd', 'dict.list') == [1, 2.0, True, False, None]
 
-    assert snap._snapd._get_one('lxd', 'criu.enable') == 'true'
-    assert snap._snapd._get_one('lxd', 'ceph.external') == 'false'
+    assert snap._snapd_conf._get_one('lxd', 'criu.enable') == 'true'
+    assert snap._snapd_conf._get_one('lxd', 'ceph.external') == 'false'
 
 
 def test_unset_key_raises_snap_error():
@@ -120,7 +120,7 @@ def test_unset_key_raises_snap_error():
 
     # We can make the above work w/ arbitrary config.
     snap.set('lxd', {key: 'true'})
-    assert snap._snapd._get_one('lxd', key) == 'true'
+    assert snap._snapd_conf._get_one('lxd', key) == 'true'
 
 
 def test_snap_ensure():
