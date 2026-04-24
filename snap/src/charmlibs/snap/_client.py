@@ -221,7 +221,7 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                 # 'ready-time': '2026-02-24T15:42:28.439435568+13:00'}
                 raise _errors.SnapChangeError(
                     message=response.get('err', ''),
-                    kind=response.get('kind', ''),
+                    kind='charmlibs-snap',
                     value=response.get('id', ''),
                     status_code=None,
                     status=response.get('status'),

@@ -18,6 +18,18 @@ from __future__ import annotations
 
 
 class SnapError(Exception):
+    """Base class for all library errors, raised directly when a more specific type isn't defined.
+
+    Args:
+        message: Typically the 'message' field from a snapd API response.
+        kind: The 'kind' field from a snapd API response, used to derive the specific error type.
+            Manually constructed errors have the kind 'charmlibs-snap'.
+        value: The 'value' field from a snapd API response, which may contain additional details.
+        status_code: The HTTP status code from the snapd API response, if applicable.
+            Stored privately for logging and debugging, not part of the public error API.
+        status: The 'status' field from a snapd API response, if applicable.
+            Stored privately for logging and debugging, not part of the public error API.
+    """
     def __init__(
         self,
         message: str,
@@ -56,15 +68,18 @@ class SnapAPIError(SnapError):
 
 
 class SnapAlreadyInstalledError(SnapError):
-    pass
+    """Raised via the API when an install is attempted for a snap that is already installed."""
 
 
 class SnapNotFoundError(SnapError):
-    pass
+    """Raised when a snap is not found, either in the store or as an installed snap."""
 
 
 class SnapNeedsClassicError(SnapError):
-    pass
+    """Raised via the API if classic is not specified for a classic confinement snap.
+
+    This can occur for a snap install or refresh.
+    """
 
 
 class _SnapNoUpdatesAvailableError(SnapError):
@@ -76,11 +91,11 @@ class _SnapNoUpdatesAvailableError(SnapError):
 
 
 class SnapOptionNotFoundError(SnapError):
-    pass
+    """Raised via the API when the specified snap config option is not found."""
 
 
 class SnapChangeError(SnapError):
-    pass
+    """Raised manually when a snap change has an unexpected status (including failures)."""
 
 
 def _error_type_from_result_kind(kind: str) -> type[SnapError]:  # pyright: ignore[reportUnusedFunction]
