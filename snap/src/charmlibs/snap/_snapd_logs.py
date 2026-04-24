@@ -79,9 +79,9 @@ def _parse_timestamp(timestamp: str) -> datetime.datetime:
     # Note: Newer snapd versions emit RFC3339 timestamps with timezone offsets, but we don't
     # need to handle them here since they're covered by fromisoformat in Python 3.11+.
     dt, ms = timestamp.removesuffix('Z').split('.')
-    base = datetime.datetime.fromisoformat(dt).astimezone(tz=datetime.timezone.utc)
-    # datetime.timedelta only supports microsecond precision (first 6 digits of fractional seconds)
-    # but snapd timestamps may have higher precision so we truncate and ignore the rest.
-    # This matches the behaviour of fromisoformat in Python 3.11+.
-    microseconds = datetime.timedelta(microseconds=int(ms[:6]))
+    base = datetime.datetime.fromisoformat(dt).replace(tzinfo=datetime.timezone.utc)
+    # datetime.timedelta only supports microsecond precision (first 6 digits of fractional seconds).
+    # Snapd timestamps may have higher precision (truncated) or fewer than 6 digits (right-padded
+    # with zeros). E.g. '.13454' is 134540 µs, not 13454 µs. This matches fromisoformat in 3.11+.
+    microseconds = datetime.timedelta(microseconds=int(ms[:6].ljust(6, '0')))
     return base + microseconds
