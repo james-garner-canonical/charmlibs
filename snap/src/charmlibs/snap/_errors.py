@@ -19,25 +19,39 @@ from __future__ import annotations
 
 class SnapError(Exception):
     def __init__(
-        self, message: str, *, kind: str, value: str, code: int | None, status: str | None
+        self,
+        message: str,
+        *,
+        kind: str,
+        value: str,
+        status_code: int | None,
+        status: str | None,
     ):
         super().__init__(message)
         self.message = message
         self.kind = kind
         self.value = value
-        self.code = code
-        self.status = status
+        # Too low-level to be part of the public API, but useful for debugging and logging.
+        self._status_code = status_code
+        self._status = status
 
     def __repr__(self) -> str:
-        return f'{type(self).__name__}({self.message!r}, kind={self.kind!r}, value={self.value!r}, code={self.code!r}, status={self.status!r})'  # noqa: E501
+        return (
+            f'{type(self).__name__}('
+            f'{self.message!r}'
+            f', kind={self.kind!r}'
+            f', value={self.value!r}'
+            f', status_code={self._status_code!r}'
+            f', status={self._status!r}'
+            ')'
+        )
 
 
 class SnapAPIError(SnapError):
     """Raised manually when the snapd API returns a response we don't understand.
 
     Callers will not be able to resolve this error directly, but may want to catch it for logging,
-    or to trigger retries if the error may be transient. If retries are not successful,
-    user intervention may be required.
+    or to trigger retries. If retries are not successful, user intervention may be required.
     """
 
 
@@ -53,7 +67,7 @@ class SnapNeedsClassicError(SnapError):
     pass
 
 
-class _SnapNoUpdatesAvailableError(SnapError):  # pyright: ignore[reportUnusedClass]
+class _SnapNoUpdatesAvailableError(SnapError):
     """Raised via the API when a refresh is attempted but no updates are available.
 
     This class is private because the public refresh function suppresses this error,
@@ -67,3 +81,19 @@ class SnapOptionNotFoundError(SnapError):
 
 class SnapChangeError(SnapError):
     pass
+
+
+def _error_type_from_result_kind(kind: str) -> type[SnapError]:  # pyright: ignore[reportUnusedFunction]
+    match kind:
+        case 'snap-already-installed':
+            return SnapAlreadyInstalledError
+        case 'option-not-found':
+            return SnapOptionNotFoundError
+        case 'snap-needs-classic':
+            return SnapNeedsClassicError
+        case 'snap-not-found' | 'snap-not-installed':
+            return SnapNotFoundError
+        case 'snap-no-update-available':
+            return _SnapNoUpdatesAvailableError
+        case _:
+            return SnapError

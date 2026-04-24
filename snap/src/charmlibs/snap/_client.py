@@ -111,7 +111,7 @@ def _request(
             message=f'Invalid JSON in response for path {path!r}: {e}',
             kind='charmlibs-snap',
             value=response_bytes.decode(errors='replace'),
-            code=response.status,
+            status_code=response.status,
             status=response.reason,
         ) from None
     if not isinstance(response_dict, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -119,14 +119,13 @@ def _request(
             message=f"Unexpected response type {type(response_dict).__name__!r} for path {path!r}, expected a 'dict'",  # noqa: E501
             kind='charmlibs-snap',
             value=str(response_dict),
-            code=response.status,
+            status_code=response.status,
             status=response.reason,
         )
     try:
         match response_dict['type']:
             case 'error':
-                error_type = _error_type_from_result(response_dict['result'])
-                raise _make_error(error_type, response_dict)
+                raise _make_error(response_dict)
             case 'async':
                 return _wait_for_change(change_id=response_dict['change'])
             case _:
@@ -136,7 +135,7 @@ def _request(
             message=f'Missing expected key {e} in response for path {path!r}',
             kind='charmlibs-snap',
             value=str(response_dict),
-            code=response.status,
+            status_code=response.status,
             status=response.reason,
         ) from None
 
@@ -189,7 +188,7 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                 message=f'Unexpected response type {type(response).__name__} while waiting for change {change_id}',  # noqa: E501
                 kind='charmlibs-snap',
                 value=str(response),
-                code=None,
+                status_code=None,
                 status=None,
             )
         match response.get('status'):
@@ -224,36 +223,19 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                     message=response.get('err', ''),
                     kind=response.get('kind', ''),
                     value=response.get('id', ''),
-                    code=None,
+                    status_code=None,
                     status=response.get('status'),
                 )
 
 
-def _error_type_from_result(result: dict[str, Any]) -> type[_errors.SnapError]:
-    match result.get('kind'):
-        # TODO: custom exceptions for more error kinds
-        case 'snap-already-installed':
-            return _errors.SnapAlreadyInstalledError
-        case 'option-not-found':
-            return _errors.SnapOptionNotFoundError
-        case 'snap-needs-classic':
-            return _errors.SnapNeedsClassicError
-        case 'snap-not-found' | 'snap-not-installed':
-            return _errors.SnapNotFoundError
-        case 'snap-no-update-available':
-            return _errors._SnapNoUpdatesAvailableError
-        case _:
-            return _errors.SnapError
-
-
-def _make_error(
-    error_type: type[_errors.SnapError], response: dict[str, Any]
-) -> _errors.SnapError:
+def _make_error(response: dict[str, Any]) -> _errors.SnapError:
     result = response.get('result', {})
+    kind = result.get('kind', '')
+    error_type = _errors._error_type_from_result_kind(kind)
     return error_type(
-        message=result.get('message', ''),
-        kind=result.get('kind', ''),
+        result.get('message', ''),
+        kind=kind,
         value=result.get('value', ''),
-        code=response.get('status-code'),
+        status_code=response.get('status-code'),
         status=response.get('status'),
     )
