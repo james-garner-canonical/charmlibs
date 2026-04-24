@@ -19,6 +19,11 @@ from conftest import result_of
 
 
 class TestLogs:
+    def test_logs_query_no_snaps(self, mock_client):
+        mock_client.get.return_value = []
+        _snapd_logs.logs()
+        mock_client.get.assert_called_once_with('/v2/logs', query={'n': 10})
+
     def test_logs_query_single_snap(self, mock_client):
         mock_client.get.return_value = []
         _snapd_logs.logs('lxd')
