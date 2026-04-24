@@ -61,7 +61,24 @@ def info(snap: str, *, missing_ok: Literal[False] = False) -> Info: ...
 @typing.overload
 def info(snap: str, *, missing_ok: Literal[True]) -> Info | None: ...
 def info(snap: str, *, missing_ok: bool = False) -> Info | None:
-    """Get information about an installed snap."""
+    """Get information about an installed snap.
+
+    This function implements the semantics of the `snap list` command,
+    restricted to a single snap.
+
+    Args:
+        snap: the name of the snap.
+        missing_ok: if ``True``, return ``None`` if the snap is not installed.
+            if ``False`` (default), raise ``SnapNotFoundError`` instead.
+
+    Returns:
+        An Info object with information about the snap,
+            or None if the snap is not installed and missing_ok is ``True``.
+
+    Raises:
+        SnapNotFoundError: if the snap is not installed and ``missing_ok`` is ``False``.
+        SnapError: (or a subtype) if the snap information could not be retrieved for another reason.
+    """
     try:
         info_dict = _client.get(f'/v2/snaps/{snap}')
     except _errors.SnapNotFoundError:
