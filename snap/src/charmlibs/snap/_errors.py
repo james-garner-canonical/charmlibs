@@ -30,6 +30,7 @@ class SnapError(Exception):
         status: The 'status' field from a snapd API response, if applicable.
             Stored privately for logging and debugging, not part of the public error API.
     """
+
     def __init__(
         self,
         message: str,

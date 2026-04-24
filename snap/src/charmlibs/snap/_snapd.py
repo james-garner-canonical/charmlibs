@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 # /v2/snaps/{snap}
 
+
 @dataclasses.dataclass
 class Info:
     name: str
@@ -80,7 +81,7 @@ def info(snap: str, *, missing_ok: bool = False) -> Info | None:
 
     Raises:
         SnapNotFoundError: if the snap is not installed and ``missing_ok`` is ``False``.
-        SnapError: (or a subtype) if the snap information could not be retrieved for another reason.
+        SnapError: (or a subtype) if the information could not be retrieved for another reason.
     """
     try:
         info_dict = _client.get(f'/v2/snaps/{snap}')
@@ -390,12 +391,14 @@ def _list_slots(snap: str, connected_only: bool = False) -> list[_Slot]:  # pyri
 
 # /v2/logs
 
+
 @dataclasses.dataclass
 class LogEntry:
     timestamp: datetime.datetime
     message: str
     sid: str
     pid: int
+
 
 def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
     query: dict[str, Any] = {'n': num_lines}
@@ -421,7 +424,7 @@ def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
                 pid=int(obj['pid']),
             )
             log_entries.append(log_entry)
-        except (KeyError, TypeError, ValueError) as e:
+        except (KeyError, TypeError, ValueError) as e:  # noqa: PERF203
             logger.warning('Skipping log entry with unexpected format: %r (error: %r)', obj, e)
     return log_entries
 

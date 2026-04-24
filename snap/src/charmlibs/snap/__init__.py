@@ -79,11 +79,11 @@ from ._snapd import (
 from ._version import __version__ as __version__
 
 __all__ = [
+    'Info',
     'SnapAPIError',
     'SnapAlreadyInstalledError',
     'SnapChangeError',
     'SnapError',
-    'Info',
     'SnapNeedsClassicError',
     'SnapNotFoundError',
     'SnapOptionNotFoundError',
