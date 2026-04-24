@@ -153,19 +153,19 @@ def test_snap_ensure_revision():
 
 def test_snap_start():
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
-    services = snap._snapd._list_services('kube-proxy')
+    services = snap._snapd_apps._list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert daemon.get('active')
 
     snap.stop('kube-proxy', 'daemon')
-    services = snap._snapd._list_services('kube-proxy')
+    services = snap._snapd_apps._list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
 
     snap.start('kube-proxy', 'daemon')
-    services = snap._snapd._list_services('kube-proxy')
+    services = snap._snapd_apps._list_services('kube-proxy')
     assert services
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert daemon['active']
@@ -177,7 +177,7 @@ def test_snap_start():
 def test_snap_stop():
     snap.ensure('kube-proxy', classic=True, channel='latest/stable')
     snap.stop('kube-proxy', 'daemon', disable=True)
-    services = snap._snapd._list_services('kube-proxy')
+    services = snap._snapd_apps._list_services('kube-proxy')
     daemon = next(s for s in services if s['name'] == 'daemon')
     assert not daemon.get('active')
     assert not daemon.get('enabled')
@@ -216,7 +216,7 @@ def test_snap_hold_refresh():
     snap.hold('hello-world', duration=datetime.timedelta(days=2))
     info = snap.info('hello-world')
     assert info.hold is not None
-    hold = snap._snapd._parse_timestamp(info.hold)
+    hold = snap._snapd_logs._parse_timestamp(info.hold)
     assert hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
 
 
@@ -244,7 +244,7 @@ def test_snap_connect_and_disconnect():
     # plugs = snap._snap.list_plugs('vlc')
     # assert [p for p in plugs if p.plug == 'mount-observe']
 
-    snap._snapd.disconnect('vlc', 'mount-observe')
+    snap._snapd_interfaces.disconnect('vlc', 'mount-observe')
     # plugs = snap._snap.list_plugs('vlc')
     # assert not [p for p in plugs if p.plug == 'mount-observe']
 

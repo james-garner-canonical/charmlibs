@@ -58,27 +58,33 @@ from ._functions import (
 )
 from ._snapd import (
     Info,
-    connect,
-    disconnect,
     hold,
     info,
     install,
-    logs,
     refresh,
     remove,
-    restart,
-    start,
-    stop,
     unhold,
 )
 from ._snapd_aliases import (
     alias,
     unalias,
 )
+from ._snapd_apps import (
+    restart,
+    start,
+    stop,
+)
 from ._snapd_conf import (
     get,
     set,  # noqa: A004 (shadowing a Python builtin)
     unset,
+)
+from ._snapd_interfaces import (
+    connect,
+    disconnect,
+)
+from ._snapd_logs import (
+    logs,
 )
 from ._version import __version__ as __version__
 
