@@ -48,16 +48,21 @@ class TestErrorTypeFromResultKind:
 
 
 class TestSnapError:
-    def _make(self, **kwargs):
-        defaults = {
-            'message': 'something went wrong',
-            'kind': 'charmlibs-snap',
-            'value': 'extra-info',
-            'status_code': 400,
-            'status': 'Bad Request',
-        }
-        defaults.update(kwargs)
-        return SnapError(**defaults)
+    def _make(
+        self,
+        message: str = 'something went wrong',
+        kind: str = 'charmlibs-snap',
+        value: str = 'extra-info',
+        status_code: int | None = 400,
+        status: str | None = 'Bad Request',
+    ) -> SnapError:
+        return SnapError(
+            message=message,
+            kind=kind,
+            value=value,
+            status_code=status_code,
+            status=status,
+        )
 
     def test_message(self):
         err = self._make(message='the message')

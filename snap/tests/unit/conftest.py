@@ -4,12 +4,24 @@ from __future__ import annotations
 
 import json
 import pathlib
-from types import SimpleNamespace
-from typing import Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
+if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
+    from pytest_mock import MockerFixture
+
 FIXTURES_DIR = pathlib.Path(__file__).parent / 'fixtures'
+
+
+@dataclass
+class MockClient:
+    get: MagicMock
+    post: MagicMock
+    put: MagicMock
 
 
 def load_fixture(name: str) -> Any:
@@ -21,14 +33,14 @@ def result_of(name: str) -> Any:
     """Return the 'result' field from a fixture — what _client.get/put returns for sync ops."""
     data = load_fixture(name)
     if isinstance(data, list):
-        return data  # logs_lxd.json is already a list
+        return data  # pyright: ignore[reportUnknownVariableType]
     return data['result']
 
 
 @pytest.fixture
-def mock_client(mocker):
+def mock_client(mocker: MockerFixture) -> MockClient:
     """Patch _client.get, .post, and .put for use in _snapd_*.py tests."""
-    return SimpleNamespace(
+    return MockClient(
         get=mocker.patch('charmlibs.snap._client.get'),
         post=mocker.patch('charmlibs.snap._client.post'),
         put=mocker.patch('charmlibs.snap._client.put'),

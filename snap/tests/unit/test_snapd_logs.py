@@ -8,6 +8,7 @@ from __future__ import annotations
 import datetime
 import logging
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -16,44 +17,49 @@ from charmlibs.snap._errors import SnapError
 from charmlibs.snap._snapd_logs import LogEntry, _parse_timestamp
 from conftest import result_of
 
+if TYPE_CHECKING:
+    from pytest import LogCaptureFixture
+
+    from conftest import MockClient
+
 
 class TestLogs:
-    def test_logs_query_no_snaps(self, mock_client):
+    def test_logs_query_no_snaps(self, mock_client: MockClient):
         mock_client.get.return_value = []
         _snapd_logs.logs()
         mock_client.get.assert_called_once_with('/v2/logs', query={'n': 10})
 
-    def test_logs_query_single_snap(self, mock_client):
+    def test_logs_query_single_snap(self, mock_client: MockClient):
         mock_client.get.return_value = []
         _snapd_logs.logs('lxd')
         mock_client.get.assert_called_once_with('/v2/logs', query={'n': 10, 'names': 'lxd'})
 
-    def test_logs_multiple_snaps(self, mock_client):
+    def test_logs_multiple_snaps(self, mock_client: MockClient):
         mock_client.get.return_value = []
         _snapd_logs.logs('lxd', 'vlc')
         query = mock_client.get.call_args.kwargs['query']
         assert query['names'] == 'lxd,vlc'
 
-    def test_logs_custom_num_lines(self, mock_client):
+    def test_logs_custom_num_lines(self, mock_client: MockClient):
         mock_client.get.return_value = []
         _snapd_logs.logs('lxd', num_lines=50)
         query = mock_client.get.call_args.kwargs['query']
         assert query['n'] == 50
 
-    def test_logs_parses_entries(self, mock_client):
+    def test_logs_parses_entries(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('logs_lxd.json')
         entries = _snapd_logs.logs('lxd')
         assert len(entries) == 10
         assert entries[0].sid == 'systemd'
         assert isinstance(entries[0].timestamp, datetime.datetime)
 
-    def test_logs_pid_is_int(self, mock_client):
+    def test_logs_pid_is_int(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('logs_lxd.json')
         entries = _snapd_logs.logs('lxd')
         assert entries[0].pid == 1
         assert isinstance(entries[0].pid, int)
 
-    def test_logs_skips_malformed(self, mock_client, caplog):
+    def test_logs_skips_malformed(self, mock_client: MockClient, caplog: LogCaptureFixture):
         mock_client.get.return_value = [
             {'timestamp': '2026-04-24T03:01:19.488008Z', 'sid': 'lxd', 'pid': '1'},
             # 'message' key missing
@@ -70,11 +76,11 @@ class TestLogs:
         assert entries[0].pid == 2
         assert any('Skipping' in r.message for r in caplog.records)
 
-    def test_logs_empty(self, mock_client):
+    def test_logs_empty(self, mock_client: MockClient):
         mock_client.get.return_value = []
         assert _snapd_logs.logs('lxd') == []
 
-    def test_logs_raises_snap_error(self, mock_client):
+    def test_logs_raises_snap_error(self, mock_client: MockClient):
         mock_client.get.side_effect = SnapError(
             'snap "hello-world" has no services',
             kind='app-not-found',
@@ -85,7 +91,7 @@ class TestLogs:
         with pytest.raises(SnapError):
             _snapd_logs.logs('hello-world')
 
-    def test_logs_returns_log_entry_objects(self, mock_client):
+    def test_logs_returns_log_entry_objects(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('logs_lxd.json')
         entries = _snapd_logs.logs('lxd')
         assert all(isinstance(e, LogEntry) for e in entries)
