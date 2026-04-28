@@ -1151,7 +1151,9 @@ class TestSnapBareMethods(unittest.TestCase):
 
         class APIErrorCache:
             def __getitem__(self, key: object):
-                raise snap.SnapAPIError(body={}, code=123, status='status', message='message')
+                raise snap.SnapAPIError(
+                    body={}, status_code=123, status='status', message='message'
+                )
 
         mock_subprocess.return_value = 'curl XXX installed'
         with patch.object(_snap, 'SnapCache', new=APIErrorCache):
