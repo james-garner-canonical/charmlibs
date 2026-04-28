@@ -114,23 +114,14 @@ class TestPost:
 
 class TestPut:
     def test_put_passes_method(self, mock_raw):
-        mock_raw.return_value = _fake_response(
-            load_fixture('async_hold.json'), status=202, reason='Accepted'
-        )
-        # async response triggers _wait_for_change; patch that too
-        with pytest.raises(
-            Exception
-        ):  # will fail polling without further mocking — just check method
-            _client.put('/v2/snaps/lxd/conf', body={'key': 'val'})
-        assert mock_raw.call_args_list[0].args[0] == 'PUT'
+        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
+        _client.put('/v2/snaps/lxd/conf', body={'key': 'val'})
+        assert mock_raw.call_args.args[0] == 'PUT'
 
     def test_put_sends_json_body(self, mock_raw):
-        mock_raw.return_value = _fake_response(
-            load_fixture('async_hold.json'), status=202, reason='Accepted'
-        )
-        with pytest.raises(Exception):
-            _client.put('/v2/snaps/lxd/conf', body={'mykey': 'myval'})
-        sent = mock_raw.call_args_list[0].kwargs['data']
+        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
+        _client.put('/v2/snaps/lxd/conf', body={'mykey': 'myval'})
+        sent = mock_raw.call_args.kwargs['data']
         assert json.loads(sent) == {'mykey': 'myval'}
 
 
