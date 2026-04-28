@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 from charmlibs.snap import _snapd_aliases
-
 from conftest import result_of
 
 

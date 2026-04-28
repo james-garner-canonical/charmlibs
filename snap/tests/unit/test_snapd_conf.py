@@ -9,7 +9,6 @@ import pytest
 
 from charmlibs.snap import _snapd_conf
 from charmlibs.snap._errors import SnapOptionNotFoundError
-
 from conftest import result_of
 
 
@@ -22,9 +21,7 @@ class TestGet:
     def test_get_specific_key(self, mock_client):
         mock_client.get.return_value = result_of('conf_lxd_single_key.json')
         _snapd_conf.get('lxd', 'integer')
-        mock_client.get.assert_called_once_with(
-            '/v2/snaps/lxd/conf', query={'keys': 'integer'}
-        )
+        mock_client.get.assert_called_once_with('/v2/snaps/lxd/conf', query={'keys': 'integer'})
 
     def test_get_multiple_keys(self, mock_client):
         mock_client.get.return_value = {}

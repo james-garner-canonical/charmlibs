@@ -14,7 +14,6 @@ import pytest
 from charmlibs.snap import _snapd_logs
 from charmlibs.snap._errors import SnapError
 from charmlibs.snap._snapd_logs import LogEntry, _parse_timestamp
-
 from conftest import result_of
 
 
@@ -58,7 +57,12 @@ class TestLogs:
         mock_client.get.return_value = [
             {'timestamp': '2026-04-24T03:01:19.488008Z', 'sid': 'lxd', 'pid': '1'},
             # 'message' key missing
-            {'timestamp': '2026-04-24T03:01:20.000000Z', 'message': 'ok', 'sid': 'lxd', 'pid': '2'},
+            {
+                'timestamp': '2026-04-24T03:01:20.000000Z',
+                'message': 'ok',
+                'sid': 'lxd',
+                'pid': '2',
+            },
         ]
         with caplog.at_level(logging.WARNING, logger='charmlibs.snap._snapd_logs'):
             entries = _snapd_logs.logs('lxd')

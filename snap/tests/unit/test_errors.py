@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from charmlibs.snap._errors import (
     SnapAlreadyInstalledError,
     SnapAPIError,
@@ -15,8 +13,8 @@ from charmlibs.snap._errors import (
     SnapNeedsClassicError,
     SnapNotFoundError,
     SnapOptionNotFoundError,
-    _SnapNoUpdatesAvailableError,
     _error_type_from_result_kind,
+    _SnapNoUpdatesAvailableError,
 )
 
 
@@ -37,7 +35,10 @@ class TestErrorTypeFromResultKind:
         assert _error_type_from_result_kind('snap-not-installed') is SnapNotFoundError
 
     def test_snap_no_update_available(self):
-        assert _error_type_from_result_kind('snap-no-update-available') is _SnapNoUpdatesAvailableError
+        assert (
+            _error_type_from_result_kind('snap-no-update-available')
+            is _SnapNoUpdatesAvailableError
+        )
 
     def test_unknown_kind(self):
         assert _error_type_from_result_kind('bogus-kind') is SnapError

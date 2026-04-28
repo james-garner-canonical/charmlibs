@@ -7,10 +7,8 @@ from __future__ import annotations
 
 import json
 import logging
-from io import BytesIO
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import call
 
 import pytest
 
@@ -24,11 +22,12 @@ from charmlibs.snap._errors import (
     SnapNotFoundError,
     SnapOptionNotFoundError,
 )
+from conftest import FIXTURES_DIR, load_fixture
 
-from conftest import load_fixture, FIXTURES_DIR
 
-
-def _fake_response(data: bytes | dict[str, Any] | list[Any], status: int = 200, reason: str = 'OK'):
+def _fake_response(
+    data: bytes | dict[str, Any] | list[Any], status: int = 200, reason: str = 'OK'
+):
     """Build a fake HTTPResponse-like object for mocking _request_raw."""
     if isinstance(data, (dict, list)):
         data = json.dumps(data).encode()
@@ -77,45 +76,58 @@ class TestGet:
 
 class TestPost:
     def test_post_passes_method(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_already_installed_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapAlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert mock_raw.call_args.args[0] == 'POST'
 
     def test_post_sends_json_body(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_already_installed_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapAlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         sent = mock_raw.call_args.kwargs['data']
         assert json.loads(sent) == {'action': 'install'}
 
     def test_post_sets_content_type(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_already_installed_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapAlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         headers = mock_raw.call_args.kwargs['headers']
         assert headers['Content-Type'] == 'application/json'
 
     def test_post_no_body_sends_no_data(self, mock_raw):
-        mock_raw.return_value = _fake_response({'type': 'sync', 'status-code': 200,
-                                                'status': 'OK', 'result': {}})
+        mock_raw.return_value = _fake_response({
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': {},
+        })
         _client.post('/v2/snaps/hello-world')
         assert mock_raw.call_args.kwargs.get('data') is None
 
 
 class TestPut:
     def test_put_passes_method(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted')
+        mock_raw.return_value = _fake_response(
+            load_fixture('async_hold.json'), status=202, reason='Accepted'
+        )
         # async response triggers _wait_for_change; patch that too
-        with pytest.raises(Exception):  # will fail polling without further mocking — just check method
+        with pytest.raises(
+            Exception
+        ):  # will fail polling without further mocking — just check method
             _client.put('/v2/snaps/lxd/conf', body={'key': 'val'})
         assert mock_raw.call_args_list[0].args[0] == 'PUT'
 
     def test_put_sends_json_body(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted')
+        mock_raw.return_value = _fake_response(
+            load_fixture('async_hold.json'), status=202, reason='Accepted'
+        )
         with pytest.raises(Exception):
             _client.put('/v2/snaps/lxd/conf', body={'mykey': 'myval'})
         sent = mock_raw.call_args_list[0].kwargs['data']
@@ -148,36 +160,47 @@ class TestSyncResponse:
 
 class TestErrorResponses:
     def test_snap_already_installed(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_already_installed_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapAlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert 'already installed' in str(exc_info.value)
 
     def test_snap_needs_classic(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_needs_classic_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_needs_classic_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapNeedsClassicError):
             _client.post('/v2/snaps/just', body={'action': 'install'})
 
     def test_snap_not_found(self, mock_raw):
         fixture = {
-            'type': 'error', 'status-code': 404, 'status': 'Not Found',
-            'result': {'message': 'snap "nope" not found', 'kind': 'snap-not-found', 'value': 'nope'},
+            'type': 'error',
+            'status-code': 404,
+            'status': 'Not Found',
+            'result': {
+                'message': 'snap "nope" not found',
+                'kind': 'snap-not-found',
+                'value': 'nope',
+            },
         }
         mock_raw.return_value = _fake_response(fixture, status=404, reason='Not Found')
         with pytest.raises(SnapNotFoundError):
             _client.get('/v2/snaps/nope')
 
     def test_option_not_found(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('conf_option_not_found_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('conf_option_not_found_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapOptionNotFoundError):
             _client.get('/v2/snaps/lxd/conf', query={'keys': 'keydoesnotexist01'})
 
     def test_unknown_error_kind_raises_snap_error(self, mock_raw):
         fixture = {
-            'type': 'error', 'status-code': 500, 'status': 'Internal Server Error',
+            'type': 'error',
+            'status-code': 500,
+            'status': 'Internal Server Error',
             'result': {'message': 'something unexpected', 'kind': 'unknown-kind', 'value': ''},
         }
         mock_raw.return_value = _fake_response(fixture, status=500, reason='Internal Server Error')
@@ -186,22 +209,25 @@ class TestErrorResponses:
         assert type(exc_info.value) is SnapError
 
     def test_error_preserves_status_code(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_already_installed_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapAlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert exc_info.value._status_code == 400
 
     def test_error_preserves_kind(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_needs_classic_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_needs_classic_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapNeedsClassicError) as exc_info:
             _client.post('/v2/snaps/just', body={'action': 'install'})
         assert exc_info.value.kind == 'snap-needs-classic'
 
     def test_error_preserves_value(self, mock_raw):
-        mock_raw.return_value = _fake_response(load_fixture('snap_already_installed_error.json'),
-                                               status=400, reason='Bad Request')
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
+        )
         with pytest.raises(SnapAlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert exc_info.value.value == 'hello-world'
@@ -228,14 +254,19 @@ class TestErrorResponses:
 class TestAsyncChange:
     def test_async_triggers_poll(self, mock_raw):
         done_envelope = {
-            'type': 'sync', 'status-code': 200, 'status': 'OK',
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
             'result': load_fixture('change_done.json')['result'],
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
             _fake_response(done_envelope),
         ]
-        _client.post('/v2/snaps/hello-world', body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'})
+        _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
         # First call was the POST, second was the GET /v2/changes/{id}
         assert mock_raw.call_count == 2
         poll_call = mock_raw.call_args_list[1]
@@ -245,11 +276,15 @@ class TestAsyncChange:
     def test_async_doing_then_done(self, mock_raw):
         # Real Doing fixture followed by the Done one — exercises the poll loop
         doing_envelope = {
-            'type': 'sync', 'status-code': 200, 'status': 'OK',
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
             'result': load_fixture('change_doing.json')['result'],
         }
         done_envelope = {
-            'type': 'sync', 'status-code': 200, 'status': 'OK',
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
             'result': load_fixture('change_done.json')['result'],
         }
         mock_raw.side_effect = [
@@ -257,27 +292,37 @@ class TestAsyncChange:
             _fake_response(doing_envelope),
             _fake_response(done_envelope),
         ]
-        result = _client.post('/v2/snaps/hello-world', body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'})
+        result = _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
         assert mock_raw.call_count == 3
         # Returns the data field from the Done response
         assert result == load_fixture('change_done.json')['result'].get('data', {})
 
     def test_async_done_returns_data(self, mock_raw):
         done_envelope = {
-            'type': 'sync', 'status-code': 200, 'status': 'OK',
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
             'result': load_fixture('change_done.json')['result'],
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
             _fake_response(done_envelope),
         ]
-        result = _client.post('/v2/snaps/hello-world', body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'})
+        result = _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
         expected_data = load_fixture('change_done.json')['result']['data']
         assert result == expected_data
 
     def test_async_error_raises_snap_change_error(self, mock_raw):
         error_envelope = {
-            'type': 'sync', 'status-code': 200, 'status': 'OK',
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
             'result': load_fixture('change_error.json')['result'],
         }
         mock_raw.side_effect = [
@@ -285,13 +330,22 @@ class TestAsyncChange:
             _fake_response(error_envelope),
         ]
         with pytest.raises(SnapChangeError) as exc_info:
-            _client.post('/v2/aliases', body={'action': 'alias', 'snap': 'hello-world',
-                                              'app': 'nonexistent', 'alias': 'test-alias-error-fixture'})
+            _client.post(
+                '/v2/aliases',
+                body={
+                    'action': 'alias',
+                    'snap': 'hello-world',
+                    'app': 'nonexistent',
+                    'alias': 'test-alias-error-fixture',
+                },
+            )
         assert 'nonexistent' in exc_info.value.message
 
     def test_async_error_message_from_err_field(self, mock_raw):
         error_envelope = {
-            'type': 'sync', 'status-code': 200, 'status': 'OK',
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
             'result': load_fixture('change_error.json')['result'],
         }
         mock_raw.side_effect = [
@@ -299,16 +353,27 @@ class TestAsyncChange:
             _fake_response(error_envelope),
         ]
         with pytest.raises(SnapChangeError) as exc_info:
-            _client.post('/v2/aliases', body={'action': 'alias', 'snap': 'hello-world',
-                                              'app': 'nonexistent', 'alias': 'test-alias-error-fixture'})
+            _client.post(
+                '/v2/aliases',
+                body={
+                    'action': 'alias',
+                    'snap': 'hello-world',
+                    'app': 'nonexistent',
+                    'alias': 'test-alias-error-fixture',
+                },
+            )
         change_result = load_fixture('change_error.json')['result']
         assert exc_info.value.message == change_result['err']
         assert exc_info.value.value == change_result['id']
 
     def test_async_wait_status_logs_warning(self, mock_raw, caplog):
         wait_result = {
-            'id': '42', 'kind': 'install-snap', 'summary': 'Install snap',
-            'status': 'Wait', 'ready': False, 'data': {},
+            'id': '42',
+            'kind': 'install-snap',
+            'summary': 'Install snap',
+            'status': 'Wait',
+            'ready': False,
+            'data': {},
         }
         wait_envelope = {'type': 'sync', 'status-code': 200, 'status': 'OK', 'result': wait_result}
         mock_raw.side_effect = [
@@ -316,7 +381,10 @@ class TestAsyncChange:
             _fake_response(wait_envelope),
         ]
         with caplog.at_level(logging.WARNING, logger='charmlibs.snap._client'):
-            _client.post('/v2/snaps/hello-world', body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'})
+            _client.post(
+                '/v2/snaps/hello-world',
+                body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+            )
         assert any('Wait' in r.message for r in caplog.records)
 
     def test_async_change_poll_non_dict_raises_snap_api_error(self, mock_raw):
@@ -334,10 +402,18 @@ class TestAsyncChange:
         mocker.patch('charmlibs.snap._client._CHANGE_TIMEOUT', 0)
         mocker.patch('charmlibs.snap._client.time.sleep')
         doing_result = {
-            'id': '42', 'kind': 'install-snap', 'summary': 'Install',
-            'status': 'Doing', 'ready': False,
+            'id': '42',
+            'kind': 'install-snap',
+            'summary': 'Install',
+            'status': 'Doing',
+            'ready': False,
         }
-        doing_envelope = {'type': 'sync', 'status-code': 200, 'status': 'OK', 'result': doing_result}
+        doing_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': doing_result,
+        }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
             _fake_response(doing_envelope),
@@ -361,5 +437,3 @@ class TestLogsEndpoint:
         with pytest.raises(SnapError) as exc_info:
             _client.get('/v2/logs', query={'n': 10, 'names': 'hello-world'})
         assert exc_info.value.kind == 'app-not-found'
-
-

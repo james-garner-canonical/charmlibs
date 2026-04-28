@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from charmlibs.snap import _snapd_apps
-
 from conftest import result_of
 
 

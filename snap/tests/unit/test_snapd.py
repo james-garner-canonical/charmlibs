@@ -11,7 +11,6 @@ import pytest
 
 from charmlibs.snap import _snapd
 from charmlibs.snap._errors import SnapError, SnapNotFoundError, _SnapNoUpdatesAvailableError
-
 from conftest import result_of
 
 
@@ -75,8 +74,14 @@ class TestInfoFromDict:
 
     def test_extra_fields_ignored(self):
         d = _minimal_info_dict()
-        d.update({'tracking-channel': 'latest/stable', 'type': 'app', 'devmode': False,
-                  'jailmode': False, 'enabled': True, 'status': 'active'})
+        d.update({
+            'tracking-channel': 'latest/stable',
+            'type': 'app',
+            'devmode': False,
+            'jailmode': False,
+            'enabled': True,
+            'status': 'active',
+        })
         info = _snapd.Info._from_dict(d)
         assert info.name == 'hello-world'
 

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from charmlibs.snap import _snapd_interfaces
 from charmlibs.snap._snapd_interfaces import _Plug, _Slot
-
 from conftest import result_of
 
 
