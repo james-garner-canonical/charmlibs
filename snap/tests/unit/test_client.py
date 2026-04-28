@@ -388,7 +388,8 @@ class TestAsyncChange:
         assert any('Wait' in r.message for r in caplog.records)
 
     def test_async_change_poll_non_dict_raises_snap_api_error(self, mock_raw):
-        # /v2/changes/{id} result is a list — passes _request's dict check but fails in _wait_for_change
+        # /v2/changes/{id} result is a list.
+        # This passes _request's dict check but fails in _wait_for_change.
         poll_envelope = {'type': 'sync', 'status-code': 200, 'status': 'OK', 'result': []}
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),

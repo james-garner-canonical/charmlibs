@@ -49,13 +49,13 @@ class TestErrorTypeFromResultKind:
 
 class TestSnapError:
     def _make(self, **kwargs):
-        defaults = dict(
-            message='something went wrong',
-            kind='charmlibs-snap',
-            value='extra-info',
-            status_code=400,
-            status='Bad Request',
-        )
+        defaults = {
+            'message': 'something went wrong',
+            'kind': 'charmlibs-snap',
+            'value': 'extra-info',
+            'status_code': 400,
+            'status': 'Bad Request',
+        }
         defaults.update(kwargs)
         return SnapError(**defaults)
 

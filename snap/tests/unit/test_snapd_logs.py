@@ -114,12 +114,12 @@ class TestParseTimestamp:
         assert ts.microsecond == 488008
 
     def test_z_suffix_short_fraction(self):
-        # 5-digit fraction should be left-padded to 6 digits (0.13454 s = 134540 µs)
+        # 5-digit fraction should be left-padded to 6 digits (0.13454 s = 134540 μs)
         ts = _parse_timestamp('2026-02-27T03:01:19.13454Z')
         assert ts.microsecond == 134540
 
     def test_z_suffix_four_digit_fraction(self):
-        # 4-digit fraction: 0.0033 s = 3300 µs
+        # 4-digit fraction: 0.0033 s = 3300 μs
         ts = _parse_timestamp('2026-02-27T03:01:19.0033Z')
         assert ts.microsecond == 3300
 
