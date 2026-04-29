@@ -16,9 +16,10 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     # Libraries should use clear but wide dependency bounds to avoid overly constraining charms.
-    # Set the dependency bounds according to the features your library needs.
     # Ops 3 is backwards compatible with Ops 2, but drops Python 3.8 support.
-    # Ops 3 may have new features not present in Ops 2.
+    # Ops 3 has new features not present in Ops 2.
+    # To review the changes in Ops 3, see https://github.com/canonical/operator/releases.
+    # Set the dependency bounds according to the features your library needs.
     # "ops>=2.23.1,<4",
 ]
 
