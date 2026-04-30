@@ -222,10 +222,18 @@ jobs:
 
       - name: Pack charms
         if: ${{ hashFiles(format('{0}/tests/integration/pack.sh', inputs.package)) != '' }}
+        id: pack
         env:
-          TAG: ${{ matrix.tag }}
-          SUBSTRATE: ${{ matrix.substrate }}
-        run: uvx --from rust-just just tag="$TAG" "pack-$SUBSTRATE" "$PACKAGE"
+          PACK_CMD: uvx --from rust-just just tag="${{ matrix.tag }}" "pack-${{ matrix.substrate }}" "${{ env.PACKAGE }}"
+        run: $PACK_CMD || $PACK_CMD  # Retry once to work around snap startup issues.
+
+      - name: Upload Charmcraft logs
+        if: ${{ !cancelled() && steps.pack.conclusion != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE }}-charmcraft-logs-${{ matrix.substrate }}-${{ matrix.tag }}
+          path: /home/runner/.local/state/charmcraft/log/charmcraft-*.log
+          if-no-files-found: warn
 
       - name: Run Juju integration tests
         env:
