@@ -224,14 +224,12 @@ jobs:
         if: ${{ hashFiles(format('{0}/tests/integration/pack.sh', inputs.package)) != '' }}
         id: pack
         env:
-          # TAG: ${{ matrix.tag }}
-          # SUBSTRATE: ${{ matrix.substrate }}
-        # run: uvx --from rust-just just tag="$TAG" "pack-$SUBSTRATE" "$PACKAGE"
+          TAG: ${{ matrix.tag }}
+          SUBSTRATE: ${{ matrix.substrate }}
         # Retry once to work around snap startup issues with charmcraft pack.
-        # Revert to the commented out form above when the issue is resolved.
+        # Drop the retry when the issue is resolved.
         # https://github.com/canonical/charmcraft/issues/2515
-          PACK_CMD: uvx --from rust-just just tag="${{ matrix.tag }}" "pack-${{ matrix.substrate }}" "${{ env.PACKAGE }}"
-        run: $PACK_CMD || $PACK_CMD
+        run: uvx --from rust-just just tag="$TAG" "pack-$SUBSTRATE" "$PACKAGE" || uvx --from rust-just just tag="$TAG" "pack-$SUBSTRATE" "$PACKAGE"
 
       - name: Upload Charmcraft logs
         if: ${{ !cancelled() && steps.pack.conclusion != 'skipped' }}
