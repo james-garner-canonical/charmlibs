@@ -236,7 +236,7 @@ jobs:
 
       - name: Upload charmcraft logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.package }}-charmcraft-logs-${{ matrix.substrate }}-${{ matrix.tag }}
           path: /home/runner/.local/state/charmcraft/log/charmcraft-*.log
