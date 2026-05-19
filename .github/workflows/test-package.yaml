@@ -233,3 +233,11 @@ jobs:
           RECIPE: integration-${{ matrix.substrate }}
           TAG: ${{ matrix.tag }}
         run: uvx --from rust-just just python="$PYTHON" tag="$TAG" "$RECIPE" "$PACKAGE"
+
+      - name: Upload charmcraft logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.package }}-charmcraft-logs-${{ matrix.substrate }}-${{ matrix.tag }}
+          path: /home/runner/.local/state/charmcraft/log/charmcraft-*.log
+          if-no-files-found: warn
