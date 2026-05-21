@@ -243,7 +243,7 @@ jobs:
         with:
           name: ${{ needs.init.outputs.package-name }}-charmcraft-logs-${{ matrix.substrate }}-${{ matrix.tag }}
           path: /home/runner/.local/state/charmcraft/log/charmcraft-*.log
-          if-no-files-found: warn
+          if-no-files-found: warn  # pack.sh scripts aren't required to produce charmcraft logs (though they do currently)
 
       - name: Run Juju integration tests
         env:
