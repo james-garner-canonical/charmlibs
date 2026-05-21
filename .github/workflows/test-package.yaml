@@ -237,6 +237,13 @@ jobs:
           SUBSTRATE: ${{ matrix.substrate }}
         run: uvx --from rust-just just tag="$TAG" "pack-$SUBSTRATE" "$PACKAGE"
 
+      - name: Run Juju integration tests
+        env:
+          PYTHON: ${{ needs.init.outputs.min_python_version }}
+          RECIPE: integration-${{ matrix.substrate }}
+          TAG: ${{ matrix.tag }}
+        run: uvx --from rust-just just python="$PYTHON" tag="$TAG" "$RECIPE" "$PACKAGE"
+
       - name: Upload Charmcraft logs
         if: ${{ !cancelled() && steps.pack.conclusion != 'skipped' }}
         uses: actions/upload-artifact@v4
@@ -244,10 +251,3 @@ jobs:
           name: ${{ needs.init.outputs.package-name }}-charmcraft-logs-${{ matrix.substrate }}-${{ matrix.tag }}
           path: /home/runner/.local/state/charmcraft/log/charmcraft-*.log
           if-no-files-found: warn  # pack.sh scripts aren't required to produce charmcraft logs (though they do currently)
-
-      - name: Run Juju integration tests
-        env:
-          PYTHON: ${{ needs.init.outputs.min_python_version }}
-          RECIPE: integration-${{ matrix.substrate }}
-          TAG: ${{ matrix.tag }}
-        run: uvx --from rust-just just python="$PYTHON" tag="$TAG" "$RECIPE" "$PACKAGE"
