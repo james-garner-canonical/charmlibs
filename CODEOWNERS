@@ -28,14 +28,14 @@
 # individual package and interface entries
 
 # charmlibs packages (alphabetical)
-/apt/ @canonical/charmlibs-maintainers
+/apt/ @canonical/charm-tech
 /nginx_k8s/ @canonical/tracing-and-profiling
-/passwd/ @canonical/charmlibs-maintainers
-/pathops/ @canonical/charmlibs-maintainers
+/passwd/ @canonical/charm-tech
+/pathops/ @canonical/charm-tech
 /rollingops/ @canonical/data
-/snap/ @canonical/charmlibs-maintainers
-/sysctl/ @canonical/charmlibs-maintainers
-/systemd/ @canonical/charmlibs-maintainers
+/snap/ @canonical/charm-tech
+/sysctl/ @canonical/charm-tech
+/systemd/ @canonical/charm-tech
 
 # charmlibs.interfaces packages (alphabetical)
 
