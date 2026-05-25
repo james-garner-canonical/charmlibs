@@ -34,7 +34,7 @@ Always run:
 just check pathops
 ```
 
-### Unit tests
+### Unit tests and type checking
 
 Pathops is very concerned with `pathlib` compatibility across Python versions. Unit tests should be run with the Python versions supported by Ubuntu LTS releases (which charms will run with). Run the unit tests against these versions with:
 
@@ -61,7 +61,7 @@ just functional pathops
 
 Functional tests live under `tests/functional/` and exercise both `ContainerPath` and `LocalPath` against a real Pebble instance. They require `pebble` to be installed and available in `PATH`.
 
-`tests/functional/setup.sh` starts Pebble with `PEBBLE=/tmp/pebble-test` and `umask 0` (necessary for the permission tests). `teardown.sh` kills the process. The `umask 0` setting is important — tests that check file modes will fail if the umask masks bits.
+`tests/functional/setup.sh` starts Pebble with `PEBBLE=/tmp/pebble-test` and `umask 0`. `teardown.sh` kills the process. The `umask 0` setting is important — tests that check file modes will fail if the umask masks bits.
 
 In CI, functional tests run against a matrix of Pebble versions and Ubuntu bases (see `[tool.charmlibs.functional]` in `pyproject.toml`). Locally you'll need to install the Pebble version you want to test against manually.
 
@@ -85,6 +85,6 @@ just integration-k8s pathops
 
 Integration tests deploy real charms against a live Juju model. They require `charmcraft` for packing, and a live Juju controller.
 
-`pack.sh` copies the library's `src/` and `pyproject.toml` directly into a temporary charm directory before calling `charmcraft pack`. The `CHARMLIBS_TAG` environment variable (set to (e.g.) `22.04` or `24.04`) determines which Ubuntu base to pack for. In CI, the integration test matrix runs across the supported bases and substrates.
+`pack.sh` copies the library's `src/` and `pyproject.toml` directly into a temporary charm directory before calling `charmcraft pack`. The `CHARMLIBS_TAG` environment variable (set to `22.04` or `24.04`, for example) determines which Ubuntu base to pack for. In CI, the integration test matrix runs across the supported bases and substrates.
 
 `tests/integration/test_meta.py` asserts that the `k8s` and `machine` test charms have identical `common.py` files — if this test fails, the charms have drifted and need to be reconciled.
