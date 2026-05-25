@@ -2,19 +2,22 @@
 
 `charmlibs` is the home of Canonical's charm libraries -- Python packages used by [Juju](https://canonical.com/juju) charms.
 
-Charms are Python programs that use the [Ops](https://documentation.ubuntu.com/ops/) framework to manage workloads on Kubernetes or bare-metal clouds. Charm libraries package up common functionality so that teams don't have to reinvent the wheel. Each library in this monorepo is distributed as a separate Python package on PyPI.
+Charms are Python programs that use the [Ops](https://documentation.ubuntu.com/ops/) framework to manage workloads on Kubernetes or machine clouds. Charm libraries package up common functionality so that teams don't have to reinvent the wheel.
+
+> [!IMPORTANT]
+> Each library in this monorepo is distributed as a separate Python package on PyPI, so you charms only include what they actually need.
 
 There are two kinds of charm libraries:
 
-- **General libraries** (e.g. [`charmlibs-apt`](apt/), [`charmlibs-pathops`](pathops/)) provide utility APIs for charms. Imported as `from charmlibs import apt`.
-- **Interface libraries** (e.g. [`charmlibs-interfaces-tls-certificates`](interfaces/tls-certificates/)) manage the structured data that charms exchange over a Juju relation. Imported as `from charmlibs.interfaces import tls_certificates`.
+- **General libraries** (such as [`charmlibs-apt`](apt/), [`charmlibs-pathops`](pathops/)) provide utility APIs for charms. Imported as `from charmlibs import apt`.
+- **Interface libraries** (such as [`charmlibs-interfaces-tls-certificates`](interfaces/tls-certificates/)) manage the structured data that charms exchange over a Juju relation. Imported as `from charmlibs.interfaces import tls_certificates`.
 
 ## Contributing to this monorepo
 
-`charmlibs` is for libraries that are broadly useful across different charms and teams. A library is a good fit if it:
+`charmlibs` is for libraries that are broadly useful across different charms and teams. A library is a good fit if it both:
 
-- **Solves a common problem**, and is useful to charms across multiple products or teams, not just your own.
-- **Has a design or a proven track record** — either a specification with cross-team buy-in, or a pattern already tested in production. (Migrating an existing, widely-used Charmhub-hosted library doesn't need a separate specification.)
+- **Solves a common problem**: It is useful to charms across multiple products or teams, not just your own.
+- **Has a design or a proven track record**: Either a specification with cross-team buy-in, or a pattern already tested in production. (Migrating an existing, widely-used Charmhub-hosted library doesn't need a separate specification.)
 
 All public interfaces intended for use by other charms should have a corresponding `charmlibs.interfaces` library.
 

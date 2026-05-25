@@ -2,7 +2,7 @@
 
 ## Overview
 
-`charmlibs` is a monorepo of Python libraries for [Juju](https://documentation.ubuntu.com/juju/3.6/) charms.
+`charmlibs` is a monorepo of Python libraries for Juju charms.
 
 **Key concepts:**
 
@@ -18,7 +18,7 @@
 | General | `charmlibs` | `charmlibs-pathops` | `from charmlibs import pathops` |
 | Interface | `charmlibs.interfaces` | `charmlibs-interfaces-tls-certificates` | `from charmlibs.interfaces import tls_certificates` |
 
-General libraries live at the repo root (e.g. `pathops/`). Interface libraries live under `interfaces/` (e.g. `interfaces/tls-certificates/`).
+General libraries live at the repo root (e.g. `pathops/`). Interface libraries live under `interfaces/` (for example, `interfaces/tls-certificates/`).
 
 ## Repo structure
 
@@ -117,16 +117,12 @@ just add pathops 'pydantic>=2'
 just add interfaces/tls-certificates --requirements my-requirements.txt
 ```
 
-### IDE setup
-
-Point your IDE to `<package>/.venv` after running any `just` test command. The virtual environment is created there automatically.
-
 ## Test types
 
 | Type | Command | What it tests | External requirements |
 |------|---------|---------------|----------------------|
 | Unit | `just unit <package>` | Logic with mocked externals | None |
-| Functional | `just functional <package>` | Interaction with real external processes (not Juju) | Varies (e.g. pebble, sudo) |
+| Functional | `just functional <package>` | Interaction with real external processes (not Juju) | Varies (for example, pebble, sudo) |
 | Integration | `just integration-k8s/machine <package>` | Library in a real Juju deployment | charmcraft + Juju controller |
 
 A test type is only executed if the corresponding `tests/` subdirectory exists. Remove a directory to skip that test type entirely.
@@ -135,7 +131,7 @@ Read more: [types of tests in the charmlibs monorepo](https://documentation.ubun
 
 ## Commit and PR conventions
 
-**PRs are squash-merged.** The PR title becomes the single commit message on `main`. Branch commit messages don't need to follow any format.
+**PRs are squash-merged.** The PR title becomes the single commit message on `main`. Branch commit messages are for local reference, and should follow conventional commits for clarity.
 
 PR titles must follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/). When a PR affects a single library, use the distribution package name without the leading `charmlibs-` as the scope:
 
@@ -170,8 +166,8 @@ pathops/
 │   │   ├── conftest.py
 │   │   └── test_*.py
 │   ├── functional/
-│   │   ├── setup.sh        # Sourced before tests (e.g. start pebble)
-│   │   ├── teardown.sh     # Sourced after tests (e.g. kill pebble)
+│   │   ├── setup.sh        # Sourced before tests (for example, start pebble)
+│   │   ├── teardown.sh     # Sourced after tests (for example, kill pebble)
 │   │   └── test_*.py
 │   └── integration/
 │       ├── pack.sh         # Script to pack test charms
@@ -221,7 +217,7 @@ When writing or editing docstrings in `__init__.py` or other public modules, rem
 
 | Resource | URL |
 |----------|-----|
-| charmlibs docs | https://documentation.ubuntu.com/charmlibs |
+| charmlibs docs | .docs/index.md |
 | ops (charm framework) | https://documentation.ubuntu.com/ops/ |
 | ops.testing reference | https://documentation.ubuntu.com/ops/latest/reference/ops-testing/ |
 | Juju docs | https://documentation.ubuntu.com/juju/3.6/ |

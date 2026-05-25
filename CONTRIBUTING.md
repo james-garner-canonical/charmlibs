@@ -1,6 +1,6 @@
 # Contributing to charmlibs
 
-This monorepo contains Python libraries for [Juju](https://documentation.ubuntu.com/juju/3.6/) charms. General libraries are defined in top-level subdirectories, and interface libraries and/or metadata are defined under the interfaces directory.
+This monorepo contains Python libraries for [Juju](https://canonical.com/juju) charms. General libraries are defined in top-level subdirectories, and interface libraries and/or metadata are defined under the interfaces directory.
 
 # Quick start
 
