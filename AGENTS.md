@@ -220,8 +220,8 @@ When writing or editing docstrings in `__init__.py` or other public modules, rem
 | charmlibs docs | .docs/index.md |
 | ops (charm framework) | https://documentation.ubuntu.com/ops/ |
 | ops.testing reference | https://documentation.ubuntu.com/ops/latest/reference/ops-testing/ |
-| Juju docs | https://documentation.ubuntu.com/juju/3.6/ |
+| Juju docs | https://documentation.ubuntu.com/juju/latest/llms.txt |
 | Charmcraft docs | https://documentation.ubuntu.com/charmcraft/stable/ |
 | Jubilant (integration test client) | https://documentation.ubuntu.com/jubilant/ |
 | Pebble | https://documentation.ubuntu.com/pebble/ |
-| Concierge (CI Juju setup) | https://github.com/canonical/concierge |
+| Concierge (CI Juju setup) | https://raw.githubusercontent.com/canonical/concierge/refs/heads/main/README.md |
