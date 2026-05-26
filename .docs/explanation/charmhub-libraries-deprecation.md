@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: Charmhub-hosted charm libraries fetched with charmcraft fetch-libs are being phased out in favour of standard Python packages.
+---
+
 (charmhub-libraries-deprecation)=
 # Charmhub-hosted libraries are being phased out
 
