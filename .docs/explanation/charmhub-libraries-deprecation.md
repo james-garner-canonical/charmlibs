@@ -40,7 +40,7 @@ Charmhub libraries do not participate in standard Python tooling. This makes it 
 Charm libraries should be distributed as regular Python packages, typically on PyPI.
 Libraries of broad interest are published under the `charmlibs` namespace from the [`charmlibs` monorepo](https://github.com/canonical/charmlibs). Team-specific libraries can be distributed on PyPI under their own namespace, as Git dependencies, or as local packages in a charm monorepo.
 
-> See {ref}`how-to-python-package` for full details on distribution options.
+Read more: {ref}`how-to-python-package`
 
 ## What should I do?
 
@@ -48,7 +48,7 @@ Libraries of broad interest are published under the `charmlibs` namespace from t
 
 Migrate it to a Python package. If it implements a widely-used interface or provides broadly useful functionality, it belongs in the `charmlibs` monorepo.
 
-> See {ref}`how-to-migrate` for a step-by-step guide.
+Read more: {ref}`how-to-migrate`
 
 ### If you use Charmhub-hosted libraries in your charm
 
@@ -59,10 +59,10 @@ When a Python package replacement is available, switch to it:
 3. Add the replacement package to your charm's dependencies.
 4. Update your imports to use the new package's import path.
 
-> See {ref}`how-to-manage-charm-libraries` for guidance on managing Python package dependencies in your charm.
+Read more: {ref}`how-to-manage-charm-libraries`
 
 ### If you are writing a new library
 
 Create it as a Python package from the start. Do not publish new libraries on Charmhub.
 
-> See {ref}`how-to-python-package` for advice on where and how to publish.
+Read more: {ref}`how-to-python-package`
