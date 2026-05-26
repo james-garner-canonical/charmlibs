@@ -16,14 +16,14 @@ Charms originally shared code by distributing single-file Python modules on Char
 ## Timeline
 
 - `charmcraft` emits a deprecation warning on library operations (we are here).
-- Charmhub disables uploading *new* libraries (26.04 cycle).
+- Charmhub disables uploading *new* libraries (26.10 cycle).
 - Charmhub disables updates to existing libraries.
 
 ## Why the change?
 
 ### No dependency resolution
 
-Charmhub-hosted libraries have no mechanism for declaring or resolving dependencies on other Python packages. If a library needs a dependency, it lists the package name in a `PYDEPS` variable, and the charm author must manually add each dependency to their charm's own requirements. That is, transitive dependencies of Charmhub-hosted libraries are tracked manually, and the charm author is also responsible for resolving a compatible version for the different libraries that might require that dependency.
+Charmhub-hosted libraries have no mechanism for resolving dependencies on other Python packages. If a library needs a dependency, it lists the package name in a `PYDEPS` variable, and the charm author must manually add each dependency to their charm's own requirements. That is, transitive dependencies of Charmhub-hosted libraries are tracked manually, and the charm author is also responsible for resolving a compatible version for the different libraries that might require that dependency.
 
 Standard Python packages, by contrast, declare their dependencies in metadata that tools like `pip` and `uv` resolve automatically.
 
@@ -44,24 +44,24 @@ Libraries of broad interest are published under the `charmlibs` namespace from t
 
 ## What should I do?
 
-**If you maintain a Charmhub-hosted library:**
+### If you maintain a Charmhub-hosted library
 
-Consider migrating it to a Python package. If it implements a widely-used interface or provides broadly useful functionality, it belongs in the `charmlibs` monorepo.
+Migrate it to a Python package. If it implements a widely-used interface or provides broadly useful functionality, it belongs in the `charmlibs` monorepo.
 
 > See {ref}`how-to-migrate` for a step-by-step guide.
 
-**If you use Charmhub-hosted libraries in your charm:**
+### If you use Charmhub-hosted libraries in your charm
 
 When a Python package replacement is available, switch to it:
 
-1. Remove the library from the `charm-libs` section of your `charmcraft.yaml` and delete the vendored file from `lib/`.
+1. Remove the library from the `charm-libs` section of your `charmcraft.yaml` and delete the vendored directory from `lib/`.
 2. Remove any manually added transitive dependencies that are no longer needed.
-3. Add the replacement package to your charm's dependencies (e.g. in `pyproject.toml`).
+3. Add the replacement package to your charm's dependencies.
 4. Update your imports to use the new package's import path.
 
 > See {ref}`how-to-manage-charm-libraries` for guidance on managing Python package dependencies in your charm.
 
-**If you are writing a new library:**
+### If you are writing a new library
 
 Create it as a Python package from the start. Do not publish new libraries on Charmhub.
 
