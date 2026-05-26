@@ -18,7 +18,7 @@ import logging
 from contextlib import contextmanager
 from typing import Any
 
-from ops import CharmBase, Object, Relation, RelationBrokenEvent
+from ops import CharmBase, Object, Relation, RelationBrokenEvent, Unit
 from ops.framework import EventBase
 
 from charmlibs import pathops
@@ -40,7 +40,7 @@ from charmlibs.rollingops._common._models import (
 from charmlibs.rollingops._common._utils import ETCD_FAILED_HOOK_NAME, LOCK_GRANTED_HOOK_NAME
 from charmlibs.rollingops._etcd._backend import _EtcdRollingOpsBackend
 from charmlibs.rollingops._peer._backend import _PeerRollingOpsBackend
-from charmlibs.rollingops._peer._models import PeerUnitOperations
+from charmlibs.rollingops._peer._models import PeerUnitOperations, iter_peer_units
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +61,29 @@ class RollingOpsManager(Object):
     available, mirrors operation state into the peer relation, and falls
     back to peer-based processing when etcd becomes unavailable or
     inconsistent.
+
+    Args:
+        charm: The charm instance owning this manager.
+        callback_targets: Mapping of callback identifiers to callables
+            executed when the unit is granted the lock.
+        peer_relation_name: Name of the peer relation used for fallback
+            state and operation mirroring.
+        etcd_relation_name: Name of the relation providing etcd access.
+            If not provided, only peer backend is used.
+        cluster_id: Identifier used to scope etcd-backed state for this
+            rolling-ops instance. All applications using the same ``cluster_id``
+            will share the same lock, allowing rolling operations to be coordinated
+            across multiple applications.  Do not provide a ``cluster_id`` without
+            a `etcd_relation_name`.
+        sync_lock_targets: Optional mapping of sync lock backend
+            identifiers to backend implementations used when acquiring
+            synchronous locks through the peer backend.
+        base_dir: Base directory used by rollingops to store runtime files, including
+            etcd connection information and logs from background processes.
+            Defaults to ``/var/lib/rollingops``, which will be created if missing.
+            The process running rollingops must have permission to create and write to
+            this directory. For Kubernetes charms, this path must exist within the
+            charm container filesystem.
     """
 
     def __init__(
@@ -89,16 +112,19 @@ class RollingOpsManager(Object):
         Args:
             charm: The charm instance owning this manager.
             callback_targets: Mapping of callback identifiers to callables
-                executed when queued operations are granted the lock.
+                executed when the unit is granted the lock.
             peer_relation_name: Name of the peer relation used for fallback
                 state and operation mirroring.
             etcd_relation_name: Name of the relation providing etcd access.
                 If not provided, only peer backend is used.
             cluster_id: Identifier used to scope etcd-backed state for this
-                rolling-ops instance.
+                rolling-ops instance. All applications using the same ``cluster_id``
+                will share the same lock, allowing rolling operations to be coordinated
+                across multiple applications.  Do not provide a ``cluster_id`` without
+                a `etcd_relation_name`.
             sync_lock_targets: Optional mapping of sync lock backend
                 identifiers to backend implementations used when acquiring
-                synchronous locks through the peer fallback path.
+                synchronous locks through the peer backend.
             base_dir: base directory where all files related to rollingops will be written.
                 Written to ``/var/lib/rollingops`` by default.
         """
@@ -241,7 +267,7 @@ class RollingOpsManager(Object):
                 operation is granted the rolling lock.
             kwargs: Optional keyword arguments passed to the callback target.
             max_retry: Optional maximum number of retries allowed for the
-                operation. None means infinte retries.
+                operation. None means infinite retries.
 
         Raises:
             RollingOpsInvalidLockRequestError: If the callback identifier is
@@ -359,6 +385,14 @@ class RollingOpsManager(Object):
             self._backend_state.fallback_to_peer()
             self._peer_backend.ensure_processing()
             logger.info('Fell back to peer backend.')
+
+    def _get_peer_unit(self, unit_name: str) -> Unit:
+        """Return the peer unit having the provided name."""
+        for peer_unit in iter_peer_units(self.model, self.peer_relation_name):
+            if peer_unit.name == unit_name:
+                return peer_unit
+
+        raise ValueError('unit_name provided does not belong to the peer relation.')
 
     def _get_sync_lock_backend(self, backend_id: str) -> SyncLockBackend:
         """Instantiate the configured peer sync lock backend.
@@ -485,28 +519,51 @@ class RollingOpsManager(Object):
             processing_backend=self._backend_state.backend,
         )
 
-    def is_waiting_callback(self, callback_id: str) -> bool:
-        """Return whether the current unit has a pending operation matching callback."""
+    def is_waiting_callback(self, callback_id: str, unit_name: str | None = None) -> bool:
+        """Return whether the desired unit has a pending operation matching callback.
+
+        Args:
+            callback_id: callback ID to search for in the unit list of operations.
+            unit_name: name of the unit to search for specific callback ID operations.
+                If not specified, defaults to this unit.
+
+        Raises:
+            ValueError: If the unit name is not found within the peer relation units.
+        """
         if self._peer_relation is None:
             return False
+
+        if unit_name is None:
+            unit_name = self.model.unit.name
 
         operations = PeerUnitOperations(
             self.model,
             self.peer_relation_name,
-            self.model.unit,
+            self._get_peer_unit(unit_name),
         ).queue.operations
 
         return any(op.callback_id == callback_id for op in operations)
 
-    def is_waiting(self) -> bool:
-        """Return whether the current unit has a pending operations."""
+    def is_waiting(self, unit_name: str | None = None) -> bool:
+        """Return whether the desired unit has pending operations.
+
+        Args:
+            unit_name: name of the unit to search for operations.
+                If not specified, defaults to this unit.
+
+        Raises:
+            ValueError: If the unit name is not found within the peer relation units.
+        """
         if self._peer_relation is None:
             return False
+
+        if unit_name is None:
+            unit_name = self.model.unit.name
 
         operations = PeerUnitOperations(
             self.model,
             self.peer_relation_name,
-            self.model.unit,
+            self._get_peer_unit(unit_name),
         ).queue.operations
 
         return bool(operations)
