@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 import logging
 import typing
 from typing import Any
@@ -32,12 +31,39 @@ logger = logging.getLogger(__name__)
 # /v2/logs
 
 
-@dataclasses.dataclass
 class LogEntry:
-    timestamp: datetime.datetime
-    message: str
-    sid: str
-    pid: int
+    def __init__(self, timestamp: datetime.datetime, sid: str, pid: int, message: str):
+        self._timestamp = timestamp
+        self._sid = sid
+        self._pid = pid
+        self._message = message
+
+    @property
+    def timestamp(self) -> datetime.datetime:
+        return self._timestamp
+
+    @property
+    def message(self) -> str:
+        return self._message
+
+    @property
+    def sid(self) -> str:
+        return self._sid
+
+    @property
+    def pid(self) -> int:
+        return self._pid
+
+    def __repr__(self) -> str:
+        return (
+            f'LogEntry(timestamp={self._timestamp!r},'
+            f' sid={self._sid!r},'
+            f' pid={self._pid!r},'
+            f' message={self._message!r})'
+        )
+
+    def __str__(self) -> str:
+        return f'{self._timestamp} {self._sid}[{self._pid}]: {self._message}'
 
 
 def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
@@ -45,6 +71,7 @@ def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
     if snaps:
         query['names'] = ','.join(snaps)
     result = _client.get('/v2/logs', query=query)
+    assert isinstance(result, list)
     # A log entry looks like:
     # {'timestamp': '2026-02-27T03:01:19.488008Z',
     #  'message': 'QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}',  # noqa: E501
@@ -52,16 +79,15 @@ def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
     #  'pid': '135506'}]
     # The snap CLI presents this as:
     # 2026-02-27T16:01:19+13:00 multipassd[135506]: QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}  # noqa: E501
-    # We preserve the separate fields by parsing to a dataclass.
-    assert isinstance(result, list)
+    # We preserve the separate fields by parsing to a LogEntry.
     log_entries: list[LogEntry] = []
     for obj in result:
         try:
             log_entry = LogEntry(
                 timestamp=_utils._parse_timestamp(obj['timestamp']),
-                message=obj['message'],
                 sid=obj['sid'],
                 pid=int(obj['pid']),
+                message=obj['message'],
             )
             log_entries.append(log_entry)
         except (KeyError, TypeError, ValueError) as e:  # noqa: PERF203
