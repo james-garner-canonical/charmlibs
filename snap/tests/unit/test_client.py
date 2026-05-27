@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 
 from charmlibs.snap import _client
 from charmlibs.snap._errors import (
-    _SnapAlreadyInstalledError,
     SnapAPIError,
     SnapBadResponseError,
     SnapChangeError,
@@ -32,6 +31,7 @@ from charmlibs.snap._errors import (
     SnapNotFoundError,
     SnapOptionNotFoundError,
     SnapTimeoutError,
+    _SnapAlreadyInstalledError,
 )
 from conftest import FIXTURES_DIR, load_fixture
 

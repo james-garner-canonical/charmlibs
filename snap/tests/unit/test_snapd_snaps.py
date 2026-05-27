@@ -12,9 +12,9 @@ import pytest
 
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
-    _SnapAlreadyInstalledError,
     SnapError,
     SnapNotFoundError,
+    _SnapAlreadyInstalledError,
     _SnapNoUpdatesAvailableError,
 )
 from conftest import result_of
