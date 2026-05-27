@@ -124,13 +124,14 @@ def install(
     channel: str | None = None,
     revision: int | str | None = None,
     classic: bool = False,
-    strict: bool = False,
-) -> None:
+) -> bool:
     """Install a snap.
+
+    Returns:
+        True if the snap was installed, False if it was already installed.
 
     Raises:
         ValueError: if both channel and revision are specified.
-        SnapAlreadyInstalledError: if the snap is already installed.
         SnapError: (or a subtype) if the snap could not be installed as requested.
     """
     if channel is not None and revision is not None:
@@ -148,15 +149,17 @@ def install(
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
     except _errors.SnapAlreadyInstalledError:
-        if strict:
-            raise
+        return False
+    return True
 
 
-def remove(snap: str, *, purge: bool = False, strict: bool = False) -> None:
+def remove(snap: str, *, purge: bool = False) -> bool:
     """Remove a snap.
 
+    Returns:
+        True if the snap was removed, False if it was not installed.
+
     Raises:
-        SnapNotFoundError: if the snap is not installed.
         SnapError: (or a subtype) if the snap could not be removed as requested.
     """
     data: dict[str, Any] = {'action': 'remove'}
@@ -166,8 +169,8 @@ def remove(snap: str, *, purge: bool = False, strict: bool = False) -> None:
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
     except _errors.SnapNotFoundError:
-        if strict:
-            raise
+        return False
+    return True
 
 
 def refresh(
@@ -175,9 +178,11 @@ def refresh(
     channel: str | None = None,
     *,
     revision: int | str | None = None,
-    strict: bool = False,
-) -> None:
+) -> bool:
     """Refresh a snap.
+
+    Returns:
+        True if the snap was refreshed, False if no updates were available.
 
     Raises:
         ValueError: if both channel and revision are specified.
@@ -196,8 +201,8 @@ def refresh(
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
     except _errors.SnapNoUpdatesAvailableError:
-        if strict:
-            raise
+        return False
+    return True
 
 
 def hold(snap: str, duration: datetime.timedelta | int | float | None = None) -> None:

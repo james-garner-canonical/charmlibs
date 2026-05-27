@@ -10,7 +10,6 @@ import pytest
 
 from charmlibs.snap import _functions
 from charmlibs.snap import _snapd_snaps as _snapd
-from charmlibs.snap._errors import SnapNoUpdatesAvailableError
 from charmlibs.snap._utils import _normalize_channel
 
 if TYPE_CHECKING:
@@ -107,10 +106,9 @@ class TestEnsure:
 
     def test_installed_same_channel_update_true(self, mock_snapd: MockSnapd):
         mock_snapd.info.return_value = make_info(channel='latest/stable')
+        mock_snapd.refresh.return_value = True
         result = _functions.ensure('hello-world', channel='latest/stable')
-        mock_snapd.refresh.assert_called_once_with(
-            'hello-world', channel='latest/stable', strict=True
-        )
+        mock_snapd.refresh.assert_called_once_with('hello-world', channel='latest/stable')
         assert result is True
 
     def test_installed_same_channel_update_false(self, mock_snapd: MockSnapd):
@@ -133,7 +131,7 @@ class TestEnsure:
 
     def test_no_updates_available_returns_false(self, mock_snapd: MockSnapd):
         mock_snapd.info.return_value = make_info(channel='latest/stable')
-        mock_snapd.refresh.side_effect = SnapNoUpdatesAvailableError('', kind='', value='')
+        mock_snapd.refresh.return_value = False
         result = _functions.ensure('hello-world', channel='latest/stable')
         assert result is False
 

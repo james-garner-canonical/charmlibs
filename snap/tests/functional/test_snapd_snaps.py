@@ -59,16 +59,10 @@ def test_install():
     assert info.channel == 'latest/stable'
 
 
-def test_install_already_installed_suppressed_by_default():
+def test_install_already_installed_returns_false():
     ensure_installed('hello-world')
-    _snapd.install('hello-world')  # should not raise
-
-
-def test_install_already_installed_strict_raises():
-    ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAlreadyInstalledError) as ctx:
-        _snapd.install('hello-world', strict=True)
-    assert ctx.value.kind == 'snap-already-installed'
+    result = _snapd.install('hello-world')
+    assert result is False
 
 
 def test_install_needs_classic_raises():
@@ -116,16 +110,10 @@ def test_remove():
     assert _snapd.info('hello-world', missing_ok=True) is None
 
 
-def test_remove_not_installed_suppressed_by_default():
+def test_remove_not_installed_returns_false():
     ensure_removed('hello-world')
-    _snapd.remove('hello-world')  # should not raise
-
-
-def test_remove_not_installed_strict_raises():
-    ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
-        _snapd.remove('hello-world', strict=True)
-    assert ctx.value.kind in ('snap-not-found', 'snap-not-installed')
+    result = _snapd.remove('hello-world')
+    assert result is False
 
 
 # ---------------------------------------------------------------------------
@@ -140,19 +128,11 @@ def test_refresh_channel():
     assert info.channel == 'latest/candidate'
 
 
-def test_refresh_no_updates_suppressed():
-    # refresh with no available updates should not raise (the error is suppressed).
+def test_refresh_no_updates_returns_false():
     ensure_installed('hello-world', channel='latest/stable')
-    _snapd.refresh('hello-world', channel='latest/stable')
-    # Still installed and unchanged.
+    result = _snapd.refresh('hello-world', channel='latest/stable')
+    assert result is False
     assert _snapd.info('hello-world').channel == 'latest/stable'
-
-
-def test_refresh_no_updates_strict_raises():
-    ensure_installed('hello-world', channel='latest/stable')
-    with pytest.raises(_errors.SnapNoUpdatesAvailableError) as ctx:
-        _snapd.refresh('hello-world', channel='latest/stable', strict=True)
-    assert ctx.value.kind == 'snap-no-update-available'
 
 
 def test_refresh_not_installed_raises_base_snap_error():

@@ -143,10 +143,11 @@ class TestInfo:
 
 class TestInstall:
     def test_install_minimal(self, mock_client: MockClient):
-        _snapd.install('hello-world')
+        result = _snapd.install('hello-world')
         mock_client.post.assert_called_once_with(
             '/v2/snaps/hello-world', body={'action': 'install'}
         )
+        assert result is True
 
     def test_install_channel(self, mock_client: MockClient):
         _snapd.install('hello-world', channel='edge')
@@ -175,22 +176,19 @@ class TestInstall:
             _snapd.install('hello-world', channel='edge', revision=5)
         mock_client.post.assert_not_called()
 
-    def test_install_already_installed_suppressed_by_default(self, mock_client: MockClient):
+    def test_install_already_installed_returns_false(self, mock_client: MockClient):
         mock_client.post.side_effect = SnapAlreadyInstalledError('', kind='', value='')
-        _snapd.install('hello-world')  # should not raise
-
-    def test_install_already_installed_strict_raises(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAlreadyInstalledError('', kind='', value='')
-        with pytest.raises(SnapAlreadyInstalledError):
-            _snapd.install('hello-world', strict=True)
+        result = _snapd.install('hello-world')
+        assert result is False
 
 
 class TestRemove:
     def test_remove(self, mock_client: MockClient):
-        _snapd.remove('hello-world')
+        result = _snapd.remove('hello-world')
         mock_client.post.assert_called_once_with(
             '/v2/snaps/hello-world', body={'action': 'remove'}
         )
+        assert result is True
 
     def test_remove_no_purge_by_default(self, mock_client: MockClient):
         _snapd.remove('hello-world')
@@ -202,21 +200,18 @@ class TestRemove:
         body = mock_client.post.call_args.kwargs['body']
         assert body['purge'] is True
 
-    def test_remove_not_installed_suppressed_by_default(self, mock_client: MockClient):
+    def test_remove_not_installed_returns_false(self, mock_client: MockClient):
         mock_client.post.side_effect = SnapNotFoundError('', kind='', value='')
-        _snapd.remove('hello-world')  # should not raise
-
-    def test_remove_not_installed_strict_raises(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNotFoundError('', kind='', value='')
-        with pytest.raises(SnapNotFoundError):
-            _snapd.remove('hello-world', strict=True)
+        result = _snapd.remove('hello-world')
+        assert result is False
 
 
 class TestRefresh:
     def test_refresh_minimal(self, mock_client: MockClient):
-        _snapd.refresh('hello-world')
+        result = _snapd.refresh('hello-world')
         body = mock_client.post.call_args.kwargs['body']
         assert body == {'action': 'refresh'}
+        assert result is True
 
     def test_refresh_channel(self, mock_client: MockClient):
         _snapd.refresh('hello-world', channel='edge')
@@ -232,7 +227,7 @@ class TestRefresh:
         with pytest.raises(ValueError):
             _snapd.refresh('hello-world', channel='edge', revision=42)
 
-    def test_refresh_suppresses_no_updates(self, mock_client: MockClient):
+    def test_refresh_no_updates_returns_false(self, mock_client: MockClient):
         mock_client.post.side_effect = SnapNoUpdatesAvailableError(
             'snap "hello-world" has no updates available',
             kind='snap-no-update-available',
@@ -240,16 +235,8 @@ class TestRefresh:
             status_code=400,
             status='Bad Request',
         )
-        _snapd.refresh('hello-world')  # should not raise
-
-    def test_refresh_no_updates_suppressed_by_default(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNoUpdatesAvailableError('', kind='', value='')
-        _snapd.refresh('hello-world')  # should not raise
-
-    def test_refresh_no_updates_strict_raises(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNoUpdatesAvailableError('', kind='', value='')
-        with pytest.raises(SnapNoUpdatesAvailableError):
-            _snapd.refresh('hello-world', strict=True)
+        result = _snapd.refresh('hello-world')
+        assert result is False
 
 
 class TestHold:

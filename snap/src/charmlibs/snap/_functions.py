@@ -14,7 +14,7 @@
 
 """High level helper functions that build on top of the basic snap operations."""
 
-from . import _errors, _snapd_snaps, _utils
+from . import _snapd_snaps, _utils
 
 
 def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) -> bool:
@@ -61,8 +61,4 @@ def ensure(
     # Already installed on the requested channel (or any channel if none was specified).
     if not update:  # User explicitly requested no update in this case.
         return False
-    try:  # Refresh to get the latest revision on the current channel, if possible.
-        _snapd_snaps.refresh(snap, channel=channel, strict=True)
-        return True
-    except _errors.SnapNoUpdatesAvailableError:
-        return False  # No updates available, so no changes were made.
+    return _snapd_snaps.refresh(snap, channel=channel)
