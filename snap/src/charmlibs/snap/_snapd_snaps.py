@@ -118,6 +118,16 @@ def info(snap: str, *, missing_ok: bool = False) -> Info | None:
     return Info._from_dict(info_dict)
 
 
+@typing.overload
+def install(snap: str, *, channel: str, revision: None = None, classic: bool = False) -> bool: ...
+@typing.overload
+def install(
+    snap: str, *, channel: None = None, revision: int | str, classic: bool = False
+) -> bool: ...
+@typing.overload
+def install(
+    snap: str, *, channel: None = None, revision: None = None, classic: bool = False
+) -> bool: ...
 def install(
     snap: str,
     *,
@@ -173,6 +183,12 @@ def remove(snap: str, *, purge: bool = False) -> bool:
     return True
 
 
+@typing.overload
+def refresh(snap: str, channel: str, *, revision: None = None) -> bool: ...
+@typing.overload
+def refresh(snap: str, channel: None = None, *, revision: int | str) -> bool: ...
+@typing.overload
+def refresh(snap: str, channel: None = None, *, revision: None = None) -> bool: ...
 def refresh(
     snap: str,
     channel: str | None = None,

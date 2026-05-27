@@ -173,7 +173,7 @@ class TestInstall:
 
     def test_install_both_raises(self, mock_client: MockClient):
         with pytest.raises(ValueError):
-            _snapd.install('hello-world', channel='edge', revision=5)
+            _snapd.install('hello-world', channel='edge', revision=5)  # type: ignore[call-overload]
         mock_client.post.assert_not_called()
 
     def test_install_already_installed_returns_false(self, mock_client: MockClient):
@@ -225,7 +225,7 @@ class TestRefresh:
 
     def test_refresh_both_raises(self, mock_client: MockClient):
         with pytest.raises(ValueError):
-            _snapd.refresh('hello-world', channel='edge', revision=42)
+            _snapd.refresh('hello-world', channel='edge', revision=42)  # type: ignore[call-overload]
 
     def test_refresh_no_updates_returns_false(self, mock_client: MockClient):
         mock_client.post.side_effect = _SnapNoUpdatesAvailableError(

@@ -96,7 +96,7 @@ def test_install_revision():
 
 def test_install_channel_and_revision_raises():
     with pytest.raises(ValueError):
-        _snapd.install('hello-world', channel='latest/stable', revision=28)
+        _snapd.install('hello-world', channel='latest/stable', revision=28)  # type: ignore[call-overload]
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +148,7 @@ def test_refresh_not_installed_raises_base_snap_error():
 
 def test_refresh_channel_and_revision_raises():
     with pytest.raises(ValueError):
-        _snapd.refresh('hello-world', channel='latest/stable', revision=28)
+        _snapd.refresh('hello-world', channel='latest/stable', revision=28)  # type: ignore[call-overload]
 
 
 # ---------------------------------------------------------------------------
