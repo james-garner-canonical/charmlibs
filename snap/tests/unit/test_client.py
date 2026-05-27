@@ -276,7 +276,45 @@ class TestErrorResponses:
 
 
 class TestAsyncChange:
-    def test_async_triggers_poll(self, mock_raw: MagicMock):
+    """Tests for async change waiting via /v2/notices long-polling.
+
+    Every async operation goes through three request phases:
+      1. The initial POST/PUT that returns an async response with a change_id.
+      2. GET /v2/notices?types=change-update&keys={id}&timeout=... (long-poll).
+      3. GET /v2/changes/{id}  (status check after a notice fires).
+    Phases 2-3 repeat if the change is still in progress after the first notice.
+    """
+
+    @staticmethod
+    def _fake_notices(
+        change_id: str, last_repeated: str = '2024-01-01T00:00:00.000000000Z'
+    ) -> Any:
+        """One change-update notice for change_id."""
+        return _fake_response({
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': [
+                {
+                    'id': change_id,
+                    'user-id': None,
+                    'type': 'change-update',
+                    'key': change_id,
+                    'first-occurred': last_repeated,
+                    'last-occurred': last_repeated,
+                    'last-repeated': last_repeated,
+                    'occurrences': 1,
+                    'last-data': {'kind': 'install-snap'},
+                }
+            ],
+        })
+
+    @staticmethod
+    def _fake_empty_notices() -> Any:
+        """Empty notices response — snapd-side timeout elapsed."""
+        return _fake_response({'type': 'sync', 'status-code': 200, 'status': 'OK', 'result': []})
+
+    def test_async_triggers_notice_wait(self, mock_raw: MagicMock):
         done_envelope = {
             'type': 'sync',
             'status-code': 200,
@@ -285,20 +323,71 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
             _fake_response(done_envelope),
         ]
         _client.post(
             '/v2/snaps/hello-world',
             body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
         )
-        # First call was the POST, second was the GET /v2/changes/{id}
-        assert mock_raw.call_count == 2
-        poll_call = mock_raw.call_args_list[1]
-        assert poll_call.args[0] == 'GET'
-        assert '/v2/changes/' in poll_call.args[1]
+        # POST → notices long-poll → changes status check
+        assert mock_raw.call_count == 3
+        notices_call = mock_raw.call_args_list[1]
+        assert notices_call.args[0] == 'GET'
+        assert notices_call.args[1] == '/v2/notices'
+        changes_call = mock_raw.call_args_list[2]
+        assert changes_call.args[0] == 'GET'
+        assert '/v2/changes/' in changes_call.args[1]
 
-    def test_async_doing_then_done(self, mock_raw: MagicMock):
-        # Real Doing fixture followed by the Done one — exercises the poll loop
+    def test_async_notices_pass_change_id_as_key_filter(self, mock_raw: MagicMock):
+        done_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_done.json')['result'],
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
+            _fake_response(done_envelope),
+        ]
+        _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
+        notices_call = mock_raw.call_args_list[1]
+        query = notices_call.kwargs['query']
+        assert query['types'] == 'change-update'
+        assert query['keys'] == '94'  # the change_id from async_hold.json
+
+    def test_async_notices_long_poll_timeout_param(self, mock_raw: MagicMock):
+        done_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_done.json')['result'],
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
+            _fake_response(done_envelope),
+        ]
+        _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
+        notices_call = mock_raw.call_args_list[1]
+        query = notices_call.kwargs['query']
+        assert 'timeout' in query
+        # HTTP connection timeout should be longer than the snapd-side timeout.
+        import re
+
+        timeout_seconds = float(re.match(r'([\d.]+)s', query['timeout']).group(1))  # type: ignore[union-attr]
+        http_timeout = notices_call.kwargs['timeout']
+        assert http_timeout > timeout_seconds
+
+    def test_async_notices_second_poll_includes_after_param(self, mock_raw: MagicMock):
+        """After the first notice batch, subsequent polls include 'after' to skip old notices."""
         doing_envelope = {
             'type': 'sync',
             'status-code': 200,
@@ -313,14 +402,65 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94', last_repeated='2024-01-01T00:00:00.000000000Z'),
             _fake_response(doing_envelope),
+            self._fake_notices('94', last_repeated='2024-01-01T00:00:01.000000000Z'),
+            _fake_response(done_envelope),
+        ]
+        _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
+        second_notices_call = mock_raw.call_args_list[3]
+        query = second_notices_call.kwargs['query']
+        assert query.get('after') == '2024-01-01T00:00:00.000000000Z'
+
+    def test_async_first_poll_omits_after_param(self, mock_raw: MagicMock):
+        """First notice long-poll has no 'after' so it picks up any already-fired notice."""
+        done_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_done.json')['result'],
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
+            _fake_response(done_envelope),
+        ]
+        _client.post(
+            '/v2/snaps/hello-world',
+            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
+        )
+        first_notices_call = mock_raw.call_args_list[1]
+        assert 'after' not in first_notices_call.kwargs.get('query', {})
+
+    def test_async_doing_then_done(self, mock_raw: MagicMock):
+        # Doing status on first check → loop → Done on second check.
+        doing_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_doing.json')['result'],
+        }
+        done_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_done.json')['result'],
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
+            _fake_response(doing_envelope),
+            self._fake_notices('94'),
             _fake_response(done_envelope),
         ]
         result = _client.post(
             '/v2/snaps/hello-world',
             body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
         )
-        assert mock_raw.call_count == 3
+        assert mock_raw.call_count == 5
         # Returns the data field from the Done response
         assert result == load_fixture('change_done.json')['result'].get('data', {})
 
@@ -333,6 +473,7 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
             _fake_response(done_envelope),
         ]
         result = _client.post(
@@ -351,6 +492,7 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
+            self._fake_notices('96'),
             _fake_response(error_envelope),
         ]
         with pytest.raises(SnapChangeError) as exc_info:
@@ -375,6 +517,7 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
+            self._fake_notices('96'),
             _fake_response(error_envelope),
         ]
         with pytest.raises(SnapChangeError) as exc_info:
@@ -409,6 +552,7 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
             _fake_response(wait_envelope),
         ]
         with caplog.at_level(logging.WARNING, logger='charmlibs.snap._client'):
@@ -419,8 +563,7 @@ class TestAsyncChange:
         assert any('Wait' in r.message for r in caplog.records)
 
     def test_async_change_poll_non_dict_raises_snap_api_error(self, mock_raw: MagicMock):
-        # /v2/changes/{id} result is a list.
-        # This passes _request's dict check but fails in _wait_for_change.
+        # /v2/changes/{id} result is a list — invalid, should raise SnapBadResponseError.
         poll_envelope: dict[str, Any] = {
             'type': 'sync',
             'status-code': 200,
@@ -429,31 +572,29 @@ class TestAsyncChange:
         }
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            self._fake_notices('94'),
             _fake_response(poll_envelope),
         ]
         with pytest.raises(SnapBadResponseError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert 'Unexpected response type' in exc_info.value.message
 
-    def test_async_timeout_raises(self, mock_raw: MagicMock, mocker: MockerFixture):
-        mocker.patch('charmlibs.snap._client._CHANGE_TIMEOUT', 0)
-        mocker.patch('charmlibs.snap._client.time.sleep')
-        doing_result = {
-            'id': '42',
-            'kind': 'install-snap',
-            'summary': 'Install',
-            'status': 'Doing',
-            'ready': False,
-        }
-        doing_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': doing_result,
-        }
+    def test_async_empty_notices_raises_timeout(self, mock_raw: MagicMock):
+        # Empty notices list from snapd means the long-poll timed out server-side.
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(doing_envelope),
+            self._fake_empty_notices(),
+        ]
+        with pytest.raises(SnapTimeoutError) as exc_info:
+            _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
+        assert exc_info.value.kind == 'charmlibs-snap-change-timeout'
+        assert isinstance(exc_info.value, TimeoutError)
+
+    def test_async_timeout_raises(self, mock_raw: MagicMock, mocker: MockerFixture):
+        # With _CHANGE_TIMEOUT=0, the deadline fires before any notice request is made.
+        mocker.patch('charmlibs.snap._client._CHANGE_TIMEOUT', 0)
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
         ]
         with pytest.raises(SnapTimeoutError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
