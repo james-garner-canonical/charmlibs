@@ -45,7 +45,6 @@ something is badly wrong with the system, and user intervention is almost certai
 """
 
 from ._errors import (
-    SnapAlreadyInstalledError,
     SnapAPIError,
     SnapAppNotFoundError,
     SnapBadResponseError,
@@ -54,7 +53,6 @@ from ._errors import (
     SnapError,
     SnapNeedsClassicError,
     SnapNotFoundError,
-    SnapNoUpdatesAvailableError,
     SnapOptionNotFoundError,
     SnapTimeoutError,
 )
@@ -99,14 +97,12 @@ __all__ = [
     'Info',
     'LogEntry',
     'SnapAPIError',
-    'SnapAlreadyInstalledError',
     'SnapAppNotFoundError',
     'SnapBadResponseError',
     'SnapChangeError',
     'SnapConnectionError',
     'SnapError',
     'SnapNeedsClassicError',
-    'SnapNoUpdatesAvailableError',
     'SnapNotFoundError',
     'SnapOptionNotFoundError',
     'SnapTimeoutError',

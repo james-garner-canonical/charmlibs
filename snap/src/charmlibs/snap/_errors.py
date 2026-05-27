@@ -89,7 +89,7 @@ class SnapAPIError(SnapError):
     """Raised when the snapd API returns an error response."""
 
 
-class SnapAlreadyInstalledError(SnapAPIError):
+class _SnapAlreadyInstalledError(SnapAPIError):
     """Raised via the API when an install is attempted for a snap that is already installed."""
 
 
@@ -108,7 +108,7 @@ class SnapNeedsClassicError(SnapAPIError):
     """
 
 
-class SnapNoUpdatesAvailableError(SnapAPIError):
+class _SnapNoUpdatesAvailableError(SnapAPIError):
     """Raised via the API when a refresh is attempted but no updates are available."""
 
 
@@ -137,7 +137,7 @@ class SnapChangeError(SnapAPIError):
 def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: ignore[reportUnusedFunction]
     match kind:
         case 'snap-already-installed':
-            return SnapAlreadyInstalledError
+            return _SnapAlreadyInstalledError
         case 'app-not-found':
             return SnapAppNotFoundError
         case 'option-not-found':
@@ -147,7 +147,7 @@ def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: i
         case 'snap-not-found' | 'snap-not-installed':
             return SnapNotFoundError
         case 'snap-no-update-available':
-            return SnapNoUpdatesAvailableError
+            return _SnapNoUpdatesAvailableError
         case 'interfaces-unchanged':
             return _SnapInterfacesUnchangedError
         case _:

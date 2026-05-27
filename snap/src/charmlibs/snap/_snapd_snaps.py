@@ -148,7 +148,7 @@ def install(
     # NOTE: Unlike the API, the CLI doesn't error if it's already installed (just prints a msg).
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapAlreadyInstalledError:
+    except _errors._SnapAlreadyInstalledError:
         return False
     return True
 
@@ -200,7 +200,7 @@ def refresh(
     # NOTE: Unlike the API, the CLI doesn't error if there are no updates (just prints a msg).
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapNoUpdatesAvailableError:
+    except _errors._SnapNoUpdatesAvailableError:
         return False
     return True
 

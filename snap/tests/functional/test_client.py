@@ -84,7 +84,7 @@ def test_post_waits_for_async_change():
 
 def test_post_sync_error_snap_already_installed():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAlreadyInstalledError) as ctx:
+    with pytest.raises(_errors._SnapAlreadyInstalledError) as ctx:
         _client.post('/v2/snaps/hello-world', body={'action': 'install'})
     assert ctx.value.kind == 'snap-already-installed'
 
@@ -132,7 +132,7 @@ def test_post_async_change_error_raises_snap_change_error():
 def test_post_snap_no_update_available():
     # snap-no-update-available is raised (not suppressed) at the _client level.
     ensure_installed('hello-world', channel='latest/stable')
-    with pytest.raises(_errors.SnapNoUpdatesAvailableError) as ctx:
+    with pytest.raises(_errors._SnapNoUpdatesAvailableError) as ctx:
         _client.post(
             '/v2/snaps/hello-world', body={'action': 'refresh', 'channel': 'latest/stable'}
         )

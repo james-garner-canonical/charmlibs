@@ -12,10 +12,10 @@ import pytest
 
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
-    SnapAlreadyInstalledError,
+    _SnapAlreadyInstalledError,
     SnapError,
     SnapNotFoundError,
-    SnapNoUpdatesAvailableError,
+    _SnapNoUpdatesAvailableError,
 )
 from conftest import result_of
 
@@ -177,7 +177,7 @@ class TestInstall:
         mock_client.post.assert_not_called()
 
     def test_install_already_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAlreadyInstalledError('', kind='', value='')
+        mock_client.post.side_effect = _SnapAlreadyInstalledError('', kind='', value='')
         result = _snapd.install('hello-world')
         assert result is False
 
@@ -228,7 +228,7 @@ class TestRefresh:
             _snapd.refresh('hello-world', channel='edge', revision=42)
 
     def test_refresh_no_updates_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNoUpdatesAvailableError(
+        mock_client.post.side_effect = _SnapNoUpdatesAvailableError(
             'snap "hello-world" has no updates available',
             kind='snap-no-update-available',
             value='',

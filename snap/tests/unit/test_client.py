@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 from charmlibs.snap import _client
 from charmlibs.snap._errors import (
-    SnapAlreadyInstalledError,
+    _SnapAlreadyInstalledError,
     SnapAPIError,
     SnapBadResponseError,
     SnapChangeError,
@@ -84,7 +84,7 @@ class TestPost:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapAlreadyInstalledError):
+        with pytest.raises(_SnapAlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert mock_raw.call_args.args[0] == 'POST'
 
@@ -92,7 +92,7 @@ class TestPost:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapAlreadyInstalledError):
+        with pytest.raises(_SnapAlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         sent = mock_raw.call_args.kwargs['data']
         assert json.loads(sent) == {'action': 'install'}
@@ -101,7 +101,7 @@ class TestPost:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapAlreadyInstalledError):
+        with pytest.raises(_SnapAlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         headers = mock_raw.call_args.kwargs['headers']
         assert headers['Content-Type'] == 'application/json'
@@ -159,7 +159,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapAlreadyInstalledError) as exc_info:
+        with pytest.raises(_SnapAlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert 'already installed' in str(exc_info.value)
 
@@ -208,7 +208,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapAlreadyInstalledError) as exc_info:
+        with pytest.raises(_SnapAlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert exc_info.value._status_code == 400
 
@@ -224,7 +224,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapAlreadyInstalledError) as exc_info:
+        with pytest.raises(_SnapAlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert exc_info.value.value == 'hello-world'
 
