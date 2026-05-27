@@ -44,9 +44,6 @@ _SOCKET_PATH = '/run/snapd.socket'
 # TODO: a user facing way to set timeout? e.g. charmlibs.snap.set_timeouts(request=60, change=1800)
 _REQUEST_TIMEOUT = 30
 _CHANGE_TIMEOUT = 600  # 10 minutes in seconds
-# Extra seconds added to the HTTP connection timeout beyond the snapd-side long-poll timeout,
-# to avoid a race between snapd closing the connection and our own timeout firing.
-_NOTICE_TIMEOUT_BUFFER = 5
 
 
 def get(path: str, query: dict[str, Any] | None = None):
@@ -71,7 +68,6 @@ def _request(
     query: dict[str, Any] | None = None,
     body: dict[str, Any] | None = None,
     log: bool = True,
-    request_timeout: float = _REQUEST_TIMEOUT,
 ) -> dict[str, Any] | list[dict[str, Any]]:
     """Make a JSON request to the snapd server with the given HTTP method and path.
 
@@ -88,9 +84,7 @@ def _request(
         headers['Content-Type'] = 'application/json'
     else:
         data = None
-    response = _request_raw(
-        method, path, query=query, headers=headers, data=data, timeout=request_timeout
-    )
+    response = _request_raw(method, path, query=query, headers=headers, data=data)
     response_bytes = response.read()
     try:
         if path == '/v2/logs':
@@ -147,7 +141,6 @@ def _request_raw(
     query: dict[str, Any] | None = None,
     headers: dict[str, Any] | None = None,
     data: bytes | Generator[bytes, Any, Any] | None = None,
-    timeout: float = _REQUEST_TIMEOUT,
 ) -> http.client.HTTPResponse:
     """Make a request to the snapd server; return the raw HTTPResponse object."""
     assert path.startswith('/')
@@ -165,7 +158,7 @@ def _request_raw(
     # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
     # opener.add_handler(urllib.request.HTTPErrorProcessor())
     try:
-        return opener.open(request, timeout=timeout)
+        return opener.open(request, timeout=_REQUEST_TIMEOUT)
     except TimeoutError:
         raise _errors.SnapTimeoutError(
             f'Request to snapd timed out after {_REQUEST_TIMEOUT}s: {method} {path}',
@@ -187,76 +180,19 @@ def _request_raw(
 
 
 def _wait_for_change(change_id: str) -> dict[str, Any]:
-    """Wait for an async change to complete using /v2/notices long-polling.
+    """Wait for an async change to complete.
 
-    Instead of polling /v2/changes/{id} every 100ms, we ask snapd to hold the HTTP connection
-    open until a change-update notice fires for our change_id (or the timeout elapses). This
-    means snapd pushes the notification the instant the change status changes, and we make at
-    most a handful of HTTP requests for the entire wait rather than thousands of polls.
-
-    The ``timeout`` query parameter is the snapd-side maximum wait duration. Our HTTP connection
-    timeout is set slightly longer so we always receive snapd's response before our own timeout.
-    If no notice arrives within the deadline we raise :class:`SnapTimeoutError`; the change
-    continues running in snapd regardless (snapd has no per-change timeout API).
+    The poll time is 100 milliseconds, the same as in snap clients.
     """
     logger.debug('_wait_for_change(%r)', change_id)
     deadline = time.monotonic() + _CHANGE_TIMEOUT
-    # On the first long-poll we omit 'after', so we pick up any notice that already fired
-    # (e.g. the change completed before we started waiting).  After each batch we advance
-    # 'after' past the latest notice timestamp to avoid re-receiving stale notices.
-    after: str | None = None
-
     while True:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
+        if time.monotonic() > deadline:
             raise _errors.SnapTimeoutError(
                 f'Timed out after {_CHANGE_TIMEOUT}s waiting for snap change {change_id}',
                 kind='charmlibs-snap-change-timeout',
                 value=change_id,
             )
-
-        query: dict[str, Any] = {
-            'types': 'change-update',
-            'keys': change_id,
-            'timeout': f'{remaining:.3f}s',
-        }
-        if after is not None:
-            query['after'] = after
-
-        # Long-poll: snapd holds this connection until a change-update notice fires or
-        # the timeout elapses.  The HTTP request timeout is slightly longer to avoid a
-        # race between snapd closing the connection and our own timeout firing.
-        notices_raw = _request(
-            'GET',
-            '/v2/notices',
-            query=query,
-            log=False,
-            request_timeout=remaining + _NOTICE_TIMEOUT_BUFFER,
-        )
-
-        if not isinstance(notices_raw, list):
-            raise _errors.SnapBadResponseError(
-                message=(
-                    f'Unexpected response type {type(notices_raw).__name__!r}'
-                    " for /v2/notices, expected a 'list'"
-                ),
-                kind='charmlibs-snap',
-                value=str(notices_raw),
-            )
-        if not notices_raw:
-            # Empty list: snapd-side timeout elapsed with no change-update notice.
-            raise _errors.SnapTimeoutError(
-                f'Timed out after {_CHANGE_TIMEOUT}s waiting for snap change {change_id}',
-                kind='charmlibs-snap-change-timeout',
-                value=change_id,
-            )
-
-        # Advance 'after' past the latest notice so subsequent long-polls skip it.
-        last_repeated = max(n.get('last-repeated', '') for n in notices_raw)
-        if last_repeated:
-            after = last_repeated
-
-        # A notice fired — check the current change status.
         response = _request('GET', f'/v2/changes/{change_id}', log=False)
         if not isinstance(response, dict):
             raise _errors.SnapBadResponseError(
@@ -265,8 +201,8 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                 value=str(response),
             )
         match status := response.get('status'):
-            case 'Do' | 'Doing' | 'Undo' | 'Undoing':
-                # Not terminal yet — wait for the next notice.
+            case 'Do' | 'Doing':
+                time.sleep(0.1)
                 continue
             case 'Done':
                 return response.get('data', {})
