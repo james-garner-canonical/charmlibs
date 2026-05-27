@@ -15,6 +15,7 @@ from charmlibs.snap._errors import (
     SnapError,
     SnapNotFoundError,
     _SnapAlreadyInstalledError,
+    _SnapNotInstalledError,
     _SnapNoUpdatesAvailableError,
 )
 from conftest import result_of
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 def _make_snap_not_found():
     return SnapNotFoundError(
         'snap "hello-world" is not installed',
-        kind='snap-not-installed',
+        kind='snap-not-found',
         value='',
         status_code=404,
         status='Not Found',
@@ -201,7 +202,9 @@ class TestRemove:
         assert body['purge'] is True
 
     def test_remove_not_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNotFoundError('', kind='', value='')
+        mock_client.post.side_effect = _SnapNotInstalledError(
+            '', kind='snap-not-installed', value=''
+        )
         result = _snapd.remove('hello-world')
         assert result is False
 
@@ -278,7 +281,7 @@ class TestHold:
         assert hold_time > before + datetime.timedelta(days=1)
 
     def test_hold_not_installed(self, mock_client: MockClient, mocker: MockerFixture):
-        snap_not_found = SnapNotFoundError('', kind='', value='')
+        snap_not_found = SnapNotFoundError('', kind='snap-not-found', value='')
         mocker.patch('charmlibs.snap._snapd_snaps.info', side_effect=snap_not_found)
         with pytest.raises(SnapNotFoundError):
             _snapd.hold('hello-world')

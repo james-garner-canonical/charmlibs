@@ -178,7 +178,7 @@ def remove(snap: str, *, purge: bool = False) -> bool:
     # NOTE: Unlike the API, the CLI doesn't error if the snap isn't installed (just prints a msg).
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapNotFoundError:
+    except _errors._SnapNotInstalledError:
         return False
     return True
 
