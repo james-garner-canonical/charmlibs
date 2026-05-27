@@ -435,6 +435,38 @@ class TestAsyncChange:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert 'Unexpected response type' in exc_info.value.message
 
+    @pytest.mark.parametrize('status', ['Undo', 'Undoing'])
+    def test_async_undo_statuses_continue_polling(self, mock_raw: MagicMock, status: str):
+        """Undo and Undoing are non-terminal rollback states; polling should continue."""
+        undo_result: dict[str, Any] = {
+            'id': '94',
+            'kind': 'install-snap',
+            'summary': 'Install snap "hello-world"',
+            'status': status,
+            'ready': False,
+        }
+        undo_envelope: dict[str, Any] = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': undo_result,
+        }
+        error_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_error.json')['result'],
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            _fake_response(undo_envelope),
+            _fake_response(error_envelope),
+        ]
+        with pytest.raises(SnapChangeError):
+            _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
+        # POST + poll returning undo status + poll returning error = 3 calls
+        assert mock_raw.call_count == 3
+
     def test_async_timeout_raises(self, mock_raw: MagicMock, mocker: MockerFixture):
         mocker.patch('charmlibs.snap._client._CHANGE_TIMEOUT', 0)
         mocker.patch('charmlibs.snap._client.time.sleep')
