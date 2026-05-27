@@ -108,6 +108,10 @@ class SnapNeedsClassicError(SnapAPIError):
     """
 
 
+class SnapRevisionNotAvailableError(SnapAPIError):
+    """Raised via the API when the specified snap revision is not available."""
+
+
 class _SnapNoUpdatesAvailableError(SnapAPIError):
     """Raised via the API when a refresh is attempted but no updates are available."""
 
@@ -148,6 +152,8 @@ def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: i
             return SnapNotFoundError
         case 'snap-no-update-available':
             return _SnapNoUpdatesAvailableError
+        case 'snap-revision-not-available':
+            return SnapRevisionNotAvailableError
         case 'interfaces-unchanged':
             return _SnapInterfacesUnchangedError
         case _:
