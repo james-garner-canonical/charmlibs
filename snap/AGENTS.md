@@ -20,11 +20,10 @@ just format snap
 ```
 Also run tests against the real snapd API like this if the change is substantial, and before reporting completion. These are a bit slow so run them less frequently than the unit tests. Select specific tests with `-k '<expression>'`.
 ```
-multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv .scripts/output-wrapper.sh just functional snap
+.scripts/output-wrapper.sh workshop run resolute -- functional snap
 # read .out to check
 ```
-If the VM isn't available, you must either stop and ask the user, or proceed without functional tests (only if appropriate).
-IMPORTANT: Always use the `--working-directory` and `UV_PROJECT_ENVIRONMENT` arguments, or else there is big trouble.
+If workshop isn't launched yet, run `workshop launch resolute` first. If workshop isn't available, you must either stop and ask the user, or proceed without functional tests (only if appropriate).
 
 **When running functional tests via `run_in_terminal`:** use `mode=sync` with `timeout=360000` (6 minutes). This avoids polling — the result is returned directly once the suite finishes.
 
@@ -34,7 +33,7 @@ Before you make any changes, run all these checks to make sure there aren't any 
 
 ## Checking the snapd API directly
 
-If you need to check how the snapd API responds, write a short Python script at the repo root (e.g. `sketch.py`) and run it inside the VM. The repo root is mounted at `/home/ubuntu/charmlibs` in the VM, so files written by the script are immediately available on the host via `read_file`.
+If you need to check how the snapd API responds, write a short Python script at the repo root (e.g. `sketch.py`) and run it inside the workshop container. The repo root is mounted at `/project` in the container, so files written by the script are immediately available on the host via `read_file`.
 
 ```python
 # sketch.py
@@ -47,16 +46,18 @@ with open('sketch-out.json', 'w') as f:
     json.dump(result, f, indent=2, default=str)
 ```
 
+Run it with `workshop exec` (snapd requires root, so use `--uid 0`):
 ```bash
-multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
-  sudo uvx --with-editable ./snap python sketch.py
+workshop exec --uid 0 resolute -- uvx --with-editable ./snap python sketch.py
 # Then read sketch-out.json from the host with read_file
 ```
 
-You can also use curl directly for quick checks, but be careful of shell quoting issues:
+You can also use curl directly for quick checks:
 ```
-multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- sudo curl -s --unix-socket /run/snapd.socket http://localhost/v2/logs?names=<snap>&n=1
+workshop exec --uid 0 resolute -- curl -s --unix-socket /run/snapd.socket http://localhost/v2/logs?names=<snap>&n=1
 ```
+
+For interactive exploration (e.g. investigating mount permissions, testing multiple commands in sequence), use `workshop shell resolute` to get a persistent shell session inside the container.
 
 ---
 
@@ -133,22 +134,21 @@ def test_SCENARIO_NAME_capture(monkeypatch):
 ```
 
 Key points about the capture pattern:
-- `_CAPTURE_DIR` uses `pathlib.Path(__file__).resolve().parent.parent.parent / '.report' / 'capture'` — this resolves correctly both on the host and inside the VM because the project directory is mounted at `/home/ubuntu/charmlibs`.
+- `_CAPTURE_DIR` uses `pathlib.Path(__file__).resolve().parent.parent.parent / '.report' / 'capture'` — this resolves correctly both on the host and inside the workshop container because the project directory is mounted at `/project`.
 - The monkeypatch wraps `_client._make_error` to intercept the raw API response before it's converted to an exception. This captures both the raw JSON envelope AND the resulting exception fields.
 - Tests always `pytest.fail()` at the end — this is intentional so you can see the captured data in the test output and know these are temporary.
 - The `no_exception` key handles cases where the operation succeeds silently (e.g. idempotent operations).
 - Add `import json` and `import pathlib` to the file's imports if not already present.
 
-### Step 2: Run capture tests on the VM
+### Step 2: Run capture tests
 
 ```bash
-multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
-  .scripts/output-wrapper.sh sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap -k _capture
+.scripts/output-wrapper.sh workshop run resolute -- functional snap -k _capture
 ```
 
 Run this with `mode=sync` and `timeout=360000`.
 
-The output is in `.out` at the repo root. Then read the captured JSON files at `snap/.report/capture/*.json` — accessible from the host because the project directory is mounted in the VM.
+The output is in `.out` at the repo root. Then read the captured JSON files at `snap/.report/capture/*.json` — accessible from the host because the project directory is mounted in the workshop container.
 
 Use `read_file` directly on the JSON files — no terminal command needed, no approval required. Do NOT run `jq` or any other terminal command to read these files.
 
@@ -219,8 +219,7 @@ just format snap
 # check .out
 .scripts/output-wrapper.sh just unit snap
 # check .out
-multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
-  .scripts/output-wrapper.sh sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap
+.scripts/output-wrapper.sh workshop run resolute -- functional snap
 # check .out
 ```
 
