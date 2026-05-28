@@ -15,6 +15,10 @@ _SNAP = 'lxd'
 _APP = 'lxc'
 _ALIAS = 'test-functional-lxc-alias'
 
+# A snap name that is never installed — used for error paths where any absent
+# snap produces the same error response, avoiding unnecessary remove operations.
+_ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
+
 
 def _cleanup_alias() -> None:
     """Remove the test alias if it exists, ignoring errors."""
@@ -32,7 +36,7 @@ def _alias_exists() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# alias
+# alias (lxd installed)
 # ---------------------------------------------------------------------------
 
 
@@ -53,8 +57,37 @@ def test_alias_nonexistent_app_raises_snap_change_error():
     _cleanup_alias()
 
 
+def test_alias_is_idempotent():
+    # Calling alias() again with the same snap, app, and alias name succeeds silently.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)  # second call — no error
+    assert _alias_exists()
+    _cleanup_alias()
+
+
+def test_alias_reassigns_within_same_snap():
+    # Calling alias() with the same alias name but a different app of the same snap
+    # silently reassigns the alias — no error raised.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
+    _snapd_aliases.alias(_SNAP, 'lxd', _ALIAS)  # different app, same snap — no error
+    _cleanup_alias()
+
+
+def test_alias_name_conflicts_with_snap_command_namespace():
+    # Using a snap's own name as the alias name conflicts with its command namespace.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    with pytest.raises(_errors.SnapChangeError) as ctx:
+        _snapd_aliases.alias(_SNAP, _APP, _SNAP)  # alias name = 'lxd'
+    assert 'conflicts with the command namespace' in ctx.value.message
+
+
 # ---------------------------------------------------------------------------
-# unalias
+# unalias (lxd installed)
 # ---------------------------------------------------------------------------
 
 
@@ -77,7 +110,7 @@ def test_unalias_nonexistent_alias_raises():
 
 
 # ---------------------------------------------------------------------------
-# _list_aliases
+# _list_aliases (lxd installed)
 # ---------------------------------------------------------------------------
 
 
@@ -97,25 +130,8 @@ def test_list_aliases_includes_created_alias():
 
 
 # ---------------------------------------------------------------------------
-# not-installed snap (uses hello-world to avoid churn with lxd)
+# hello-world installed (test cross-snap alias conflicts)
 # ---------------------------------------------------------------------------
-
-
-def test_alias_not_installed_snap_raises():
-    ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotInstalledError) as ctx:
-        _snapd_aliases.alias('hello-world', 'hello', 'test-not-installed-alias')
-    assert ctx.value.kind == 'snap-not-installed'
-
-
-def test_alias_is_idempotent():
-    # Calling alias() again with the same snap, app, and alias name succeeds silently.
-    ensure_installed(_SNAP)
-    _cleanup_alias()
-    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
-    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)  # second call — no error
-    assert _alias_exists()
-    _cleanup_alias()
 
 
 def test_alias_duplicate_name_different_snap_raises():
@@ -130,6 +146,22 @@ def test_alias_duplicate_name_different_snap_raises():
     _cleanup_alias()
 
 
+# ---------------------------------------------------------------------------
+# not-installed snap (uses a never-installed name to avoid churn)
+# ---------------------------------------------------------------------------
+
+
+def test_alias_not_installed_snap_raises():
+    with pytest.raises(_errors.SnapNotInstalledError) as ctx:
+        _snapd_aliases.alias(_ABSENT_SNAP, 'hello', 'test-not-installed-alias')
+    assert ctx.value.kind == 'snap-not-installed'
+
+
+# ---------------------------------------------------------------------------
+# unalias after snap removed — last because it removes lxd
+# ---------------------------------------------------------------------------
+
+
 def test_unalias_after_snap_removed_raises():
     # Aliases don't survive snap removal; unaliasing after removal raises the same error
     # as attempting to remove an alias that was never created.
@@ -141,22 +173,3 @@ def test_unalias_after_snap_removed_raises():
         _snapd_aliases.unalias(_ALIAS)
     assert not ctx.value.kind
     assert 'cannot find' in ctx.value.message
-
-
-def test_alias_reassigns_within_same_snap():
-    # Calling alias() with the same alias name but a different app of the same snap
-    # silently reassigns the alias — no error raised.
-    ensure_installed(_SNAP)
-    _cleanup_alias()
-    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
-    _snapd_aliases.alias(_SNAP, 'lxd', _ALIAS)  # different app, same snap — no error
-    _cleanup_alias()
-
-
-def test_alias_name_conflicts_with_snap_command_namespace():
-    # Using a snap's own name as the alias name conflicts with its command namespace.
-    ensure_installed(_SNAP)
-    _cleanup_alias()
-    with pytest.raises(_errors.SnapChangeError) as ctx:
-        _snapd_aliases.alias(_SNAP, _APP, _SNAP)  # alias name = 'lxd'
-    assert 'conflicts with the command namespace' in ctx.value.message

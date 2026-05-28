@@ -12,12 +12,16 @@ from typing import Any
 import pytest
 
 from charmlibs.snap import _errors, _snapd_conf
-from conftest import ensure_installed, ensure_removed
+from conftest import ensure_installed
 
 _SNAP = 'lxd'
 # A key prefix we use to avoid colliding with real lxd configuration.
 _KEY = 'test-functional-key'
 _KEY2 = 'test-functional-key2'
+
+# A snap name that is never installed — used for error paths where any absent
+# snap produces the same error response, avoiding unnecessary remove operations.
+_ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
 
 
 def _cleanup(*keys: str) -> None:
@@ -143,9 +147,8 @@ def test_get_option_not_found_value_contains_snap_and_key():
 
 def test_get_not_installed_snap_raises_option_not_found():
     # Config GET for a non-installed snap returns option-not-found (not snap-not-found).
-    ensure_removed('hello-world')
     with pytest.raises(_errors.SnapOptionNotFoundError) as ctx:
-        _snapd_conf.get('hello-world', 'any-key')
+        _snapd_conf.get(_ABSENT_SNAP, 'any-key')
     assert ctx.value.kind == 'option-not-found'
 
 
@@ -199,35 +202,25 @@ def test_unset_multiple_keys():
 
 
 # ---------------------------------------------------------------------------
-# not-installed snap (uses hello-world to avoid churn with lxd)
+# not-installed snap (uses a never-installed name to avoid churn)
 # ---------------------------------------------------------------------------
 
 
 def test_set_not_installed_snap_raises_snap_not_found():
-    ensure_removed('hello-world')
     with pytest.raises(_errors.SnapNotFoundError) as ctx:
-        _snapd_conf.set('hello-world', {'test-key': 'value'})
+        _snapd_conf.set(_ABSENT_SNAP, {'test-key': 'value'})
     assert ctx.value.kind == 'snap-not-found'
 
 
 def test_unset_not_installed_snap_raises_snap_not_found():
-    ensure_removed('hello-world')
     with pytest.raises(_errors.SnapNotFoundError) as ctx:
-        _snapd_conf.unset('hello-world', 'test-key')
+        _snapd_conf.unset(_ABSENT_SNAP, 'test-key')
     assert ctx.value.kind == 'snap-not-found'
 
 
 # ---------------------------------------------------------------------------
 # set
 # ---------------------------------------------------------------------------
-
-
-def test_set_not_installed_snap_raises():
-    # Config PUT on a non-installed snap raises SnapNotFoundError.
-    ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
-        _snapd_conf.set('hello-world', {'any-key': 'value'})
-    assert ctx.value.kind == 'snap-not-found'
 
 
 def test_set_multiple_keys_at_once():

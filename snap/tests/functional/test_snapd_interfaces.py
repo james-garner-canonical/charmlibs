@@ -7,13 +7,17 @@
 import pytest
 
 from charmlibs.snap import _errors, _snapd_interfaces
-from conftest import ensure_installed, ensure_removed
+from conftest import ensure_installed
 
-_SNAP = 'vlc'
+_SNAP = 'htop'
 _PLUG = 'mount-observe'
 # snapd auto-resolves the mount-observe slot to snapd.
 _SLOT_SNAP = 'snapd'
 _SLOT = 'mount-observe'
+
+# A snap name that is never installed — used for error paths where any absent
+# snap produces the same error response, avoiding unnecessary remove operations.
+_ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
 
 
 def _is_connected() -> bool:
@@ -97,6 +101,30 @@ def test_disconnect_not_connected_no_error():
     assert not _is_connected()
 
 
+def test_disconnect_forget_connected_no_error():
+    # disconnect forget=True on a connected interface works without error.
+    ensure_installed(_SNAP)
+    _ensure_connected()
+    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
+
+
+def test_disconnect_forget_not_connected_no_error():
+    # disconnect forget=True on a not-connected interface is a no-op
+    # (interfaces-unchanged suppressed, same as without forget=True).
+    ensure_installed(_SNAP)
+    _ensure_disconnected()
+    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
+
+
+def test_disconnect_nonexistent_plug_or_slot_raises():
+    # disconnect: plug/slot name doesn't exist on the installed snap.
+    ensure_installed(_SNAP)
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_interfaces.disconnect(_SNAP, 'nonexistent-slot')
+    assert not ctx.value.kind
+    assert 'no plug or slot named' in ctx.value.message
+
+
 # ---------------------------------------------------------------------------
 # _list_interfaces / _list_plugs / _list_slots
 # ---------------------------------------------------------------------------
@@ -150,22 +178,20 @@ def test_list_plugs_connected_only():
 
 
 # ---------------------------------------------------------------------------
-# not-installed snap (uses hello-world to avoid churn with vlc)
+# not-installed snap (uses a never-installed name to avoid churn)
 # ---------------------------------------------------------------------------
 
 
 def test_connect_not_installed_snap_raises():
-    ensure_removed('hello-world')
     with pytest.raises(_errors.SnapAPIError) as ctx:
-        _snapd_interfaces.connect('hello-world', 'home')
+        _snapd_interfaces.connect(_ABSENT_SNAP, 'home')
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
 
 
 def test_disconnect_not_installed_snap_raises():
-    ensure_removed('hello-world')
     with pytest.raises(_errors.SnapAPIError) as ctx:
-        _snapd_interfaces.disconnect('hello-world', 'home')
+        _snapd_interfaces.disconnect(_ABSENT_SNAP, 'home')
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
 
@@ -173,32 +199,7 @@ def test_disconnect_not_installed_snap_raises():
 def test_connect_slot_snap_not_installed_raises():
     # connect: slot snap not installed raises SnapAPIError with empty kind.
     ensure_installed(_SNAP)
-    ensure_removed('hello-world')
     with pytest.raises(_errors.SnapAPIError) as ctx:
-        _snapd_interfaces.connect(_SNAP, _PLUG, 'hello-world', _SLOT)
+        _snapd_interfaces.connect(_SNAP, _PLUG, _ABSENT_SNAP, _SLOT)
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
-
-
-def test_disconnect_nonexistent_plug_or_slot_raises():
-    # disconnect: plug/slot name doesn't exist on the installed snap.
-    ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapAPIError) as ctx:
-        _snapd_interfaces.disconnect(_SNAP, 'nonexistent-slot')
-    assert not ctx.value.kind
-    assert 'no plug or slot named' in ctx.value.message
-
-
-def test_disconnect_forget_connected_no_error():
-    # disconnect forget=True on a connected interface works without error.
-    ensure_installed(_SNAP)
-    _ensure_connected()
-    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
-
-
-def test_disconnect_forget_not_connected_no_error():
-    # disconnect forget=True on a not-connected interface is a no-op
-    # (interfaces-unchanged suppressed, same as without forget=True).
-    ensure_installed(_SNAP)
-    _ensure_disconnected()
-    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
