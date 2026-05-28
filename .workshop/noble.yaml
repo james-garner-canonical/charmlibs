@@ -4,4 +4,5 @@ sdks:
   - name: project-charmlibs
 actions:
   functional: |
-    sudo just python=python3 functional "$@"
+    # Override Python with: workshop run --env PYTHON=python3.12 noble -- functional ...
+    sudo just python="${PYTHON:-python3}" functional "$@"
