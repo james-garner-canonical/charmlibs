@@ -22,6 +22,11 @@ def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) ->
 
     Returns:
         True if the snap was installed or updated, False otherwise.
+
+    Raises:
+        SnapNotFoundError: If the snap does not exist in the store.
+        SnapRevisionNotAvailableError: If the revision does not exist.
+        SnapNeedsClassicError: If the snap requires ``classic=True``.
     """
     info = _snapd_snaps.info(snap, missing_ok=True)
     if info is None:  # Not installed.
@@ -49,6 +54,11 @@ def ensure(
 
     Returns:
         True if the snap was installed or updated, False otherwise.
+
+    Raises:
+        SnapNotFoundError: If the snap does not exist in the store.
+        SnapNeedsClassicError: If the snap requires ``classic=True``.
+        SnapChannelNotAvailableError: If the channel is invalid or unavailable.
     """
     info = _snapd_snaps.info(snap, missing_ok=True)
     if info is None:  # Not installed.

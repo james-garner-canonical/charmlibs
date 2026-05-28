@@ -231,6 +231,9 @@ def hold(snap: str, duration: datetime.timedelta | int | float | None = None) ->
     """Hold a snap to prevent it from being automatically refreshed.
 
     Does not prevent manual refreshes.
+
+    Raises:
+        SnapNotFoundError: If the snap is not installed.
     """
     # https://forum.snapcraft.io/t/snapd-rest-api/17954
     if duration is None:
@@ -249,7 +252,10 @@ def hold(snap: str, duration: datetime.timedelta | int | float | None = None) ->
 
 
 def unhold(snap: str) -> None:
-    """Unhold a snap to allow it to be refreshed."""
+    """Unhold a snap to allow it to be refreshed.
+
+    Does not raise if the snap is not installed or not held.
+    """
     # NOTE: Neither the API nor CLI error if the snap isn't installed or held.
     _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
 
