@@ -2,16 +2,18 @@ If this file is in context and work is on the snap library, treat it with the sa
 
 Familiarise yourself with the codebase by reading everything under snap/src.
 
-Always run these checks. Redirect output to `snap/.report/` so that verbose output doesn't flood your context — read the log file selectively (e.g. with `grep` or `tail`) only if a command fails:
+Always run these checks. Use `.scripts/output-wrapper.sh` to capture output to `.out` — read `.out` selectively (e.g. with `grep` or `tail`) only if a command fails:
 ```
-mkdir -p snap/.report
-just lint snap > snap/.report/lint.log 2>&1 && echo "lint passed" || tail -50 snap/.report/lint.log
-just format snap  # fix any formatting issues (prints a diff if changes are needed; no redirect needed)
-just unit snap > snap/.report/unit.log 2>&1 && echo "unit passed" || grep -E "FAILED|ERROR|short test summary" snap/.report/unit.log | head -50
+just format snap
+.scripts/output-wrapper.sh just lint snap
+# read .out to check
+.scripts/output-wrapper.sh just unit snap
+# read .out to check
 ```
 Also run tests against the real snapd API like this if the change is substantial, and before reporting completion. These are a bit slow so run them less frequently than the unit tests. Select specific tests with `-k '<expression>'`.
 ```
-multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap > snap/.report/functional.log 2>&1 && echo "functional passed" || tail -80 snap/.report/functional.log
+.scripts/output-wrapper.sh multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap
+# read .out to check
 ```
 If the VM isn't available, you must either stop and ask the user, or proceed without functional tests (only if appropriate).
 IMPORTANT: Always use the `--working-directory` and `UV_PROJECT_ENVIRONMENT` arguments, or else there is big trouble.
