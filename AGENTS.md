@@ -134,9 +134,9 @@ Read more: [types of tests in the charmlibs monorepo](https://documentation.ubun
 Functional tests often require `sudo` and may be destructive to the local environment (e.g. installing or removing system packages). **Never run functional tests directly on the host machine.** Always use [Workshop](https://snapcraft.io/workshop) to run them in an isolated VM:
 
 ```bash
+workshop run resolute -- functional <package>    # Ubuntu 26.04
 workshop run noble -- functional <package>       # Ubuntu 24.04
 workshop run jammy -- functional <package>       # Ubuntu 22.04
-workshop run resolute -- functional <package>    # Ubuntu 26.04
 ```
 
 Workshop configs are defined in `.workshop/`. The `functional` action runs `sudo just functional "$@"` inside the VM. Extra pytest flags are passed through:

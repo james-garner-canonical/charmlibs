@@ -48,9 +48,9 @@ just add pathops 'pydantic>=2'
 - `just functional <package>` runs functional tests, which interact with real external processes (but not Juju itself). Some functional test suites may require `sudo` access and may be destructive to the local environment (e.g. installing or removing system packages). Use [Workshop](https://snapcraft.io/workshop) to run them in an isolated VM instead of running them directly on your host:
 
   ```bash
+  workshop run resolute -- functional <package>    # Ubuntu 26.04
   workshop run noble -- functional <package>       # Ubuntu 24.04
   workshop run jammy -- functional <package>       # Ubuntu 22.04
-  workshop run resolute -- functional <package>    # Ubuntu 26.04
   ```
 
   Extra pytest flags are passed through, e.g. `workshop run noble -- functional snap -x -k test_install`. Workshop configs are in `.workshop/`.
