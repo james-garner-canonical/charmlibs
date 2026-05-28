@@ -24,7 +24,11 @@ from . import _client
 
 
 def start(snap: str, *services: str, enable: bool = False) -> None:
-    """Start snap services."""
+    """Start snap services.
+
+    Raises:
+        SnapAppNotFoundError: if the snap is not installed or the service is not found.
+    """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'start', 'names': names}
     if enable:
@@ -33,7 +37,11 @@ def start(snap: str, *services: str, enable: bool = False) -> None:
 
 
 def stop(snap: str, *services: str, disable: bool = False) -> None:
-    """Stop snap services."""
+    """Stop snap services.
+
+    Raises:
+        SnapAppNotFoundError: if the snap is not installed or the service is not found.
+    """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'stop', 'names': names}
     if disable:
@@ -42,7 +50,11 @@ def stop(snap: str, *services: str, disable: bool = False) -> None:
 
 
 def restart(snap: str, *services: str) -> None:
-    """Restart snap services."""
+    """Restart snap services.
+
+    Raises:
+        SnapAppNotFoundError: if the snap is not installed or the service is not found.
+    """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'restart', 'names': names}
     _client.post('/v2/apps', body=data)

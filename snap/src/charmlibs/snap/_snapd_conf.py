@@ -28,7 +28,11 @@ logger = logging.getLogger(__name__)
 
 
 def get(snap: str, /, *keys: str) -> dict[str, Any]:
-    """Get snap configuration."""
+    """Get snap configuration.
+
+    Raises:
+        SnapOptionNotFoundError: if the snap is not installed, or if a requested key is not set.
+    """
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
     assert isinstance(config, dict)
@@ -42,7 +46,11 @@ def _get_one(snap: str, key: str, /) -> Any:  # pyright: ignore[reportUnusedFunc
 
 
 def unset(snap: str, key: str, /, *keys: str) -> None:
-    """Unset snap configuration keys."""
+    """Unset snap configuration keys.
+
+    Raises:
+        SnapNotFoundError: if the snap is not installed.
+    """
     _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 
 
@@ -53,5 +61,9 @@ def _unset_all(snap: str) -> None:  # pyright: ignore[reportUnusedFunction]
 
 # Defined last to minimise the chance of meaningfully shadowing the built-in set type.
 def set(snap: str, config: dict[str, Any], /) -> None:  # noqa: A001 (shadowing a Python builtin)
-    """Set snap configuration."""
+    """Set snap configuration.
+
+    Raises:
+        SnapNotFoundError: if the snap is not installed.
+    """
     _client.put(f'/v2/snaps/{snap}/conf', body=config)

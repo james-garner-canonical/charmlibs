@@ -27,7 +27,11 @@ from . import _client, _errors
 def connect(
     plug_snap: str, plug: str, slot_snap: str | None = None, slot: str | None = None, /
 ) -> None:
-    """Connect a snap and plug, to a target snap and slot."""
+    """Connect a snap and plug, to a target snap and slot.
+
+    Raises:
+        SnapAPIError: if the snap is not installed or the plug/slot is not found.
+    """
     data = {
         'action': 'connect',
         'plugs': [{'snap': plug_snap, 'plug': plug}],
@@ -45,7 +49,11 @@ def disconnect(
     *,
     forget: bool = False,
 ) -> None:
-    """Disconnect a plug from a slot."""
+    """Disconnect a plug from a slot.
+
+    Raises:
+        SnapAPIError: if the snap is not installed.
+    """
     data: dict[str, Any] = {'action': 'disconnect'}
     if slot_snap is None:
         assert slot is None

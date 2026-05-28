@@ -29,7 +29,11 @@ logger = logging.getLogger(__name__)
 
 
 def alias(snap: str, app: str, alias_name: str) -> None:
-    """Create an alias for a snap app."""
+    """Create an alias for a snap app.
+
+    Raises:
+        SnapAPIError: if the snap is not installed.
+    """
     data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
     _client.post('/v2/aliases', body=data)
 
