@@ -45,7 +45,7 @@ just add pathops 'pydantic>=2'
 
 `functional` and `integration` tests are also executed in CI, and can be run locally too. They're excluded from `just check` as they may require additional setup:
 
-- `just functional <package>` runs functional tests, which interact with real external processes (but not Juju itself). Some functional test suites may require `sudo` access and may be destructive to the local environment (e.g. installing or removing system packages). Use [Workshop](https://snapcraft.io/workshop) to run them in an isolated VM instead of running them directly on your host:
+- `just functional <package>` runs functional tests, which interact with real external processes (but not Juju itself). Some functional test suites may require `sudo` access and may be destructive to the local environment (e.g. installing or removing system packages). Use [Workshop](https://snapcraft.io/workshop) to run them in an isolated container instead of running them directly on your host:
 
   ```bash
   workshop run resolute -- functional <package>    # Ubuntu 26.04

@@ -131,7 +131,7 @@ Read more: [types of tests in the charmlibs monorepo](https://documentation.ubun
 
 ### Running functional tests with Workshop
 
-Functional tests often require `sudo` and may be destructive to the local environment (e.g. installing or removing system packages). **Never run functional tests directly on the host machine.** Always use [Workshop](https://snapcraft.io/workshop) to run them in an isolated VM:
+Functional tests often require `sudo` and may be destructive to the local environment (e.g. installing or removing system packages). **Never run functional tests directly on the host machine.** Always use [Workshop](https://snapcraft.io/workshop) to run them in an isolated container:
 
 ```bash
 workshop run resolute -- functional <package>    # Ubuntu 26.04
