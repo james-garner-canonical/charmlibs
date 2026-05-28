@@ -101,12 +101,8 @@ class SnapNotFoundError(SnapAPIError):
     """Raised via the API when a snap is not found in the store."""
 
 
-class _SnapNotInstalledError(SnapAPIError):
-    """Raised via the API when a snap is not installed on the system.
-
-    This class is private because the public remove function suppresses this error,
-    returning False instead.
-    """
+class SnapNotInstalledError(SnapAPIError):
+    """Raised via the API when a snap is not installed on the system."""
 
 
 class SnapNeedsClassicError(SnapAPIError):
@@ -159,7 +155,7 @@ def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: i
         case 'snap-not-found':
             return SnapNotFoundError
         case 'snap-not-installed':
-            return _SnapNotInstalledError
+            return SnapNotInstalledError
         case 'snap-no-update-available':
             return _SnapNoUpdatesAvailableError
         case 'snap-revision-not-available':

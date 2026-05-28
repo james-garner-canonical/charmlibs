@@ -12,11 +12,11 @@ from charmlibs.snap._errors import (
     SnapError,
     SnapNeedsClassicError,
     SnapNotFoundError,
+    SnapNotInstalledError,
     SnapOptionNotFoundError,
     _error_type_from_result_kind,
     _SnapAlreadyInstalledError,
     _SnapInterfacesUnchangedError,
-    _SnapNotInstalledError,
     _SnapNoUpdatesAvailableError,
 )
 
@@ -35,7 +35,7 @@ class TestErrorTypeFromResultKind:
         assert _error_type_from_result_kind('snap-not-found') is SnapNotFoundError
 
     def test_snap_not_installed(self):
-        assert _error_type_from_result_kind('snap-not-installed') is _SnapNotInstalledError
+        assert _error_type_from_result_kind('snap-not-installed') is SnapNotInstalledError
 
     def test_snap_no_update_available(self):
         assert (
@@ -122,14 +122,14 @@ class TestSnapError:
         assert 'Bad Request' in r
 
     def test_subclass_repr(self):
-        err = _SnapNotInstalledError(
+        err = SnapNotInstalledError(
             'snap not installed',
             kind='snap-not-installed',
             value='',
             status_code=404,
             status='Not Found',
         )
-        assert '_SnapNotInstalledError' in repr(err)
+        assert 'SnapNotInstalledError' in repr(err)
 
     def test_snap_api_error_is_subclass_of_snap_error(self):
         assert issubclass(SnapAPIError, SnapError)
@@ -146,7 +146,7 @@ class TestSnapError:
         for cls in [
             _SnapAlreadyInstalledError,
             SnapNotFoundError,
-            _SnapNotInstalledError,
+            SnapNotInstalledError,
             SnapNeedsClassicError,
             SnapOptionNotFoundError,
             _SnapNoUpdatesAvailableError,

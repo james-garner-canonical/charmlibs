@@ -14,8 +14,8 @@ from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
     SnapError,
     SnapNotFoundError,
+    SnapNotInstalledError,
     _SnapAlreadyInstalledError,
-    _SnapNotInstalledError,
     _SnapNoUpdatesAvailableError,
 )
 from conftest import result_of
@@ -202,7 +202,7 @@ class TestRemove:
         assert body['purge'] is True
 
     def test_remove_not_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = _SnapNotInstalledError(
+        mock_client.post.side_effect = SnapNotInstalledError(
             '', kind='snap-not-installed', value=''
         )
         result = _snapd.remove('hello-world')

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from charmlibs.snap import _snapd_aliases
-from charmlibs.snap._errors import _SnapNotInstalledError
+from charmlibs.snap._errors import SnapNotInstalledError
 from conftest import result_of
 
 if TYPE_CHECKING:
@@ -26,14 +26,14 @@ class TestAlias:
         )
 
     def test_alias_not_installed_raises(self, mock_client: MockClient):
-        mock_client.post.side_effect = _SnapNotInstalledError(
+        mock_client.post.side_effect = SnapNotInstalledError(
             'snap "hello-world" is not installed',
             kind='snap-not-installed',
             value='hello-world',
             status_code=400,
             status='Bad Request',
         )
-        with pytest.raises(_SnapNotInstalledError):
+        with pytest.raises(SnapNotInstalledError):
             _snapd_aliases.alias('hello-world', 'hello', 'test-alias')
 
 
