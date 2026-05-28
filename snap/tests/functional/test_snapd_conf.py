@@ -199,6 +199,25 @@ def test_unset_multiple_keys():
 
 
 # ---------------------------------------------------------------------------
+# not-installed snap (uses hello-world to avoid churn with lxd)
+# ---------------------------------------------------------------------------
+
+
+def test_set_not_installed_snap_raises_snap_not_found():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+        _snapd_conf.set('hello-world', {'test-key': 'value'})
+    assert ctx.value.kind == 'snap-not-found'
+
+
+def test_unset_not_installed_snap_raises_snap_not_found():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+        _snapd_conf.unset('hello-world', 'test-key')
+    assert ctx.value.kind == 'snap-not-found'
+
+
+# ---------------------------------------------------------------------------
 # set
 # ---------------------------------------------------------------------------
 

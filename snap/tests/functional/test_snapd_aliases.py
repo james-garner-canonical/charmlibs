@@ -9,7 +9,7 @@ import subprocess
 import pytest
 
 from charmlibs.snap import _errors, _snapd_aliases
-from conftest import ensure_installed
+from conftest import ensure_installed, ensure_removed
 
 _SNAP = 'lxd'
 _APP = 'lxc'
@@ -94,3 +94,15 @@ def test_list_aliases_includes_created_alias():
     aliases = _snapd_aliases._list_aliases()
     assert _SNAP in aliases
     _cleanup_alias()
+
+
+# ---------------------------------------------------------------------------
+# not-installed snap (uses hello-world to avoid churn with lxd)
+# ---------------------------------------------------------------------------
+
+
+def test_alias_not_installed_snap_raises():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_aliases.alias('hello-world', 'hello', 'test-not-installed-alias')
+    assert ctx.value.kind == 'snap-not-installed'

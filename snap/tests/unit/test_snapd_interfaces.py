@@ -7,7 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from charmlibs.snap import _snapd_interfaces
+from charmlibs.snap._errors import SnapAPIError
 from charmlibs.snap._snapd_interfaces import _Plug, _Slot
 from conftest import result_of
 
@@ -42,6 +45,18 @@ class TestConnect:
         mock_client.post.assert_called_once()
         assert mock_client.post.call_args.args[0] == '/v2/interfaces'
 
+    def test_connect_not_installed_raises(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapAPIError(
+            'snap "hello-world" is not installed',
+            kind='',
+            value='',
+            status_code=400,
+            status='Bad Request',
+        )
+        with pytest.raises(SnapAPIError) as ctx:
+            _snapd_interfaces.connect('hello-world', 'home')
+        assert not ctx.value.kind
+
 
 class TestDisconnect:
     def test_disconnect_2_arg(self, mock_client: MockClient):
@@ -75,6 +90,18 @@ class TestDisconnect:
         _snapd_interfaces.disconnect('vlc', 'mount-observe')
         body = mock_client.post.call_args.kwargs['body']
         assert body['action'] == 'disconnect'
+
+    def test_disconnect_not_installed_raises(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapAPIError(
+            'snap "hello-world" is not installed',
+            kind='',
+            value='',
+            status_code=400,
+            status='Bad Request',
+        )
+        with pytest.raises(SnapAPIError) as ctx:
+            _snapd_interfaces.disconnect('hello-world', 'home')
+        assert not ctx.value.kind
 
 
 class TestListInterfaces:

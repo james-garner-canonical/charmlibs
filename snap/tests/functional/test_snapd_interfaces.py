@@ -7,7 +7,7 @@
 import pytest
 
 from charmlibs.snap import _errors, _snapd_interfaces
-from conftest import ensure_installed
+from conftest import ensure_installed, ensure_removed
 
 _SNAP = 'vlc'
 _PLUG = 'mount-observe'
@@ -147,3 +147,24 @@ def test_list_plugs_connected_only():
     _ensure_disconnected()
     disconnected_plugs = _snapd_interfaces._list_plugs(_SNAP, connected_only=True)
     assert not any(p.plug == _PLUG for p in disconnected_plugs)
+
+
+# ---------------------------------------------------------------------------
+# not-installed snap (uses hello-world to avoid churn with vlc)
+# ---------------------------------------------------------------------------
+
+
+def test_connect_not_installed_snap_raises():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_interfaces.connect('hello-world', 'home')
+    assert not ctx.value.kind
+    assert 'not installed' in ctx.value.message
+
+
+def test_disconnect_not_installed_snap_raises():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_interfaces.disconnect('hello-world', 'home')
+    assert not ctx.value.kind
+    assert 'not installed' in ctx.value.message

@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 
 from charmlibs.snap import _errors, _snapd_apps
-from conftest import ensure_installed
+from conftest import ensure_installed, ensure_removed
 
 _SNAP = 'kube-proxy'
 _SERVICE = 'daemon'
@@ -198,6 +198,32 @@ def test_list_services_returns_list():
     assert len(services) > 0
     names = [s['name'] for s in services]
     assert _SERVICE in names
+
+
+# ---------------------------------------------------------------------------
+# not-installed snap (uses hello-world to avoid churn with kube-proxy)
+# ---------------------------------------------------------------------------
+
+
+def test_start_not_installed_snap_raises_app_not_found():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+        _snapd_apps.start('hello-world', 'svc')
+    assert ctx.value.kind == 'app-not-found'
+
+
+def test_stop_not_installed_snap_raises_app_not_found():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+        _snapd_apps.stop('hello-world', 'svc')
+    assert ctx.value.kind == 'app-not-found'
+
+
+def test_restart_not_installed_snap_raises_app_not_found():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+        _snapd_apps.restart('hello-world', 'svc')
+    assert ctx.value.kind == 'app-not-found'
 
 
 def test_list_services_no_snap_returns_all():
