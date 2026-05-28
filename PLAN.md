@@ -24,8 +24,8 @@ Work through the next module in the list. Your task is done when you finish this
 - [x] `_snapd_interfaces` — snap interfaces (connect, disconnect)
 - [x] `_snapd_aliases` — snap aliases (alias, unalias)
 - [x] `_snapd_logs` — snap logs (logs)
-- [ ] `_functions` — high-level helpers (ensure, ensure_revision)
-- [ ] `_client` — connection errors, timeouts, async change failures (unit tests only)
+- [x] `_functions` — high-level helpers (ensure, ensure_revision)
+- [x] `_client` — connection errors, timeouts, async change failures (unit tests only)
 
 ## Missing Error Scenarios Per Module
 
@@ -136,15 +136,18 @@ Tests: `snap/tests/functional/test_snapd_logs.py`, `snap/tests/unit/test_snapd_l
 - No new unit tests needed — `logs()` has no conditional error handling; all errors propagate directly from `_client.get`.
 - Added docstring to `logs()` with `Raises:` section documenting `SnapNotFoundError`, `SnapAppNotFoundError`, and `SnapAPIError`.
 
-### `_functions` (snap/src/charmlibs/snap/_functions.py)
+### `_functions` (completed)
 
-Tests: `snap/tests/functional/test_functions.py`, `snap/tests/unit/test_functions.py`
+- Coverage was already excellent — functional and unit tests cover all install/refresh/no-op paths and all realistic error paths (`SnapNeedsClassicError`, `SnapNotFoundError`, `SnapRevisionNotAvailableError`, invalid channel).
+- No new tests, error classes, or docstring changes were needed.
 
-Coverage is already excellent. No new error scenarios identified.
+### `_client` (completed)
 
-### `_client` (snap/src/charmlibs/snap/_client.py)
-
-Tests: unit tests only — `snap/tests/unit/test_client.py` (new file)
+- All `_request_raw` connection/timeout error paths were already unit-tested.
+- All `_wait_for_change` terminal states (`Done`, `Wait`, `Error`, `Doing`, `Undoing`) were already unit-tested.
+- Added `test_async_unknown_status_raises_snap_change_error`: the defensive `case _:` branch in `_wait_for_change` raises `SnapChangeError` with kind `charmlibs-snap-change-unknown`. Not triggered in practice, but worth verifying the guard is wired up correctly.
+- Added `test_missing_result_key_raises_snap_bad_response_error`: a sync response with `type: 'sync'` but no `result` key triggers the `except KeyError` path in `_request`, raising `SnapBadResponseError`. The existing test covered missing `type`; this covers missing `result`.
+- No new error classes or docstring changes needed.
 
 All modules call through `_client.get/post/put` → `_request` → `_request_raw`. Connection and timeout errors propagate identically regardless of which module initiates the call, so they only need to be tested once at the `_client` level.
 

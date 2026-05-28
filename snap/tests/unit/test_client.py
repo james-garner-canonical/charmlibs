@@ -274,6 +274,17 @@ class TestErrorResponses:
         assert exc_info.value.kind == 'charmlibs-snap-connection-error'
         assert isinstance(exc_info.value, ConnectionError)
 
+    def test_missing_result_key_raises_snap_bad_response_error(self, mock_raw: MagicMock):
+        # A sync response with no 'result' key raises SnapBadResponseError.
+        mock_raw.return_value = _fake_response({
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+        })
+        with pytest.raises(SnapBadResponseError) as exc_info:
+            _client.get('/v2/snaps/hello-world')
+        assert 'Missing expected key' in exc_info.value.message
+
 
 class TestAsyncChange:
     def test_async_triggers_poll(self, mock_raw: MagicMock):
@@ -492,6 +503,30 @@ class TestAsyncChange:
         assert exc_info.value.kind == 'charmlibs-snap-change-timeout'
         assert 'snap change' in exc_info.value.message
         assert isinstance(exc_info.value, TimeoutError)
+
+    def test_async_unknown_status_raises_snap_change_error(self, mock_raw: MagicMock):
+        # An unrecognised change status raises SnapChangeError with the 'unknown' kind.
+        unknown_result = {
+            'id': '42',
+            'kind': 'install-snap',
+            'summary': 'Install snap',
+            'status': 'Halted',
+            'ready': False,
+        }
+        unknown_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': unknown_result,
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
+            _fake_response(unknown_envelope),
+        ]
+        with pytest.raises(SnapChangeError) as exc_info:
+            _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
+        assert exc_info.value.kind == 'charmlibs-snap-change-unknown'
+        assert 'Halted' in exc_info.value.message
 
 
 class TestLogsEndpoint:
