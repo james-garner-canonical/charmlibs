@@ -71,12 +71,13 @@ def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
 
     Args:
         snaps: Snap names to retrieve logs for. If omitted, returns system-wide snap logs.
-        num_lines: Maximum number of log lines to return. Must be positive.
+        num_lines: Maximum number of log lines to return. Must be a positive integer,
+            or ``-1`` to retrieve all available log lines (equivalent to ``snap logs -n all``).
 
     Raises:
         SnapNotFoundError: If a specified snap is not installed.
         SnapAppNotFoundError: If a specified snap has no services.
-        SnapAPIError: If ``num_lines`` is invalid (e.g. zero).
+        SnapAPIError: If ``num_lines`` is invalid (e.g. zero or less than -1).
     """
     query: dict[str, Any] = {'n': num_lines}
     if snaps:

@@ -129,7 +129,8 @@ Tests: `snap/tests/functional/test_snapd_logs.py`, `snap/tests/unit/test_snapd_l
 
 - A truly nonexistent snap name (e.g. `nonexistent-snap-xyz123`) and a removed-but-real snap both raise `SnapNotFoundError` with `kind='snap-not-found'` — no distinction at the `/v2/logs` endpoint.
 - `num_lines=0` is rejected by snapd with `SnapAPIError` (empty kind), message `"invalid value for n: 0"`. Not worth a dedicated error class.
-- `num_lines=-1` is accepted silently by snapd — returns a list of log entries (likely all available).
+- `num_lines=-1` (and `-100`, etc.) silently defaults to 10 — snapd treats any non-positive integer as the default.
+- Non-integer `n` values (e.g. `n=foo` via curl) also silently default to 10 — HTTP 200 with 10 entries. Not reachable through the library since `num_lines` is typed as `int`.
 - Calling `logs()` with no snap arguments returns system-wide snap logs — works without error.
 - No new error classes needed.
 - No new unit tests needed — `logs()` has no conditional error handling; all errors propagate directly from `_client.get`.
