@@ -22,7 +22,7 @@ Work through the next module in the list. Your task is done when you finish this
 - [x] `_snapd_conf` — snap configuration (get, set, unset)
 - [x] `_snapd_apps` — snap services (start, stop, restart)
 - [x] `_snapd_interfaces` — snap interfaces (connect, disconnect)
-- [ ] `_snapd_aliases` — snap aliases (alias, unalias)
+- [x] `_snapd_aliases` — snap aliases (alias, unalias)
 - [ ] `_snapd_logs` — snap logs (logs)
 - [ ] `_functions` — high-level helpers (ensure, ensure_revision)
 - [ ] `_client` — connection errors, timeouts, async change failures (unit tests only)
@@ -98,6 +98,17 @@ Tests: `snap/tests/functional/test_snapd_aliases.py`, `snap/tests/unit/test_snap
 | `alias` | Alias name that already exists (different snap) | Medium | Conflict error? |
 | `alias` | Empty or invalid alias name | Low | |
 | `unalias` | Alias created, snap removed, then unalias | Medium | Does the alias survive snap removal? |
+
+### `_snapd_aliases` (completed)
+
+- `alias()` is fully idempotent when called twice with the same snap+app+alias_name — no error, second call succeeds silently.
+- Calling `alias()` with the same alias name but a different app of the **same snap** also succeeds silently — snapd reassigns the alias to the new app without error.
+- Only trying to claim an alias already held by a **different snap** raises `SnapChangeError` with "already enabled for" in the message.
+- Trying to claim an alias name already held by a different snap raises `SnapChangeError` with "already enabled for" in the message.
+- Aliases do **not** survive snap removal. Calling `unalias()` after the snap is removed raises `SnapAPIError` with empty kind and "cannot find manual alias" in the message — identical to calling `unalias()` on a never-created alias.
+- `hello-world` snap's app name is `hello-world`, not `hello` — important for test setup; the existing `test_alias_not_installed_snap_raises` works because snapd rejects with `snap-not-installed` before checking the app name.
+- No new error classes needed (all new scenarios map to existing `SnapChangeError` or base `SnapAPIError`).
+- No new unit tests added — `alias()` and `unalias()` have no conditional logic; existing body-construction tests are sufficient.
 
 ### `_snapd_logs` (snap/src/charmlibs/snap/_snapd_logs.py)
 

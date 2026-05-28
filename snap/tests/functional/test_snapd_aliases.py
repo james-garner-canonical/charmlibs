@@ -106,3 +106,48 @@ def test_alias_not_installed_snap_raises():
     with pytest.raises(_errors.SnapNotInstalledError) as ctx:
         _snapd_aliases.alias('hello-world', 'hello', 'test-not-installed-alias')
     assert ctx.value.kind == 'snap-not-installed'
+
+
+def test_alias_is_idempotent():
+    # Calling alias() again with the same snap, app, and alias name succeeds silently.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)  # second call — no error
+    assert _alias_exists()
+    _cleanup_alias()
+
+
+def test_alias_duplicate_name_different_snap_raises():
+    # An alias name already claimed by another snap raises SnapChangeError.
+    ensure_installed(_SNAP)
+    ensure_installed('hello-world')
+    _cleanup_alias()
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
+    with pytest.raises(_errors.SnapChangeError) as ctx:
+        _snapd_aliases.alias('hello-world', 'hello-world', _ALIAS)
+    assert 'already enabled for' in ctx.value.message
+    _cleanup_alias()
+
+
+def test_unalias_after_snap_removed_raises():
+    # Aliases don't survive snap removal; unaliasing after removal raises the same error
+    # as attempting to remove an alias that was never created.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
+    ensure_removed(_SNAP)
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_aliases.unalias(_ALIAS)
+    assert not ctx.value.kind
+    assert 'cannot find' in ctx.value.message
+
+
+def test_alias_reassigns_within_same_snap():
+    # Calling alias() with the same alias name but a different app of the same snap
+    # silently reassigns the alias — no error raised.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
+    _snapd_aliases.alias(_SNAP, 'lxd', _ALIAS)  # different app, same snap — no error
+    _cleanup_alias()
