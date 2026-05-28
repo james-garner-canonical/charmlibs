@@ -96,3 +96,31 @@ class TestUnset:
         )
         with pytest.raises(SnapNotFoundError):
             _snapd_conf.unset('hello-world', 'test-key')
+
+
+class TestGetAdditional:
+    def test_get_mixed_keys_raises_option_not_found(self, mock_client: MockClient):
+        mock_client.get.side_effect = SnapOptionNotFoundError(
+            'snap "lxd" has no "key-that-does-not-exist-xyz" configuration option',
+            kind='option-not-found',
+            value={'SnapName': 'lxd', 'Key': 'key-that-does-not-exist-xyz'},
+            status_code=400,
+            status='Bad Request',
+        )
+        with pytest.raises(SnapOptionNotFoundError) as ctx:
+            _snapd_conf.get('lxd', 'existing-key', 'key-that-does-not-exist-xyz')
+        assert ctx.value.kind == 'option-not-found'
+
+
+class TestSetAdditional:
+    def test_set_empty_dict(self, mock_client: MockClient):
+        # set({}) sends an empty body — the API accepts it as a no-op.
+        _snapd_conf.set('lxd', {})
+        mock_client.put.assert_called_once_with('/v2/snaps/lxd/conf', body={})
+
+
+class TestUnsetAdditional:
+    def test_unset_dotted_path(self, mock_client: MockClient):
+        # unset() with a dotted-path key passes it as-is to the API.
+        _snapd_conf.unset('lxd', 'parent.child')
+        mock_client.put.assert_called_once_with('/v2/snaps/lxd/conf', body={'parent.child': None})

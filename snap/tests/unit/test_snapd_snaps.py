@@ -12,9 +12,11 @@ import pytest
 
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
+    SnapAPIError,
     SnapError,
     SnapNotFoundError,
     SnapNotInstalledError,
+    SnapRevisionNotAvailableError,
     _SnapAlreadyInstalledError,
     _SnapNoUpdatesAvailableError,
 )
@@ -325,3 +327,92 @@ class TestListChannels:
         assert info.name == 'hello-world'
         assert info.revision == '29'
         assert info.classic is False
+
+    def test_list_channels_nonexistent_snap_raises(self, mock_client: MockClient):
+        mock_client.get.side_effect = SnapNotFoundError(
+            'snap not found',
+            kind='snap-not-found',
+            value='this-snap-does-not-exist-xyz',
+            status_code=404,
+            status='Not Found',
+        )
+        with pytest.raises(SnapNotFoundError) as ctx:
+            _snapd._list_channels('this-snap-does-not-exist-xyz')
+        assert ctx.value.kind == 'snap-not-found'
+
+
+class TestInstallAdditionalErrors:
+    def test_install_nonexistent_snap_raises_snap_not_found(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapNotFoundError(
+            'snap not found',
+            kind='snap-not-found',
+            value='this-snap-does-not-exist-xyz-abc-123',
+            status_code=404,
+            status='Not Found',
+        )
+        with pytest.raises(SnapNotFoundError) as ctx:
+            _snapd.install('this-snap-does-not-exist-xyz-abc-123')
+        assert ctx.value.kind == 'snap-not-found'
+
+    def test_install_invalid_channel_raises_snap_api_error(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapAPIError(
+            'no snap revision on specified channel',
+            kind='snap-channel-not-available',
+            value='',
+            status_code=404,
+            status='Not Found',
+        )
+        with pytest.raises(SnapAPIError) as ctx:
+            _snapd.install('hello-world', channel='garbage')
+        assert ctx.value.kind == 'snap-channel-not-available'
+
+    def test_install_revision_not_available_raises(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapRevisionNotAvailableError(
+            'no snap revision available as specified',
+            kind='snap-revision-not-available',
+            value='hello-world',
+            status_code=404,
+            status='Not Found',
+        )
+        with pytest.raises(SnapRevisionNotAvailableError) as ctx:
+            _snapd.install('hello-world', revision=99999999)
+        assert ctx.value.kind == 'snap-revision-not-available'
+
+
+class TestRefreshAdditionalErrors:
+    def test_refresh_invalid_channel_raises_snap_api_error(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapAPIError(
+            'no snap revision on specified channel',
+            kind='snap-channel-not-available',
+            value='',
+            status_code=404,
+            status='Not Found',
+        )
+        with pytest.raises(SnapAPIError) as ctx:
+            _snapd.refresh('hello-world', channel='garbage')
+        assert ctx.value.kind == 'snap-channel-not-available'
+
+    def test_refresh_revision_not_available_raises(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapRevisionNotAvailableError(
+            'no snap revision available as specified',
+            kind='snap-revision-not-available',
+            value='hello-world',
+            status_code=404,
+            status='Not Found',
+        )
+        with pytest.raises(SnapRevisionNotAvailableError) as ctx:
+            _snapd.refresh('hello-world', revision=99999999)
+        assert ctx.value.kind == 'snap-revision-not-available'
+
+
+class TestRemoveAdditionalCases:
+    def test_remove_purge_not_installed_returns_false(self, mock_client: MockClient):
+        mock_client.post.side_effect = SnapNotInstalledError(
+            'snap "hello-world" is not installed',
+            kind='snap-not-installed',
+            value='hello-world',
+            status_code=404,
+            status='Not Found',
+        )
+        result = _snapd.remove('hello-world', purge=True)
+        assert result is False

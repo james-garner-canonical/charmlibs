@@ -1,12 +1,14 @@
 # Plan: Comprehensive Error-Path Test Coverage for Snap Library
 
-> **Shell**: We are in **fish**. Do not use bash-only syntax (e.g. `&&` chaining in loops, `$?`).
+> **Shell**: We are in **fish**. Do not use bash-only syntax. In particular:
+> - `for` loops use `end` not `done`: `for f in *.json; echo $f; end`
+> - Do NOT run terminal commands to read capture JSON — use `read_file` directly on `snap/.report/capture/*.json` instead (no approval required).
 >
-> **Output capture**: **Always** run commands via `.scripts/output-wrapper.sh`. This writes stdout+stderr to `.out`. Read `.out` afterwards to check results. Never use `>` / `2>&1` redirects directly.
+> **Output capture**: **Always** run commands via `.scripts/output-wrapper.sh`. This writes stdout+stderr to `.out`. Read `.out` afterwards to check results — it is plain text and `grep` / `tail` / `cat` work normally on it.
 >
 > **Just commands**: Always use `just` commands when one exists (e.g. `just lint snap`, `just unit snap`, `just format snap`). Do not call `uv`, `pytest`, `ruff`, etc. directly.
 >
-> **`-k` quoting caveat**: `just unit` loses quoting on `-k` expressions containing spaces (e.g. `-k 'foo or bar'`). This is a `just` limitation — the `unit` recipe uses `{{flags}}` interpolation which strips quotes. **Workarounds**: use `-k` with a single pattern (no `or`/`and`), or run selective tests via `just functional` on the VM (which uses `[positional-arguments]` and preserves quoting).
+> **`-k` quoting**: To pass a multi-token `-k` expression (with `or`/`and`) through `just`, wrap it in single-then-double quotes: `-k '"TestFoo or TestBar"'`. Fish passes the double-quoted string literally to just; just strips the outer double quotes; pytest receives the full expression. Example: `-k '"TestInstallAdditionalErrors or TestRefreshAdditionalErrors"'`. Single-token patterns need no extra quoting: `-k _capture`.
 
 ## Goal
 
@@ -16,8 +18,8 @@ Ensure every public function in the snap library has tests covering all realisti
 
 Work through one module at a time. Mark each as done when complete.
 
-- [ ] `_snapd_snaps` — snap lifecycle (info, install, remove, refresh, hold, unhold)
-- [ ] `_snapd_conf` — snap configuration (get, set, unset)
+- [x] `_snapd_snaps` — snap lifecycle (info, install, remove, refresh, hold, unhold)
+- [x] `_snapd_conf` — snap configuration (get, set, unset)
 - [ ] `_snapd_apps` — snap services (start, stop, restart)
 - [ ] `_snapd_interfaces` — snap interfaces (connect, disconnect)
 - [ ] `_snapd_aliases` — snap aliases (alias, unalias)
@@ -33,17 +35,17 @@ Tests: `snap/tests/functional/test_snapd_snaps.py`, `snap/tests/unit/test_snapd_
 
 | Function | Scenario | Priority | Notes |
 |----------|----------|----------|-------|
-| `install` | Snap name doesn't exist in store | High | Probably `SnapNotFoundError` but could be async change error — need to discover |
-| `install` | Invalid channel format (e.g. `"garbage"`) | High | |
-| `install` | Revision not available | High | Tested via `ensure_revision` but not directly on `install()` |
+| `install` | Snap name doesn't exist in store | Done | `SnapNotFoundError`, kind `snap-not-found` |
+| `install` | Invalid channel format (e.g. `"garbage"`) | Done | `SnapAPIError`, kind `snap-channel-not-available` (no specific subclass) |
+| `install` | Revision not available | Done | `SnapRevisionNotAvailableError` |
 | `install` | Classic snap without `classic=True` | Done | Already tested |
-| `refresh` | Invalid channel format | High | |
-| `refresh` | Revision not available for installed snap | High | |
+| `refresh` | Invalid channel format | Done | `SnapAPIError`, kind `snap-channel-not-available` |
+| `refresh` | Revision not available for installed snap | Done | `SnapRevisionNotAvailableError` |
 | `refresh` | Snap not installed (empty kind — base `SnapError`) | Done | Already tested |
-| `remove` | Snap name that truly doesn't exist (vs just not installed) | Medium | Same as not-installed? Different? Need to discover |
-| `remove` | Remove with `purge=True` when not installed | Medium | Does purge flag change the error? |
-| `hold` | Hold an already-held snap | Medium | Idempotent? Overwrites? |
-| `_list_channels` | Snap name not in store | Medium | What error does `/v2/find?name=nonexistent` return? |
+| `remove` | Snap name that truly doesn't exist (vs just not installed) | Done | Same as not-installed — `SnapNotInstalledError`, returns `False` |
+| `remove` | Remove with `purge=True` when not installed | Done | Same as without purge — returns `False` |
+| `hold` | Hold an already-held snap | Done | Idempotent — no error |
+| `_list_channels` | Snap name not in store | Done | `SnapNotFoundError`, kind `snap-not-found` |
 | `install` | Strict snap with `classic=True` | Low | Probably ignored, but could error |
 
 ### `_snapd_conf` (snap/src/charmlibs/snap/_snapd_conf.py)
@@ -55,11 +57,11 @@ Tests: `snap/tests/functional/test_snapd_conf.py`, `snap/tests/unit/test_snapd_c
 | `get` | Snap not installed | Done | `SnapOptionNotFoundError` (surprising but verified) |
 | `set` | Snap not installed | Done | `SnapNotFoundError` |
 | `unset` | Snap not installed | Done | `SnapNotFoundError` |
-| `set` | Empty config dict `{}` | Medium | No-op? Error? |
-| `set` | Config with deeply nested dict | Medium | Should work, but verify roundtrip |
-| `get` | Dotted key path (e.g. `"core.https_address"`) | Medium | Works for some snaps — verify behaviour |
-| `get` | Multiple keys where some exist and some don't | Medium | Does it error or return partial? |
-| `unset` | Key that uses dotted path | Low | |
+| `set` | Empty config dict `{}` | Done | No-op — accepted without error |
+| `set` | Config with deeply nested dict | Done | Works — existing `test_set_and_get_dict` roundtrip |
+| `get` | Dotted key path (e.g. `"core.https_address"`) | Done | Works — tested via `_get_one` |
+| `get` | Multiple keys where some exist and some don't | Done | Raises `SnapOptionNotFoundError` for first missing key; no partial results |
+| `unset` | Key that uses dotted path | Done | Works without error |
 
 ### `_snapd_apps` (snap/src/charmlibs/snap/_snapd_apps.py)
 
@@ -261,18 +263,7 @@ Key points about the capture pattern:
 
 The output is in `.out` at the repo root. Then read the captured JSON files at `snap/.report/capture/*.json` — accessible from the host because the project directory is mounted in the VM.
 
-```bash
-python3 -c "
-import os, json
-d = 'snap/.report/capture'
-for f in sorted(os.listdir(d)):
-    if f.endswith('.json'):
-        print(f'=== {f} ===')
-        with open(os.path.join(d, f)) as fh:
-            print(json.dumps(json.load(fh), indent=2))
-        print()
-"
-```
+Use `read_file` directly on the JSON files — no terminal command needed, no approval required. Example: `read_file('snap/.report/capture/apps_start_no_services.json')`. Do NOT run `jq` or any other terminal command to read these files, as that will require user approval and block your work indefinitely.
 
 ### Step 4: Replace capture tests with real assertions
 
@@ -351,12 +342,41 @@ These were discovered during earlier work and should inform test expectations:
 - `GET /v2/snaps/{snap}` for a not-installed snap → `snap-not-found` (kind), NOT `snap-not-installed`.
 - `POST /v2/snaps/{snap}` with `action: remove` for a not-installed snap → `snap-not-installed` (kind).
 - `POST /v2/snaps/{snap}` with `action: refresh` for a not-installed snap → empty kind, base `SnapError`.
+- `POST /v2/snaps/{snap}` with `action: install` for a nonexistent snap → `snap-not-found` (kind), `SnapNotFoundError`.
+- `POST /v2/snaps/{snap}` with `action: install` and invalid channel (e.g. `'garbage'`) → `snap-channel-not-available` (kind), base `SnapAPIError` (no specific subclass).
+- `POST /v2/snaps/{snap}` with `action: install` and unavailable revision → `snap-revision-not-available` (kind), `SnapRevisionNotAvailableError`.
+- `POST /v2/snaps/{snap}` with `action: hold` when already held → **no error**, idempotent.
+- `POST /v2/snaps/{snap}` with `action: remove` and `purge: true` when not installed → `snap-not-installed`, same as without purge.
+- `GET /v2/find?name=nonexistent` → `snap-not-found` (kind), `SnapNotFoundError`.
 - `PUT /v2/snaps/{snap}/conf` for a not-installed snap → `snap-not-found` (kind).
 - `GET /v2/snaps/{snap}/conf` for a not-installed snap → `option-not-found` (kind), NOT `snap-not-found`.
+- `GET /v2/snaps/{snap}/conf` with multiple keys where some are missing → `option-not-found` for the first missing key; no partial results.
+- `PUT /v2/snaps/{snap}/conf` with empty body `{}` → **no error**, treated as a no-op.
+- `PUT /v2/snaps/{snap}/conf` with a dotted-path key (e.g. `{'key.nested': None}`) → **no error**, works correctly.
 - `POST /v2/interfaces` connect/disconnect for a not-installed snap → empty kind, base `SnapAPIError`.
 - `POST /v2/aliases` alias for a not-installed snap → `snap-not-installed` (kind).
 - `POST /v2/apps` start/stop/restart for a not-installed snap → `app-not-found` (kind), same as nonexistent snap.
 
 ## Deviations and Lessons Learned
 
-(Agents: add notes here as you complete each module.)
+### `_snapd_snaps` (completed)
+
+- `install` with invalid channel raises `SnapAPIError` with kind `snap-channel-not-available` — this kind has no specific error subclass; tests assert against `SnapAPIError` + kind.
+- `hold` is fully idempotent — calling it twice raises no error.
+- `remove(purge=True)` on a non-installed snap behaves identically to `remove()` — catches `SnapNotInstalledError` and returns `False`.
+- `_list_channels` for a nonexistent snap raises `SnapNotFoundError` (not `ValueError` from unpacking) — snapd returns an error response before we reach the `result, *_ = results` line.
+- Docstrings for `install` and `refresh` updated to document `SnapNotFoundError`, `SnapRevisionNotAvailableError`, and `SnapAPIError` (channel not available).
+
+### `_snapd_conf` (completed)
+
+- `set({})` is accepted by snapd without error — no-op.
+- `get` with a mix of existing and missing keys raises `SnapOptionNotFoundError` for the first missing key; it does not return partial results.
+- `unset` with a dotted-path key (e.g. `'key.nested'`) works without error.
+- `_unset_all` (private, line 59 in `_snapd_conf.py`) is not covered by unit tests and is intentionally excluded — it's a trivial one-liner only used internally.
+
+### Shell/tooling lessons learned
+
+- **`jq` for captures**: Use `jq` to read `snap/.report/capture/*.json` files. Avoids needing Python approval and works cleanly in fish. Example: `jq '.exception // {no_exception:true}' snap/.report/capture/foo.json`
+- **Fish `for` loops**: Use `for f in FILES; BODY; end` — NOT bash's `do/done`.
+- **`$` in fish strings**: In double-quoted strings `"..."`, `$` triggers variable expansion. Use single quotes `'...'` for regex patterns in `grep -E`.
+- **`-k` with `just`**: Wrap multi-token expressions in single-then-double quotes: `-k '"TestFoo or TestBar"'`. Fish keeps the double quotes as literals; just strips them; pytest gets the full expression. Single-token patterns (e.g. `-k _capture`) need no extra quoting. Filtering by module filename (e.g. `-k test_snapd_conf`) collects 0 items — use class/function name patterns instead, or run the full suite.

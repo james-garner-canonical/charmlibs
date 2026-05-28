@@ -192,3 +192,86 @@ def test_unhold_not_installed_no_error():
     # unhold on a non-installed snap succeeds silently (async Done).
     ensure_removed('hello-world')
     _snapd.unhold('hello-world')  # should not raise
+
+
+# ---------------------------------------------------------------------------
+# install (additional error paths)
+# ---------------------------------------------------------------------------
+
+
+def test_install_nonexistent_snap_raises():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+        _snapd.install('this-snap-does-not-exist-xyz-abc-123')
+    assert ctx.value.kind == 'snap-not-found'
+    assert ctx.value.value == 'this-snap-does-not-exist-xyz-abc-123'
+
+
+def test_install_invalid_channel_raises():
+    # A non-existent channel raises SnapAPIError with kind 'snap-channel-not-available'.
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd.install('hello-world', channel='garbage')
+    assert ctx.value.kind == 'snap-channel-not-available'
+    assert 'channel' in ctx.value.message or 'no snap revision' in ctx.value.message
+
+
+def test_install_revision_not_available_raises():
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapRevisionNotAvailableError) as ctx:
+        _snapd.install('hello-world', revision=99999999)
+    assert ctx.value.kind == 'snap-revision-not-available'
+
+
+# ---------------------------------------------------------------------------
+# refresh (additional error paths)
+# ---------------------------------------------------------------------------
+
+
+def test_refresh_invalid_channel_raises():
+    ensure_installed('hello-world')
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd.refresh('hello-world', channel='garbage')
+    assert ctx.value.kind == 'snap-channel-not-available'
+
+
+def test_refresh_revision_not_available_raises():
+    ensure_installed('hello-world')
+    with pytest.raises(_errors.SnapRevisionNotAvailableError) as ctx:
+        _snapd.refresh('hello-world', revision=99999999)
+    assert ctx.value.kind == 'snap-revision-not-available'
+
+
+# ---------------------------------------------------------------------------
+# hold (additional)
+# ---------------------------------------------------------------------------
+
+
+def test_hold_already_held_no_error():
+    # Holding an already-held snap is idempotent — no error is raised.
+    ensure_installed('hello-world')
+    _snapd.hold('hello-world')
+    _snapd.hold('hello-world')  # second hold should not raise
+
+
+# ---------------------------------------------------------------------------
+# remove (additional)
+# ---------------------------------------------------------------------------
+
+
+def test_remove_purge_not_installed_returns_false():
+    # purge=True on a non-installed snap behaves the same as purge=False: returns False.
+    ensure_removed('hello-world')
+    result = _snapd.remove('hello-world', purge=True)
+    assert result is False
+
+
+# ---------------------------------------------------------------------------
+# _list_channels (error paths)
+# ---------------------------------------------------------------------------
+
+
+def test_list_channels_nonexistent_snap_raises():
+    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+        _snapd._list_channels('this-snap-does-not-exist-xyz')
+    assert ctx.value.kind == 'snap-not-found'

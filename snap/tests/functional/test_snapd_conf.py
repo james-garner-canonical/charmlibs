@@ -238,3 +238,28 @@ def test_set_multiple_keys_at_once():
     assert result[_KEY] == 'v1'
     assert result[_KEY2] == 'v2'
     _cleanup(_KEY2)
+
+
+def test_set_empty_dict_no_error():
+    # set({}) is a no-op — the API accepts an empty body without error.
+    ensure_installed(_SNAP)
+    _snapd_conf.set(_SNAP, {})  # should not raise
+
+
+def test_get_mixed_keys_raises_option_not_found():
+    # When some requested keys exist and some don't, the API raises option-not-found
+    # for the first missing key rather than returning partial results.
+    ensure_installed(_SNAP)
+    _snapd_conf.set(_SNAP, {_KEY: 'exists'})
+    with pytest.raises(_errors.SnapOptionNotFoundError) as ctx:
+        _snapd_conf.get(_SNAP, _KEY, 'key-that-does-not-exist-xyz')
+    assert ctx.value.kind == 'option-not-found'
+    _cleanup()
+
+
+def test_unset_dotted_path_no_error():
+    # unset() accepts dotted-path keys and the API handles them without error.
+    ensure_installed(_SNAP)
+    _snapd_conf.set(_SNAP, {_KEY: {'nested': 'value'}})
+    _snapd_conf.unset(_SNAP, f'{_KEY}.nested')  # should not raise
+    _cleanup()
