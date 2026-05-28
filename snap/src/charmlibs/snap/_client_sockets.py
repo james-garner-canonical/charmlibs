@@ -45,8 +45,7 @@ class _UnixSocketConnection(http.client.HTTPConnection):
             raise NotImplementedError(f'Unix sockets not supported on {sys.platform}')
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.connect(self._socket_path)
-        if not isinstance(self.timeout, _NotProvided):
-            self.sock.settimeout(self.timeout)
+        self.sock.settimeout(self.timeout)
 
 
 class UnixSocketHandler(urllib.request.AbstractHTTPHandler):
