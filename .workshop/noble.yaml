@@ -1,7 +1,6 @@
 name: noble
 base: ubuntu@24.04
 sdks:
-  - name: uv
   - name: project-charmlibs
 actions:
   functional: |

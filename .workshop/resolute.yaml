@@ -1,7 +1,6 @@
 name: resolute
 base: ubuntu@26.04
 sdks:
-  - name: uv
   - name: project-charmlibs
 actions:
   functional: |

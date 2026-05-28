@@ -1,7 +1,6 @@
 name: jammy
 base: ubuntu@22.04
 sdks:
-  - name: uv
   - name: project-charmlibs
 actions:
   functional: |
