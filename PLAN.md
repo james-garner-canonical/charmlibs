@@ -104,6 +104,8 @@ Tests: `snap/tests/functional/test_snapd_aliases.py`, `snap/tests/unit/test_snap
 - `alias()` is fully idempotent when called twice with the same snap+app+alias_name — no error, second call succeeds silently.
 - Calling `alias()` with the same alias name but a different app of the **same snap** also succeeds silently — snapd reassigns the alias to the new app without error.
 - Only trying to claim an alias already held by a **different snap** raises `SnapChangeError` with "already enabled for" in the message.
+- Using a snap's own name as the alias name raises `SnapChangeError` with "conflicts with the command namespace" — snapd prevents aliases from shadowing existing snap commands.
+- `unalias()` always treats its argument as a literal alias name (sends `{'alias': name}`), never as a snap name. No footgun where passing a snap name would wipe all its aliases — that would require sending `{'snap': name}` instead.
 - Trying to claim an alias name already held by a different snap raises `SnapChangeError` with "already enabled for" in the message.
 - Aliases do **not** survive snap removal. Calling `unalias()` after the snap is removed raises `SnapAPIError` with empty kind and "cannot find manual alias" in the message — identical to calling `unalias()` on a never-created alias.
 - `hello-world` snap's app name is `hello-world`, not `hello` — important for test setup; the existing `test_alias_not_installed_snap_raises` works because snapd rejects with `snap-not-installed` before checking the app name.

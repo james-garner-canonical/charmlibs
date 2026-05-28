@@ -151,3 +151,12 @@ def test_alias_reassigns_within_same_snap():
     _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
     _snapd_aliases.alias(_SNAP, 'lxd', _ALIAS)  # different app, same snap — no error
     _cleanup_alias()
+
+
+def test_alias_name_conflicts_with_snap_command_namespace():
+    # Using a snap's own name as the alias name conflicts with its command namespace.
+    ensure_installed(_SNAP)
+    _cleanup_alias()
+    with pytest.raises(_errors.SnapChangeError) as ctx:
+        _snapd_aliases.alias(_SNAP, _APP, _SNAP)  # alias name = 'lxd'
+    assert 'conflicts with the command namespace' in ctx.value.message

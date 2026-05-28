@@ -37,6 +37,7 @@ def alias(snap: str, app: str, alias_name: str) -> None:
     Raises:
         SnapNotInstalledError: if the snap is not installed.
         SnapChangeError: if the alias name is already claimed by a different snap,
+            conflicts with the command namespace of an installed snap,
             or if the specified app does not exist within the snap.
     """
     data = {'action': 'alias', 'snap': snap, 'app': app, 'alias': alias_name}
