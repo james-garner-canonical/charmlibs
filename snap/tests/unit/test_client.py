@@ -23,8 +23,10 @@ if TYPE_CHECKING:
 from charmlibs.snap import _client
 from charmlibs.snap._errors import (
     SnapAPIError,
+    SnapAppNotFoundError,
     SnapBadResponseError,
     SnapChangeError,
+    SnapChannelNotAvailableError,
     SnapConnectionError,
     SnapError,
     SnapNeedsClassicError,
@@ -285,6 +287,40 @@ class TestErrorResponses:
             _client.get('/v2/snaps/hello-world')
         assert 'Missing expected key' in exc_info.value.message
 
+    def test_error_without_value_key(self, mock_raw: MagicMock):
+        # Real app-not-found responses omit 'value' entirely.
+        mock_raw.return_value = _fake_response(
+            load_fixture('app_not_found_error.json'), status=404, reason='Not Found'
+        )
+        with pytest.raises(SnapAppNotFoundError) as exc_info:
+            _client.post('/v2/apps', body={'action': 'start', 'names': ['hello-world.svc']})
+        assert exc_info.value.value == ''  # defaults to empty string
+        assert exc_info.value.kind == 'app-not-found'
+
+    def test_error_without_kind_key(self, mock_raw: MagicMock):
+        # Real interface errors omit 'kind' entirely.
+        mock_raw.return_value = _fake_response(
+            load_fixture('interfaces_not_installed_error.json'),
+            status=400,
+            reason='Bad Request',
+        )
+        with pytest.raises(SnapAPIError) as exc_info:
+            _client.post('/v2/interfaces', body={'action': 'connect'})
+        assert type(exc_info.value) is SnapAPIError  # not a subclass
+        assert exc_info.value.kind == ''
+
+    def test_error_with_dict_value(self, mock_raw: MagicMock):
+        # snap-channel-not-available returns a rich dict as 'value'.
+        mock_raw.return_value = _fake_response(
+            load_fixture('snap_channel_not_available_error.json'),
+            status=404,
+            reason='Not Found',
+        )
+        with pytest.raises(SnapChannelNotAvailableError) as exc_info:
+            _client.post('/v2/snaps/hello-world', body={'action': 'install'})
+        assert isinstance(exc_info.value.value, dict)
+        assert exc_info.value.value['channel'] == 'garbage'  # pyright: ignore[reportUnknownMemberType]
+
 
 class TestAsyncChange:
     def test_async_triggers_poll(self, mock_raw: MagicMock):
@@ -527,6 +563,23 @@ class TestAsyncChange:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert exc_info.value.kind == 'charmlibs-snap-change-unknown'
         assert 'Halted' in exc_info.value.message
+
+    def test_async_alias_conflict_raises_snap_change_error(self, mock_raw: MagicMock):
+        # Real alias conflict: alias already enabled for a different snap.
+        error_envelope = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': load_fixture('change_error_alias_conflict.json')['result'],
+        }
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
+            _fake_response(error_envelope),
+        ]
+        with pytest.raises(SnapChangeError) as exc_info:
+            _client.post('/v2/aliases', body={'action': 'alias'})
+        assert 'already enabled for' in exc_info.value.message
+        assert exc_info.value.value == '96'
 
 
 class TestLogsEndpoint:
