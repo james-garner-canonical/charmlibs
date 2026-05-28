@@ -1,5 +1,7 @@
 # Install development tools.
-snap install --classic astral-uv just pebble
+snap install --classic astral-uv
+snap install --classic just
+snap install --classic pebble
 
 # uv hardlinks by default, which fails across the workshop mount boundary.
 echo UV_LINK_MODE=copy >> /etc/environment

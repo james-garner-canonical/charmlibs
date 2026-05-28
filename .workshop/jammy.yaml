@@ -4,4 +4,4 @@ sdks:
   - name: project-charmlibs
 actions:
   functional: |
-    sudo just functional "$@"
+    sudo just python=python3 functional "$@"
