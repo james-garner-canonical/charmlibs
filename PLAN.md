@@ -23,7 +23,7 @@ Work through the next module in the list. Your task is done when you finish this
 - [x] `_snapd_apps` — snap services (start, stop, restart)
 - [x] `_snapd_interfaces` — snap interfaces (connect, disconnect)
 - [x] `_snapd_aliases` — snap aliases (alias, unalias)
-- [ ] `_snapd_logs` — snap logs (logs)
+- [x] `_snapd_logs` — snap logs (logs)
 - [ ] `_functions` — high-level helpers (ensure, ensure_revision)
 - [ ] `_client` — connection errors, timeouts, async change failures (unit tests only)
 
@@ -120,10 +120,20 @@ Tests: `snap/tests/functional/test_snapd_logs.py`, `snap/tests/unit/test_snapd_l
 |----------|----------|----------|-------|
 | `logs` | Snap not installed | Done | `SnapNotFoundError` |
 | `logs` | Snap with no services | Done | `SnapAppNotFoundError` |
-| `logs` | `num_lines=0` | Medium | Empty list? Error? |
-| `logs` | Snap name that doesn't exist at all | Medium | Same as not installed? Different? |
-| `logs` | No snap args — all system logs | Low | Might return a lot; verify it works |
-| `logs` | Negative `num_lines` | Low | Snapd behaviour unknown |
+| `logs` | `num_lines=0` | Done | `SnapAPIError`, empty kind, "invalid value for n: 0" |
+| `logs` | Snap name that doesn't exist at all | Done | Same as not installed — `SnapNotFoundError` |
+| `logs` | No snap args — all system logs | Done | Works — returns system-wide logs |
+| `logs` | Negative `num_lines` | Done | Works — snapd accepts it silently |
+
+### `_snapd_logs` (completed)
+
+- A truly nonexistent snap name (e.g. `nonexistent-snap-xyz123`) and a removed-but-real snap both raise `SnapNotFoundError` with `kind='snap-not-found'` — no distinction at the `/v2/logs` endpoint.
+- `num_lines=0` is rejected by snapd with `SnapAPIError` (empty kind), message `"invalid value for n: 0"`. Not worth a dedicated error class.
+- `num_lines=-1` is accepted silently by snapd — returns a list of log entries (likely all available).
+- Calling `logs()` with no snap arguments returns system-wide snap logs — works without error.
+- No new error classes needed.
+- No new unit tests needed — `logs()` has no conditional error handling; all errors propagate directly from `_client.get`.
+- Added docstring to `logs()` with `Raises:` section documenting `SnapNotFoundError`, `SnapAppNotFoundError`, and `SnapAPIError`.
 
 ### `_functions` (snap/src/charmlibs/snap/_functions.py)
 

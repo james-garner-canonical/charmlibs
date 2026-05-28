@@ -63,3 +63,31 @@ def test_logs_not_installed_snap_raises():
     with pytest.raises(_errors.SnapNotFoundError) as ctx:
         _snapd_logs.logs('hello-world')
     assert ctx.value.kind == 'snap-not-found'
+
+
+def test_logs_nonexistent_snap_raises():
+    # A truly nonexistent snap name raises the same SnapNotFoundError.
+    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+        _snapd_logs.logs('nonexistent-snap-xyz123')
+    assert ctx.value.kind == 'snap-not-found'
+
+
+def test_logs_num_lines_zero_raises():
+    # snapd rejects n=0 as invalid.
+    ensure_installed(_SNAP, classic=True)
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_logs.logs(_SNAP, num_lines=0)
+    assert 'invalid value for n' in ctx.value.message
+
+
+def test_logs_negative_num_lines():
+    # snapd accepts negative num_lines without error.
+    ensure_installed(_SNAP, classic=True)
+    entries = _snapd_logs.logs(_SNAP, num_lines=-1)
+    assert isinstance(entries, list)
+
+
+def test_logs_no_snap_args():
+    # Calling logs() with no snap arguments returns system-wide logs.
+    entries = _snapd_logs.logs(num_lines=3)
+    assert isinstance(entries, list)

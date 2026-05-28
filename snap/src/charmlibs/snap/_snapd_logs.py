@@ -67,6 +67,17 @@ class LogEntry:
 
 
 def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
+    """Retrieve recent log entries for one or more snaps.
+
+    Args:
+        snaps: Snap names to retrieve logs for. If omitted, returns system-wide snap logs.
+        num_lines: Maximum number of log lines to return. Must be positive.
+
+    Raises:
+        SnapNotFoundError: If a specified snap is not installed.
+        SnapAppNotFoundError: If a specified snap has no services.
+        SnapAPIError: If ``num_lines`` is invalid (e.g. zero).
+    """
     query: dict[str, Any] = {'n': num_lines}
     if snaps:
         query['names'] = ','.join(snaps)
