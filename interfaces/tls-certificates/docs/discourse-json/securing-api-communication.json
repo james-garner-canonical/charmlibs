@@ -1,0 +1,508 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 38562,
+        "name": "Yazan Salti",
+        "username": "yazansalti",
+        "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png",
+        "created_at": "2025-08-13T09:04:42.137Z",
+        "cooked": "<h1><a name=\"p-38562-secure-client-app-communication-1\" class=\"anchor\" href=\"#p-38562-secure-client-app-communication-1\"></a>Secure Client \u2194 App Communication</h1>\n<p>You should deploy a TLS provider in a different model to provide certificates for applications to secure API communication.</p>\n<p>This provider will issue the certificates used to secure traffic between clients and applications.</p>\n<p>Supported TLS providers include:</p>\n<ul>\n<li><a href=\"https://charmhub.io/self-signed-certificates\">self-signed-certificates</a></li>\n<li><a href=\"https://charmhub.io/vault-k8s\">vault</a></li>\n<li><a href=\"https://charmhub.io/lego\">lego</a></li>\n<li><a href=\"https://charmhub.io/manual-tls-certificates\">manual-tls-certificates</a></li>\n</ul>\n<blockquote>\n<p>Note: Deploying the TLS provider in a different model is not mandatory. In smaller or simpler setups, the provider and requirer applications can be in the same model.</p>\n</blockquote>\n<h2><a name=\"p-38562-h-1-using-an-ingress-2\" class=\"anchor\" href=\"#p-38562-h-1-using-an-ingress-2\"></a>1. Using an Ingress</h2>\n<p>In most cases, applications are accessed behind an ingress.</p>\n<p>The ingress will:</p>\n<ol>\n<li>Integrate with the TLS provider in APP mode to secure external (client-to-ingress) communication.</li>\n<li>Terminate TLS traffic before passing requests to backend applications.</li>\n</ol>\n<p>For internal traffic between ingress and backends, you can:</p>\n<ul>\n<li>Use a provider like <a href=\"https://charmhub.io/self-signed-certificates\">self-signed-certificates</a>.</li>\n<li>Integrate each backend application with the provider over the <a href=\"https://charmhub.io/tls-certificates-interface\">tls-certificates</a> interface in UNIT mode.</li>\n<li>Integrate the ingress with the provider over the <a href=\"https://charmhub.io/certificate-transfer-interface\">certificates-transfer</a> interface so that the ingress trusts the CA used by the backend units.</li>\n<li>This ensures the ingress can validate backend-provided certificate chains that lead to the trusted CA.</li>\n</ul>\n<h2><a name=\"p-38562-h-2-trust-establishment-between-clients-and-applications-3\" class=\"anchor\" href=\"#p-38562-h-2-trust-establishment-between-clients-and-applications-3\"></a>2. Trust Establishment Between Clients and Applications</h2>\n<p>For TLS to work correctly:</p>\n<ul>\n<li><strong>Clients</strong> must trust the CA that issued the application\u2019s leaf certificate.</li>\n<li><strong>Applications</strong> must present a valid chain that leads to that trusted CA.</li>\n</ul>\n<h3><a name=\"p-38562-examples-4\" class=\"anchor\" href=\"#p-38562-examples-4\"></a>Examples:</h3>\n<ul>\n<li>\n<p><strong>Public CA (<code>lego</code> with Let\u2019s Encrypt`)</strong>:</p>\n<p>Certificates are usually trusted by default.</p>\n</li>\n<li>\n<p><strong>Self-signed CA (<code>self-signed-certificates</code>, <code>vault</code>, or <code>manual-tls-certificates</code>)</strong>:</p>\n<p>Clients (or client applications) must explicitly trust the CA.</p>\n<p>For Juju-integrated client applications, this is achieved by integrating with the provider over the <code>certificates-transfer</code> interface.</p>\n</li>\n</ul>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/original/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2.jpeg\" data-download-href=\"/uploads/short-url/OIlfm9HvSMC4z3M3U38k6o9R2a.jpeg?dl=1\" title=\"external\"><img src=\"https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_690x376.jpeg\" alt=\"external\" data-base62-sha1=\"OIlfm9HvSMC4z3M3U38k6o9R2a\" width=\"690\" height=\"376\" srcset=\"https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_690x376.jpeg, https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_1035x564.jpeg 1.5x, https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_1380x752.jpeg 2x\" data-dominant-color=\"F8F8F8\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">external</span><span class=\"informations\">2912\u00d71587 177 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-08-15T12:31:31.835Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 33,
+        "reads": 5,
+        "readers_count": 4,
+        "score": 166.0,
+        "yours": false,
+        "topic_id": 18385,
+        "topic_slug": "deployment-blueprint-securing-api-communication",
+        "display_username": "Yazan Salti",
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_bg_color": "",
+        "flair_color": "",
+        "flair_group_id": 43,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://charmhub.io/self-signed-certificates",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/lego",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/certificate-transfer-interface",
+            "internal": false,
+            "reflection": false,
+            "title": "Charmhub | Deploy Certificate Transfer Interface using Charmhub - The Open Operator Collection",
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/vault-k8s",
+            "internal": false,
+            "reflection": false,
+            "title": "Charmhub | Deploy Vault using Charmhub - The Open Operator Collection",
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/manual-tls-certificates",
+            "internal": false,
+            "reflection": false,
+            "title": "Charmhub | Deploy Manual TLS Certificates using Charmhub - The Open Operator Collection",
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/tls-certificates-interface",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/the-tls-certificate-interface-documentation/11635",
+            "internal": true,
+            "reflection": true,
+            "title": "The TLS Certificate Interface Documentation",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/deployment-blueprint-ca-trust-best-practices/18386",
+            "internal": true,
+            "reflection": true,
+            "title": "Deployment Blueprint - CA Trust Best Practices",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/security-with-x-509-certificates/11664",
+            "internal": true,
+            "reflection": true,
+            "title": "Security with X.509 certificates",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "Canonical Staff",
+        "title_is_group": true,
+        "bookmarked": false,
+        "raw": "# Secure Client <-> App Communication\n\nYou should deploy a TLS provider in a different model to provide certificates for applications to secure API communication.\n\nThis provider will issue the certificates used to secure traffic between clients and applications.\n\nSupported TLS providers include:\n\n- [self-signed-certificates](https://charmhub.io/self-signed-certificates)\n- [vault](https://charmhub.io/vault-k8s)\n- [lego](https://charmhub.io/lego)\n- [manual-tls-certificates](https://charmhub.io/manual-tls-certificates)\n\n> Note: Deploying the TLS provider in a different model is not mandatory. In smaller or simpler setups, the provider and requirer applications can be in the same model.\n\n## 1. Using an Ingress\n\nIn most cases, applications are accessed behind an ingress.\n\nThe ingress will:\n\n1. Integrate with the TLS provider in APP mode to secure external (client-to-ingress) communication.\n2. Terminate TLS traffic before passing requests to backend applications.\n\nFor internal traffic between ingress and backends, you can:\n\n- Use a provider like [self-signed-certificates](https://charmhub.io/self-signed-certificates).\n- Integrate each backend application with the provider over the [tls-certificates](https://charmhub.io/tls-certificates-interface) interface in UNIT mode.\n- Integrate the ingress with the provider over the [certificates-transfer](https://charmhub.io/certificate-transfer-interface) interface so that the ingress trusts the CA used by the backend units.\n- This ensures the ingress can validate backend-provided certificate chains that lead to the trusted CA.\n\n\n## 2. Trust Establishment Between Clients and Applications\n\nFor TLS to work correctly:\n\n- **Clients** must trust the CA that issued the application\u2019s leaf certificate.\n- **Applications** must present a valid chain that leads to that trusted CA.\n\n### Examples:\n\n- **Public CA (`lego` with Let\u2019s Encrypt`)**:\n    \n    Certificates are usually trusted by default.\n    \n- **Self-signed CA (`self-signed-certificates`, `vault`, or `manual-tls-certificates`)**:\n    \n    Clients (or client applications) must explicitly trust the CA.\n    \n    For Juju-integrated client applications, this is achieved by integrating with the provider over the `certificates-transfer` interface.\n\n![external|690x376](upload://OIlfm9HvSMC4z3M3U38k6o9R2a.jpeg)",
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1653,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/deployment-blueprint-securing-api-communication/18385/1",
+        "user_signature": null,
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      38562
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      289
+    ]
+  ],
+  "suggested_topics": [
+    {
+      "fancy_title": "Mysql InnoDB not clustered",
+      "id": 18880,
+      "title": "Mysql InnoDB not clustered",
+      "slug": "mysql-innodb-not-clustered",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-09-16T06:20:52.145Z",
+      "last_posted_at": "2025-09-16T06:20:52.287Z",
+      "bumped": true,
+      "bumped_at": "2025-09-16T06:20:52.287Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "mysql-innodb-cluster"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 19,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 4974,
+            "username": "sulaiman-aira",
+            "name": "Aira",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/s/e56c9b/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Velero Operator backup config interface",
+      "id": 19088,
+      "title": "Velero Operator backup config interface",
+      "slug": "velero-operator-backup-config-interface",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-10-17T01:01:48.103Z",
+      "last_posted_at": "2025-10-17T01:01:48.219Z",
+      "bumped": true,
+      "bumped_at": "2025-10-17T01:01:48.219Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "k8s",
+        "velero"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 13,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3602,
+            "username": "deezzir",
+            "name": "Iurii Kondrakov",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/deezzir/{size}/4018_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Platform Engineering pulse report - #11 2025",
+      "id": 17967,
+      "title": "Platform Engineering pulse report - #11 2025",
+      "slug": "platform-engineering-pulse-report-11-2025",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-06-06T17:29:12.547Z",
+      "last_posted_at": "2025-06-06T17:29:12.684Z",
+      "bumped": true,
+      "bumped_at": "2025-06-06T17:29:12.684Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "team-updates"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 18,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 4273,
+            "username": "deekay",
+            "name": "Do\u011fay Kamar",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/d/8491ac/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to integrate with charmed Pyroscope over `profiling`",
+      "id": 18828,
+      "title": "How to integrate with charmed Pyroscope over `profiling`",
+      "slug": "how-to-integrate-with-charmed-pyroscope-over-profiling",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-09-02T09:52:48.036Z",
+      "last_posted_at": "2025-09-02T09:52:48.254Z",
+      "bumped": true,
+      "bumped_at": "2025-09-02T10:37:10.302Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "profiling"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 21,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1308,
+            "username": "ppasotti",
+            "name": "Pietro Pasotti",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/ppasotti/{size}/3011_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "moderator": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Charm Tech pulse 2025#21",
+      "id": 19121,
+      "title": "Charm Tech pulse 2025#21",
+      "slug": "charm-tech-pulse-2025-21",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-10-24T02:53:32.654Z",
+      "last_posted_at": "2025-10-24T02:53:32.808Z",
+      "bumped": true,
+      "bumped_at": "2025-10-24T02:53:32.808Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "team-updates"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 35,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3518,
+            "username": "james-garner",
+            "name": "James Garner",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/james-garner/{size}/4134_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "docs"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Deployment Blueprint - Securing API Communication",
+  "id": 18385,
+  "title": "Deployment Blueprint - Securing API Communication",
+  "posts_count": 1,
+  "created_at": "2025-08-13T09:04:41.985Z",
+  "views": 23,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-08-13T09:04:42.137Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "deployment-blueprint-securing-api-communication",
+  "category_id": 41,
+  "word_count": 321,
+  "deleted_at": null,
+  "user_id": 1653,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_1024x558.jpeg",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_18385",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 2912,
+      "height": 1587,
+      "url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2.jpeg"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 558,
+      "url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_1024x558.jpeg"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1653,
+        "username": "yazansalti",
+        "name": "Yazan Salti",
+        "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png",
+        "post_count": 1,
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_color": "",
+        "flair_bg_color": "",
+        "flair_group_id": 43,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1653,
+      "username": "yazansalti",
+      "name": "Yazan Salti",
+      "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png"
+    },
+    "last_poster": {
+      "id": 1653,
+      "username": "yazansalti",
+      "name": "Yazan Salti",
+      "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png"
+    }
+  },
+  "bookmarks": []
+}

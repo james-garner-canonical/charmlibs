@@ -1,0 +1,550 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 38567,
+        "name": "Yazan Salti",
+        "username": "yazansalti",
+        "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png",
+        "created_at": "2025-08-13T12:27:41.777Z",
+        "cooked": "<h1><a name=\"p-38567-trust-ca-certificates-of-tls-providers-1\" class=\"anchor\" href=\"#p-38567-trust-ca-certificates-of-tls-providers-1\"></a>Trust CA certificates of TLS Providers</h1>\n<p>In the Juju ecosystem, multiple TLS providers can be used to issue certificates for applications and units.</p>\n<ul>\n<li><a href=\"https://charmhub.io/self-signed-certificates\">self-signed-certificates</a></li>\n<li><a href=\"https://charmhub.io/vault-k8s\">vault</a></li>\n<li><a href=\"https://charmhub.io/lego\">lego</a></li>\n<li><a href=\"https://charmhub.io/manual-tls-certificates\">manual-tls-certificates</a></li>\n</ul>\n<p>In some cases, the CA certificates used by these providers are self-signed. This means that the certificates they issue will not be trusted by default by other applications or clients unless the CA is explicitly trusted.</p>\n<h3><a name=\"p-38567-best-practices-for-production-deployments-2\" class=\"anchor\" href=\"#p-38567-best-practices-for-production-deployments-2\"></a>Best Practices for Production Deployments</h3>\n<ul>\n<li><strong>Internal Communication (Unit-to-Unit)</strong>\nAs described in the <a href=\"https://discourse.charmhub.io/t/deployment-blueprint-securing-internal-communication/18382\">internal communication guide</a>, <code>self-signed-certificates</code> can be used to secure intra-application traffic.\nIn this case:\n<ul>\n<li>Each unit of an application receives the CA certificate as part of the relation data from the <a href=\"https://charmhub.io/tls-certificates-interface\">tls-certificates</a> integration.</li>\n<li>The CA is the direct issuer of the application\u2019s leaf certificate.</li>\n<li>Trusting this CA is sufficient to establish trust in the leaf certificates.</li>\n</ul>\n</li>\n<li><strong>API Communication</strong>\nFor more complex deployments that <a href=\"https://discourse.charmhub.io/t/deployment-blueprint-securing-api-communication/18385\">secure API communication</a>, client applications should trust the CA directly from the CA provider, not from the application.\n<ul>\n<li>The CA certificate can be obtained by integrating with the provider over the <a href=\"https://charmhub.io/certificate-transfer-interface\">certificates-transfer</a> interface.</li>\n<li>When the provider uses intermediate CA, it is recommended to trust the provider with the root CA (or the highest CA in the hierarchy). However this is not mandatory.</li>\n</ul>\n</li>\n</ul>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-08-15T12:27:32.975Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 32,
+        "reads": 6,
+        "readers_count": 5,
+        "score": 161.2,
+        "yours": false,
+        "topic_id": 18386,
+        "topic_slug": "deployment-blueprint-ca-trust-best-practices",
+        "display_username": "Yazan Salti",
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_bg_color": "",
+        "flair_color": "",
+        "flair_group_id": 43,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://discourse.charmhub.io/t/deployment-blueprint-securing-internal-communication/18382",
+            "internal": true,
+            "reflection": false,
+            "title": "Deployment Blueprint - Securing Internal Communication",
+            "clicks": 2
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/deployment-blueprint-securing-api-communication/18385",
+            "internal": true,
+            "reflection": false,
+            "title": "Deployment Blueprint - Securing API Communication",
+            "clicks": 1
+          },
+          {
+            "url": "https://charmhub.io/self-signed-certificates",
+            "internal": false,
+            "reflection": false,
+            "title": "Charmhub | Deploy Self Signed X.509 Certificates using Charmhub - The Open Operator Collection",
+            "clicks": 1
+          },
+          {
+            "url": "https://charmhub.io/manual-tls-certificates",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/tls-certificates-interface",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/certificate-transfer-interface",
+            "internal": false,
+            "reflection": false,
+            "title": "Charmhub | Deploy Certificate Transfer Interface using Charmhub - The Open Operator Collection",
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/vault-k8s",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://charmhub.io/lego",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/security-with-x-509-certificates/11664",
+            "internal": true,
+            "reflection": true,
+            "title": "Security with X.509 certificates",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/the-tls-certificate-interface-documentation/11635",
+            "internal": true,
+            "reflection": true,
+            "title": "The TLS Certificate Interface Documentation",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "Canonical Staff",
+        "title_is_group": true,
+        "bookmarked": false,
+        "raw": "# Trust CA certificates of TLS Providers\n\nIn the Juju ecosystem, multiple TLS providers can be used to issue certificates for applications and units.\n* [self-signed-certificates](https://charmhub.io/self-signed-certificates)\n* [vault](https://charmhub.io/vault-k8s)\n* [lego](https://charmhub.io/lego)\n* [manual-tls-certificates](https://charmhub.io/manual-tls-certificates)\n\nIn some cases, the CA certificates used by these providers are self-signed. This means that the certificates they issue will not be trusted by default by other applications or clients unless the CA is explicitly trusted.\n\n### Best Practices for Production Deployments\n\n* **Internal Communication (Unit-to-Unit)**\nAs described in the [internal communication guide](https://discourse.charmhub.io/t/deployment-blueprint-securing-internal-communication/18382), `self-signed-certificates` can be used to secure intra-application traffic.\nIn this case:\n  * Each unit of an application receives the CA certificate as part of the relation data from the [tls-certificates](https://charmhub.io/tls-certificates-interface) integration.\n  * The CA is the direct issuer of the application\u2019s leaf certificate.\n  * Trusting this CA is sufficient to establish trust in the leaf certificates.\n* **API Communication**\nFor more complex deployments that [secure API communication](https://discourse.charmhub.io/t/deployment-blueprint-securing-api-communication/18385), client applications should trust the CA directly from the CA provider, not from the application.\n  * The CA certificate can be obtained by integrating with the provider over the [certificates-transfer](https://charmhub.io/certificate-transfer-interface) interface.\n  * When the provider uses intermediate CA, it is recommended to trust the provider with the root CA (or the highest CA in the hierarchy). However this is not mandatory.",
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1653,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/deployment-blueprint-ca-trust-best-practices/18386/1",
+        "user_signature": null,
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      38567
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      288
+    ]
+  ],
+  "suggested_topics": [
+    {
+      "fancy_title": "Charm Tech pulse 2026#05",
+      "id": 19987,
+      "title": "Charm Tech pulse 2026#05",
+      "slug": "charm-tech-pulse-2026-05",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2026-03-13T03:30:10.419Z",
+      "last_posted_at": "2026-03-13T03:30:10.712Z",
+      "bumped": true,
+      "bumped_at": "2026-03-13T03:30:10.712Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "team-updates"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 8,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3810,
+            "username": "davidwilding",
+            "name": "David Wilding",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/davidwilding/{size}/4209_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Velero Operator integrate Google Kubernetes Cluster",
+      "id": 20054,
+      "title": "Velero Operator integrate Google Kubernetes Cluster",
+      "slug": "velero-operator-integrate-google-kubernetes-cluster",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2026-03-23T02:51:21.855Z",
+      "last_posted_at": "2026-03-23T02:51:22.008Z",
+      "bumped": true,
+      "bumped_at": "2026-03-23T02:51:22.008Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "k8s",
+        "velero"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 2274,
+            "username": "raychan",
+            "name": "Chi Wai CHAN",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/r/d2c977/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Velero Operator integrate AWS cluster",
+      "id": 19091,
+      "title": "Velero Operator integrate AWS cluster",
+      "slug": "velero-operator-integrate-aws-cluster",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-10-17T01:18:41.805Z",
+      "last_posted_at": "2025-10-17T01:18:41.938Z",
+      "bumped": true,
+      "bumped_at": "2026-03-17T02:14:20.768Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "k8s",
+        "velero"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 19,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3602,
+            "username": "deezzir",
+            "name": "Iurii Kondrakov",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/deezzir/{size}/4018_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Common Name and SANs Attributes",
+      "id": 19118,
+      "title": "Common Name and SANs Attributes",
+      "slug": "common-name-and-sans-attributes",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-10-23T10:28:25.501Z",
+      "last_posted_at": "2025-10-23T10:28:25.728Z",
+      "bumped": true,
+      "bumped_at": "2025-10-23T10:28:25.728Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "tls-cert-interface"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 33,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1653,
+            "username": "yazansalti",
+            "name": "Yazan Salti",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Request for assuming name of charm",
+      "id": 20047,
+      "title": "Request for assuming name of charm",
+      "slug": "request-for-assuming-name-of-charm",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2026-03-20T08:25:28.098Z",
+      "last_posted_at": "2026-03-26T22:16:02.688Z",
+      "bumped": true,
+      "bumped_at": "2026-03-26T22:16:02.688Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "help-needed"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 33,
+      "category_id": 46,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 5640,
+            "username": "dwellir-snapcrafters",
+            "name": "Dwellir AB",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/dwellir-snapcrafters/{size}/5462_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 560,
+            "username": "verterok",
+            "name": "Guillermo Gonzalez",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/verterok/{size}/892_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "docs"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Deployment Blueprint - CA Trust Best Practices",
+  "id": 18386,
+  "title": "Deployment Blueprint - CA Trust Best Practices",
+  "posts_count": 1,
+  "created_at": "2025-08-13T12:27:41.451Z",
+  "views": 30,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-08-13T12:27:41.777Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "deployment-blueprint-ca-trust-best-practices",
+  "category_id": 41,
+  "word_count": 268,
+  "deleted_at": null,
+  "user_id": 1653,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_18386",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1653,
+        "username": "yazansalti",
+        "name": "Yazan Salti",
+        "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png",
+        "post_count": 1,
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_color": "",
+        "flair_bg_color": "",
+        "flair_group_id": 43,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1653,
+      "username": "yazansalti",
+      "name": "Yazan Salti",
+      "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png"
+    },
+    "last_poster": {
+      "id": 1653,
+      "username": "yazansalti",
+      "name": "Yazan Salti",
+      "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png"
+    },
+    "links": [
+      {
+        "url": "https://discourse.charmhub.io/t/deployment-blueprint-securing-internal-communication/18382",
+        "title": "Deployment Blueprint - Securing Internal Communication",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1653,
+        "domain": "discourse.charmhub.io",
+        "root_domain": "charmhub.io"
+      },
+      {
+        "url": "https://charmhub.io/self-signed-certificates",
+        "title": "Charmhub | Deploy Self Signed X.509 Certificates using Charmhub - The Open Operator Collection",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1653,
+        "domain": "charmhub.io",
+        "root_domain": "charmhub.io"
+      },
+      {
+        "url": "https://discourse.charmhub.io/t/deployment-blueprint-securing-api-communication/18385",
+        "title": "Deployment Blueprint - Securing API Communication",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1653,
+        "domain": "discourse.charmhub.io",
+        "root_domain": "charmhub.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

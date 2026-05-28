@@ -1,0 +1,556 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 27204,
+        "name": "Gulsum Atici",
+        "username": "gatici",
+        "avatar_template": "/letter_avatar_proxy/v4/letter/g/b5ac83/{size}.png",
+        "created_at": "2023-08-18T09:27:26.631Z",
+        "cooked": "<p><strong>Note</strong>: This library has moved to charmlibs</p>\n<p>The TLS Certificates Interface is a charm relation interface for securely requesting and providing TLS certificates in the charm ecosystem.</p>\n<p>The TLS Certificates Library is a library that automate the management of certificates in charms using the TLS Certificates Interface.</p>\n<p>This documentation is meant for <strong>charm authors</strong>.</p>\n<h2><a name=\"p-27204-in-this-documentation-1\" class=\"anchor\" href=\"#p-27204-in-this-documentation-1\"></a>In this documentation</h2>\n<div class=\"md-table\">\n<table>\n<thead>\n<tr>\n<th></th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Tutorials</strong><br>  Get started - a hands-on introduction for new users<br></td>\n<td></td>\n</tr>\n<tr>\n<td><strong>Explanation</strong><br> Concepts - discussion and clarification of key topics <br></td>\n<td><strong>Reference</strong><br> Technical information - specifications, APIs, architecture</td>\n</tr>\n</tbody>\n</table>\n</div><h2><a name=\"p-27204-project-and-community-2\" class=\"anchor\" href=\"#p-27204-project-and-community-2\"></a>Project and community</h2>\n<p>The TLS Certificates Library is a member of the Ubuntu family. It\u2019s an open source project that warmly welcomes community projects, contributions, suggestions, fixes and constructive feedback.</p>\n<ul>\n<li><a href=\"https://ubuntu.com/community/ethos/code-of-conduct\">Code of conduct</a></li>\n<li>Meet the community and chat with us on <a href=\"https://matrix.to/#/!yAkGlrYcBFYzYRvOlQ:ubuntu.com?via=ubuntu.com&amp;via=matrix.org&amp;via=gnome.org\">Matrix</a></li>\n<li>Contribute and report bugs to the library on <a href=\"https://github.com/canonical/tls-certificates-interface\">GitHub</a></li>\n</ul>\n<h1><a name=\"p-27204-navigation-3\" class=\"anchor\" href=\"#p-27204-navigation-3\"></a>Navigation</h1>\n<div class=\"md-table\">\n<table>\n<thead>\n<tr>\n<th>Level</th>\n<th>Path</th>\n<th>Navlink</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>tutorials</td>\n<td><a>Tutorials</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-getting-started</td>\n<td><a href=\"/t/15537\">Getting Started (v4)</a></td>\n</tr>\n<tr>\n<td>1</td>\n<td>Explanation</td>\n<td><a>Explanation</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-tls-certificates-interface</td>\n<td><a href=\"/t/15539\">TLS Certificates Interface</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-common-name-and-sans-attributes</td>\n<td><a href=\"/t/19118\"> Common Name and SANs Attributes</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-certificate-renewal</td>\n<td><a href=\"/t/15542\">Automated Certificate Renewal (v4)</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-library-differences-v3-to-v4</td>\n<td><a href=\"/t/17225\">TLS Certificates Library v3 vs v4</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-security</td>\n<td><a href=\"/t/18245\">Security</a></td>\n</tr>\n<tr>\n<td>1</td>\n<td>Reference</td>\n<td><a>(For Charm Developers) Reference</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-library-versions</td>\n<td><a href=\"/t/15555\">Library Versions</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-private-key-label-change</td>\n<td><a href=\"/t/16764\">Change of private key labels in V4.8</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-recommended-config-options</td>\n<td><a href=\"/t/15541\">Recommended Configuration Options</a></td>\n</tr>\n<tr>\n<td>1</td>\n<td>Reference</td>\n<td><a>(For Charm Users)  Reference</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-securing-internal-communication</td>\n<td><a href=\"/t/18382\">Securing Internal Communication</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-securing-api-communication</td>\n<td><a href=\"/t/18385\">Securing API Communication</a></td>\n</tr>\n<tr>\n<td>2</td>\n<td>h-ca-trust-best-practices</td>\n<td><a href=\"/t/18386\">CA Trust Best Practices</a></td>\n</tr>\n</tbody>\n</table>\n</div>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-12-04T17:19:42.412Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 118,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 596.2,
+        "yours": false,
+        "topic_id": 11635,
+        "topic_slug": "the-tls-certificate-interface-documentation",
+        "display_username": "Gulsum Atici",
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_bg_color": "",
+        "flair_color": "",
+        "flair_group_id": 43,
+        "badges_granted": [],
+        "version": 27,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/canonical/tls-certificates-interface",
+            "internal": false,
+            "reflection": false,
+            "clicks": 4
+          },
+          {
+            "url": "https://ubuntu.com/community/ethos/code-of-conduct",
+            "internal": false,
+            "reflection": false,
+            "title": "Ubuntu Code of Conduct v2.0 | Ubuntu",
+            "clicks": 0
+          },
+          {
+            "url": "https://matrix.to/#/!yAkGlrYcBFYzYRvOlQ:ubuntu.com?via=ubuntu.com&via=matrix.org&via=gnome.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/getting-started-with-the-tls-certificates-library-v4/15537",
+            "internal": true,
+            "reflection": false,
+            "title": "Getting Started with the TLS Certificates Library (v4)",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/explanation-the-tls-certificates-interface/15539",
+            "internal": true,
+            "reflection": false,
+            "title": "Explanation: The TLS Certificates Interface",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/recommended-juju-configuration-options-for-tls-requirers/15541",
+            "internal": true,
+            "reflection": false,
+            "title": "Recommended Juju configuration options for TLS requirers",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/tls-certificates-interface-library-versions/15555",
+            "internal": true,
+            "reflection": false,
+            "title": "TLS Certificates Interface Library versions",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/explanation-certificate-renewal-with-the-tls-certificates-library-v4/15542",
+            "internal": true,
+            "reflection": false,
+            "title": "Explanation: Certificate Renewal with the TLS Certificates Library [v4]",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/important-update-tls-certificates-interface-uses-new-labels-for-juju-secrets-storing-the-private-keys/16764",
+            "internal": true,
+            "reflection": false,
+            "title": "Important Update: tls-certificates-interface uses new labels for Juju secrets storing the private keys.",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/differences-between-tls-certificates-library-v3-and-v4/17225",
+            "internal": true,
+            "reflection": false,
+            "title": "Differences between TLS Certificates Library v3 and v4",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/security-explanation-in-tls-certificates-interface/18245",
+            "internal": true,
+            "reflection": false,
+            "title": "Security Explanation in TLS Certificates Interface",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/deployment-blueprint-securing-api-communication/18385",
+            "internal": true,
+            "reflection": false,
+            "title": "Deployment Blueprint - Securing API Communication",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/deployment-blueprint-ca-trust-best-practices/18386",
+            "internal": true,
+            "reflection": false,
+            "title": "Deployment Blueprint - CA Trust Best Practices",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/deployment-blueprint-securing-internal-communication/18382",
+            "internal": true,
+            "reflection": false,
+            "title": "Deployment Blueprint - Securing Internal Communication",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/common-name-and-sans-attributes/19118",
+            "internal": true,
+            "reflection": false,
+            "title": "Common Name and SANs Attributes",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "Canonical Staff",
+        "title_is_group": true,
+        "bookmarked": false,
+        "raw": "**Note**: This library has moved to charmlibs\n\nThe TLS Certificates Interface is a charm relation interface for securely requesting and providing TLS certificates in the charm ecosystem. \n\nThe TLS Certificates Library is a library that automate the management of certificates in charms using the TLS Certificates Interface. \n\nThis documentation is meant for **charm authors**. \n\n## In this documentation\n\n| | |\n|-|-|\n| **Tutorials**</br>  Get started - a hands-on introduction for new users</br> |  |\n| **Explanation**</br> Concepts - discussion and clarification of key topics </br> | **Reference**</br> Technical information - specifications, APIs, architecture |\n\n\n\n## Project and community\n\nThe TLS Certificates Library is a member of the Ubuntu family. It\u2019s an open source project that warmly welcomes community projects, contributions, suggestions, fixes and constructive feedback.\n\n* [Code of conduct](https://ubuntu.com/community/ethos/code-of-conduct)\n* Meet the community and chat with us on [Matrix](https://matrix.to/#/!yAkGlrYcBFYzYRvOlQ:ubuntu.com?via=ubuntu.com&via=matrix.org&via=gnome.org)\n* Contribute and report bugs to the library on [GitHub](https://github.com/canonical/tls-certificates-interface)\n\n# Navigation\n|Level | Path | Navlink|\n|--- | --- | ---|\n|1 | tutorials | [Tutorials]()|\n|2 | h-getting-started | [Getting Started (v4)](/t/15537)|\n|1 | Explanation | [Explanation]()|\n|2 | h-tls-certificates-interface | [TLS Certificates Interface](/t/15539)|\n|2 | h-common-name-and-sans-attributes | [ Common Name and SANs Attributes](/t/19118)|\n|2 | h-certificate-renewal | [Automated Certificate Renewal (v4)](/t/15542)|\n|2 | h-library-differences-v3-to-v4 | [TLS Certificates Library v3 vs v4](/t/17225)|\n|2 | h-security | [Security](/t/18245)|\n|1 | Reference | [(For Charm Developers) Reference]()|\n|2 | h-library-versions | [Library Versions](/t/15555)|\n|2 | h-private-key-label-change | [Change of private key labels in V4.8](/t/16764)|\n|2 | h-recommended-config-options | [Recommended Configuration Options](/t/15541)|\n|1 | Reference | [(For Charm Users)  Reference]()|\n|2 | h-securing-internal-communication | [Securing Internal Communication](/t/18382)|\n|2 | h-securing-api-communication | [Securing API Communication](/t/18385)|\n|2 | h-ca-trust-best-practices | [CA Trust Best Practices](/t/18386)|",
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1296,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": true,
+        "last_wiki_edit": "2025-12-04T17:19:42.427Z",
+        "user_suspended": true,
+        "post_url": "/t/the-tls-certificate-interface-documentation/11635/1",
+        "user_signature": null,
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      27204
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1015
+    ]
+  ],
+  "suggested_topics": [
+    {
+      "fancy_title": "Charmed MongoDB 8 How to | Disable TLS",
+      "id": 19115,
+      "title": "Charmed MongoDB 8 How to | Disable TLS",
+      "slug": "charmed-mongodb-8-how-to-disable-tls",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-10-22T10:38:43.644Z",
+      "last_posted_at": "2025-10-22T10:38:43.834Z",
+      "bumped": true,
+      "bumped_at": "2025-10-22T10:38:43.834Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "mongodb",
+        "charmed-mongodb",
+        "charm"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 12,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 2475,
+            "username": "patriciareinoso",
+            "name": "Patricia Reinoso",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/p/54ee81/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Charm Tech pulse 2025#26 and 2026#1",
+      "id": 19624,
+      "title": "Charm Tech pulse 2025#26 and 2026#1",
+      "slug": "charm-tech-pulse-2025-26-and-2026-1",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2026-01-16T03:00:30.385Z",
+      "last_posted_at": "2026-01-16T03:00:30.628Z",
+      "bumped": true,
+      "bumped_at": "2026-01-16T03:00:30.628Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "team-updates"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 11,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 691,
+            "username": "benhoyt",
+            "name": "Ben Hoyt",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/benhoyt/{size}/4635_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "moderator": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Charmed MongoDB How-To | Major version Upgrades",
+      "id": 18356,
+      "title": "Charmed MongoDB How-To | Major version Upgrades",
+      "slug": "charmed-mongodb-how-to-major-version-upgrades",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-08-06T15:57:52.911Z",
+      "last_posted_at": "2025-08-06T15:57:53.144Z",
+      "bumped": true,
+      "bumped_at": "2025-08-06T20:46:39.397Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "mongodb",
+        "charmed-mongodb-vm"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 13,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3210,
+            "username": "gu1nn3zz",
+            "name": "Neha Oudin",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/gu1nn3zz/{size}/3820_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "content-cache docs: How to enable COS",
+      "id": 18369,
+      "title": "content-cache docs: How to enable COS",
+      "slug": "content-cache-docs-how-to-enable-cos",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-08-08T09:02:13.571Z",
+      "last_posted_at": "2025-08-08T09:02:13.729Z",
+      "bumped": true,
+      "bumped_at": "2026-02-13T13:21:43.353Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "content-cache"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 4,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 4248,
+            "username": "platform-engineering",
+            "name": "Platform Engineering",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/p/b5ac83/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Charmed Temporal K8s How To - Upgrade from latest/stable to 1.23/stable",
+      "id": 20313,
+      "title": "Charmed Temporal K8s How To - Upgrade from latest/stable to 1.23/stable",
+      "slug": "charmed-temporal-k8s-how-to-upgrade-from-latest-stable-to-1-23-stable",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2026-05-04T15:04:46.352Z",
+      "last_posted_at": "2026-05-04T15:04:46.940Z",
+      "bumped": true,
+      "bumped_at": "2026-05-04T15:04:46.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "temporal"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 3,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 5398,
+            "username": "nikitajare",
+            "name": "",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/n/a9adbd/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "docs",
+    "tls-cert-interface"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "The TLS Certificate Interface Documentation",
+  "id": 11635,
+  "title": "The TLS Certificate Interface Documentation",
+  "posts_count": 1,
+  "created_at": "2023-08-18T09:27:26.504Z",
+  "views": 1087,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-08-18T09:27:26.631Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "the-tls-certificate-interface-documentation",
+  "category_id": 41,
+  "word_count": 320,
+  "deleted_at": null,
+  "user_id": 1296,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_11635",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1296,
+        "username": "gatici",
+        "name": "Gulsum Atici",
+        "avatar_template": "/letter_avatar_proxy/v4/letter/g/b5ac83/{size}.png",
+        "post_count": 1,
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_color": "",
+        "flair_bg_color": "",
+        "flair_group_id": 43,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1296,
+      "username": "gatici",
+      "name": "Gulsum Atici",
+      "avatar_template": "/letter_avatar_proxy/v4/letter/g/b5ac83/{size}.png"
+    },
+    "last_poster": {
+      "id": 1296,
+      "username": "gatici",
+      "name": "Gulsum Atici",
+      "avatar_template": "/letter_avatar_proxy/v4/letter/g/b5ac83/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/canonical/tls-certificates-interface",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1296,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

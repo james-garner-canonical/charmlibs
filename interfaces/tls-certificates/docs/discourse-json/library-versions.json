@@ -1,0 +1,501 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 33771,
+        "name": "Guillaume Belanger",
+        "username": "gruyaume",
+        "avatar_template": "/letter_avatar_proxy/v4/letter/g/b782af/{size}.png",
+        "created_at": "2024-09-13T12:48:18.678Z",
+        "cooked": "<h1><a name=\"library-versions-1\" class=\"anchor\" href=\"#library-versions-1\"></a>Library versions</h1>\n<div class=\"md-table\">\n<table>\n<thead>\n<tr>\n<th>Library Version</th>\n<th>Status</th>\n<th>TLS Certificates Interface version</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>v0</strong></td>\n<td>Deprecated</td>\n<td><a href=\"https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1\">v1</a></td>\n</tr>\n<tr>\n<td><strong>v1</strong></td>\n<td>Deprecated</td>\n<td><a href=\"https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1\">v1</a></td>\n</tr>\n<tr>\n<td><strong><a href=\"https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v2/tls_certificates.py\">v2</a></strong></td>\n<td>Legacy</td>\n<td><a href=\"https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1\">v1</a></td>\n</tr>\n<tr>\n<td><strong><a href=\"https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v3/tls_certificates.py\">v3</a></strong></td>\n<td>Legacy</td>\n<td><a href=\"https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1\">v1</a></td>\n</tr>\n<tr>\n<td><strong><a href=\"https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v4/tls_certificates.py\">v4</a></strong></td>\n<td>Stable</td>\n<td><a href=\"https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1\">v1</a></td>\n</tr>\n</tbody>\n</table>\n</div>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-01-22T14:06:32.880Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 21,
+        "reads": 5,
+        "readers_count": 4,
+        "score": 106.0,
+        "yours": false,
+        "topic_id": 15555,
+        "topic_slug": "tls-certificates-interface-library-versions",
+        "display_username": "Guillaume Belanger",
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_bg_color": "",
+        "flair_color": "",
+        "flair_group_id": 43,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v3/tls_certificates.py",
+            "internal": false,
+            "reflection": false,
+            "title": "tls-certificates-interface/lib/charms/tls_certificates_interface/v3/tls_certificates.py at main \u00b7 canonical/tls-certificates-interface \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1",
+            "internal": false,
+            "reflection": false,
+            "title": "charm-relation-interfaces/interfaces/tls_certificates/v1 at main \u00b7 canonical/charm-relation-interfaces \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v2/tls_certificates.py",
+            "internal": false,
+            "reflection": false,
+            "title": "tls-certificates-interface/lib/charms/tls_certificates_interface/v2/tls_certificates.py at main \u00b7 canonical/tls-certificates-interface \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v4/tls_certificates.py",
+            "internal": false,
+            "reflection": false,
+            "title": "tls-certificates-interface/lib/charms/tls_certificates_interface/v4/tls_certificates.py at main \u00b7 canonical/tls-certificates-interface \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://discourse.charmhub.io/t/the-tls-certificate-interface-documentation/11635",
+            "internal": true,
+            "reflection": true,
+            "title": "The TLS Certificate Interface Documentation",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "Canonical Staff",
+        "title_is_group": true,
+        "bookmarked": false,
+        "raw": "# Library versions\n\n| Library Version                                                                                                                          | Status     | TLS Certificates Interface version                                                                    |\n| ---------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------- |\n| **v0**                                                                                                                                   | Deprecated | [v1](https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1) |\n| **v1**                                                                                                                                   | Deprecated | [v1](https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1) |\n| **[v2](https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v2/tls_certificates.py)** | Legacy     | [v1](https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1) |\n| **[v3](https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v3/tls_certificates.py)** | Legacy     | [v1](https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1) |\n| **[v4](https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v4/tls_certificates.py)** | Stable       | [v1](https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/tls_certificates/v1) |",
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1668,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": true,
+        "last_wiki_edit": "2025-01-22T14:06:32.892Z",
+        "user_suspended": true,
+        "post_url": "/t/tls-certificates-interface-library-versions/15555/1",
+        "user_signature": null,
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      33771
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      622
+    ]
+  ],
+  "suggested_topics": [
+    {
+      "fancy_title": ":loudspeaker: The tls_certificates V4 library has moved from Charmhub to Charmlibs",
+      "id": 19410,
+      "title": "\ud83d\udce2 The tls_certificates V4 library has moved from Charmhub to Charmlibs",
+      "slug": "the-tls-certificates-v4-library-has-moved-from-charmhub-to-charmlibs",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-12-05T12:26:47.299Z",
+      "last_posted_at": "2025-12-05T12:26:47.393Z",
+      "bumped": true,
+      "bumped_at": "2025-12-05T12:26:47.393Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "announcements"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 78,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1653,
+            "username": "yazansalti",
+            "name": "Yazan Salti",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/yazansalti/{size}/2913_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Charmed Mongos | Revision 62",
+      "id": 19165,
+      "title": "Charmed Mongos | Revision 62",
+      "slug": "charmed-mongos-revision-62",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-10-27T22:21:57.591Z",
+      "last_posted_at": "2025-10-27T22:21:57.935Z",
+      "bumped": true,
+      "bumped_at": "2025-10-27T22:21:57.935Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "docs",
+        "mongos",
+        "charmed-mongos"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 32,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3210,
+            "username": "gu1nn3zz",
+            "name": "Neha Oudin",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/gu1nn3zz/{size}/3820_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Charmed Pyroscope HA docs - explanation - index",
+      "id": 18125,
+      "title": "Charmed Pyroscope HA docs - explanation - index",
+      "slug": "charmed-pyroscope-ha-docs-explanation-index",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-06-25T12:22:55.509Z",
+      "last_posted_at": "2025-06-25T12:22:55.653Z",
+      "bumped": true,
+      "bumped_at": "2025-06-25T12:35:37.464Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "cos",
+        "explanation",
+        "pyroscope"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 34,
+      "category_id": 41,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 2840,
+            "username": "michaeldmitry",
+            "name": "Michael Dmitry Victor Alexander",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/m/ecae2f/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Create `8.4` track for mysql charm",
+      "id": 19606,
+      "title": "Create `8.4` track for mysql charm",
+      "slug": "create-8-4-track-for-mysql-charm",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2026-01-07T14:36:59.612Z",
+      "last_posted_at": "2026-01-07T20:46:59.263Z",
+      "bumped": true,
+      "bumped_at": "2026-01-07T20:46:59.263Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 26,
+      "category_id": 46,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 3812,
+            "username": "sinclert",
+            "name": "Sinclert P\u00e9rez",
+            "avatar_template": "/user_avatar/discourse.charmhub.io/sinclert/{size}/4210_2.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3480,
+            "username": "ruhajaved",
+            "name": "Ruha Javed",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/r/46a35a/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Service Mesh team update - weeks 26-27 (2025)",
+      "id": 18226,
+      "title": "Service Mesh team update - weeks 26-27 (2025)",
+      "slug": "service-mesh-team-update-weeks-26-27-2025",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2025-07-07T11:40:02.865Z",
+      "last_posted_at": "2025-07-07T11:40:03.034Z",
+      "bumped": true,
+      "bumped_at": "2025-07-07T11:40:03.034Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "team-updates",
+        "service-mesh"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 17,
+      "category_id": 62,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 663,
+            "username": "dylanstathis",
+            "name": "Dylan Stephano-Shachter",
+            "avatar_template": "/letter_avatar_proxy/v4/letter/d/977dab/{size}.png",
+            "primary_group_name": "Canonical",
+            "flair_name": "Canonical",
+            "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+            "flair_group_id": 43,
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "docs"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "TLS Certificates Interface Library versions",
+  "id": 15555,
+  "title": "TLS Certificates Interface Library versions",
+  "posts_count": 1,
+  "created_at": "2024-09-13T12:48:18.584Z",
+  "views": 147,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-09-13T12:48:18.678Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "tls-certificates-interface-library-versions",
+  "category_id": 41,
+  "word_count": 129,
+  "deleted_at": null,
+  "user_id": 1668,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_15555",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1668,
+        "username": "gruyaume",
+        "name": "Guillaume Belanger",
+        "avatar_template": "/letter_avatar_proxy/v4/letter/g/b782af/{size}.png",
+        "post_count": 1,
+        "primary_group_name": "Canonical",
+        "flair_name": "Canonical",
+        "flair_url": "//discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/4/40b1afea19a293ffea50c87a121a97eb888f710b.png",
+        "flair_color": "",
+        "flair_bg_color": "",
+        "flair_group_id": 43,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1668,
+      "username": "gruyaume",
+      "name": "Guillaume Belanger",
+      "avatar_template": "/letter_avatar_proxy/v4/letter/g/b782af/{size}.png"
+    },
+    "last_poster": {
+      "id": 1668,
+      "username": "gruyaume",
+      "name": "Guillaume Belanger",
+      "avatar_template": "/letter_avatar_proxy/v4/letter/g/b782af/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/canonical/tls-certificates-interface/blob/main/lib/charms/tls_certificates_interface/v3/tls_certificates.py",
+        "title": "tls-certificates-interface/lib/charms/tls_certificates_interface/v3/tls_certificates.py at main \u00b7 canonical/tls-certificates-interface \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1668,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}
