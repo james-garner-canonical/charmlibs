@@ -31,7 +31,6 @@ from charmlibs.snap._errors import (
     SnapError,
     SnapNeedsClassicError,
     SnapNotFoundError,
-    SnapOptionNotFoundError,
     SnapTimeoutError,
     _SnapAlreadyInstalledError,
 )
@@ -61,9 +60,9 @@ class TestGet:
         assert result['name'] == 'hello-world'
 
     def test_get_passes_path(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
-        _client.get('/v2/snaps/lxd/conf')
-        assert mock_raw.call_args.args[1] == '/v2/snaps/lxd/conf'
+        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
+        _client.get('/v2/snaps/hello-world')
+        assert mock_raw.call_args.args[1] == '/v2/snaps/hello-world'
 
     def test_get_passes_method(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
@@ -71,8 +70,8 @@ class TestGet:
         assert mock_raw.call_args.args[0] == 'GET'
 
     def test_get_passes_query(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_single_key.json'))
-        _client.get('/v2/snaps/lxd/conf', query={'keys': 'integer'})
+        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
+        _client.get('/v2/snaps/hello-world', query={'keys': 'integer'})
         assert mock_raw.call_args.kwargs['query'] == {'keys': 'integer'}
 
     def test_get_no_body(self, mock_raw: MagicMock):
@@ -121,13 +120,13 @@ class TestPost:
 
 class TestPut:
     def test_put_passes_method(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
-        _client.put('/v2/snaps/lxd/conf', body={'key': 'val'})
+        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
+        _client.put('/v2/snaps/hello-world/conf', body={'key': 'val'})
         assert mock_raw.call_args.args[0] == 'PUT'
 
     def test_put_sends_json_body(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
-        _client.put('/v2/snaps/lxd/conf', body={'mykey': 'myval'})
+        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
+        _client.put('/v2/snaps/hello-world/conf', body={'mykey': 'myval'})
         sent = mock_raw.call_args.kwargs['data']
         assert json.loads(sent) == {'mykey': 'myval'}
 
@@ -139,14 +138,20 @@ class TestSyncResponse:
         assert result == load_fixture('snap_info_hello_world.json')['result']
 
     def test_sync_list_result(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('services_lxd.json'))
-        result = _client.get('/v2/apps')
+        fixture = {
+            'type': 'sync',
+            'status-code': 200,
+            'status': 'OK',
+            'result': [{'name': 'a'}, {'name': 'b'}, {'name': 'c'}],
+        }
+        mock_raw.return_value = _fake_response(fixture)
+        result = _client.get('/v2/snaps')
         assert isinstance(result, list)
         assert len(result) == 3
 
     def test_sync_dict_result(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
-        result = _client.get('/v2/snaps/lxd/conf')
+        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
+        result = _client.get('/v2/snaps/hello-world')
         assert isinstance(result, dict)
 
     def test_accept_header_set(self, mock_raw: MagicMock):
@@ -186,13 +191,6 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(fixture, status=404, reason='Not Found')
         with pytest.raises(SnapNotFoundError):
             _client.get('/v2/snaps/nope')
-
-    def test_option_not_found(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('conf_option_not_found_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(SnapOptionNotFoundError):
-            _client.get('/v2/snaps/lxd/conf', query={'keys': 'keydoesnotexist01'})
 
     def test_unknown_error_kind_raises_snap_error(self, mock_raw: MagicMock):
         fixture = {
@@ -298,14 +296,20 @@ class TestErrorResponses:
         assert exc_info.value.kind == 'app-not-found'
 
     def test_error_without_kind_key(self, mock_raw: MagicMock):
-        # Real interface errors omit 'kind' entirely.
+        # Some API errors omit 'kind' entirely.
+        fixture = {
+            'type': 'error',
+            'status-code': 400,
+            'status': 'Bad Request',
+            'result': {'message': 'snap is not installed'},
+        }
         mock_raw.return_value = _fake_response(
-            load_fixture('interfaces_not_installed_error.json'),
+            fixture,
             status=400,
             reason='Bad Request',
         )
         with pytest.raises(SnapAPIError) as exc_info:
-            _client.post('/v2/interfaces', body={'action': 'connect'})
+            _client.post('/v2/snaps/hello-world', body={'action': 'refresh'})
         assert type(exc_info.value) is SnapAPIError  # not a subclass
         assert exc_info.value.kind == ''
 

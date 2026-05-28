@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import datetime
 import logging
 import typing
 from typing import Any, Literal
@@ -40,14 +39,12 @@ class Info:
         channel: str,
         revision: int | str,
         version: str,
-        hold: datetime.datetime | str | None,
     ):
         self._name = name
         self._classic = classic
         self._channel = _utils._normalize_channel(channel)
         self._revision = str(revision)
         self._version = version
-        self._hold = _utils._parse_timestamp(hold) if isinstance(hold, str) else hold
 
     @classmethod
     def _from_dict(cls, info_dict: dict[str, str]) -> Self:
@@ -57,7 +54,6 @@ class Info:
             revision=info_dict['revision'],
             version=info_dict['version'],
             classic=info_dict['confinement'] == 'classic',
-            hold=info_dict.get('hold'),
         )
 
     @property
@@ -79,10 +75,6 @@ class Info:
     @property
     def version(self) -> str:
         return self._version
-
-    @property
-    def hold(self) -> datetime.datetime | None:
-        return self._hold
 
 
 @typing.overload
@@ -225,73 +217,3 @@ def refresh(
     except _errors._SnapNoUpdatesAvailableError:
         return False
     return True
-
-
-def hold(snap: str, duration: datetime.timedelta | int | float | None = None) -> None:
-    """Hold a snap to prevent it from being automatically refreshed.
-
-    Does not prevent manual refreshes.
-
-    Raises:
-        SnapNotFoundError: If the snap is not installed.
-    """
-    # https://forum.snapcraft.io/t/snapd-rest-api/17954
-    if duration is None:
-        until = 'forever'
-    else:
-        if isinstance(duration, datetime.timedelta):
-            delta = duration
-        else:
-            delta = datetime.timedelta(seconds=duration)
-        until = (datetime.datetime.now(datetime.timezone.utc) + delta).isoformat()
-    data = {'action': 'hold', 'hold-level': 'general', 'time': until}
-    # NOTE: The API returns an error with no 'kind' when holding a non-installed snap.
-    # The CLI raises an error in this case, so we pre-emptively check if the snap is installed.
-    info(snap)  # Raise SnapNotFoundError if not installed.
-    _client.post(f'/v2/snaps/{snap}', body=data)
-
-
-def unhold(snap: str) -> None:
-    """Unhold a snap to allow it to be refreshed.
-
-    Does not raise if the snap is not installed or not held.
-    """
-    # NOTE: Neither the API nor CLI error if the snap isn't installed or held.
-    _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
-
-
-def _list_snaps() -> list[Info]:  # pyright: ignore[reportUnusedFunction]
-    """List all installed snaps."""
-    info_dicts = _client.get('/v2/snaps')
-    assert isinstance(info_dicts, list)
-    return [Info._from_dict(info_dict) for info_dict in info_dicts]
-
-
-# /v2/find
-
-
-def _list_channels(snap: str) -> dict[str, Info]:  # pyright: ignore[reportUnusedFunction]
-    """List information about all channels of a snap available in the store."""
-    results = _client.get('/v2/find', query={'name': snap})
-    assert isinstance(results, list)
-    # API returns a list of results, or an error if there are no matches.
-    # We'll have one result for an exact name match.
-    result, *_ = results
-    # A result has information like this:
-    # {
-    #     # ...
-    #     'channels': {
-    #         # ...
-    #         'latest/stable': {
-    #             'revision': '226',
-    #             'confinement': 'classic',
-    #             'version': '07258626',
-    #             'channel': 'latest/stable',
-    #             'epoch': {'read': [0], 'write': [0]},
-    #             'size': 352374784,
-    #             'released-at': '2026-02-19T23:54:26.844384Z'
-    #         },
-    #     },
-    # }
-    channels = result['channels']
-    return {k: Info._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()}

@@ -124,24 +124,6 @@ class _SnapNoUpdatesAvailableError(SnapAPIError):
     """Raised via the API when a refresh is attempted but no updates are available."""
 
 
-class _SnapInterfacesUnchangedError(SnapAPIError):
-    """Raised via the API when a connect/disconnect would result in no change.
-
-    This class is private because the public disconnect function suppresses this error,
-    following the snap CLI's lead.
-    """
-
-
-class SnapOptionNotFoundError(SnapAPIError):
-    """Raised via the API when the specified snap config option is not found.
-
-    Note that ``SnapOptionNotFoundError.value`` is typically a ``dict``,
-    rather than the usual ``str``::
-
-        {'SnapName': snap_name, 'Key': key}.
-    """
-
-
 class SnapChangeError(SnapAPIError):
     """Raised when a snap change results in an error or has an unexpected status."""
 
@@ -152,8 +134,6 @@ def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: i
             return _SnapAlreadyInstalledError
         case 'app-not-found':
             return SnapAppNotFoundError
-        case 'option-not-found':
-            return SnapOptionNotFoundError
         case 'snap-channel-not-available':
             return SnapChannelNotAvailableError
         case 'snap-needs-classic':
@@ -166,7 +146,5 @@ def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: i
             return _SnapNoUpdatesAvailableError
         case 'snap-revision-not-available':
             return SnapRevisionNotAvailableError
-        case 'interfaces-unchanged':
-            return _SnapInterfacesUnchangedError
         case _:
             return SnapAPIError

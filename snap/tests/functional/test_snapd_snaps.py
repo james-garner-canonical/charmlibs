@@ -2,14 +2,12 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Functional tests for _snapd_snaps: info, install, remove, refresh, hold, unhold.
+"""Functional tests for _snapd_snaps: info, install, remove, refresh.
 
 Tests are ordered to minimise snap install/remove churn.  All tests that need
 hello-world *installed* run first, then all tests that need it *removed*, then
 tests that inherently install/remove as part of the test logic.
 """
-
-import datetime
 
 import pytest
 
@@ -40,7 +38,6 @@ def test_info_fields():
     ensure_installed('hello-world')
     info = _snapd.info('hello-world')
     assert info.classic is False
-    assert info.hold is None
 
 
 def test_install_already_installed_returns_false():
@@ -75,37 +72,6 @@ def test_refresh_revision_not_available_raises():
     with pytest.raises(_errors.SnapRevisionNotAvailableError) as ctx:
         _snapd.refresh('hello-world', revision=99999999)
     assert ctx.value.kind == 'snap-revision-not-available'
-
-
-def test_hold_with_duration():
-    ensure_installed('hello-world')
-    _snapd.hold('hello-world', duration=datetime.timedelta(days=2))
-    info = _snapd.info('hello-world')
-    assert info.hold is not None
-    assert info.hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
-
-
-def test_hold_forever():
-    ensure_installed('hello-world')
-    _snapd.hold('hello-world')
-    info = _snapd.info('hello-world')
-    # When held forever, snapd returns a far-future timestamp.
-    assert info.hold is not None
-
-
-def test_hold_already_held_no_error():
-    # Holding an already-held snap is idempotent — no error is raised.
-    ensure_installed('hello-world')
-    _snapd.hold('hello-world')
-    _snapd.hold('hello-world')  # second hold should not raise
-
-
-def test_unhold():
-    ensure_installed('hello-world')
-    _snapd.hold('hello-world')
-    assert _snapd.info('hello-world').hold is not None
-    _snapd.unhold('hello-world')
-    assert _snapd.info('hello-world').hold is None
 
 
 def test_remove():
@@ -156,20 +122,6 @@ def test_refresh_not_installed_raises_base_snap_error():
     # No kind is set -- the message contains "is not installed" but snapd omits the kind field.
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
-
-
-def test_hold_not_installed_raises_snap_not_found_error():
-    # hold() calls info() first, which raises SnapNotFoundError with a proper kind.
-    ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
-        _snapd.hold('hello-world')
-    assert ctx.value.kind == 'snap-not-found'
-
-
-def test_unhold_not_installed_no_error():
-    # unhold on a non-installed snap succeeds silently (async Done).
-    ensure_removed('hello-world')
-    _snapd.unhold('hello-world')  # should not raise
 
 
 def test_install_invalid_channel_raises():
@@ -254,9 +206,3 @@ def test_install_channel_and_revision_raises():
 def test_refresh_channel_and_revision_raises():
     with pytest.raises(ValueError):
         _snapd.refresh('hello-world', channel='latest/stable', revision=28)  # type: ignore[call-overload]
-
-
-def test_list_channels_nonexistent_snap_raises():
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
-        _snapd._list_channels(_ABSENT_SNAP)
-    assert ctx.value.kind == 'snap-not-found'

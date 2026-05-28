@@ -1,8 +1,0 @@
-{
-    "type": "error",
-    "status-code": 400,
-    "status": "Bad Request",
-    "result": {
-        "message": "snap \"hello-world\" is not installed"
-    }
-}

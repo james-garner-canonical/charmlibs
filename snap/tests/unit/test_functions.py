@@ -22,7 +22,6 @@ def make_info(
     channel: str = 'latest/stable',
     revision: int | str = 29,
     classic: bool = False,
-    hold: str | None = None,
 ) -> _snapd.Info:
     return _snapd.Info(
         name='hello-world',
@@ -30,7 +29,6 @@ def make_info(
         revision=revision,
         version='6.4',
         classic=classic,
-        hold=hold,
     )
 
 

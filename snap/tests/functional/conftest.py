@@ -8,6 +8,7 @@ import logging
 import subprocess
 
 from charmlibs import snap
+from charmlibs.snap import _snapd_snaps
 
 # Enable debug logging from snap library during tests.
 handler = logging.StreamHandler()
@@ -26,7 +27,7 @@ def get_command_path(command: str) -> str:
 
 def ensure_removed(*snaps: str) -> None:
     for snap_name in snaps:
-        if snap.info(snap_name, missing_ok=True) is not None:
+        if _snapd_snaps.info(snap_name, missing_ok=True) is not None:
             snap.remove(snap_name)
 
 

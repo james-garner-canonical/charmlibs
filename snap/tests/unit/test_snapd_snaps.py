@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import datetime
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -21,8 +20,6 @@ from charmlibs.snap._errors import (
 from conftest import result_of
 
 if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
-
     from conftest import MockClient
 
 
@@ -56,7 +53,6 @@ class TestInfoFromDict:
         assert info.channel == 'latest/stable'
         assert info.revision == '29'
         assert info.classic is False
-        assert info.hold is None
 
     def test_revision_is_str(self):
         info = _snapd.Info._from_dict(_minimal_info_dict(revision='29'))
@@ -78,15 +74,6 @@ class TestInfoFromDict:
     def test_classic(self):
         info = _snapd.Info._from_dict(_minimal_info_dict(confinement='classic'))
         assert info.classic is True
-
-    def test_hold_present(self):
-        info = _snapd.Info._from_dict(result_of('snap_info_hello_world_held.json'))
-        assert info.hold is not None
-        assert info.hold.year == 2318
-
-    def test_hold_absent(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict())
-        assert info.hold is None
 
     def test_extra_fields_ignored(self):
         d = _minimal_info_dict()
@@ -114,11 +101,6 @@ class TestInfo:
         mock_client.get.return_value = result_of('snap_info_kube_proxy.json')
         info = _snapd.info('kube-proxy')
         assert info.classic is True
-
-    def test_info_with_hold(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('snap_info_hello_world_held.json')
-        info = _snapd.info('hello-world')
-        assert info.hold is not None
 
     def test_info_missing_ok_false(self, mock_client: MockClient):
         mock_client.get.side_effect = _make_snap_not_found()
@@ -228,91 +210,6 @@ class TestRefresh:
         )
         result = _snapd.refresh('hello-world')
         assert result is False
-
-
-class TestHold:
-    @pytest.fixture(autouse=True)
-    def mock_info(self, mocker: MockerFixture):
-        mocker.patch('charmlibs.snap._snapd_snaps.info')
-
-    def test_hold_forever(self, mock_client: MockClient):
-        _snapd.hold('hello-world')
-        body = mock_client.post.call_args.kwargs['body']
-        assert body['time'] == 'forever'
-
-    def test_hold_action_level(self, mock_client: MockClient):
-        _snapd.hold('hello-world')
-        body = mock_client.post.call_args.kwargs['body']
-        assert body['action'] == 'hold'
-        assert body['hold-level'] == 'general'
-
-    def test_hold_timedelta(self, mock_client: MockClient):
-        before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=datetime.timedelta(days=2))
-        body = mock_client.post.call_args.kwargs['body']
-        assert body['time'] != 'forever'
-        hold_time = datetime.datetime.fromisoformat(body['time'])
-        assert hold_time > before + datetime.timedelta(days=1)
-
-    def test_hold_int_seconds(self, mock_client: MockClient):
-        before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=172800)  # 2 days in seconds
-        body = mock_client.post.call_args.kwargs['body']
-        hold_time = datetime.datetime.fromisoformat(body['time'])
-        assert hold_time > before + datetime.timedelta(days=1)
-
-    def test_hold_float_seconds(self, mock_client: MockClient):
-        before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=172800.0)
-        body = mock_client.post.call_args.kwargs['body']
-        hold_time = datetime.datetime.fromisoformat(body['time'])
-        assert hold_time > before + datetime.timedelta(days=1)
-
-    def test_hold_not_installed(self, mock_client: MockClient, mocker: MockerFixture):
-        snap_not_found = SnapNotFoundError('', kind='snap-not-found', value='')
-        mocker.patch('charmlibs.snap._snapd_snaps.info', side_effect=snap_not_found)
-        with pytest.raises(SnapNotFoundError):
-            _snapd.hold('hello-world')
-        mock_client.post.assert_not_called()
-
-
-class TestUnhold:
-    def test_unhold(self, mock_client: MockClient):
-        _snapd.unhold('hello-world')
-        mock_client.post.assert_called_once_with(
-            '/v2/snaps/hello-world', body={'action': 'unhold'}
-        )
-
-
-class TestListSnaps:
-    def test_list_snaps_returns_info_objects(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('snaps_list.json')
-        snaps = _snapd._list_snaps()
-        assert len(snaps) == 2
-        assert all(isinstance(s, _snapd.Info) for s in snaps)
-        mock_client.get.assert_called_once_with('/v2/snaps')
-
-    def test_list_snaps_names(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('snaps_list.json')
-        snaps = _snapd._list_snaps()
-        assert {s.name for s in snaps} == {'hello-world', 'kube-proxy'}
-
-
-class TestListChannels:
-    def test_list_channels_returns_info_per_channel(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('find_hello_world.json')
-        channels = _snapd._list_channels('hello-world')
-        assert set(channels) == {'latest/stable', 'latest/candidate', 'latest/beta', 'latest/edge'}
-        assert all(isinstance(v, _snapd.Info) for v in channels.values())
-        mock_client.get.assert_called_once_with('/v2/find', query={'name': 'hello-world'})
-
-    def test_list_channels_info_fields(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('find_hello_world.json')
-        channels = _snapd._list_channels('hello-world')
-        info = channels['latest/stable']
-        assert info.name == 'hello-world'
-        assert info.revision == '29'
-        assert info.classic is False
 
 
 class TestRemoveAdditionalCases:
