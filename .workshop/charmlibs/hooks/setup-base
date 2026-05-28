@@ -9,4 +9,4 @@ echo UV_LINK_MODE=copy >> /etc/environment
 echo UV_PROJECT_ENVIRONMENT=/tmp/workshop-uv-venv >> /etc/environment
 
 # Install fish shell for interactive use.
-apt-get update -qq && apt-get install -yqq fish
+apt-get update -qq && apt-get install -yqq fish || echo "Couldn't install fish for interactive use."
