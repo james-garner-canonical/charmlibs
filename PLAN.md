@@ -169,8 +169,7 @@ just format snap
 .scripts/output-wrapper.sh just unit snap
 # read .out
 multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
-  sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv \
-  .scripts/output-wrapper.sh just functional snap
+  .scripts/output-wrapper.sh sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap
 # read .out
 ```
 
@@ -257,8 +256,7 @@ Key points about the capture pattern:
 
 ```bash
 multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
-  sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv \
-  .scripts/output-wrapper.sh just functional snap -k _capture
+  .scripts/output-wrapper.sh sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap -k _capture
 ```
 
 The output is in `.out` at the repo root. Then read the captured JSON files at `snap/.report/capture/*.json` — accessible from the host because the project directory is mounted in the VM.
@@ -347,8 +345,7 @@ just format snap
 .scripts/output-wrapper.sh just unit snap
 # check .out
 multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
-  sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv \
-  .scripts/output-wrapper.sh just functional snap
+  .scripts/output-wrapper.sh sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap
 # check .out
 ```
 
