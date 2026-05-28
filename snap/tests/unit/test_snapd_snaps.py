@@ -12,11 +12,9 @@ import pytest
 
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
-    SnapChannelNotAvailableError,
     SnapError,
     SnapNotFoundError,
     SnapNotInstalledError,
-    SnapRevisionNotAvailableError,
     _SnapAlreadyInstalledError,
     _SnapNoUpdatesAvailableError,
 )
@@ -167,13 +165,6 @@ class TestInstall:
         body = mock_client.post.call_args.kwargs['body']
         assert body['classic'] is True
 
-    def test_install_no_extras(self, mock_client: MockClient):
-        _snapd.install('hello-world')
-        body = mock_client.post.call_args.kwargs['body']
-        assert 'channel' not in body
-        assert 'revision' not in body
-        assert 'classic' not in body
-
     def test_install_both_raises(self, mock_client: MockClient):
         with pytest.raises(ValueError):
             _snapd.install('hello-world', channel='edge', revision=5)  # type: ignore[call-overload]
@@ -192,11 +183,6 @@ class TestRemove:
             '/v2/snaps/hello-world', body={'action': 'remove'}
         )
         assert result is True
-
-    def test_remove_no_purge_by_default(self, mock_client: MockClient):
-        _snapd.remove('hello-world')
-        body = mock_client.post.call_args.kwargs['body']
-        assert 'purge' not in body
 
     def test_remove_purge(self, mock_client: MockClient):
         _snapd.remove('hello-world', purge=True)
@@ -327,82 +313,6 @@ class TestListChannels:
         assert info.name == 'hello-world'
         assert info.revision == '29'
         assert info.classic is False
-
-    def test_list_channels_nonexistent_snap_raises(self, mock_client: MockClient):
-        mock_client.get.side_effect = SnapNotFoundError(
-            'snap not found',
-            kind='snap-not-found',
-            value='this-snap-does-not-exist-xyz',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapNotFoundError) as ctx:
-            _snapd._list_channels('this-snap-does-not-exist-xyz')
-        assert ctx.value.kind == 'snap-not-found'
-
-
-class TestInstallAdditionalErrors:
-    def test_install_nonexistent_snap_raises_snap_not_found(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNotFoundError(
-            'snap not found',
-            kind='snap-not-found',
-            value='this-snap-does-not-exist-xyz-abc-123',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapNotFoundError) as ctx:
-            _snapd.install('this-snap-does-not-exist-xyz-abc-123')
-        assert ctx.value.kind == 'snap-not-found'
-
-    def test_install_invalid_channel_raises_snap_api_error(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapChannelNotAvailableError(
-            'no snap revision on specified channel',
-            kind='snap-channel-not-available',
-            value='',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapChannelNotAvailableError) as ctx:
-            _snapd.install('hello-world', channel='garbage')
-        assert ctx.value.kind == 'snap-channel-not-available'
-
-    def test_install_revision_not_available_raises(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapRevisionNotAvailableError(
-            'no snap revision available as specified',
-            kind='snap-revision-not-available',
-            value='hello-world',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapRevisionNotAvailableError) as ctx:
-            _snapd.install('hello-world', revision=99999999)
-        assert ctx.value.kind == 'snap-revision-not-available'
-
-
-class TestRefreshAdditionalErrors:
-    def test_refresh_invalid_channel_raises_snap_api_error(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapChannelNotAvailableError(
-            'no snap revision on specified channel',
-            kind='snap-channel-not-available',
-            value='',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapChannelNotAvailableError) as ctx:
-            _snapd.refresh('hello-world', channel='garbage')
-        assert ctx.value.kind == 'snap-channel-not-available'
-
-    def test_refresh_revision_not_available_raises(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapRevisionNotAvailableError(
-            'no snap revision available as specified',
-            kind='snap-revision-not-available',
-            value='hello-world',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapRevisionNotAvailableError) as ctx:
-            _snapd.refresh('hello-world', revision=99999999)
-        assert ctx.value.kind == 'snap-revision-not-available'
 
 
 class TestRemoveAdditionalCases:

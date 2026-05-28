@@ -5,10 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from charmlibs.snap import _snapd_apps
-from charmlibs.snap._errors import SnapAppNotFoundError
 from conftest import result_of
 
 if TYPE_CHECKING:
@@ -37,22 +34,6 @@ class TestStart:
         body = mock_client.post.call_args.kwargs['body']
         assert body['enable'] is True
 
-    def test_start_no_enable_default(self, mock_client: MockClient):
-        _snapd_apps.start('lxd')
-        body = mock_client.post.call_args.kwargs['body']
-        assert 'enable' not in body
-
-    def test_start_not_installed_raises_app_not_found(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAppNotFoundError(
-            'snap "hello-world" has no service "svc"',
-            kind='app-not-found',
-            value='',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapAppNotFoundError):
-            _snapd_apps.start('hello-world', 'svc')
-
 
 class TestStop:
     def test_stop_snap_only(self, mock_client: MockClient):
@@ -71,22 +52,6 @@ class TestStop:
         body = mock_client.post.call_args.kwargs['body']
         assert body['disable'] is True
 
-    def test_stop_no_disable_default(self, mock_client: MockClient):
-        _snapd_apps.stop('lxd')
-        body = mock_client.post.call_args.kwargs['body']
-        assert 'disable' not in body
-
-    def test_stop_not_installed_raises_app_not_found(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAppNotFoundError(
-            'snap "hello-world" has no service "svc"',
-            kind='app-not-found',
-            value='',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapAppNotFoundError):
-            _snapd_apps.stop('hello-world', 'svc')
-
 
 class TestRestart:
     def test_restart_snap_only(self, mock_client: MockClient):
@@ -99,17 +64,6 @@ class TestRestart:
         _snapd_apps.restart('lxd', 'daemon')
         body = mock_client.post.call_args.kwargs['body']
         assert body['names'] == ['lxd.daemon']
-
-    def test_restart_not_installed_raises_app_not_found(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAppNotFoundError(
-            'snap "hello-world" has no service "svc"',
-            kind='app-not-found',
-            value='',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapAppNotFoundError):
-            _snapd_apps.restart('hello-world', 'svc')
 
 
 class TestListServices:

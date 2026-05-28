@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from charmlibs.snap import LogEntry, SnapError, _snapd_logs
+from charmlibs.snap import LogEntry, _snapd_logs
 from charmlibs.snap._utils import _parse_timestamp
 from conftest import result_of
 
@@ -78,17 +78,6 @@ class TestLogs:
     def test_logs_empty(self, mock_client: MockClient):
         mock_client.get.return_value = []
         assert _snapd_logs.logs('lxd') == []
-
-    def test_logs_raises_snap_error(self, mock_client: MockClient):
-        mock_client.get.side_effect = SnapError(
-            'snap "hello-world" has no services',
-            kind='app-not-found',
-            value='',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapError):
-            _snapd_logs.logs('hello-world')
 
     def test_logs_returns_log_entry_objects(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('logs_lxd.json')

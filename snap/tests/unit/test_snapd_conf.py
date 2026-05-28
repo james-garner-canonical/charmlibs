@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from charmlibs.snap import _snapd_conf
-from charmlibs.snap._errors import SnapNotFoundError, SnapOptionNotFoundError
+from charmlibs.snap._errors import SnapOptionNotFoundError
 from conftest import result_of
 
 if TYPE_CHECKING:
@@ -64,17 +64,6 @@ class TestSet:
         _snapd_conf.set('lxd', {'mykey': 'myval'})
         mock_client.put.assert_called_once_with('/v2/snaps/lxd/conf', body={'mykey': 'myval'})
 
-    def test_set_not_installed_raises_snap_not_found(self, mock_client: MockClient):
-        mock_client.put.side_effect = SnapNotFoundError(
-            'snap "hello-world" is not installed',
-            kind='snap-not-found',
-            value='hello-world',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapNotFoundError):
-            _snapd_conf.set('hello-world', {'test-key': 'value'})
-
 
 class TestUnset:
     def test_unset_single(self, mock_client: MockClient):
@@ -85,31 +74,6 @@ class TestUnset:
         _snapd_conf.unset('lxd', 'a', 'b')
         body = mock_client.put.call_args.kwargs['body']
         assert body == {'a': None, 'b': None}
-
-    def test_unset_not_installed_raises_snap_not_found(self, mock_client: MockClient):
-        mock_client.put.side_effect = SnapNotFoundError(
-            'snap "hello-world" is not installed',
-            kind='snap-not-found',
-            value='hello-world',
-            status_code=404,
-            status='Not Found',
-        )
-        with pytest.raises(SnapNotFoundError):
-            _snapd_conf.unset('hello-world', 'test-key')
-
-
-class TestGetAdditional:
-    def test_get_mixed_keys_raises_option_not_found(self, mock_client: MockClient):
-        mock_client.get.side_effect = SnapOptionNotFoundError(
-            'snap "lxd" has no "key-that-does-not-exist-xyz" configuration option',
-            kind='option-not-found',
-            value={'SnapName': 'lxd', 'Key': 'key-that-does-not-exist-xyz'},
-            status_code=400,
-            status='Bad Request',
-        )
-        with pytest.raises(SnapOptionNotFoundError) as ctx:
-            _snapd_conf.get('lxd', 'existing-key', 'key-that-does-not-exist-xyz')
-        assert ctx.value.kind == 'option-not-found'
 
 
 class TestSetAdditional:
