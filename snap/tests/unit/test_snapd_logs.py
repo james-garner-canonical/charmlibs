@@ -84,6 +84,25 @@ class TestLogs:
         entries = _snapd_logs.logs('lxd')
         assert all(isinstance(e, LogEntry) for e in entries)
 
+    def test_log_entry_str(self, mock_client: MockClient):
+        mock_client.get.return_value = result_of('logs_lxd.json')
+        entry = _snapd_logs.logs('lxd')[0]
+        s = str(entry)
+        assert str(entry.timestamp) in s
+        assert str(entry.sid) in s
+        assert str(entry.pid) in s
+        assert str(entry.message) in s
+
+    def test_log_entry_repr(self, mock_client: MockClient):
+        mock_client.get.return_value = result_of('logs_lxd.json')
+        entry = _snapd_logs.logs('lxd')[0]
+        r = repr(entry)
+        assert entry.__class__.__name__ in r
+        assert repr(entry.timestamp) in r
+        assert repr(entry.sid) in r
+        assert repr(entry.pid) in r
+        assert repr(entry.message) in r
+
 
 class TestParseTimestamp:
     def test_z_suffix(self):
