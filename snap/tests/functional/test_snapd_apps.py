@@ -15,12 +15,12 @@ from charmlibs.snap import _errors, _snapd_apps
 from conftest import ensure_installed
 
 _SNAP = 'kube-proxy'
+_SERVICE = 'daemon'
+_QUALIFIED_SERVICE = f'{_SNAP}.{_SERVICE}'
 
 # A snap name that is never installed — used for error paths where any absent
 # snap produces the same error response, avoiding unnecessary remove operations.
 _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
-_SERVICE = 'daemon'
-_QUALIFIED_SERVICE = f'{_SNAP}.{_SERVICE}'
 
 
 def _service_dict() -> dict[str, Any]:
