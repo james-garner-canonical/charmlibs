@@ -12,7 +12,7 @@ import pytest
 
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
-    SnapAPIError,
+    SnapChannelNotAvailableError,
     SnapError,
     SnapNotFoundError,
     SnapNotInstalledError,
@@ -355,14 +355,14 @@ class TestInstallAdditionalErrors:
         assert ctx.value.kind == 'snap-not-found'
 
     def test_install_invalid_channel_raises_snap_api_error(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAPIError(
+        mock_client.post.side_effect = SnapChannelNotAvailableError(
             'no snap revision on specified channel',
             kind='snap-channel-not-available',
             value='',
             status_code=404,
             status='Not Found',
         )
-        with pytest.raises(SnapAPIError) as ctx:
+        with pytest.raises(SnapChannelNotAvailableError) as ctx:
             _snapd.install('hello-world', channel='garbage')
         assert ctx.value.kind == 'snap-channel-not-available'
 
@@ -381,14 +381,14 @@ class TestInstallAdditionalErrors:
 
 class TestRefreshAdditionalErrors:
     def test_refresh_invalid_channel_raises_snap_api_error(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapAPIError(
+        mock_client.post.side_effect = SnapChannelNotAvailableError(
             'no snap revision on specified channel',
             kind='snap-channel-not-available',
             value='',
             status_code=404,
             status='Not Found',
         )
-        with pytest.raises(SnapAPIError) as ctx:
+        with pytest.raises(SnapChannelNotAvailableError) as ctx:
             _snapd.refresh('hello-world', channel='garbage')
         assert ctx.value.kind == 'snap-channel-not-available'
 

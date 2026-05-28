@@ -16,7 +16,7 @@ Ensure every public function in the snap library has tests covering all realisti
 
 ## Checklist
 
-Work through one module at a time. Mark each as done when complete.
+Work through the next module in the list. Your task is done when you finish this module, and you'll report completion to the user after finishing that module.
 
 - [x] `_snapd_snaps` — snap lifecycle (info, install, remove, refresh, hold, unhold)
 - [x] `_snapd_conf` — snap configuration (get, set, unset)
@@ -168,9 +168,9 @@ just format snap
 # read .out
 .scripts/output-wrapper.sh just unit snap
 # read .out
-.scripts/output-wrapper.sh multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
+multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
   sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv \
-  just functional snap
+  .scripts/output-wrapper.sh just functional snap
 # read .out
 ```
 
@@ -256,9 +256,9 @@ Key points about the capture pattern:
 ### Step 3: Run capture tests on the VM
 
 ```bash
-.scripts/output-wrapper.sh multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
+multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
   sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv \
-  just functional snap -k _capture
+  .scripts/output-wrapper.sh just functional snap -k _capture
 ```
 
 The output is in `.out` at the repo root. Then read the captured JSON files at `snap/.report/capture/*.json` — accessible from the host because the project directory is mounted in the VM.
@@ -304,11 +304,39 @@ def test_alias_not_installed_raises(self, mock_client: MockClient):
 
 The unit test conftest (`snap/tests/unit/conftest.py`) provides a `mock_client` fixture that patches `_client.get`, `_client.post`, and `_client.put`. Use `side_effect` for errors, `return_value` for success responses. Use `result_of('fixture.json')` to load fixture data from `snap/tests/unit/fixtures/`.
 
-### Step 6: Update docstrings
+### Step 6: Consider adding a new specific error class
+
+Review every new error kind discovered in this module. For each kind that falls through to base `SnapAPIError`, ask: would a dedicated public subclass be useful for charm authors who want to catch this error specifically?
+
+**Criteria for adding a new class:**
+- The kind is distinct and meaningful (e.g. `snap-channel-not-available`, not a generic catch-all).
+- A charm author might reasonably want to catch it separately from other `SnapAPIError`s (e.g. to retry with a different channel).
+- It is parallel to existing specific subclasses (e.g. alongside `SnapRevisionNotAvailableError`).
+
+**If a new class is warranted:**
+
+1. Add it to `snap/src/charmlibs/snap/_errors.py` — follow the existing pattern: subclass `SnapAPIError`, add a one-line docstring describing when it is raised.
+2. Add a `case 'kind-string': return NewErrorClass` entry to `_error_type_from_result_kind` in the same file.
+3. Export it from `snap/src/charmlibs/snap/__init__.py` — add to both the import block and `__all__`.
+4. Update all tests (functional and unit) for this module to use the new specific class instead of `SnapAPIError` where applicable.
+
+Example — adding `SnapChannelNotAvailableError`:
+
+```python
+# In _errors.py, alongside the other SnapAPIError subclasses:
+class SnapChannelNotAvailableError(SnapAPIError):
+    """Raised via the API when no snap revision is available on the specified channel."""
+
+# In _error_type_from_result_kind:
+case 'snap-channel-not-available':
+    return SnapChannelNotAvailableError
+```
+
+### Step 7: Update docstrings
 
 For any function where we discover a new error that can be raised, add it to the function's `Raises:` section in the docstring. If the function has no `Raises:` section yet, add one.
 
-### Step 7: Run all checks
+### Step 8: Run all checks
 
 Use `.scripts/output-wrapper.sh` to capture output to `.out` at the repo root. Run each command separately and check `.out` after each:
 
@@ -318,20 +346,25 @@ just format snap
 # check .out
 .scripts/output-wrapper.sh just unit snap
 # check .out
-.scripts/output-wrapper.sh multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
+multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
   sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv \
-  just functional snap
+  .scripts/output-wrapper.sh just functional snap
 # check .out
 ```
 
 All three must pass before marking the module complete.
 
-### Step 8: Update this plan
+### Step 9: Update this plan
 
 Before reporting done, update this file:
 1. Check off the completed module in the checklist.
 2. Add a short "Lessons learned" note under the module's section if anything surprising was discovered (e.g. unexpected error kinds, idempotent operations, API quirks).
 3. Note any deviations from the plan.
+
+
+### Step 10: Report to the user
+
+After finishing work for a single module, you're done! Let the user know.
 
 ---
 
@@ -343,7 +376,7 @@ These were discovered during earlier work and should inform test expectations:
 - `POST /v2/snaps/{snap}` with `action: remove` for a not-installed snap → `snap-not-installed` (kind).
 - `POST /v2/snaps/{snap}` with `action: refresh` for a not-installed snap → empty kind, base `SnapError`.
 - `POST /v2/snaps/{snap}` with `action: install` for a nonexistent snap → `snap-not-found` (kind), `SnapNotFoundError`.
-- `POST /v2/snaps/{snap}` with `action: install` and invalid channel (e.g. `'garbage'`) → `snap-channel-not-available` (kind), base `SnapAPIError` (no specific subclass).
+- `POST /v2/snaps/{snap}` with `action: install` and invalid channel (e.g. `'garbage'`) → `snap-channel-not-available` (kind), `SnapChannelNotAvailableError`.
 - `POST /v2/snaps/{snap}` with `action: install` and unavailable revision → `snap-revision-not-available` (kind), `SnapRevisionNotAvailableError`.
 - `POST /v2/snaps/{snap}` with `action: hold` when already held → **no error**, idempotent.
 - `POST /v2/snaps/{snap}` with `action: remove` and `purge: true` when not installed → `snap-not-installed`, same as without purge.
@@ -361,7 +394,7 @@ These were discovered during earlier work and should inform test expectations:
 
 ### `_snapd_snaps` (completed)
 
-- `install` with invalid channel raises `SnapAPIError` with kind `snap-channel-not-available` — this kind has no specific error subclass; tests assert against `SnapAPIError` + kind.
+- `install` with invalid channel raises `SnapChannelNotAvailableError` (kind `snap-channel-not-available`) — a new specific error class added alongside `SnapRevisionNotAvailableError`.
 - `hold` is fully idempotent — calling it twice raises no error.
 - `remove(purge=True)` on a non-installed snap behaves identically to `remove()` — catches `SnapNotInstalledError` and returns `False`.
 - `_list_channels` for a nonexistent snap raises `SnapNotFoundError` (not `ValueError` from unpacking) — snapd returns an error response before we reach the `result, *_ = results` line.

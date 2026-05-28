@@ -112,6 +112,10 @@ class SnapNeedsClassicError(SnapAPIError):
     """
 
 
+class SnapChannelNotAvailableError(SnapAPIError):
+    """Raised via the API when no snap revision is available on the specified channel."""
+
+
 class SnapRevisionNotAvailableError(SnapAPIError):
     """Raised via the API when the specified snap revision is not available."""
 
@@ -150,6 +154,8 @@ def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: i
             return SnapAppNotFoundError
         case 'option-not-found':
             return SnapOptionNotFoundError
+        case 'snap-channel-not-available':
+            return SnapChannelNotAvailableError
         case 'snap-needs-classic':
             return SnapNeedsClassicError
         case 'snap-not-found':

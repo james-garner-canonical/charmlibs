@@ -208,9 +208,8 @@ def test_install_nonexistent_snap_raises():
 
 
 def test_install_invalid_channel_raises():
-    # A non-existent channel raises SnapAPIError with kind 'snap-channel-not-available'.
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.SnapChannelNotAvailableError) as ctx:
         _snapd.install('hello-world', channel='garbage')
     assert ctx.value.kind == 'snap-channel-not-available'
     assert 'channel' in ctx.value.message or 'no snap revision' in ctx.value.message
@@ -230,7 +229,7 @@ def test_install_revision_not_available_raises():
 
 def test_refresh_invalid_channel_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.SnapChannelNotAvailableError) as ctx:
         _snapd.refresh('hello-world', channel='garbage')
     assert ctx.value.kind == 'snap-channel-not-available'
 

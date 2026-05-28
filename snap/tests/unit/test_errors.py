@@ -9,11 +9,13 @@ from charmlibs.snap._errors import (
     SnapAPIError,
     SnapBadResponseError,
     SnapChangeError,
+    SnapChannelNotAvailableError,
     SnapError,
     SnapNeedsClassicError,
     SnapNotFoundError,
     SnapNotInstalledError,
     SnapOptionNotFoundError,
+    SnapRevisionNotAvailableError,
     _error_type_from_result_kind,
     _SnapAlreadyInstalledError,
     _SnapInterfacesUnchangedError,
@@ -48,6 +50,18 @@ class TestErrorTypeFromResultKind:
             _error_type_from_result_kind('interfaces-unchanged') is _SnapInterfacesUnchangedError
         )
 
+    def test_snap_channel_not_available(self):
+        assert (
+            _error_type_from_result_kind('snap-channel-not-available')
+            is SnapChannelNotAvailableError
+        )
+
+    def test_snap_revision_not_available(self):
+        assert (
+            _error_type_from_result_kind('snap-revision-not-available')
+            is SnapRevisionNotAvailableError
+        )
+
     def test_unknown_kind(self):
         assert _error_type_from_result_kind('bogus-kind') is SnapAPIError
 
@@ -59,10 +73,12 @@ class TestErrorTypeFromResultKind:
             'snap-already-installed',
             'app-not-found',
             'option-not-found',
+            'snap-channel-not-available',
             'snap-needs-classic',
             'snap-not-found',
             'snap-not-installed',
             'snap-no-update-available',
+            'snap-revision-not-available',
             'interfaces-unchanged',
             'bogus-kind',
             '',

@@ -12,7 +12,7 @@ just format snap
 ```
 Also run tests against the real snapd API like this if the change is substantial, and before reporting completion. These are a bit slow so run them less frequently than the unit tests. Select specific tests with `-k '<expression>'`.
 ```
-.scripts/output-wrapper.sh multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap
+multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv .scripts/output-wrapper.sh just functional snap
 # read .out to check
 ```
 If the VM isn't available, you must either stop and ask the user, or proceed without functional tests (only if appropriate).

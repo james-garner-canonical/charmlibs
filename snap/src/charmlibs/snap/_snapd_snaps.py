@@ -144,9 +144,8 @@ def install(
         ValueError: if both channel and revision are specified.
         SnapNotFoundError: if the snap does not exist in the store.
         SnapRevisionNotAvailableError: if the specified revision is not available.
+        SnapChannelNotAvailableError: if the specified channel is not available.
         SnapNeedsClassicError: if the snap requires classic confinement and ``classic`` is not set.
-        SnapAPIError: if the specified channel is not available
-            (kind ``snap-channel-not-available``).
         SnapError: (or a subtype) if the snap could not be installed for another reason.
     """
     if channel is not None and revision is not None:
@@ -208,8 +207,7 @@ def refresh(
     Raises:
         ValueError: if both channel and revision are specified.
         SnapRevisionNotAvailableError: if the specified revision is not available.
-        SnapAPIError: if the specified channel is not available
-            (kind ``snap-channel-not-available``).
+        SnapChannelNotAvailableError: if the specified channel is not available.
         SnapError: (or a subtype) if the snap could not be refreshed for another reason.
     """
     if channel is not None and revision is not None:
