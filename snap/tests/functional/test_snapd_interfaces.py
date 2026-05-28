@@ -168,3 +168,37 @@ def test_disconnect_not_installed_snap_raises():
         _snapd_interfaces.disconnect('hello-world', 'home')
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
+
+
+def test_connect_slot_snap_not_installed_raises():
+    # connect: slot snap not installed raises SnapAPIError with empty kind.
+    ensure_installed(_SNAP)
+    ensure_removed('hello-world')
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_interfaces.connect(_SNAP, _PLUG, 'hello-world', _SLOT)
+    assert not ctx.value.kind
+    assert 'not installed' in ctx.value.message
+
+
+def test_disconnect_nonexistent_plug_or_slot_raises():
+    # disconnect: plug/slot name doesn't exist on the installed snap.
+    ensure_installed(_SNAP)
+    with pytest.raises(_errors.SnapAPIError) as ctx:
+        _snapd_interfaces.disconnect(_SNAP, 'nonexistent-slot')
+    assert not ctx.value.kind
+    assert 'no plug or slot named' in ctx.value.message
+
+
+def test_disconnect_forget_connected_no_error():
+    # disconnect forget=True on a connected interface works without error.
+    ensure_installed(_SNAP)
+    _ensure_connected()
+    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
+
+
+def test_disconnect_forget_not_connected_no_error():
+    # disconnect forget=True on a not-connected interface is a no-op
+    # (interfaces-unchanged suppressed, same as without forget=True).
+    ensure_installed(_SNAP)
+    _ensure_disconnected()
+    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise

@@ -52,7 +52,7 @@ def disconnect(
     """Disconnect a plug from a slot.
 
     Raises:
-        SnapAPIError: if the snap is not installed.
+        SnapAPIError: if the snap is not installed or the plug/slot is not found.
     """
     data: dict[str, Any] = {'action': 'disconnect'}
     if slot_snap is None:

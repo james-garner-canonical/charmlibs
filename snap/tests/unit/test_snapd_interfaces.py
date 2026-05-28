@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from charmlibs.snap import _snapd_interfaces
-from charmlibs.snap._errors import SnapAPIError
+from charmlibs.snap._errors import SnapAPIError, _SnapInterfacesUnchangedError
 from charmlibs.snap._snapd_interfaces import _Plug, _Slot
 from conftest import result_of
 
@@ -102,6 +102,29 @@ class TestDisconnect:
         with pytest.raises(SnapAPIError) as ctx:
             _snapd_interfaces.disconnect('hello-world', 'home')
         assert not ctx.value.kind
+
+    def test_disconnect_interfaces_unchanged_suppressed(self, mock_client: MockClient):
+        # The try/except in disconnect() suppresses _SnapInterfacesUnchangedError
+        # to make disconnect symmetric with connect (both are no-ops when nothing changes).
+        mock_client.post.side_effect = _SnapInterfacesUnchangedError(
+            'nothing to do',
+            kind='interfaces-unchanged',
+            value='',
+            status_code=400,
+            status='Bad Request',
+        )
+        _snapd_interfaces.disconnect('vlc', 'mount-observe')  # should not raise
+
+    def test_disconnect_interfaces_unchanged_suppressed_with_forget(self, mock_client: MockClient):
+        # _SnapInterfacesUnchangedError is suppressed even when forget=True.
+        mock_client.post.side_effect = _SnapInterfacesUnchangedError(
+            'nothing to do',
+            kind='interfaces-unchanged',
+            value='',
+            status_code=400,
+            status='Bad Request',
+        )
+        _snapd_interfaces.disconnect('vlc', 'mount-observe', forget=True)  # should not raise
 
 
 class TestListInterfaces:

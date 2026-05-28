@@ -21,7 +21,7 @@ Work through the next module in the list. Your task is done when you finish this
 - [x] `_snapd_snaps` — snap lifecycle (info, install, remove, refresh, hold, unhold)
 - [x] `_snapd_conf` — snap configuration (get, set, unset)
 - [x] `_snapd_apps` — snap services (start, stop, restart)
-- [ ] `_snapd_interfaces` — snap interfaces (connect, disconnect)
+- [x] `_snapd_interfaces` — snap interfaces (connect, disconnect)
 - [ ] `_snapd_aliases` — snap aliases (alias, unalias)
 - [ ] `_snapd_logs` — snap logs (logs)
 - [ ] `_functions` — high-level helpers (ensure, ensure_revision)
@@ -173,6 +173,8 @@ multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
 # read .out
 ```
 
+**When running functional tests via `run_in_terminal`:** use `mode=sync` with `timeout=360000` (6 minutes). This avoids polling — the result is returned directly once the suite finishes. If the timeout is hit, it falls back to returning a terminal ID (same as async), so you can still poll with `get_terminal_output` as a fallback.
+
 ### Step 1: Identify gaps
 
 Read the source module and its existing functional + unit test files. List every function and identify which error scenarios are NOT yet tested. Refer to the table above but also think about what else could go wrong — the tables are a starting point, not exhaustive.
@@ -258,6 +260,8 @@ Key points about the capture pattern:
 multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
   .scripts/output-wrapper.sh sudo env UV_PROJECT_ENVIRONMENT=/tmp/sudo-snap-venv just functional snap -k _capture
 ```
+
+Run this with `mode=sync` and `timeout=360000`. Capture tests are fast (seconds), so this will return directly.
 
 The output is in `.out` at the repo root. Then read the captured JSON files at `snap/.report/capture/*.json` — accessible from the host because the project directory is mounted in the VM.
 
@@ -349,6 +353,8 @@ multipass exec --working-directory '/home/ubuntu/charmlibs' snap-sandbox -- \
 # check .out
 ```
 
+Run the functional tests with `mode=sync` and `timeout=360000`. The full suite takes ~5 minutes; this avoids polling and returns the result directly. If the timeout is hit it returns a terminal ID for polling as a fallback.
+
 All three must pass before marking the module complete.
 
 ### Step 9: Update this plan
@@ -403,6 +409,16 @@ These were discovered during earlier work and should inform test expectations:
 - `get` with a mix of existing and missing keys raises `SnapOptionNotFoundError` for the first missing key; it does not return partial results.
 - `unset` with a dotted-path key (e.g. `'key.nested'`) works without error.
 - `_unset_all` (private, line 59 in `_snapd_conf.py`) is not covered by unit tests and is intentionally excluded — it's a trivial one-liner only used internally.
+
+### `_snapd_interfaces` (completed)
+
+- `connect` with a nonexistent slot snap raises `SnapAPIError` with empty kind and `"not installed"` message — identical error to a nonexistent plug snap. No new error class warranted.
+- `disconnect` with a genuinely nonexistent plug/slot (not just not-connected) raises `SnapAPIError` with empty kind and `"has no plug or slot named"` in the message — distinct from the not-connected case (which is silently suppressed).
+- `disconnect(forget=True)` when connected: works without error.
+- `disconnect(forget=True)` when not connected: snapd returns `interfaces-unchanged`, which the existing `try/except` suppresses — same no-op behavior as without `forget=True`.
+- Added 2 unit tests: `test_disconnect_interfaces_unchanged_suppressed` and `test_disconnect_interfaces_unchanged_suppressed_with_forget` — these verify the `try/except` logic that suppresses `_SnapInterfacesUnchangedError`.
+- Updated `disconnect` docstring: "if the snap is not installed or the plug/slot is not found."
+- No new error classes needed (both new errors have empty kind).
 
 ### `_snapd_apps` (completed)
 
