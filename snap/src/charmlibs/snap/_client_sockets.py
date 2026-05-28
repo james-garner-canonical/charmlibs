@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import http.client
 import socket
-import sys
 import urllib.request
 
 
@@ -41,8 +40,6 @@ class _UnixSocketConnection(http.client.HTTPConnection):
 
     def connect(self):
         """Override connect to use Unix socket (instead of TCP socket)."""
-        if not hasattr(socket, 'AF_UNIX'):
-            raise NotImplementedError(f'Unix sockets not supported on {sys.platform}')
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
         self.sock.connect(self._socket_path)
