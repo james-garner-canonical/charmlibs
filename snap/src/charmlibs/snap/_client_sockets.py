@@ -21,21 +21,17 @@ import socket
 import urllib.request
 
 
-class _NotProvided:
-    pass
-
-
-_NOT_PROVIDED = _NotProvided()
-
-
 class _UnixSocketConnection(http.client.HTTPConnection):
     """Implementation of HTTPConnection that connects to a named Unix socket."""
 
-    def __init__(self, host: str, socket_path: str, timeout: _NotProvided | float = _NOT_PROVIDED):
-        if isinstance(timeout, _NotProvided):
-            super().__init__(host)
-        else:
-            super().__init__(host, timeout=timeout)
+    def __init__(self, host: str, timeout: float, socket_path: str):
+        # Only constructed by UnixSocketHandler.http_open, using AbstractHTTPHandler.do_open.
+        # do_open(http_class, req, **http_conn_args) passes:
+        # - req.host positionally
+        # - timeout=req.timeout
+        # - all user supplied http_conn_args
+        # We pass socket_path as a keyword argument.
+        super().__init__(host, timeout=timeout)
         self._socket_path = socket_path
 
     def connect(self):
