@@ -103,6 +103,6 @@ def test_list_aliases_includes_created_alias():
 
 def test_alias_not_installed_snap_raises():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors._SnapNotInstalledError) as ctx:
         _snapd_aliases.alias('hello-world', 'hello', 'test-not-installed-alias')
     assert ctx.value.kind == 'snap-not-installed'
