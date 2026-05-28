@@ -152,3 +152,23 @@ def test_ensure_installs_classic():
 def test_ensure_bad_snap_name_raises():
     with pytest.raises(_errors.SnapNotFoundError):
         _functions.ensure(_ABSENT_SNAP)
+
+
+# ---------------------------------------------------------------------------
+# ensure with channel='' — treated as no channel (empty string is falsy)
+# ---------------------------------------------------------------------------
+
+
+def test_ensure_empty_channel_installs_on_default_channel() -> None:
+    ensure_removed('hello-world')
+    did_something = _functions.ensure('hello-world', channel='')
+    assert did_something is True
+    assert _snapd.info('hello-world').channel == 'latest/stable'
+
+
+def test_ensure_empty_channel_refreshes_when_installed() -> None:
+    # channel='' is falsy, so ensure skips the channel-mismatch branch
+    # and falls through to the update-check refresh (no-op here).
+    ensure_installed('hello-world', channel='latest/stable')
+    result = _functions.ensure('hello-world', channel='')
+    assert result is False

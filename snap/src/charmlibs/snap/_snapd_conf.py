@@ -53,6 +53,7 @@ def unset(snap: str, key: str, /, *keys: str) -> None:
     """
     _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 
+
 # `unset` with no keys specified unsets all keys (!).
 # This is intentionally not exposed in our unset function for safety.
 # If we wanted to add this functionality, we would do so with a separate function, like this:

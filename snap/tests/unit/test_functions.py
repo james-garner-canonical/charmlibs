@@ -141,10 +141,19 @@ class TestEnsure:
         call_kwargs = mock_snapd.refresh.call_args.kwargs
         assert 'classic' not in call_kwargs
 
+    def test_empty_channel_treated_as_none(self, mock_snapd: MockSnapd):
+        # channel='' is falsy, so it's treated the same as channel=None:
+        # no channel-mismatch refresh, and with update=False no refresh at all.
+        mock_snapd.info.return_value = make_info(channel='latest/stable')
+        result = _functions.ensure('hello-world', channel='', update=False)
+        mock_snapd.refresh.assert_not_called()
+        assert result is False
+
 
 @pytest.mark.parametrize(
     'channel,expected',
     [
+        ('', ''),
         ('stable', 'latest/stable'),
         ('candidate', 'latest/candidate'),
         ('beta', 'latest/beta'),

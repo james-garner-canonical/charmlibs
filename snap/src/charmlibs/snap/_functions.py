@@ -64,7 +64,7 @@ def ensure(
     if info is None:  # Not installed.
         _snapd_snaps.install(snap, channel=channel, classic=classic)
         return True
-    if channel is not None and info.channel != _utils._normalize_channel(channel):
+    if channel and info.channel != _utils._normalize_channel(channel):
         # Installed but on a different channel.
         _snapd_snaps.refresh(snap, channel=channel)
         return True
