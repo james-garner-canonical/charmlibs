@@ -20,7 +20,7 @@ Work through the next module in the list. Your task is done when you finish this
 
 - [x] `_snapd_snaps` — snap lifecycle (info, install, remove, refresh, hold, unhold)
 - [x] `_snapd_conf` — snap configuration (get, set, unset)
-- [ ] `_snapd_apps` — snap services (start, stop, restart)
+- [x] `_snapd_apps` — snap services (start, stop, restart)
 - [ ] `_snapd_interfaces` — snap interfaces (connect, disconnect)
 - [ ] `_snapd_aliases` — snap aliases (alias, unalias)
 - [ ] `_snapd_logs` — snap logs (logs)
@@ -403,6 +403,19 @@ These were discovered during earlier work and should inform test expectations:
 - `get` with a mix of existing and missing keys raises `SnapOptionNotFoundError` for the first missing key; it does not return partial results.
 - `unset` with a dotted-path key (e.g. `'key.nested'`) works without error.
 - `_unset_all` (private, line 59 in `_snapd_conf.py`) is not covered by unit tests and is intentionally excluded — it's a trivial one-liner only used internally.
+
+### `_snapd_apps` (completed)
+
+- All three planned scenarios (start/stop/restart with no service arg on a snap with no services) were already covered in the functional tests — only unit test equivalents were missing.
+- `start`/`stop`/`restart` on a snap with no services and on a not-installed snap both raise `SnapAppNotFoundError` with `kind='app-not-found'`; the code path is identical (exception propagates from `_client.post`).
+- `_list_services` raises `SnapAppNotFoundError` (`app-not-found`) for a snap with no services, but `SnapNotFoundError` (`snap-not-found`) for a snap that doesn't exist at all — a subtle but testable difference.
+- Added 5 unit tests: `test_start_snap_with_no_services_raises`, `test_stop_snap_with_no_services_raises`, `test_restart_snap_with_no_services_raises`, `test_list_services_snap_with_no_services_raises`, `test_list_services_uninstalled_snap_raises`.
+- No new error classes or docstring changes needed.
+
+### Unit test lessons learned
+
+- **Don't add vacuous error-propagation unit tests.** For functions that contain no error-handling logic (no `try/except`, no conditional re-raise), a test that sets `mock.side_effect = SomeError` and asserts `SomeError` is raised proves nothing — you could substitute any exception and it would pass identically. The mapping from raw API `kind` strings to error classes is already tested in `test_errors.py` (`_error_type_from_result_kind`) and `test_client.py`. Once covered there, don't repeat it per-module.
+- **Unit tests worth writing** are ones that verify real conditional logic: name/body construction (e.g. `names=['snap.svc']` vs `names=['snap']`), optional flags only appearing when set, `try/except` branches that transform or swallow errors (e.g. `remove` returning `False` on `SnapNotInstalledError`).
 
 ### Shell/tooling lessons learned
 
