@@ -49,9 +49,8 @@ _TOCTREE_FOOTER = '```\n'
 
 def _main() -> None:
     """Discover packages and copy their docs into the Sphinx source tree."""
-    ls = _REPO_ROOT / '.scripts' / 'ls.py'
     cmd = [
-        str(ls),
+        _REPO_ROOT / '.scripts' / 'ls.py',
         'packages',
         '--exclude-examples',
         '--exclude-placeholders',
