@@ -107,7 +107,7 @@ def _main() -> None:
     if args.output:
         result = sorted(
             (info.to_dict(*args.output) for info in infos),
-            key=lambda di: json.dumps(di, sort_keys=True, default=str),
+            key=lambda di: json.dumps(di, default=str),
         )
     else:
         result = sorted(getattr(info, args.output_only) for info in infos)
