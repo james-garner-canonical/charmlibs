@@ -53,7 +53,7 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 :reverse:
 
 ```{grid-item-card} [Reference](reference/index)
-**Technical information** 
+**Technical information**
 - {ref}`General libraries <general-libs-listing>` and {ref}`interface libraries <interface-libs-listing>`
 - {ref}`charmlibs package docs <reference-charmlibs>`
 - {ref}`charmlibs.interfaces package docs <reference-charmlibs-interfaces>`

@@ -54,6 +54,9 @@ def _main() -> None:
     cmd = [str(ls), 'packages', '--exclude-examples', '--exclude-placeholders', '--exclude-testing']
     packages: list[str] = json.loads(subprocess.check_output(cmd, text=True))
 
+    # Build the mapping of repo-relative paths to Sphinx doc paths.
+    sphinx_map = _build_sphinx_map(packages)
+
     tutorial_entries: list[str] = []
     howto_entries: list[str] = []
     explanation_entries: list[str] = []
@@ -65,14 +68,13 @@ def _main() -> None:
 
         lib_name = _lib_name(raw_package)
         is_interface = raw_package.startswith('interfaces/')
-        base_url = f'{_REPO_MAIN_URL}/{raw_package}/docs'
 
-        entry = _copy_tutorial(lib_docs, lib_name, is_interface, base_url)
+        entry = _copy_tutorial(lib_docs, lib_name, is_interface, sphinx_map)
         if entry:
             tutorial_entries.append(entry)
 
         for category, entries in (('how-to', howto_entries), ('explanation', explanation_entries)):
-            entries.extend(_copy_category(lib_docs, lib_name, is_interface, base_url, category))
+            entries.extend(_copy_category(lib_docs, lib_name, is_interface, category, sphinx_map))
 
     # Write include files (always, even if empty — so the fallback extension knows not to run).
     _write_include(_DOCS_DIR / 'tutorials' / '_lib-tutorials.md', tutorial_entries)
@@ -84,7 +86,7 @@ def _copy_tutorial(
     lib_docs: pathlib.Path,
     lib_name: str,
     is_interface: bool,
-    base_url: str,
+    sphinx_map: dict[str, str],
 ) -> str | None:
     """Copy a library's tutorial and return its toctree entry, or ``None``."""
     for ext in ('.md', '.rst'):
@@ -97,7 +99,7 @@ def _copy_tutorial(
     content = source.read_text()
     title = _extract_h1(content, ext)
     content = _prefix_h1(content, lib_name, ext)
-    content = _rewrite_relative_links(content, base_url)
+    content = _rewrite_links(content, source, sphinx_map)
 
     rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
     out_dir = _DOCS_DIR / 'tutorials' / rel_dir
@@ -112,8 +114,8 @@ def _copy_category(
     lib_docs: pathlib.Path,
     lib_name: str,
     is_interface: bool,
-    base_url: str,
     category: str,
+    sphinx_map: dict[str, str],
 ) -> list[str]:
     """Copy a library's how-to or explanation docs and return toctree entries."""
     source_dir = lib_docs / category
@@ -131,7 +133,7 @@ def _copy_category(
         content = source.read_text()
         title = _extract_h1(content, source.suffix)
         content = _prefix_h1(content, lib_name, source.suffix)
-        content = _rewrite_relative_links(content, f'{base_url}/{category}')
+        content = _rewrite_links(content, source, sphinx_map)
         _write_if_needed(path=out_dir / source.name, content=content)
 
         doc_ref = f'{rel_dir}/{lib_name}/{source.stem}'
@@ -153,6 +155,14 @@ def _write_include(path: pathlib.Path, entries: list[str]) -> None:
 def _lib_name(raw_package: str) -> str:
     """Extract the library name from a package path like ``interfaces/tls-certificates``."""
     return pathlib.PurePosixPath(raw_package).name
+
+
+def _normalize(name: str) -> str:
+    """Normalize a package name to the form used in reference doc paths.
+
+    Matches the PyPI name normalization used by ``package_docs.py``.
+    """
+    return re.sub(r'[-_.]+', '-', name).lower()
 
 
 def _extract_h1(content: str, ext: str) -> str:
@@ -197,11 +207,122 @@ def _prefix_h1(content: str, lib_name: str, ext: str) -> str:
     return '\n'.join(lines)
 
 
-def _rewrite_relative_links(content: str, base_url: str) -> str:
-    """Rewrite relative (non-HTTP) markdown links to absolute GitHub URLs."""
+def _build_sphinx_map(packages: list[str]) -> dict[str, str]:
+    """Build a mapping from repo-relative file paths to Sphinx doc paths.
+
+    Covers:
+    - ``.docs/`` pages (how-to, explanation, tutorials, reference, etc.)
+    - Per-library diataxis docs (tutorial, how-to/*, explanation/*)
+    - Interface version READMEs (``interfaces/{name}/interface/v{N}/README.md``)
+    - Package READMEs (``{pkg}/README.md``)
+    """
+    m: dict[str, str] = {}
+
+    # Static .docs/ pages — walk all .md/.rst files (excluding build artifacts).
+    for path in _DOCS_DIR.rglob('*'):
+        if path.suffix not in ('.md', '.rst'):
+            continue
+        rel = path.relative_to(_DOCS_DIR)
+        parts = rel.parts
+        # Skip build artifacts, generated dirs, and include files.
+        if parts[0] in ('_build', '.sphinx', '.save', 'scripts', 'tests', 'extensions'):
+            continue
+        if rel.name.startswith('_'):
+            continue
+        repo_rel = f'.docs/{rel}'
+        sphinx_doc = str(rel.with_suffix(''))
+        m[repo_rel] = f'/{sphinx_doc}'
+
+    # Per-library diataxis docs and package READMEs.
+    for raw_package in packages:
+        lib_name = _lib_name(raw_package)
+        is_interface = raw_package.startswith('interfaces/')
+        rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
+
+        # Package README → reference page.
+        norm_name = _normalize(lib_name)
+        if is_interface:
+            readme_key = f'{raw_package}/README.md'
+            m[readme_key] = f'/reference/charmlibs/interfaces/{norm_name}'
+        else:
+            readme_key = f'{raw_package}/README.md'
+            m[readme_key] = f'/reference/charmlibs/{norm_name}'
+
+        lib_docs = _REPO_ROOT / raw_package / 'docs'
+        if not lib_docs.is_dir():
+            continue
+
+        # Tutorial.
+        for ext in ('.md', '.rst'):
+            tutorial = lib_docs / f'tutorial{ext}'
+            if tutorial.exists():
+                repo_rel = str(tutorial.relative_to(_REPO_ROOT))
+                m[repo_rel] = f'/tutorials/{rel_dir}/{lib_name}'
+                break
+
+        # How-to and explanation.
+        for category in _CATEGORIES:
+            cat_dir = lib_docs / category
+            if not cat_dir.is_dir():
+                continue
+            for source in cat_dir.iterdir():
+                if source.suffix not in ('.md', '.rst'):
+                    continue
+                repo_rel = str(source.relative_to(_REPO_ROOT))
+                m[repo_rel] = f'/{category}/{rel_dir}/{lib_name}/{source.stem}'
+
+    # Interface version READMEs (interfaces/{name}/interface/v{N}/README.md).
+    for raw_package in packages:
+        if not raw_package.startswith('interfaces/'):
+            continue
+        interface_name = _lib_name(raw_package)
+        interface_dir = _REPO_ROOT / raw_package / 'interface'
+        if not interface_dir.is_dir():
+            continue
+        for v_dir in interface_dir.glob('v[0-9]*'):
+            readme = v_dir / 'README.md'
+            if readme.exists():
+                repo_rel = str(readme.relative_to(_REPO_ROOT))
+                m[repo_rel] = f'/reference/interfaces/{interface_name}/{v_dir.name}'
+
+    return m
+
+
+def _rewrite_links(content: str, source_file: pathlib.Path, sphinx_map: dict[str, str]) -> str:
+    """Rewrite markdown links: Sphinx paths for known docs, GitHub URLs otherwise."""
+    source_dir = source_file.parent
+
+    def _replace(m: re.Match[str]) -> str:
+        text = m.group(1)
+        raw_target = m.group(2)
+
+        # Split off any anchor fragment.
+        if '#' in raw_target:
+            path_part, fragment = raw_target.rsplit('#', 1)
+            fragment = f'#{fragment}'
+        else:
+            path_part = raw_target
+            fragment = ''
+
+        # Resolve relative to the source file's directory.
+        resolved = (source_dir / path_part).resolve()
+        try:
+            repo_rel = str(resolved.relative_to(_REPO_ROOT))
+        except ValueError:
+            raise ValueError(
+                f'{source_file}: link target {raw_target!r} resolves outside the repo'
+            ) from None
+
+        # Look up in the Sphinx map.
+        if repo_rel in sphinx_map:
+            return f'[{text}]({sphinx_map[repo_rel]}{fragment})'
+
+        # Fall back to GitHub URL.
+        return f'[{text}]({_REPO_MAIN_URL}/{repo_rel}{fragment})'
+
     return re.sub(
         r'\[(.+?)\]\((?!https?://)([^)]+)\)',
-        lambda m: f'[{m.group(1)}]({base_url}/{m.group(2)})',
+        _replace,
         content,
     )
 
