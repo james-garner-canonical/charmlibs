@@ -205,41 +205,28 @@ def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
 
 def _rewrite_links(content: str, source_file: pathlib.Path, sphinx_map: dict[str, str]) -> str:
     """Rewrite markdown links: Sphinx paths for known docs, GitHub URLs otherwise."""
-    source_dir = source_file.parent
 
     def _replace(m: re.Match[str]) -> str:
         text = m.group(1)
         raw_target = m.group(2)
-
         # Split off any anchor fragment.
-        if '#' in raw_target:
-            path_part, fragment = raw_target.rsplit('#', 1)
-            fragment = f'#{fragment}'
-        else:
-            path_part = raw_target
-            fragment = ''
-
+        path_part, sep, raw_fragment = raw_target.partition('#')
+        fragment = sep + raw_fragment  # either '' or '#something'
         # Resolve relative to the source file's directory.
-        resolved = (source_dir / path_part).resolve()
-        try:
-            repo_rel = str(resolved.relative_to(_REPO_ROOT))
-        except ValueError:
-            raise ValueError(
-                f'{source_file}: link target {raw_target!r} resolves outside the repo'
-            ) from None
+        resolved = (source_file.parent / path_part).resolve()
+        repo_rel = str(resolved.relative_to(_REPO_ROOT))  # ValueError if link goes above repo root
+        # Look up in the Sphinx map, falling back to GitHub URL.
+        url = sphinx_map.get(repo_rel, f'{_REPO_MAIN_URL}/{repo_rel}')
+        return f'[{text}]({url}{fragment})'
 
-        # Look up in the Sphinx map.
-        if repo_rel in sphinx_map:
-            return f'[{text}]({sphinx_map[repo_rel]}{fragment})'
-
-        # Fall back to GitHub URL.
-        return f'[{text}]({_REPO_MAIN_URL}/{repo_rel}{fragment})'
-
-    return re.sub(
-        r'\[(.+?)\]\((?!https?://)([^)]+)\)',
-        _replace,
-        content,
+    _RELATIVE_LINK = (
+        r'\[(.+?)\]'       # [link text] -- capture group 1
+        r'\('              # (
+        r'(?!https?://)'   # not an absolute URL
+        r'([^)]+)'         # relative target -- capture group 2
+        r'\)'              # )
     )
+    return re.sub(_RELATIVE_LINK, _replace, content)
 
 
 if __name__ == '__main__':

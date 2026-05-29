@@ -172,7 +172,7 @@ def test_rewrite_links_outside_repo_raises(tmp_path: pathlib.Path, monkeypatch: 
     source = tmp_path / 'repo' / 'pkg' / 'docs' / 'tutorial.md'
     source.parent.mkdir(parents=True)
     content = 'See [bad](../../../../etc/passwd).'
-    with pytest.raises(ValueError, match='resolves outside the repo'):
+    with pytest.raises(ValueError):
         pp._rewrite_links(content, source, {})
 
 
