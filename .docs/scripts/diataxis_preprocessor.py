@@ -106,30 +106,23 @@ def _extract_h1(content: str, ext: str) -> str:
     """Extract the first H1 heading text from content."""
     if ext == '.md':
         match = re.search(r'^# (.+)$', content, re.MULTILINE)
-        if not match:
-            raise ValueError('no markdown H1 heading found')
-        return match.group(1).strip()
-    lines = content.split('\n')
-    return lines[_rst_title_index(lines)].strip()
+    else:
+        match = re.search(r'^(.+)\n(?:=+|-+)$', content, re.MULTILINE)
+    if not match:
+        raise ValueError(f'no {ext} title found')
+    return match.group(1).strip()
 
 
 def _prefix_h1(content: str, lib_name: str, ext: str) -> str:
     """Prepend the library name to the first H1 heading."""
     if ext == '.md':
         return re.sub(r'^(# )', rf'\1{lib_name}: ', content, count=1, flags=re.MULTILINE)
-    lines = content.split('\n')
-    i = _rst_title_index(lines)
-    lines[i] = f'{lib_name}: {lines[i]}'
-    lines[i + 1] = lines[i + 1][0] * len(lines[i])
-    return '\n'.join(lines)
 
+    def _replace(m: re.Match[str]) -> str:
+        title = f'{lib_name}: {m.group(1)}'
+        return f'{title}\n{m.group(2)[0] * len(title)}'
 
-def _rst_title_index(lines: list[str]) -> int:
-    """Return the line index of an RST title."""
-    for i in range(1, len(lines)):
-        if set(lines[i]) in ({'='}, {'-'}):
-            return i - 1
-    raise ValueError('no RST title found')
+    return re.sub(r'^(.+)\n(=+|-+)$', _replace, content, count=1, flags=re.MULTILINE)
 
 
 def _build_sphinx_map(packages: list[dict[str, Any]]) -> dict[pathlib.PurePath, str]:
