@@ -67,8 +67,9 @@ class Info:
     description: str = ''
     status: str = ''
     schema_path: str = ''
+    docs: dict[str, list[str]] = dataclasses.field(default_factory=dict)
 
-    def to_dict(self, *fields: str) -> dict[str, str]:
+    def to_dict(self, *fields: str) -> dict[str, object]:
         """Return dictionary containing only specified fields."""
         return {field: getattr(self, field) for field in fields}
 
@@ -106,7 +107,7 @@ def _main() -> None:
     if args.output:
         result = sorted(
             (info.to_dict(*args.output) for info in infos),
-            key=lambda di: tuple(di.items()),
+            key=lambda di: json.dumps(di, sort_keys=True, default=str),
         )
     else:
         result = sorted(getattr(info, args.output_only) for info in infos)
@@ -191,6 +192,8 @@ def _ls(
                 info.status = _get_status(category, root, path)
             if 'schema_path' in output:
                 info.schema_path = _get_schema_path_str(category, root, path)
+            if 'docs' in output:
+                info.docs = _get_docs(root, path)
             infos.append(info)
         return infos
 
@@ -368,6 +371,31 @@ def _get_status(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
         return ''
     assert category == 'interfaces'
     return _interface_yaml(path, root=root).get('status', '').strip()
+
+
+def _get_docs(root: pathlib.Path, path: pathlib.Path) -> dict[str, list[str]]:
+    """Return diataxis doc files for a package, relative to the package directory."""
+    docs_dir = root / path / 'docs'
+    result: dict[str, list[str]] = {}
+    if not docs_dir.is_dir():
+        return result
+    for ext in ('.md', '.rst'):
+        tutorial = docs_dir / f'tutorial{ext}'
+        if tutorial.exists():
+            result['tutorial'] = [str(tutorial.relative_to(root / path))]
+            break
+    for cat in ('how-to', 'explanation'):
+        cat_dir = docs_dir / cat
+        if not cat_dir.is_dir():
+            continue
+        files = sorted(
+            str(f.relative_to(root / path))
+            for f in cat_dir.iterdir()
+            if f.suffix in ('.md', '.rst')
+        )
+        if files:
+            result[cat] = files
+    return result
 
 
 def _get_schema_path_str(category: str, root: pathlib.Path, path: pathlib.Path) -> str:

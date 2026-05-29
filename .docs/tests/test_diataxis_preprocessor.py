@@ -62,10 +62,10 @@ def test_build_sphinx_map_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.M
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
     monkeypatch.setattr(pp, '_DOCS_DIR', tmp_path / '.docs')
     (tmp_path / '.docs').mkdir()
-    lib_docs = tmp_path / 'mylib' / 'docs'
-    lib_docs.mkdir(parents=True)
-    (lib_docs / 'tutorial.md').touch()
-    m = pp._build_sphinx_map(['mylib'])
+    packages: list[dict[str, object]] = [
+        {'path': 'mylib', 'docs': {'tutorial': ['docs/tutorial.md']}},
+    ]
+    m = pp._build_sphinx_map(packages)
     assert m['mylib/docs/tutorial.md'] == '/tutorials/charmlibs/mylib'
 
 
@@ -77,7 +77,10 @@ def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monke
     v1_dir = tmp_path / 'interfaces' / 'tls-certificates' / 'interface' / 'v1'
     v1_dir.mkdir(parents=True)
     (v1_dir / 'README.md').touch()
-    m = pp._build_sphinx_map(['interfaces/tls-certificates'])
+    packages: list[dict[str, object]] = [
+        {'path': 'interfaces/tls-certificates', 'docs': {}},
+    ]
+    m = pp._build_sphinx_map(packages)
     assert m['interfaces/tls-certificates/interface/v1/README.md'] == '/reference/interfaces/tls-certificates/v1'
 
 
@@ -86,7 +89,8 @@ def test_build_sphinx_map_package_readme(tmp_path: pathlib.Path, monkeypatch: py
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
     monkeypatch.setattr(pp, '_DOCS_DIR', tmp_path / '.docs')
     (tmp_path / '.docs').mkdir()
-    m = pp._build_sphinx_map(['pathops'])
+    packages: list[dict[str, object]] = [{'path': 'pathops', 'docs': {}}]
+    m = pp._build_sphinx_map(packages)
     assert m['pathops/README.md'] == '/reference/charmlibs/pathops'
 
 
@@ -258,12 +262,12 @@ def test_write_include_empty(tmp_path: pathlib.Path):
 
 def test_copy_tutorial_md(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    lib_docs.mkdir(parents=True)
-    (lib_docs / 'tutorial.md').write_text('# My Tutorial\n\nContent.\n')
+    source = tmp_path / 'lib' / 'docs' / 'tutorial.md'
+    source.parent.mkdir(parents=True)
+    source.write_text('# My Tutorial\n\nContent.\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entry = pp._copy_tutorial(lib_docs, 'mylib', False, {})
+    entry = pp._copy_tutorial(source, 'mylib', False, {})
     out = docs_dir / 'tutorials' / 'charmlibs' / 'mylib.md'
     assert out.exists()
     assert out.read_text().startswith('# mylib: My Tutorial\n')
@@ -272,25 +276,15 @@ def test_copy_tutorial_md(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatc
 
 def test_copy_tutorial_interface(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    lib_docs.mkdir(parents=True)
-    (lib_docs / 'tutorial.md').write_text('# Tutorial\n')
+    source = tmp_path / 'lib' / 'docs' / 'tutorial.md'
+    source.parent.mkdir(parents=True)
+    source.write_text('# Tutorial\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entry = pp._copy_tutorial(lib_docs, 'tls-certs', True, {})
+    entry = pp._copy_tutorial(source, 'tls-certs', True, {})
     out = docs_dir / 'tutorials' / 'charmlibs' / 'interfaces' / 'tls-certs.md'
     assert out.exists()
     assert entry == 'tls-certs: Tutorial <charmlibs/interfaces/tls-certs>'
-
-
-def test_copy_tutorial_no_file(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
-    docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    lib_docs.mkdir(parents=True)
-    monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
-    entry = pp._copy_tutorial(lib_docs, 'mylib', False, {})
-    assert entry is None
-    assert not (docs_dir / 'tutorials').exists()
 
 
 # --- _copy_category ---
@@ -298,14 +292,14 @@ def test_copy_tutorial_no_file(tmp_path: pathlib.Path, monkeypatch: pytest.Monke
 
 def test_copy_category(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    howto_dir = lib_docs / 'how-to'
+    howto_dir = tmp_path / 'lib' / 'docs' / 'how-to'
     howto_dir.mkdir(parents=True)
     (howto_dir / 'deploy.md').write_text('# Deploy\n\nSteps.\n')
     (howto_dir / 'upgrade.md').write_text('# Upgrade\n\nSteps.\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category(lib_docs, 'mylib', False, 'how-to', {})
+    sources = sorted(howto_dir.glob('*.md'))
+    entries = pp._copy_category(sources, 'mylib', False, 'how-to', {})
     out_dir = docs_dir / 'how-to' / 'charmlibs' / 'mylib'
     assert (out_dir / 'deploy.md').exists()
     assert (out_dir / 'upgrade.md').exists()
@@ -316,33 +310,19 @@ def test_copy_category(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
 
 def test_copy_category_interface(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    expl_dir = lib_docs / 'explanation'
+    expl_dir = tmp_path / 'lib' / 'docs' / 'explanation'
     expl_dir.mkdir(parents=True)
     (expl_dir / 'security.md').write_text('# Security\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category(lib_docs, 'tls-certs', True, 'explanation', {})
+    entries = pp._copy_category([expl_dir / 'security.md'], 'tls-certs', True, 'explanation', {})
     out = docs_dir / 'explanation' / 'charmlibs' / 'interfaces' / 'tls-certs' / 'security.md'
     assert out.exists()
     assert entries == ['tls-certs: Security <charmlibs/interfaces/tls-certs/security>']
 
 
-def test_copy_category_skips_non_md(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
+def test_copy_category_empty_sources(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    howto_dir = lib_docs / 'how-to'
-    howto_dir.mkdir(parents=True)
-    (howto_dir / 'notes.txt').write_text('not a doc')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
-    entries = pp._copy_category(lib_docs, 'mylib', False, 'how-to', {})
-    assert entries == []
-
-
-def test_copy_category_no_dir(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
-    docs_dir = tmp_path / 'docs_site'
-    lib_docs = tmp_path / 'lib' / 'docs'
-    lib_docs.mkdir(parents=True)
-    monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
-    entries = pp._copy_category(lib_docs, 'mylib', False, 'how-to', {})
+    entries = pp._copy_category([], 'mylib', False, 'how-to', {})
     assert entries == []

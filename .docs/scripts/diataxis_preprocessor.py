@@ -51,8 +51,16 @@ _TOCTREE_FOOTER = '```\n'
 def _main() -> None:
     """Discover packages and copy their docs into the Sphinx source tree."""
     ls = _REPO_ROOT / '.scripts' / 'ls.py'
-    cmd = [str(ls), 'packages', '--exclude-examples', '--exclude-placeholders', '--exclude-testing']
-    packages: list[str] = json.loads(subprocess.check_output(cmd, text=True))
+    cmd = [
+        str(ls),
+        'packages',
+        '--exclude-examples',
+        '--exclude-placeholders',
+        '--exclude-testing',
+        '--output', 'path',
+        '--output', 'docs',
+    ]
+    packages: list[dict[str, object]] = json.loads(subprocess.check_output(cmd, text=True))
 
     # Build the mapping of repo-relative paths to Sphinx doc paths.
     sphinx_map = _build_sphinx_map(packages)
@@ -61,20 +69,21 @@ def _main() -> None:
     howto_entries: list[str] = []
     explanation_entries: list[str] = []
 
-    for raw_package in packages:
-        lib_docs = _REPO_ROOT / raw_package / 'docs'
-        if not lib_docs.is_dir():
-            continue
-
+    for pkg in packages:
+        raw_package = str(pkg['path'])
+        docs: dict[str, list[str]] = pkg.get('docs', {})  # type: ignore[assignment]
         lib_name = _lib_name(raw_package)
         is_interface = raw_package.startswith('interfaces/')
 
-        entry = _copy_tutorial(lib_docs, lib_name, is_interface, sphinx_map)
-        if entry:
+        tutorial_files = docs.get('tutorial', [])
+        if tutorial_files:
+            source = _REPO_ROOT / raw_package / tutorial_files[0]
+            entry = _copy_tutorial(source, lib_name, is_interface, sphinx_map)
             tutorial_entries.append(entry)
 
         for category, entries in (('how-to', howto_entries), ('explanation', explanation_entries)):
-            entries.extend(_copy_category(lib_docs, lib_name, is_interface, category, sphinx_map))
+            sources = [_REPO_ROOT / raw_package / f for f in docs.get(category, [])]
+            entries.extend(_copy_category(sources, lib_name, is_interface, category, sphinx_map))
 
     # Write include files (always, even if empty — so the fallback extension knows not to run).
     _write_include(_DOCS_DIR / 'tutorials' / '_lib-tutorials.md', tutorial_entries)
@@ -83,53 +92,40 @@ def _main() -> None:
 
 
 def _copy_tutorial(
-    lib_docs: pathlib.Path,
+    source: pathlib.Path,
     lib_name: str,
     is_interface: bool,
     sphinx_map: dict[str, str],
-) -> str | None:
-    """Copy a library's tutorial and return its toctree entry, or ``None``."""
-    for ext in ('.md', '.rst'):
-        source = lib_docs / f'tutorial{ext}'
-        if source.exists():
-            break
-    else:
-        return None
-
+) -> str:
+    """Copy a library's tutorial and return its toctree entry."""
     content = source.read_text()
-    title = _extract_h1(content, ext)
-    content = _prefix_h1(content, lib_name, ext)
+    title = _extract_h1(content, source.suffix)
+    content = _prefix_h1(content, lib_name, source.suffix)
     content = _rewrite_links(content, source, sphinx_map)
 
     rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
     out_dir = _DOCS_DIR / 'tutorials' / rel_dir
     out_dir.mkdir(parents=True, exist_ok=True)
-    _write_if_needed(path=out_dir / f'{lib_name}{ext}', content=content)
+    _write_if_needed(path=out_dir / f'{lib_name}{source.suffix}', content=content)
 
     doc_ref = f'{rel_dir}/{lib_name}'
     return f'{lib_name}: {title} <{doc_ref}>'
 
 
 def _copy_category(
-    lib_docs: pathlib.Path,
+    sources: list[pathlib.Path],
     lib_name: str,
     is_interface: bool,
     category: str,
     sphinx_map: dict[str, str],
 ) -> list[str]:
     """Copy a library's how-to or explanation docs and return toctree entries."""
-    source_dir = lib_docs / category
-    if not source_dir.is_dir():
-        return []
-
     rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
     out_dir = _DOCS_DIR / category / rel_dir / lib_name
-    out_dir.mkdir(parents=True, exist_ok=True)
 
     entries: list[str] = []
-    for source in sorted(source_dir.iterdir()):
-        if source.suffix not in ('.md', '.rst'):
-            continue
+    for source in sources:
+        out_dir.mkdir(parents=True, exist_ok=True)
         content = source.read_text()
         title = _extract_h1(content, source.suffix)
         content = _prefix_h1(content, lib_name, source.suffix)
@@ -207,7 +203,7 @@ def _prefix_h1(content: str, lib_name: str, ext: str) -> str:
     return '\n'.join(lines)
 
 
-def _build_sphinx_map(packages: list[str]) -> dict[str, str]:
+def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
     """Build a mapping from repo-relative file paths to Sphinx doc paths.
 
     Covers:
@@ -234,7 +230,9 @@ def _build_sphinx_map(packages: list[str]) -> dict[str, str]:
         m[repo_rel] = f'/{sphinx_doc}'
 
     # Per-library diataxis docs and package READMEs.
-    for raw_package in packages:
+    for pkg in packages:
+        raw_package = str(pkg['path'])
+        docs: dict[str, list[str]] = pkg.get('docs', {})  # type: ignore[assignment]
         lib_name = _lib_name(raw_package)
         is_interface = raw_package.startswith('interfaces/')
         rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
@@ -242,37 +240,23 @@ def _build_sphinx_map(packages: list[str]) -> dict[str, str]:
         # Package README → reference page.
         norm_name = _normalize(lib_name)
         if is_interface:
-            readme_key = f'{raw_package}/README.md'
-            m[readme_key] = f'/reference/charmlibs/interfaces/{norm_name}'
+            m[f'{raw_package}/README.md'] = f'/reference/charmlibs/interfaces/{norm_name}'
         else:
-            readme_key = f'{raw_package}/README.md'
-            m[readme_key] = f'/reference/charmlibs/{norm_name}'
-
-        lib_docs = _REPO_ROOT / raw_package / 'docs'
-        if not lib_docs.is_dir():
-            continue
+            m[f'{raw_package}/README.md'] = f'/reference/charmlibs/{norm_name}'
 
         # Tutorial.
-        for ext in ('.md', '.rst'):
-            tutorial = lib_docs / f'tutorial{ext}'
-            if tutorial.exists():
-                repo_rel = str(tutorial.relative_to(_REPO_ROOT))
-                m[repo_rel] = f'/tutorials/{rel_dir}/{lib_name}'
-                break
+        for tutorial_rel in docs.get('tutorial', []):
+            m[f'{raw_package}/{tutorial_rel}'] = f'/tutorials/{rel_dir}/{lib_name}'
 
         # How-to and explanation.
         for category in _CATEGORIES:
-            cat_dir = lib_docs / category
-            if not cat_dir.is_dir():
-                continue
-            for source in cat_dir.iterdir():
-                if source.suffix not in ('.md', '.rst'):
-                    continue
-                repo_rel = str(source.relative_to(_REPO_ROOT))
-                m[repo_rel] = f'/{category}/{rel_dir}/{lib_name}/{source.stem}'
+            for doc_rel in docs.get(category, []):
+                stem = pathlib.PurePosixPath(doc_rel).stem
+                m[f'{raw_package}/{doc_rel}'] = f'/{category}/{rel_dir}/{lib_name}/{stem}'
 
     # Interface version READMEs (interfaces/{name}/interface/v{N}/README.md).
-    for raw_package in packages:
+    for pkg in packages:
+        raw_package = str(pkg['path'])
         if not raw_package.startswith('interfaces/'):
             continue
         interface_name = _lib_name(raw_package)
