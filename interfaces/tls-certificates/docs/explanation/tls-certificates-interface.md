@@ -8,4 +8,4 @@ The TLS Certificates Provider reads this CSR, signs a certificate for it and ins
 
 The TLS Certificates Requirer then reads the certificate, and typically stores it in a file on the workload.
 
-![image|690x214](upload://80saB9WlR3hSDOCSFF1v35riMgo.png)
+![image](https://discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/original/2X/3/381e8a5aedcca8bba7357a417402ab48de000b78.png)

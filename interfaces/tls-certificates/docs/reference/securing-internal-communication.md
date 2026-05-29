@@ -1,7 +1,7 @@
 # Secure Internal Communication of a Charm
 
 When deploying multiple applications in a Juju model that require TLS for internal communication (e.g., between the units of the same application), we recommend using the [self-signed-certificates](https://charmhub.io/self-signed-certificates) charm.
-![internal|690x688](upload://wyI0hteMdmghKvsvuc7XtP5f0jf.png)
+![internal](https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/optimized/2X/e/e43202012e711b04e1e145bd17e5b6307c1377e1_2_690x688.png)
 
 
 Integrate each application with [self-signed-certificates](https://charmhub.io/self-signed-certificates) over the [tls-certificates](https://charmhub.io/tls-certificates-interface) interface in **UNIT** mode. This ensures that  each unit receives its own unique certificate.

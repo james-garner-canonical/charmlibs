@@ -62,7 +62,7 @@ Using your browser, navigate to the application address on port 8080 using the H
 
 You should see the following page:
 
-![image|690x189](upload://nZ3xPh8jWTLB6tOkpWjVLZyPk7D.png)
+![image](https://discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/optimized/2X/a/a818e450df1025c0cc6f67a56608c74db2a8c651_2_690x189.png)
 
 We now know that have a working Nginx charm.
 
@@ -343,16 +343,16 @@ Using your browser, navigate to the application address on port 8080 using the H
 
 You should see the following page telling you that the HTTPs certificate is not valid:
 
-![image|690x391](upload://oyWUYjrIJjcu6s2bZolClcSXm3p.png)
+![image](https://discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/optimized/2X/a/ac2793cab0673be2c6d9d5720be6a317617a5f73_2_690x391.png)
 
 Don't worry, this message is expected since the certificate we received is self-signed.
 
 Click on Advanced -> Proceed and you should now see the same Nginx page as in step 1.
 
-![image|690x186](upload://nPzQcBo4q8votKsH06jcPcMv8o6.png)
+![image](https://discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/optimized/2X/a/a706954c0e3cdb5ec31179db478cc25898f5d13e_2_690x186.png)
 
 You can inspect the certificate and notice that you received a certificate for `example.com`.
 
-![image|690x843](upload://bpD83hRYkgujAeT6XiTlVgjLTln.png)
+![image](https://discourse-charmhub-io.s3.dualstack.eu-west-2.amazonaws.com/optimized/2X/4/4ffda27823c09f9b03dddbfd24d0a1dd946b5481_2_690x843.png)
 
 Congratulations, you added the TLS integration to your charm.

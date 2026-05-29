@@ -49,4 +49,4 @@ For TLS to work correctly:
     
     For Juju-integrated client applications, this is achieved by integrating with the provider over the `certificates-transfer` interface.
 
-![external|690x376](upload://OIlfm9HvSMC4z3M3U38k6o9R2a.jpeg)
+![external](https://discourse-charmhub-io.s3.eu-west-2.amazonaws.com/optimized/2X/0/05bb9c7e09d9dda9d1b6a60bdb2a239c22953fd2_2_690x376.jpeg)
