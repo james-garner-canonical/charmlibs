@@ -75,7 +75,7 @@ def _main() -> None:
         if not entries:
             continue
         path = _DOCS_DIR / category / f'_lib-{category}.md'
-        content = _TOCTREE_HEADER + '\n'.join(entries) + '\n' + _TOCTREE_FOOTER
+        content = _TOCTREE_HEADER + '\n'.join(sorted(entries)) + '\n' + _TOCTREE_FOOTER
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content)
 
