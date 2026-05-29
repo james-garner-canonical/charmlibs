@@ -222,6 +222,46 @@ This is also run as part of `just check`. The full docs site (all packages) is b
 
 When writing or editing docstrings in `__init__.py` or other public modules, remember they appear verbatim in the published reference at [documentation.ubuntu.com/charmlibs](https://documentation.ubuntu.com/charmlibs). Keep them informative for library users, not implementation notes.
 
+### Importing docs from Discourse
+
+Some interface libraries have existing documentation hosted on Discourse (discourse.charmhub.io). To migrate these docs into the charmlibs diataxis structure, use a three-step pipeline. Write disposable scripts for each step — they're deleted after migration.
+
+**Step 1: Fetch topic JSON.** Use the Discourse JSON API to download each topic. The endpoint is `https://discourse.charmhub.io/t/{topic_id}.json?include_raw=true`. Rate-limit requests (2 s delay). Save each response as a JSON file:
+
+```python
+# Key structure — map topic IDs to (slug, title, diataxis-category):
+TOPICS = {
+    15537: ("getting-started", "Getting Started (v4)", "tutorial"),
+    15539: ("tls-certificates-interface", "TLS Certificates Interface", "explanation"),
+    # ...
+}
+url = f"https://discourse.charmhub.io/t/{topic_id}.json?include_raw=true"
+# fetch and save to e.g. interfaces/<lib>/docs/discourse-json/<slug>.json
+```
+
+**Step 2: Extract raw markdown.** The first post's raw markdown is at `data["post_stream"]["posts"][0]["raw"]`. Map each slug to its diataxis output path and write the files:
+
+```python
+FILE_MAP = {
+    "getting-started": "tutorial.md",
+    "tls-certificates-interface": "explanation/tls-certificates-interface.md",
+    # ...
+}
+raw = data["post_stream"]["posts"][0]["raw"]
+(DOCS_DIR / rel_path).write_text(raw)
+```
+
+**Step 3: Resolve image shortcodes.** Discourse raw markdown uses `upload://` shortcodes for images. The cooked HTML (`data["post_stream"]["posts"][0]["cooked"]`) contains the resolved `<img src="...">` URLs. Match them positionally and rewrite:
+
+```python
+upload_refs = re.findall(r"upload://[^\s)]+", raw)
+img_urls = re.findall(r'<img[^>]+src=["\']([^"\'\s]+)', cooked)
+# Replace ![alt|NNNxNNN](upload://...) with ![alt](https://real-url)
+# Strip the |dimensions from alt text.
+```
+
+After extraction, review and edit the markdown to fit the charmlibs docs conventions (headings, cross-references, diataxis categorisation). Delete the scripts and JSON files before merging.
+
 ## Common pitfalls
 
 - **Don't call `uv add` directly** — use `just add <package> <dep>` to respect repo-level constraints.
