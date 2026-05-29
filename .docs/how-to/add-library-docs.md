@@ -1,7 +1,7 @@
 (how-to-add-library-docs)=
 # How to add docs to a library
 
-Each library in the charmlibs monorepo can include its own documentation — tutorials, how-to guides, and explanations — which are automatically included in the [charmlibs docs site](https://documentation.ubuntu.com/charmlibs).
+Each library in the charmlibs monorepo can include its own documentation — tutorials, how-to guides, and explanations — which are automatically included in this very documentation site.
 
 This guide shows you how to add docs to your library package.
 
