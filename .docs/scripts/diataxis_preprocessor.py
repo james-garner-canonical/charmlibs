@@ -66,15 +66,13 @@ def _main() -> None:
     all_entries: dict[str, list[str]] = {}
 
     for pkg in packages:
-        raw_package = str(pkg['path'])
+        lib_path = pathlib.PurePosixPath(str(pkg['path']))
         docs: dict[str, list[str]] = pkg.get('docs', {})  # type: ignore[assignment]
-        lib_name = _lib_name(raw_package)
-        is_interface = raw_package.startswith('interfaces/')
 
         for category, doc_files in docs.items():
-            sources = [_REPO_ROOT / raw_package / f for f in doc_files]
+            sources = [_REPO_ROOT / lib_path / f for f in doc_files]
             all_entries.setdefault(category, []).extend(
-                _copy_category(sources, lib_name, is_interface, category, sphinx_map)
+                _copy_category(sources, lib_path, category, sphinx_map)
             )
 
     # Write include files (always, even if empty — so the fallback extension knows not to run).
@@ -84,14 +82,13 @@ def _main() -> None:
 
 def _copy_category(
     sources: list[pathlib.Path],
-    lib_name: str,
-    is_interface: bool,
+    lib_path: pathlib.PurePosixPath,
     category: str,
     sphinx_map: dict[str, str],
 ) -> list[str]:
     """Copy a library's how-to or explanation docs and return toctree entries."""
-    rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
-    out_dir = _DOCS_DIR / category / rel_dir / lib_name
+    lib_name = lib_path.name
+    out_dir = _DOCS_DIR / category / 'charmlibs' / lib_path
 
     entries: list[str] = []
     for source in sources:
@@ -102,7 +99,7 @@ def _copy_category(
         content = _rewrite_links(content, source, sphinx_map)
         (out_dir / source.name).write_text(content)
 
-        doc_ref = f'{rel_dir}/{lib_name}/{source.stem}'
+        doc_ref = f'charmlibs/{lib_path}/{source.stem}'
         entries.append(f'{lib_name}: {title} <{doc_ref}>')
 
     return entries
@@ -116,11 +113,6 @@ def _write_include(path: pathlib.Path, entries: list[str]) -> None:
         content = ''
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
-
-
-def _lib_name(raw_package: str) -> str:
-    """Extract the library name from a package path like ``interfaces/tls-certificates``."""
-    return pathlib.PurePosixPath(raw_package).name
 
 
 def _normalize(name: str) -> str:
@@ -201,32 +193,27 @@ def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
 
     # Per-library diataxis docs and package READMEs.
     for pkg in packages:
-        raw_package = str(pkg['path'])
+        lib_path = pathlib.PurePosixPath(str(pkg['path']))
         docs: dict[str, list[str]] = pkg.get('docs', {})  # type: ignore[assignment]
-        lib_name = _lib_name(raw_package)
-        is_interface = raw_package.startswith('interfaces/')
-        rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
+        lib_name = lib_path.name
 
         # Package README → reference page.
         norm_name = _normalize(lib_name)
-        if is_interface:
-            m[f'{raw_package}/README.md'] = f'/reference/charmlibs/interfaces/{norm_name}'
-        else:
-            m[f'{raw_package}/README.md'] = f'/reference/charmlibs/{norm_name}'
+        m[f'{lib_path}/README.md'] = f'/reference/charmlibs/{lib_path.parent / norm_name}'
 
         # Diataxis docs (tutorials, how-to, explanation).
         for category, doc_files in docs.items():
             for doc_rel in doc_files:
                 stem = pathlib.PurePosixPath(doc_rel).stem
-                m[f'{raw_package}/{doc_rel}'] = f'/{category}/{rel_dir}/{lib_name}/{stem}'
+                m[f'{lib_path}/{doc_rel}'] = f'/{category}/charmlibs/{lib_path}/{stem}'
 
     # Interface version READMEs (interfaces/{name}/interface/v{N}/README.md).
     for pkg in packages:
-        raw_package = str(pkg['path'])
-        if not raw_package.startswith('interfaces/'):
+        lib_path = pathlib.PurePosixPath(str(pkg['path']))
+        if lib_path.parent == pathlib.PurePosixPath('.'):
             continue
-        interface_name = _lib_name(raw_package)
-        interface_dir = _REPO_ROOT / raw_package / 'interface'
+        interface_name = lib_path.name
+        interface_dir = _REPO_ROOT / lib_path / 'interface'
         if not interface_dir.is_dir():
             continue
         for v_dir in interface_dir.glob('v[0-9]*'):

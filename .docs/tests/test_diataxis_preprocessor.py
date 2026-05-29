@@ -24,21 +24,6 @@ import diataxis_preprocessor as pp
 import pytest
 
 
-# --- _lib_name ---
-
-
-@pytest.mark.parametrize(
-    ('raw_package', 'expected'),
-    [
-        ('pathops', 'pathops'),
-        ('interfaces/tls-certificates', 'tls-certificates'),
-        ('interfaces/certificate_transfer', 'certificate_transfer'),
-    ],
-)
-def test_lib_name(raw_package: str, expected: str):
-    assert pp._lib_name(raw_package) == expected
-
-
 # --- _normalize ---
 
 
@@ -243,7 +228,7 @@ def test_copy_category_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.Monk
     source.write_text('# My Tutorial\n\nContent.\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category([source], 'mylib', False, 'tutorials', {})
+    entries = pp._copy_category([source], pathlib.PurePosixPath('mylib'), 'tutorials', {})
     out = docs_dir / 'tutorials' / 'charmlibs' / 'mylib' / 'tutorial.md'
     assert out.exists()
     assert out.read_text().startswith('# mylib: My Tutorial\n')
@@ -259,7 +244,7 @@ def test_copy_category(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
     sources = sorted(howto_dir.glob('*.md'))
-    entries = pp._copy_category(sources, 'mylib', False, 'how-to', {})
+    entries = pp._copy_category(sources, pathlib.PurePosixPath('mylib'), 'how-to', {})
     out_dir = docs_dir / 'how-to' / 'charmlibs' / 'mylib'
     assert (out_dir / 'deploy.md').exists()
     assert (out_dir / 'upgrade.md').exists()
@@ -275,7 +260,7 @@ def test_copy_category_interface(tmp_path: pathlib.Path, monkeypatch: pytest.Mon
     (expl_dir / 'security.md').write_text('# Security\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category([expl_dir / 'security.md'], 'tls-certs', True, 'explanation', {})
+    entries = pp._copy_category([expl_dir / 'security.md'], pathlib.PurePosixPath('interfaces/tls-certs'), 'explanation', {})
     out = docs_dir / 'explanation' / 'charmlibs' / 'interfaces' / 'tls-certs' / 'security.md'
     assert out.exists()
     assert entries == ['tls-certs: Security <charmlibs/interfaces/tls-certs/security>']
@@ -284,5 +269,5 @@ def test_copy_category_interface(tmp_path: pathlib.Path, monkeypatch: pytest.Mon
 def test_copy_category_empty_sources(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
-    entries = pp._copy_category([], 'mylib', False, 'how-to', {})
+    entries = pp._copy_category([], pathlib.PurePosixPath('mylib'), 'how-to', {})
     assert entries == []
