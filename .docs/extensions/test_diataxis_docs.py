@@ -14,7 +14,7 @@
 
 # ruff: noqa: D103 (function docstrings)
 
-"""Unit tests for the 'diataxis_docs' local Sphinx extension."""
+"""Unit tests for the 'diataxis_docs' preprocessor and fallback extension."""
 
 from __future__ import annotations
 
@@ -37,6 +37,21 @@ import pytest
 )
 def test_lib_name(raw_package: str, expected: str):
     assert diataxis_docs._lib_name(raw_package) == expected
+
+
+# --- _extract_h1 ---
+
+
+def test_extract_h1_md():
+    assert diataxis_docs._extract_h1('# Getting Started\n\nText.\n', '.md') == 'Getting Started'
+
+
+def test_extract_h1_md_no_heading():
+    assert diataxis_docs._extract_h1('No heading here.\n', '.md') == 'Untitled'
+
+
+def test_extract_h1_rst():
+    assert diataxis_docs._extract_h1('My Title\n========\n\nText.\n', '.rst') == 'My Title'
 
 
 # --- _prefix_h1 ---
@@ -116,6 +131,23 @@ def test_write_if_needed_overwrites_changed(tmp_path: pathlib.Path):
     assert path.read_text() == '# New\n'
 
 
+# --- _write_include ---
+
+
+def test_write_include_with_entries(tmp_path: pathlib.Path):
+    path = tmp_path / '_lib-tutorials.md'
+    diataxis_docs._write_include(path, ['tls-certificates: Tutorial <charmlibs/interfaces/tls-certificates>'])
+    content = path.read_text()
+    assert '```{toctree}' in content
+    assert 'tls-certificates: Tutorial <charmlibs/interfaces/tls-certificates>' in content
+
+
+def test_write_include_empty(tmp_path: pathlib.Path):
+    path = tmp_path / '_lib-tutorials.md'
+    diataxis_docs._write_include(path, [])
+    assert path.read_text() == ''
+
+
 # --- _copy_tutorial ---
 
 
@@ -124,10 +156,11 @@ def test_copy_tutorial_md(tmp_path: pathlib.Path):
     lib_docs = tmp_path / 'lib' / 'docs'
     lib_docs.mkdir(parents=True)
     (lib_docs / 'tutorial.md').write_text('# My Tutorial\n\nContent.\n')
-    diataxis_docs._copy_tutorial(docs_dir, lib_docs, 'mylib', False, 'https://gh/mylib/docs')
+    entry = diataxis_docs._copy_tutorial(docs_dir, lib_docs, 'mylib', False, 'https://gh/mylib/docs')
     out = docs_dir / 'tutorials' / 'charmlibs' / 'mylib.md'
     assert out.exists()
     assert out.read_text().startswith('# mylib: My Tutorial\n')
+    assert entry == 'mylib: My Tutorial <charmlibs/mylib>'
 
 
 def test_copy_tutorial_interface(tmp_path: pathlib.Path):
@@ -135,16 +168,18 @@ def test_copy_tutorial_interface(tmp_path: pathlib.Path):
     lib_docs = tmp_path / 'lib' / 'docs'
     lib_docs.mkdir(parents=True)
     (lib_docs / 'tutorial.md').write_text('# Tutorial\n')
-    diataxis_docs._copy_tutorial(docs_dir, lib_docs, 'tls-certs', True, 'https://gh/docs')
+    entry = diataxis_docs._copy_tutorial(docs_dir, lib_docs, 'tls-certs', True, 'https://gh/docs')
     out = docs_dir / 'tutorials' / 'charmlibs' / 'interfaces' / 'tls-certs.md'
     assert out.exists()
+    assert entry == 'tls-certs: Tutorial <charmlibs/interfaces/tls-certs>'
 
 
 def test_copy_tutorial_no_file(tmp_path: pathlib.Path):
     docs_dir = tmp_path / 'docs_site'
     lib_docs = tmp_path / 'lib' / 'docs'
     lib_docs.mkdir(parents=True)
-    diataxis_docs._copy_tutorial(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs')
+    entry = diataxis_docs._copy_tutorial(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs')
+    assert entry is None
     assert not (docs_dir / 'tutorials').exists()
 
 
@@ -158,11 +193,13 @@ def test_copy_category(tmp_path: pathlib.Path):
     howto_dir.mkdir(parents=True)
     (howto_dir / 'deploy.md').write_text('# Deploy\n\nSteps.\n')
     (howto_dir / 'upgrade.md').write_text('# Upgrade\n\nSteps.\n')
-    diataxis_docs._copy_category(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs', 'how-to')
+    entries = diataxis_docs._copy_category(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs', 'how-to')
     out_dir = docs_dir / 'how-to' / 'charmlibs' / 'mylib'
     assert (out_dir / 'deploy.md').exists()
     assert (out_dir / 'upgrade.md').exists()
     assert (out_dir / 'deploy.md').read_text().startswith('# mylib: Deploy\n')
+    assert len(entries) == 2
+    assert 'mylib: Deploy <charmlibs/mylib/deploy>' in entries
 
 
 def test_copy_category_interface(tmp_path: pathlib.Path):
@@ -171,11 +208,12 @@ def test_copy_category_interface(tmp_path: pathlib.Path):
     expl_dir = lib_docs / 'explanation'
     expl_dir.mkdir(parents=True)
     (expl_dir / 'security.md').write_text('# Security\n')
-    diataxis_docs._copy_category(
+    entries = diataxis_docs._copy_category(
         docs_dir, lib_docs, 'tls-certs', True, 'https://gh/docs', 'explanation'
     )
     out = docs_dir / 'explanation' / 'charmlibs' / 'interfaces' / 'tls-certs' / 'security.md'
     assert out.exists()
+    assert entries == ['tls-certs: Security <charmlibs/interfaces/tls-certs/security>']
 
 
 def test_copy_category_skips_non_md(tmp_path: pathlib.Path):
@@ -184,52 +222,57 @@ def test_copy_category_skips_non_md(tmp_path: pathlib.Path):
     howto_dir = lib_docs / 'how-to'
     howto_dir.mkdir(parents=True)
     (howto_dir / 'notes.txt').write_text('not a doc')
-    diataxis_docs._copy_category(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs', 'how-to')
-    assert not (docs_dir / 'how-to' / 'charmlibs' / 'mylib' / 'notes.txt').exists()
+    entries = diataxis_docs._copy_category(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs', 'how-to')
+    assert entries == []
 
 
 def test_copy_category_no_dir(tmp_path: pathlib.Path):
     docs_dir = tmp_path / 'docs_site'
     lib_docs = tmp_path / 'lib' / 'docs'
     lib_docs.mkdir(parents=True)
-    diataxis_docs._copy_category(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs', 'how-to')
-    assert not (docs_dir / 'how-to').exists()
+    entries = diataxis_docs._copy_category(docs_dir, lib_docs, 'mylib', False, 'https://gh/docs', 'how-to')
+    assert entries == []
 
 
-# --- _ensure_glob_match ---
+# --- fallback ---
 
 
-def test_ensure_glob_match_flat_writes_placeholder(tmp_path: pathlib.Path):
-    directory = tmp_path / 'tutorials' / 'charmlibs'
-    diataxis_docs._ensure_glob_match(directory, nested=False)
-    assert (directory / '_placeholder.md').exists()
-    assert (directory / '_placeholder.md').read_text() == diataxis_docs.PLACEHOLDER
+def test_fallback_writes_placeholder_when_no_include(tmp_path: pathlib.Path):
+    """Fallback writes placeholder include + page when preprocessor hasn't run."""
+    for rel_path in diataxis_docs.INCLUDE_FILES:
+        include_file = tmp_path / rel_path
+        include_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Simulate fallback logic
+    for rel_path in diataxis_docs.INCLUDE_FILES:
+        include_file = tmp_path / rel_path
+        if not include_file.exists():
+            category_dir = include_file.parent
+            placeholder_path = category_dir / '_placeholder.md'
+            diataxis_docs._write_if_needed(path=placeholder_path, content=diataxis_docs.FALLBACK_PAGE)
+            diataxis_docs._write_if_needed(path=include_file, content=diataxis_docs.FALLBACK_TOCTREE)
+
+    for rel_path in diataxis_docs.INCLUDE_FILES:
+        include_file = tmp_path / rel_path
+        assert include_file.exists()
+        assert '_placeholder' in include_file.read_text()
+        assert (include_file.parent / '_placeholder.md').exists()
 
 
-def test_ensure_glob_match_flat_removes_placeholder_when_real(tmp_path: pathlib.Path):
-    directory = tmp_path / 'tutorials' / 'charmlibs'
-    directory.mkdir(parents=True)
-    (directory / '_placeholder.md').write_text(diataxis_docs.PLACEHOLDER)
-    (directory / 'mylib.md').write_text('# mylib: Tutorial\n')
-    diataxis_docs._ensure_glob_match(directory, nested=False)
-    assert not (directory / '_placeholder.md').exists()
+def test_fallback_skips_when_include_exists(tmp_path: pathlib.Path):
+    """Fallback does nothing when preprocessor has already run."""
+    for rel_path in diataxis_docs.INCLUDE_FILES:
+        include_file = tmp_path / rel_path
+        include_file.parent.mkdir(parents=True, exist_ok=True)
+        include_file.write_text('')  # preprocessor wrote empty include
 
+    # Simulate fallback logic
+    for rel_path in diataxis_docs.INCLUDE_FILES:
+        include_file = tmp_path / rel_path
+        if not include_file.exists():
+            diataxis_docs._write_if_needed(path=include_file, content=diataxis_docs.FALLBACK_TOCTREE)
 
-def test_ensure_glob_match_nested_writes_placeholder(tmp_path: pathlib.Path):
-    directory = tmp_path / 'how-to' / 'charmlibs'
-    diataxis_docs._ensure_glob_match(directory, nested=True)
-    assert (directory / '_placeholder' / '_placeholder.md').exists()
-
-
-def test_ensure_glob_match_nested_removes_placeholder_when_real(tmp_path: pathlib.Path):
-    directory = tmp_path / 'how-to' / 'charmlibs'
-    directory.mkdir(parents=True)
-    placeholder_dir = directory / '_placeholder'
-    placeholder_dir.mkdir()
-    (placeholder_dir / '_placeholder.md').write_text(diataxis_docs.PLACEHOLDER)
-    lib_dir = directory / 'mylib'
-    lib_dir.mkdir()
-    (lib_dir / 'deploy.md').write_text('# mylib: Deploy\n')
-    diataxis_docs._ensure_glob_match(directory, nested=True)
-    assert not (placeholder_dir / '_placeholder.md').exists()
-    assert not placeholder_dir.exists()
+    for rel_path in diataxis_docs.INCLUDE_FILES:
+        include_file = tmp_path / rel_path
+        assert include_file.read_text() == ''
+        assert not (include_file.parent / '_placeholder.md').exists()

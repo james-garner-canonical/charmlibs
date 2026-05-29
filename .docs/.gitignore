@@ -28,5 +28,9 @@ __pycache__
 charmlibs/
 interfaces/
 generated/
+
+# generated per-library diataxis include files and fallback placeholders
+_lib-*.md
+_placeholder.md
 .~lock.*
 .save/

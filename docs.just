@@ -9,9 +9,14 @@ Build the docs, (re)generating reference docs for all packages, or just those sp
 `just docs` is an alias for `just docs html`. To specify packages, you must use the full recipe, e.g.
 `just docs html interfaces/foo`.
 """)]
-html *packages: (_packages packages)
+html *packages: _diataxis_docs (_packages packages)
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
         sphinx-build -b dirhtml -T -W --keep-going -d .sphinx/.doctrees -D language=en . '{{build_dir}}/html'
+
+[doc('Copy per-library diataxis docs into the Sphinx source tree and generate toctree include files.')]
+_diataxis_docs:
+    cd extensions && uvx --with-requirements=../.sphinx/requirements.txt \
+        python -c "import diataxis_docs, pathlib; diataxis_docs.main(pathlib.Path('..'))"
 
 [doc("""
 Run html builder once per package, with its deps installed, setting the package argument and suppressing reference warnings.
@@ -82,6 +87,12 @@ clean:
     rm -rf tutorials/charmlibs
     rm -rf how-to/charmlibs
     rm -rf explanation/charmlibs
+    rm -f tutorials/_lib-tutorials.md
+    rm -f tutorials/_placeholder.md
+    rm -f how-to/_lib-howtos.md
+    rm -f how-to/_placeholder.md
+    rm -f explanation/_lib-explanations.md
+    rm -f explanation/_placeholder.md
 
 [doc('Run `pyright` for local sphinx extensions.')]
 ext-static *pyrightargs:

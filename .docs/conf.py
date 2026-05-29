@@ -162,6 +162,7 @@ add_function_parentheses = False  # don't automatically add parentheses after fu
 # Excludes files or directories from processing
 exclude_patterns = [
     "doc-cheat-sheet*",
+    "**/_lib-*.md",
 ]
 
 # Adds custom CSS files, located under 'html_static_path'

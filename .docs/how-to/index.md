@@ -12,10 +12,5 @@ charmlibs: Customize functional tests<customize-functional-tests>
 charmlibs: Customize integration tests<customize-integration-tests>
 ```
 
-```{toctree}
-:maxdepth: 1
-:glob:
-
-charmlibs/*/*
-charmlibs/interfaces/*/*
+```{include} _lib-howtos.md
 ```
