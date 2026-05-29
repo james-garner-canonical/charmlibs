@@ -14,7 +14,7 @@
 
 # ruff: noqa: D103 (function docstrings)
 
-"""Unit tests for the diataxis_docs Sphinx fallback extension."""
+"""Unit tests for the diataxis_docs_fallback Sphinx extension."""
 
 from __future__ import annotations
 
