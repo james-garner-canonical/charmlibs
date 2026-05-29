@@ -15,8 +15,7 @@ html *packages: _diataxis_docs (_packages packages)
 
 [doc('Copy per-library diataxis docs into the Sphinx source tree and generate toctree include files.')]
 _diataxis_docs:
-    cd extensions && uvx --with-requirements=../.sphinx/requirements.txt \
-        python -c "import diataxis_docs, pathlib; diataxis_docs.main(pathlib.Path('..'))"
+    ./diataxis_preprocessor.py
 
 [doc("""
 Run html builder once per package, with its deps installed, setting the package argument and suppressing reference warnings.
@@ -102,5 +101,5 @@ ext-static *pyrightargs:
 [doc('Run unit tests with `coverage` for local sphinx extensions.')]
 ext-unit +flags='-rA':
     uvx --with-requirements=.sphinx/requirements.txt --with=pytest \
-        coverage run --omit='test_*.py' -m pytest --tb=native -vv {{flags}} extensions
+        coverage run --omit='test_*.py' --source=extensions,diataxis_preprocessor -m pytest --tb=native -vv {{flags}} extensions
     uvx coverage report
