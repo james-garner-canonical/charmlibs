@@ -36,7 +36,7 @@ def test_build_sphinx_map_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.M
         {'path': 'mylib', 'docs': {'tutorials': ['docs/tutorial.md']}},
     ]
     m = pp._build_sphinx_map(packages)
-    assert m['mylib/docs/tutorial.md'] == '/tutorials/charmlibs/mylib/tutorial'
+    assert m[pathlib.PurePath('mylib/docs/tutorial.md')] == '/tutorials/charmlibs/mylib/tutorial'
 
 
 def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
@@ -51,7 +51,7 @@ def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monke
         {'path': 'interfaces/tls-certificates', 'docs': {}},
     ]
     m = pp._build_sphinx_map(packages)
-    assert m['interfaces/tls-certificates/interface/v1/README.md'] == '/reference/interfaces/tls-certificates/v1'
+    assert m[pathlib.PurePath('interfaces/tls-certificates/interface/v1/README.md')] == '/reference/interfaces/tls-certificates/v1'
 
 
 # --- _extract_h1 ---
@@ -111,7 +111,7 @@ def test_rewrite_links_known_doc(tmp_path: pathlib.Path, monkeypatch: pytest.Mon
     target = tmp_path / 'pkg' / 'docs' / 'how-to' / 'deploy.md'
     target.parent.mkdir(parents=True)
     target.touch()
-    sphinx_map = {'pkg/docs/how-to/deploy.md': '/how-to/charmlibs/pkg/deploy'}
+    sphinx_map = {pathlib.PurePath('pkg/docs/how-to/deploy.md'): '/how-to/charmlibs/pkg/deploy'}
     content = 'See [guide](how-to/deploy.md) for details.'
     result = pp._rewrite_links(content, source, sphinx_map)
     assert result == 'See [guide](/how-to/charmlibs/pkg/deploy) for details.'
@@ -125,7 +125,7 @@ def test_rewrite_links_with_anchor(tmp_path: pathlib.Path, monkeypatch: pytest.M
     target = tmp_path / 'pkg' / 'docs' / 'how-to' / 'deploy.md'
     target.parent.mkdir(parents=True)
     target.touch()
-    sphinx_map = {'pkg/docs/how-to/deploy.md': '/how-to/charmlibs/pkg/deploy'}
+    sphinx_map = {pathlib.PurePath('pkg/docs/how-to/deploy.md'): '/how-to/charmlibs/pkg/deploy'}
     content = 'See [step 2](how-to/deploy.md#step-2).'
     result = pp._rewrite_links(content, source, sphinx_map)
     assert result == 'See [step 2](/how-to/charmlibs/pkg/deploy#step-2).'
@@ -186,7 +186,7 @@ def test_copy_category_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.Monk
     source.write_text('# My Tutorial\n\nContent.\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category([source], pathlib.PurePosixPath('mylib'), 'tutorials', {})
+    entries = pp._copy_category([source], pathlib.PurePath('mylib'), 'tutorials', {})
     out = docs_dir / 'tutorials' / 'charmlibs' / 'mylib' / 'tutorial.md'
     assert out.exists()
     assert out.read_text().startswith('# mylib: My Tutorial\n')
@@ -202,7 +202,7 @@ def test_copy_category(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
     sources = sorted(howto_dir.glob('*.md'))
-    entries = pp._copy_category(sources, pathlib.PurePosixPath('mylib'), 'how-to', {})
+    entries = pp._copy_category(sources, pathlib.PurePath('mylib'), 'how-to', {})
     out_dir = docs_dir / 'how-to' / 'charmlibs' / 'mylib'
     assert (out_dir / 'deploy.md').exists()
     assert (out_dir / 'upgrade.md').exists()
@@ -218,7 +218,7 @@ def test_copy_category_interface(tmp_path: pathlib.Path, monkeypatch: pytest.Mon
     (expl_dir / 'security.md').write_text('# Security\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category([expl_dir / 'security.md'], pathlib.PurePosixPath('interfaces/tls-certs'), 'explanation', {})
+    entries = pp._copy_category([expl_dir / 'security.md'], pathlib.PurePath('interfaces/tls-certs'), 'explanation', {})
     out = docs_dir / 'explanation' / 'charmlibs' / 'interfaces' / 'tls-certs' / 'security.md'
     assert out.exists()
     assert entries == ['tls-certs: Security <charmlibs/interfaces/tls-certs/security>']
@@ -227,5 +227,5 @@ def test_copy_category_interface(tmp_path: pathlib.Path, monkeypatch: pytest.Mon
 def test_copy_category_empty_sources(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
-    entries = pp._copy_category([], pathlib.PurePosixPath('mylib'), 'how-to', {})
+    entries = pp._copy_category([], pathlib.PurePath('mylib'), 'how-to', {})
     assert entries == []
