@@ -23,7 +23,6 @@ import pathlib
 import diataxis_preprocessor as pp
 import pytest
 
-
 # --- _build_sphinx_map ---
 
 
@@ -39,7 +38,9 @@ def test_build_sphinx_map_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.M
     assert m[pathlib.PurePath('mylib/docs/tutorial.md')] == '/tutorials/charmlibs/mylib/tutorial'
 
 
-def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
+def test_build_sphinx_map_interface_version_readme(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+):
     """Interface version READMEs map to /reference/interfaces/{name}/v{N}."""
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
     monkeypatch.setattr(pp, '_DOCS_DIR', tmp_path / '.docs')
@@ -51,7 +52,10 @@ def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monke
         {'path': 'interfaces/tls-certificates', 'docs': {}},
     ]
     m = pp._build_sphinx_map(packages)
-    assert m[pathlib.PurePath('interfaces/tls-certificates/interface/v1/README.md')] == '/reference/interfaces/tls-certificates/v1'
+    assert (
+        m[pathlib.PurePath('interfaces/tls-certificates/interface/v1/README.md')]
+        == '/reference/interfaces/tls-certificates/v1'
+    )
 
 
 # --- _extract_h1 ---
@@ -137,7 +141,9 @@ def test_rewrite_links_with_anchor(tmp_path: pathlib.Path, monkeypatch: pytest.M
     assert result == 'See [step 2](/how-to/charmlibs/pkg/deploy#step-2).'
 
 
-def test_rewrite_links_unknown_file_github(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
+def test_rewrite_links_unknown_file_github(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+):
     """Relative link to a non-doc file falls back to GitHub URL."""
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
     monkeypatch.setattr(pp, '_REPO_MAIN_URL', 'https://github.com/canonical/charmlibs/blob/main')
@@ -172,7 +178,9 @@ def test_rewrite_links_image_github(tmp_path: pathlib.Path, monkeypatch: pytest.
     assert 'https://github.com/canonical/charmlibs/blob/main/pkg/docs/images/arch.png' in result
 
 
-def test_rewrite_links_outside_repo_raises(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
+def test_rewrite_links_outside_repo_raises(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+):
     """Link resolving outside the repo root raises ValueError."""
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path / 'repo')
     source = tmp_path / 'repo' / 'pkg' / 'docs' / 'tutorial.md'
@@ -224,7 +232,9 @@ def test_copy_category_interface(tmp_path: pathlib.Path, monkeypatch: pytest.Mon
     (expl_dir / 'security.md').write_text('# Security\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entries = pp._copy_category([expl_dir / 'security.md'], pathlib.PurePath('interfaces/tls-certs'), 'explanation', {})
+    entries = pp._copy_category(
+        [expl_dir / 'security.md'], pathlib.PurePath('interfaces/tls-certs'), 'explanation', {}
+    )
     out = docs_dir / 'explanation' / 'charmlibs' / 'interfaces' / 'tls-certs' / 'security.md'
     assert out.exists()
     assert entries == ['tls-certs: Security <charmlibs/interfaces/tls-certs/security>']

@@ -18,7 +18,10 @@
 
 from __future__ import annotations
 
-import pathlib
+import typing
+
+if typing.TYPE_CHECKING:
+    import pathlib
 
 CATEGORIES = ('tutorials', 'how-to', 'explanation')
 

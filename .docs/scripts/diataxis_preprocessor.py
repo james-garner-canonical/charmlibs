@@ -56,8 +56,8 @@ def _main() -> None:
         '--exclude-examples',
         '--exclude-placeholders',
         '--exclude-testing',
-        '--output', 'path',
-        '--output', 'docs',
+        *('--output', 'path'),
+        *('--output', 'docs'),
     ]
     packages: list[dict[str, Any]] = json.loads(subprocess.check_output(cmd, text=True))
     sphinx_map = _build_sphinx_map(packages)
@@ -133,18 +133,18 @@ def _build_sphinx_map(packages: list[dict[str, Any]]) -> dict[pathlib.PurePath, 
     - Per-library diataxis docs (tutorial, how-to/*, explanation/*)
     - Interface version READMEs (``interfaces/{name}/interface/v{N}/README.md``)
     """
-    _DOCS_REL = _DOCS_DIR.relative_to(_REPO_ROOT)
+    docs_rel = _DOCS_DIR.relative_to(_REPO_ROOT)
     m: dict[pathlib.PurePath, str] = {}
 
     # Static .docs/ pages — walk all .md/.rst files (excluding build artifacts).
-    _SKIP_DIRS = {'_build', '.sphinx', '.save', 'scripts', 'tests', 'extensions'}
+    skip_dirs = {'_build', '.sphinx', '.save', 'scripts', 'tests', 'extensions'}
     for path in _DOCS_DIR.rglob('*'):
         if path.suffix not in ('.md', '.rst'):
             continue
         rel = path.relative_to(_DOCS_DIR)
-        if rel.parts[0] in _SKIP_DIRS or rel.name.startswith('_'):
+        if rel.parts[0] in skip_dirs or rel.name.startswith('_'):
             continue
-        m[_DOCS_REL / rel] = f'/{rel.with_suffix("")}'
+        m[docs_rel / rel] = f'/{rel.with_suffix("")}'
 
     # Per-library diataxis docs + interface version READMEs.
     for pkg in packages:
@@ -158,12 +158,16 @@ def _build_sphinx_map(packages: list[dict[str, Any]]) -> dict[pathlib.PurePath, 
         if lib_path.parent.name == 'interfaces':
             interface_dir = _REPO_ROOT / lib_path / 'interface'
             for readme in interface_dir.glob('v[0-9]*/README.md'):
-                m[readme.relative_to(_REPO_ROOT)] = f'/reference/interfaces/{lib_path.name}/{readme.parent.name}'
+                m[readme.relative_to(_REPO_ROOT)] = (
+                    f'/reference/interfaces/{lib_path.name}/{readme.parent.name}'
+                )
 
     return m
 
 
-def _rewrite_links(content: str, source_file: pathlib.Path, sphinx_map: dict[pathlib.PurePath, str]) -> str:
+def _rewrite_links(
+    content: str, source_file: pathlib.Path, sphinx_map: dict[pathlib.PurePath, str]
+) -> str:
     """Rewrite markdown links: Sphinx paths for known docs, GitHub URLs otherwise."""
 
     def _replace(m: re.Match[str]) -> str:
@@ -179,14 +183,14 @@ def _rewrite_links(content: str, source_file: pathlib.Path, sphinx_map: dict[pat
         url = sphinx_map.get(repo_rel, f'{_REPO_MAIN_URL}/{repo_rel}')
         return f'[{text}]({url}{fragment})'
 
-    _RELATIVE_LINK = (
-        r'\[(.+?)\]'       # [link text] -- capture group 1
-        r'\('              # (
-        r'(?!https?://)'   # not an absolute URL
-        r'([^)]+)'         # relative target -- capture group 2
-        r'\)'              # )
+    relative_link = (
+        r'\[(.+?)\]'  # [link text] -- capture group 1
+        r'\('  # (
+        r'(?!https?://)'  # not an absolute URL
+        r'([^)]+)'  # relative target -- capture group 2
+        r'\)'  # )
     )
-    return re.sub(_RELATIVE_LINK, _replace, content)
+    return re.sub(relative_link, _replace, content)
 
 
 if __name__ == '__main__':

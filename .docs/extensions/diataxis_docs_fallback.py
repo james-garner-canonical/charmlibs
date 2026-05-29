@@ -31,6 +31,7 @@ import typing
 if typing.TYPE_CHECKING:
     import sphinx.application
 
+
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Sphinx extension entrypoint — registers the fallback hook."""
     app.connect('builder-inited', _fallback)
