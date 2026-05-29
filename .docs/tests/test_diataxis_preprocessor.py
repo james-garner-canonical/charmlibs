@@ -24,21 +24,6 @@ import diataxis_preprocessor as pp
 import pytest
 
 
-# --- _normalize ---
-
-
-@pytest.mark.parametrize(
-    ('name', 'expected'),
-    [
-        ('tls-certificates', 'tls-certificates'),
-        ('certificate_transfer', 'certificate-transfer'),
-        ('nginx_k8s', 'nginx-k8s'),
-    ],
-)
-def test_normalize(name: str, expected: str):
-    assert pp._normalize(name) == expected
-
-
 # --- _build_sphinx_map ---
 
 
@@ -67,16 +52,6 @@ def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monke
     ]
     m = pp._build_sphinx_map(packages)
     assert m['interfaces/tls-certificates/interface/v1/README.md'] == '/reference/interfaces/tls-certificates/v1'
-
-
-def test_build_sphinx_map_package_readme(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
-    """Package READMEs map to /reference/charmlibs/{normalized-name}."""
-    monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    monkeypatch.setattr(pp, '_DOCS_DIR', tmp_path / '.docs')
-    (tmp_path / '.docs').mkdir()
-    packages: list[dict[str, object]] = [{'path': 'pathops', 'docs': {}}]
-    m = pp._build_sphinx_map(packages)
-    assert m['pathops/README.md'] == '/reference/charmlibs/pathops'
 
 
 # --- _extract_h1 ---

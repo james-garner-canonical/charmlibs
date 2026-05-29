@@ -115,14 +115,6 @@ def _write_include(path: pathlib.Path, entries: list[str]) -> None:
     path.write_text(content)
 
 
-def _normalize(name: str) -> str:
-    """Normalize a package name to the form used in reference doc paths.
-
-    Matches the PyPI name normalization used by ``package_docs.py``.
-    """
-    return re.sub(r'[-_.]+', '-', name).lower()
-
-
 def _extract_h1(content: str, ext: str) -> str:
     """Extract the first H1 heading text from content."""
     if ext == '.md':
@@ -195,11 +187,6 @@ def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
     for pkg in packages:
         lib_path = pathlib.PurePosixPath(str(pkg['path']))
         docs: dict[str, list[str]] = pkg.get('docs', {})  # type: ignore[assignment]
-        lib_name = lib_path.name
-
-        # Package README → reference page.
-        norm_name = _normalize(lib_name)
-        m[f'{lib_path}/README.md'] = f'/reference/charmlibs/{lib_path.parent / norm_name}'
 
         # Diataxis docs (tutorials, how-to, explanation).
         for category, doc_files in docs.items():
