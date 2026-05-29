@@ -62,11 +62,17 @@ def test_extract_h1_md():
 
 
 def test_extract_h1_md_no_heading():
-    assert pp._extract_h1('No heading here.\n', '.md') == 'Untitled'
+    with pytest.raises(ValueError):
+        pp._extract_h1('No heading here.\n', '.md')
 
 
 def test_extract_h1_rst():
     assert pp._extract_h1('My Title\n========\n\nText.\n', '.rst') == 'My Title'
+
+
+def test_extract_h1_rst_no_heading():
+    with pytest.raises(ValueError):
+        pp._extract_h1('No heading here.\n', '.rst')
 
 
 # --- _prefix_h1 ---
