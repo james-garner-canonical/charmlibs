@@ -176,23 +176,6 @@ def test_rewrite_links_outside_repo_raises(tmp_path: pathlib.Path, monkeypatch: 
         pp._rewrite_links(content, source, {})
 
 
-# --- _write_include ---
-
-
-def test_write_include_with_entries(tmp_path: pathlib.Path):
-    path = tmp_path / '_lib-tutorials.md'
-    pp._write_include(path, ['tls-certificates: Tutorial <charmlibs/interfaces/tls-certificates>'])
-    content = path.read_text()
-    assert '```{toctree}' in content
-    assert 'tls-certificates: Tutorial <charmlibs/interfaces/tls-certificates>' in content
-
-
-def test_write_include_empty(tmp_path: pathlib.Path):
-    path = tmp_path / '_lib-tutorials.md'
-    pp._write_include(path, [])
-    assert path.read_text() == ''
-
-
 # --- _copy_category ---
 
 

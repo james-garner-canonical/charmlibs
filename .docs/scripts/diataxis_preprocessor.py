@@ -71,13 +71,15 @@ def _main() -> None:
 
         for category, doc_files in docs.items():
             sources = [_REPO_ROOT / lib_path / f for f in doc_files]
-            all_entries.setdefault(category, []).extend(
-                _copy_category(sources, lib_path, category, sphinx_map)
-            )
+            entries = _copy_category(sources, lib_path, category, sphinx_map)
+            all_entries.setdefault(category, []).extend(entries)
 
-    # Write include files (always, even if empty — so the fallback extension knows not to run).
     for category, entries in all_entries.items():
-        _write_include(_DOCS_DIR / category / f'_lib-{category}.md', entries)
+        if entries:
+            path = _DOCS_DIR / category / f'_lib-{category}.md'
+            content = _TOCTREE_HEADER + '\n'.join(entries) + '\n' + _TOCTREE_FOOTER
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
 
 
 def _copy_category(
@@ -103,16 +105,6 @@ def _copy_category(
         entries.append(f'{lib_name}: {title} <{doc_ref}>')
 
     return entries
-
-
-def _write_include(path: pathlib.Path, entries: list[str]) -> None:
-    """Write a toctree include file, or an empty file if there are no entries."""
-    if entries:
-        content = _TOCTREE_HEADER + '\n'.join(entries) + '\n' + _TOCTREE_FOOTER
-    else:
-        content = ''
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
 
 
 def _extract_h1(content: str, ext: str) -> str:
@@ -164,7 +156,6 @@ def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
     - ``.docs/`` pages (how-to, explanation, tutorials, reference, etc.)
     - Per-library diataxis docs (tutorial, how-to/*, explanation/*)
     - Interface version READMEs (``interfaces/{name}/interface/v{N}/README.md``)
-    - Package READMEs (``{pkg}/README.md``)
     """
     m: dict[str, str] = {}
 
