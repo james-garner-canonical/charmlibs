@@ -39,8 +39,6 @@ import subprocess
 _DOCS_DIR = pathlib.Path(__file__).parent.parent.resolve()
 _REPO_ROOT = _DOCS_DIR.parent
 _REPO_MAIN_URL = 'https://github.com/canonical/charmlibs/blob/main'
-# Mapping from ls.py docs keys to Sphinx output directory names.
-_CATEGORIES: dict[str, str] = {'tutorial': 'tutorials', 'how-to': 'how-to', 'explanation': 'explanation'}
 _TOCTREE_HEADER = """\
 ```{toctree}
 :maxdepth: 1
@@ -66,7 +64,7 @@ def _main() -> None:
     # Build the mapping of repo-relative paths to Sphinx doc paths.
     sphinx_map = _build_sphinx_map(packages)
 
-    all_entries: dict[str, list[str]] = {cat_dir: [] for cat_dir in _CATEGORIES.values()}
+    all_entries: dict[str, list[str]] = {'tutorials': [], 'how-to': [], 'explanation': []}
 
     for pkg in packages:
         raw_package = str(pkg['path'])
@@ -74,16 +72,15 @@ def _main() -> None:
         lib_name = _lib_name(raw_package)
         is_interface = raw_package.startswith('interfaces/')
 
-        for docs_key, cat_dir in _CATEGORIES.items():
-            sources = [_REPO_ROOT / raw_package / f for f in docs.get(docs_key, [])]
-            all_entries[cat_dir].extend(
-                _copy_category(sources, lib_name, is_interface, cat_dir, sphinx_map)
+        for category, doc_files in docs.items():
+            sources = [_REPO_ROOT / raw_package / f for f in doc_files]
+            all_entries[category].extend(
+                _copy_category(sources, lib_name, is_interface, category, sphinx_map)
             )
 
     # Write include files (always, even if empty — so the fallback extension knows not to run).
-    _write_include(_DOCS_DIR / 'tutorials' / '_lib-tutorials.md', all_entries['tutorials'])
-    _write_include(_DOCS_DIR / 'how-to' / '_lib-howtos.md', all_entries['how-to'])
-    _write_include(_DOCS_DIR / 'explanation' / '_lib-explanations.md', all_entries['explanation'])
+    for category, entries in all_entries.items():
+        _write_include(_DOCS_DIR / category / f'_lib-{category}.md', entries)
 
 
 def _copy_category(
@@ -218,11 +215,11 @@ def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
         else:
             m[f'{raw_package}/README.md'] = f'/reference/charmlibs/{norm_name}'
 
-        # Diataxis docs (tutorial, how-to, explanation).
-        for docs_key, cat_dir in _CATEGORIES.items():
-            for doc_rel in docs.get(docs_key, []):
+        # Diataxis docs (tutorials, how-to, explanation).
+        for category, doc_files in docs.items():
+            for doc_rel in doc_files:
                 stem = pathlib.PurePosixPath(doc_rel).stem
-                m[f'{raw_package}/{doc_rel}'] = f'/{cat_dir}/{rel_dir}/{lib_name}/{stem}'
+                m[f'{raw_package}/{doc_rel}'] = f'/{category}/{rel_dir}/{lib_name}/{stem}'
 
     # Interface version READMEs (interfaces/{name}/interface/v{N}/README.md).
     for pkg in packages:

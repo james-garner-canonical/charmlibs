@@ -88,9 +88,9 @@ clean:
     rm -rf explanation/charmlibs
     rm -f tutorials/_lib-tutorials.md
     rm -f tutorials/_placeholder.md
-    rm -f how-to/_lib-howtos.md
+    rm -f how-to/_lib-how-to.md
     rm -f how-to/_placeholder.md
-    rm -f explanation/_lib-explanations.md
+    rm -f explanation/_lib-explanation.md
     rm -f explanation/_placeholder.md
 
 [doc('Run `pyright` for local sphinx extensions.')]

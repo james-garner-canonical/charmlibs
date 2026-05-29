@@ -382,7 +382,7 @@ def _get_docs(root: pathlib.Path, path: pathlib.Path) -> dict[str, list[str]]:
     for ext in ('.md', '.rst'):
         tutorial = docs_dir / f'tutorial{ext}'
         if tutorial.exists():
-            result['tutorial'] = [str(tutorial.relative_to(root / path))]
+            result['tutorials'] = [str(tutorial.relative_to(root / path))]
             break
     for cat in ('how-to', 'explanation'):
         cat_dir = docs_dir / cat

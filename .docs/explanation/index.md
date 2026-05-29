@@ -9,5 +9,5 @@ charmlibs: Types of tests<charmlibs-tests>
 charmlibs: Publishing packages<charmlibs-publishing>
 ```
 
-```{include} _lib-explanations.md
+```{include} _lib-explanation.md
 ```

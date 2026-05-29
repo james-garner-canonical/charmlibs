@@ -63,7 +63,7 @@ def test_build_sphinx_map_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.M
     monkeypatch.setattr(pp, '_DOCS_DIR', tmp_path / '.docs')
     (tmp_path / '.docs').mkdir()
     packages: list[dict[str, object]] = [
-        {'path': 'mylib', 'docs': {'tutorial': ['docs/tutorial.md']}},
+        {'path': 'mylib', 'docs': {'tutorials': ['docs/tutorial.md']}},
     ]
     m = pp._build_sphinx_map(packages)
     assert m['mylib/docs/tutorial.md'] == '/tutorials/charmlibs/mylib/tutorial'

@@ -33,8 +33,8 @@ if typing.TYPE_CHECKING:
 # Include files that the preprocessor generates and the index pages {include}.
 INCLUDE_FILES = {
     'tutorials/_lib-tutorials.md',
-    'how-to/_lib-howtos.md',
-    'explanation/_lib-explanations.md',
+    'how-to/_lib-how-to.md',
+    'explanation/_lib-explanation.md',
 }
 
 FALLBACK_TOCTREE = """\

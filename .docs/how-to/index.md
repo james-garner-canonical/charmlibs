@@ -12,5 +12,5 @@ charmlibs: Customize functional tests<customize-functional-tests>
 charmlibs: Customize integration tests<customize-integration-tests>
 ```
 
-```{include} _lib-howtos.md
+```{include} _lib-how-to.md
 ```
