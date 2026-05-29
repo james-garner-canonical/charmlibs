@@ -8,7 +8,7 @@ relatedlinks: "[Charmcraft](https://documentation.ubuntu.com/charmcraft/stable/)
 :maxdepth: 3
 :hidden: false
 
-tutorial
+tutorials/index
 how-to/index
 reference/index
 explanation/index
@@ -33,7 +33,7 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 
 ````{grid} 1 1 2 2
 
-```{grid-item-card} [Tutorial](tutorial)
+```{grid-item-card} [Tutorials](tutorials/index)
 **Start here:** Write your first charm library and contribute it to the monorepo.
 ```
 

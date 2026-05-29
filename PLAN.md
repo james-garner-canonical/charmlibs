@@ -351,3 +351,11 @@ start. The extension patterns are well-established in `package_docs.py` and
 `interface_docs.py`, and the agent can validate iteratively with
 `just docs html`. Task 8 (reformatting) is mechanical — fixing image refs,
 links, and import paths in ~12 markdown files.
+
+## Validation commands
+
+- `just docs html interfaces/tls-certificates` — build the full docs, only
+  including package reference docs from tls-certificates. This is the key
+  integration test for the new extension machinery.
+- `just docs ext-unit` — run unit tests for the Sphinx extensions.
+- `just docs ext-static` — run pyright on the Sphinx extensions.

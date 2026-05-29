@@ -11,3 +11,11 @@ Provide relation data for charm tests <provide-relation-data-for-charm-tests>
 charmlibs: Customize functional tests<customize-functional-tests>
 charmlibs: Customize integration tests<customize-integration-tests>
 ```
+
+```{toctree}
+:maxdepth: 1
+:glob:
+
+charmlibs/*/*
+charmlibs/interfaces/*/*
+```

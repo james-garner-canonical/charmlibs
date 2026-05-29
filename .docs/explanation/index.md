@@ -8,3 +8,11 @@ charmhub-libraries-deprecation
 charmlibs: Types of tests<charmlibs-tests>
 charmlibs: Publishing packages<charmlibs-publishing>
 ```
+
+```{toctree}
+:maxdepth: 1
+:glob:
+
+charmlibs/*/*
+charmlibs/interfaces/*/*
+```

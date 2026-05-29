@@ -78,6 +78,10 @@ clean:
     rm -rf reference/charmlibs
     rm -rf reference/interfaces
     rm -rf .save
+    # per-library diataxis docs
+    rm -rf tutorials/charmlibs
+    rm -rf how-to/charmlibs
+    rm -rf explanation/charmlibs
 
 [doc('Run `pyright` for local sphinx extensions.')]
 ext-static *pyrightargs:
