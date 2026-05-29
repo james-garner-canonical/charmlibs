@@ -39,7 +39,8 @@ import subprocess
 _DOCS_DIR = pathlib.Path(__file__).parent.parent.resolve()
 _REPO_ROOT = _DOCS_DIR.parent
 _REPO_MAIN_URL = 'https://github.com/canonical/charmlibs/blob/main'
-_CATEGORIES = ('how-to', 'explanation')
+# Mapping from ls.py docs keys to Sphinx output directory names.
+_CATEGORIES: dict[str, str] = {'tutorial': 'tutorials', 'how-to': 'how-to', 'explanation': 'explanation'}
 _TOCTREE_HEADER = """\
 ```{toctree}
 :maxdepth: 1
@@ -65,9 +66,7 @@ def _main() -> None:
     # Build the mapping of repo-relative paths to Sphinx doc paths.
     sphinx_map = _build_sphinx_map(packages)
 
-    tutorial_entries: list[str] = []
-    howto_entries: list[str] = []
-    explanation_entries: list[str] = []
+    all_entries: dict[str, list[str]] = {cat_dir: [] for cat_dir in _CATEGORIES.values()}
 
     for pkg in packages:
         raw_package = str(pkg['path'])
@@ -75,41 +74,16 @@ def _main() -> None:
         lib_name = _lib_name(raw_package)
         is_interface = raw_package.startswith('interfaces/')
 
-        tutorial_files = docs.get('tutorial', [])
-        if tutorial_files:
-            source = _REPO_ROOT / raw_package / tutorial_files[0]
-            entry = _copy_tutorial(source, lib_name, is_interface, sphinx_map)
-            tutorial_entries.append(entry)
-
-        for category, entries in (('how-to', howto_entries), ('explanation', explanation_entries)):
-            sources = [_REPO_ROOT / raw_package / f for f in docs.get(category, [])]
-            entries.extend(_copy_category(sources, lib_name, is_interface, category, sphinx_map))
+        for docs_key, cat_dir in _CATEGORIES.items():
+            sources = [_REPO_ROOT / raw_package / f for f in docs.get(docs_key, [])]
+            all_entries[cat_dir].extend(
+                _copy_category(sources, lib_name, is_interface, cat_dir, sphinx_map)
+            )
 
     # Write include files (always, even if empty — so the fallback extension knows not to run).
-    _write_include(_DOCS_DIR / 'tutorials' / '_lib-tutorials.md', tutorial_entries)
-    _write_include(_DOCS_DIR / 'how-to' / '_lib-howtos.md', howto_entries)
-    _write_include(_DOCS_DIR / 'explanation' / '_lib-explanations.md', explanation_entries)
-
-
-def _copy_tutorial(
-    source: pathlib.Path,
-    lib_name: str,
-    is_interface: bool,
-    sphinx_map: dict[str, str],
-) -> str:
-    """Copy a library's tutorial and return its toctree entry."""
-    content = source.read_text()
-    title = _extract_h1(content, source.suffix)
-    content = _prefix_h1(content, lib_name, source.suffix)
-    content = _rewrite_links(content, source, sphinx_map)
-
-    rel_dir = 'charmlibs/interfaces' if is_interface else 'charmlibs'
-    out_dir = _DOCS_DIR / 'tutorials' / rel_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
-    _write_if_needed(path=out_dir / f'{lib_name}{source.suffix}', content=content)
-
-    doc_ref = f'{rel_dir}/{lib_name}'
-    return f'{lib_name}: {title} <{doc_ref}>'
+    _write_include(_DOCS_DIR / 'tutorials' / '_lib-tutorials.md', all_entries['tutorials'])
+    _write_include(_DOCS_DIR / 'how-to' / '_lib-howtos.md', all_entries['how-to'])
+    _write_include(_DOCS_DIR / 'explanation' / '_lib-explanations.md', all_entries['explanation'])
 
 
 def _copy_category(
@@ -244,15 +218,11 @@ def _build_sphinx_map(packages: list[dict[str, object]]) -> dict[str, str]:
         else:
             m[f'{raw_package}/README.md'] = f'/reference/charmlibs/{norm_name}'
 
-        # Tutorial.
-        for tutorial_rel in docs.get('tutorial', []):
-            m[f'{raw_package}/{tutorial_rel}'] = f'/tutorials/{rel_dir}/{lib_name}'
-
-        # How-to and explanation.
-        for category in _CATEGORIES:
-            for doc_rel in docs.get(category, []):
+        # Diataxis docs (tutorial, how-to, explanation).
+        for docs_key, cat_dir in _CATEGORIES.items():
+            for doc_rel in docs.get(docs_key, []):
                 stem = pathlib.PurePosixPath(doc_rel).stem
-                m[f'{raw_package}/{doc_rel}'] = f'/{category}/{rel_dir}/{lib_name}/{stem}'
+                m[f'{raw_package}/{doc_rel}'] = f'/{cat_dir}/{rel_dir}/{lib_name}/{stem}'
 
     # Interface version READMEs (interfaces/{name}/interface/v{N}/README.md).
     for pkg in packages:

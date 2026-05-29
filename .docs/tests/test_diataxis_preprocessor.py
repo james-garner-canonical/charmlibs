@@ -66,7 +66,7 @@ def test_build_sphinx_map_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.M
         {'path': 'mylib', 'docs': {'tutorial': ['docs/tutorial.md']}},
     ]
     m = pp._build_sphinx_map(packages)
-    assert m['mylib/docs/tutorial.md'] == '/tutorials/charmlibs/mylib'
+    assert m['mylib/docs/tutorial.md'] == '/tutorials/charmlibs/mylib/tutorial'
 
 
 def test_build_sphinx_map_interface_version_readme(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
@@ -257,37 +257,21 @@ def test_write_include_empty(tmp_path: pathlib.Path):
     assert path.read_text() == ''
 
 
-# --- _copy_tutorial ---
+# --- _copy_category ---
 
 
-def test_copy_tutorial_md(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
+def test_copy_category_tutorial(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     docs_dir = tmp_path / 'docs_site'
     source = tmp_path / 'lib' / 'docs' / 'tutorial.md'
     source.parent.mkdir(parents=True)
     source.write_text('# My Tutorial\n\nContent.\n')
     monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
     monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entry = pp._copy_tutorial(source, 'mylib', False, {})
-    out = docs_dir / 'tutorials' / 'charmlibs' / 'mylib.md'
+    entries = pp._copy_category([source], 'mylib', False, 'tutorials', {})
+    out = docs_dir / 'tutorials' / 'charmlibs' / 'mylib' / 'tutorial.md'
     assert out.exists()
     assert out.read_text().startswith('# mylib: My Tutorial\n')
-    assert entry == 'mylib: My Tutorial <charmlibs/mylib>'
-
-
-def test_copy_tutorial_interface(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
-    docs_dir = tmp_path / 'docs_site'
-    source = tmp_path / 'lib' / 'docs' / 'tutorial.md'
-    source.parent.mkdir(parents=True)
-    source.write_text('# Tutorial\n')
-    monkeypatch.setattr(pp, '_DOCS_DIR', docs_dir)
-    monkeypatch.setattr(pp, '_REPO_ROOT', tmp_path)
-    entry = pp._copy_tutorial(source, 'tls-certs', True, {})
-    out = docs_dir / 'tutorials' / 'charmlibs' / 'interfaces' / 'tls-certs.md'
-    assert out.exists()
-    assert entry == 'tls-certs: Tutorial <charmlibs/interfaces/tls-certs>'
-
-
-# --- _copy_category ---
+    assert entries == ['mylib: My Tutorial <charmlibs/mylib/tutorial>']
 
 
 def test_copy_category(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
