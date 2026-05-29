@@ -36,7 +36,7 @@ import pathlib
 import re
 import subprocess
 
-_DOCS_DIR = pathlib.Path(__file__).parent.resolve()
+_DOCS_DIR = pathlib.Path(__file__).parent.parent.resolve()
 _REPO_ROOT = _DOCS_DIR.parent
 _REPO_MAIN_URL = 'https://github.com/canonical/charmlibs/blob/main'
 _CATEGORIES = ('how-to', 'explanation')
