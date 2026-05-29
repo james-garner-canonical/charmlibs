@@ -63,7 +63,7 @@ def _main() -> None:
     # Build the mapping of repo-relative paths to Sphinx doc paths.
     sphinx_map = _build_sphinx_map(packages)
 
-    all_entries: dict[str, list[str]] = {'tutorials': [], 'how-to': [], 'explanation': []}
+    all_entries: dict[str, list[str]] = {}
 
     for pkg in packages:
         raw_package = str(pkg['path'])
@@ -73,7 +73,7 @@ def _main() -> None:
 
         for category, doc_files in docs.items():
             sources = [_REPO_ROOT / raw_package / f for f in doc_files]
-            all_entries[category].extend(
+            all_entries.setdefault(category, []).extend(
                 _copy_category(sources, lib_name, is_interface, category, sphinx_map)
             )
 
@@ -100,7 +100,7 @@ def _copy_category(
         title = _extract_h1(content, source.suffix)
         content = _prefix_h1(content, lib_name, source.suffix)
         content = _rewrite_links(content, source, sphinx_map)
-        _write_if_needed(path=out_dir / source.name, content=content)
+        (out_dir / source.name).write_text(content)
 
         doc_ref = f'{rel_dir}/{lib_name}/{source.stem}'
         entries.append(f'{lib_name}: {title} <{doc_ref}>')
@@ -115,7 +115,7 @@ def _write_include(path: pathlib.Path, entries: list[str]) -> None:
     else:
         content = ''
     path.parent.mkdir(parents=True, exist_ok=True)
-    _write_if_needed(path=path, content=content)
+    path.write_text(content)
 
 
 def _lib_name(raw_package: str) -> str:
@@ -275,12 +275,6 @@ def _rewrite_links(content: str, source_file: pathlib.Path, sphinx_map: dict[str
         _replace,
         content,
     )
-
-
-def _write_if_needed(path: pathlib.Path, content: str) -> None:
-    """Write to *path* only if the contents have changed."""
-    if not path.exists() or path.read_text() != content:
-        path.write_text(content)
 
 
 if __name__ == '__main__':

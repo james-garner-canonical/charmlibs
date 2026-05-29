@@ -216,30 +216,6 @@ def test_rewrite_links_outside_repo_raises(tmp_path: pathlib.Path, monkeypatch: 
         pp._rewrite_links(content, source, {})
 
 
-# --- _write_if_needed ---
-
-
-def test_write_if_needed_creates(tmp_path: pathlib.Path):
-    path = tmp_path / 'test.md'
-    pp._write_if_needed(path=path, content='# Hello\n')
-    assert path.read_text() == '# Hello\n'
-
-
-def test_write_if_needed_skips_unchanged(tmp_path: pathlib.Path):
-    path = tmp_path / 'test.md'
-    path.write_text('# Hello\n')
-    mtime_before = path.stat().st_mtime_ns
-    pp._write_if_needed(path=path, content='# Hello\n')
-    assert path.stat().st_mtime_ns == mtime_before
-
-
-def test_write_if_needed_overwrites_changed(tmp_path: pathlib.Path):
-    path = tmp_path / 'test.md'
-    path.write_text('# Old\n')
-    pp._write_if_needed(path=path, content='# New\n')
-    assert path.read_text() == '# New\n'
-
-
 # --- _write_include ---
 
 

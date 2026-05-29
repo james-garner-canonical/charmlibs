@@ -20,45 +20,38 @@ from __future__ import annotations
 
 import pathlib
 
-import diataxis_docs
+CATEGORIES = ('tutorials', 'how-to', 'explanation')
 
 
-def test_fallback_writes_placeholder_when_no_include(tmp_path: pathlib.Path):
-    """Fallback writes placeholder include + page when preprocessor hasn't run."""
-    for rel_path in diataxis_docs.INCLUDE_FILES:
-        include_file = tmp_path / rel_path
-        include_file.parent.mkdir(parents=True, exist_ok=True)
+def test_fallback_writes_empty_include_when_missing(tmp_path: pathlib.Path):
+    """Fallback writes empty include files when preprocessor hasn't run."""
+    for category in CATEGORIES:
+        (tmp_path / category).mkdir()
 
     # Simulate fallback logic
-    for rel_path in diataxis_docs.INCLUDE_FILES:
-        include_file = tmp_path / rel_path
-        if not include_file.exists():
-            category_dir = include_file.parent
-            placeholder_path = category_dir / '_placeholder.md'
-            diataxis_docs._write_if_needed(path=placeholder_path, content=diataxis_docs.FALLBACK_PAGE)
-            diataxis_docs._write_if_needed(path=include_file, content=diataxis_docs.FALLBACK_TOCTREE)
+    for category in CATEGORIES:
+        path = tmp_path / category / f'_lib-{category}.md'
+        if not path.exists():
+            path.write_text('')
 
-    for rel_path in diataxis_docs.INCLUDE_FILES:
-        include_file = tmp_path / rel_path
-        assert include_file.exists()
-        assert '_placeholder' in include_file.read_text()
-        assert (include_file.parent / '_placeholder.md').exists()
+    for category in CATEGORIES:
+        path = tmp_path / category / f'_lib-{category}.md'
+        assert path.exists()
+        assert path.read_text() == ''
 
 
 def test_fallback_skips_when_include_exists(tmp_path: pathlib.Path):
     """Fallback does nothing when preprocessor has already run."""
-    for rel_path in diataxis_docs.INCLUDE_FILES:
-        include_file = tmp_path / rel_path
-        include_file.parent.mkdir(parents=True, exist_ok=True)
-        include_file.write_text('')  # preprocessor wrote empty include
+    for category in CATEGORIES:
+        (tmp_path / category).mkdir()
+        (tmp_path / category / f'_lib-{category}.md').write_text('existing')
 
     # Simulate fallback logic
-    for rel_path in diataxis_docs.INCLUDE_FILES:
-        include_file = tmp_path / rel_path
-        if not include_file.exists():
-            diataxis_docs._write_if_needed(path=include_file, content=diataxis_docs.FALLBACK_TOCTREE)
+    for category in CATEGORIES:
+        path = tmp_path / category / f'_lib-{category}.md'
+        if not path.exists():
+            path.write_text('')
 
-    for rel_path in diataxis_docs.INCLUDE_FILES:
-        include_file = tmp_path / rel_path
-        assert include_file.read_text() == ''
-        assert not (include_file.parent / '_placeholder.md').exists()
+    for category in CATEGORIES:
+        path = tmp_path / category / f'_lib-{category}.md'
+        assert path.read_text() == 'existing'

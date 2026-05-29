@@ -17,9 +17,10 @@
 The ``diataxis_preprocessor.py`` script (run by ``just docs``) copies library
 docs into the Sphinx source tree and generates ``_lib-*.md`` include files.
 
-This extension provides a fallback: if those include files don't exist
-(preprocessor didn't run), it writes placeholder versions so that running
-``sphinx-build`` alone still produces a working (if incomplete) build.
+This extension provides a fallback: if any of those include files don't exist
+— either because the preprocessor wasn't run, or because no libraries have docs
+for a given category — it writes empty versions so that the ``{include}``
+directives in the category index pages resolve without errors.
 """
 
 from __future__ import annotations
@@ -30,24 +31,6 @@ import typing
 if typing.TYPE_CHECKING:
     import sphinx.application
 
-# Include files that the preprocessor generates and the index pages {include}.
-INCLUDE_FILES = {
-    'tutorials/_lib-tutorials.md',
-    'how-to/_lib-how-to.md',
-    'explanation/_lib-explanation.md',
-}
-
-FALLBACK_TOCTREE = """\
-```{toctree}
-:maxdepth: 1
-
-_placeholder
-```
-"""
-
-FALLBACK_PAGE = '# Library docs placeholder\n\nRun `just docs` to generate library docs.\n'
-
-
 def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
     """Sphinx extension entrypoint — registers the fallback hook."""
     app.connect('builder-inited', _fallback)
@@ -56,16 +39,7 @@ def setup(app: sphinx.application.Sphinx) -> dict[str, str | bool]:
 
 def _fallback(app: sphinx.application.Sphinx) -> None:
     docs_dir = pathlib.Path(app.confdir)
-    for rel_path in INCLUDE_FILES:
-        include_file = docs_dir / rel_path
-        if not include_file.exists():
-            category_dir = include_file.parent
-            placeholder_path = category_dir / '_placeholder.md'
-            _write_if_needed(path=placeholder_path, content=FALLBACK_PAGE)
-            _write_if_needed(path=include_file, content=FALLBACK_TOCTREE)
-
-
-def _write_if_needed(path: pathlib.Path, content: str) -> None:
-    """Write to *path* only if the contents have changed."""
-    if not path.exists() or path.read_text() != content:
-        path.write_text(content)
+    for category in 'tutorials', 'how-to', 'explanation':
+        path = docs_dir / category / f'_lib-{category}.md'
+        if not path.exists():
+            path.write_text('')
