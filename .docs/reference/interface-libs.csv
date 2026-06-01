@@ -1,4 +1,4 @@
-name,status,url,docs,src,kind,rel_name,rel_url_charmhub,rel_url_schema,description
+name,status,url,docs,src,kind,rel_name,rel_url_charmhub,rel_url_schema,description,tags
 charms.opencti.opencti_connector,,https://charmhub.io/opencti/libraries/opencti_connector,,https://github.com/canonical/opencti-operator/,Charmhub,opencti-connector,https://charmhub.io/integrations/opencti_connector,https://documentation.ubuntu.com/charmlibs/reference/interfaces/opencti_connector/v0/,
 charms.filesystem_manager.filesystem_info,,https://charmhub.io/filesystem-client/libraries/filesystem_info,,https://github.com/charmed-hpc/filesystem-charms,Charmhub,filesystem_info,https://charmhub.io/integrations/filesystem_info,,
 charms.storage_libs.nfs_interfaces,legacy,https://charmhub.io/storage-libs/libraries/nfs_interfaces,,,Charmhub,nfs_share,https://charmhub.io/integrations/nfs_share,,This interface is deprecated in favour of ``filesystem_info``.

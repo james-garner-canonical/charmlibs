@@ -1,4 +1,4 @@
-name,status,url,docs,src,kind,machine,K8s,description
+name,status,url,docs,src,kind,machine,K8s,description,tags
 charms.operator_libs_linux.apt,legacy,https://charmhub.io/operator-libs-linux/libraries/apt,,https://github.com/canonical/operator-libs-linux,Charmhub,y,,Use ``apt`` to install and manage packages. Deprecated in favor of ``charmlibs.apt``.
 charms.mysql.architecture,team,https://charmhub.io/mysql/libraries/architecture,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.
 charms.mysql.async_replication,team,https://charmhub.io/mysql/libraries/async_replication,,https://github.com/canonical/mysql-operator,Charmhub,y,y,Shared code between the ``mysql`` and ``mysql-k8s`` charms.

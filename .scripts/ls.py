@@ -67,8 +67,9 @@ class Info:
     description: str = ''
     status: str = ''
     schema_path: str = ''
+    tags: list[str] = dataclasses.field(default_factory=list)
 
-    def to_dict(self, *fields: str) -> dict[str, str]:
+    def to_dict(self, *fields: str) -> dict[str, object]:
         """Return dictionary containing only specified fields."""
         return {field: getattr(self, field) for field in fields}
 
@@ -106,7 +107,7 @@ def _main() -> None:
     if args.output:
         result = sorted(
             (info.to_dict(*args.output) for info in infos),
-            key=lambda di: tuple(di.items()),
+            key=lambda di: json.dumps(di, default=str),
         )
     else:
         result = sorted(getattr(info, args.output_only) for info in infos)
@@ -191,6 +192,8 @@ def _ls(
                 info.status = _get_status(category, root, path)
             if 'schema_path' in output:
                 info.schema_path = _get_schema_path_str(category, root, path)
+            if 'tags' in output:
+                info.tags = _lib_tags().get(_get_lib_name(category, root, path), [])
             infos.append(info)
         return infos
 
@@ -399,21 +402,37 @@ def _get_interface_version(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT) 
 
 
 @functools.cache
+def _general_libs_csv() -> list[dict[str, str]]:
+    with (_REPO_ROOT / '.docs' / 'reference' / 'general-libs.csv').open() as f:
+        return list(csv.DictReader(f, restval=''))
+
+
+@functools.cache
+def _interface_libs_csv() -> list[dict[str, str]]:
+    with (_REPO_ROOT / '.docs' / 'reference' / 'interface-libs.csv').open() as f:
+        return list(csv.DictReader(f, restval=''))
+
+
 def _lib_urls() -> dict[str, str]:
     result: dict[str, str] = {}
-    for p in 'general-libs.csv', 'interface-libs.csv':
-        with (_REPO_ROOT / '.docs' / 'reference' / p).open() as f:
-            for row in csv.DictReader(f):
-                # Library names should be unique, but we currently have an entry for
-                # charms.data_platform_libs.data_interfaces for each interface it supports
-                # This doesn't break our lookups though, since they all have the same metadata
-                # (aside from the interface column)
-                assert (
-                    row['name'] not in result
-                    or row['name'] == 'charms.data_platform_libs.data_interfaces'
-                )
-                result[row['name']] = row['url']
+    for row in [*_general_libs_csv(), *_interface_libs_csv()]:
+        # Library names should be unique, but we currently have an entry for
+        # charms.data_platform_libs.data_interfaces for each interface it supports.
+        # This doesn't break our lookups though, since they all have the same metadata
+        # (aside from the interface column).
+        assert (
+            row['name'] not in result
+            or row['name'] == 'charms.data_platform_libs.data_interfaces'
+        )
+        result[row['name']] = row['url']
     return result
+
+
+def _lib_tags() -> dict[str, list[str]]:
+    return {
+        row['name']: sorted({t.strip() for t in row['tags'].split(';') if t.strip()})
+        for row in [*_general_libs_csv(), *_interface_libs_csv()]
+    }
 
 
 @functools.cache
