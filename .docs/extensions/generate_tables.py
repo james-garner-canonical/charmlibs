@@ -146,27 +146,14 @@ class _TableRow(typing.NamedTuple):
     description: str
 
 
-_GENERAL_LIB_DEFAULTS: dict[str, object] = {
-    'status': '', 'docs': '', 'src': '', 'machine': False, 'K8s': False, 'description': '',
-}
-_INTERFACE_LIB_DEFAULTS: dict[str, object] = {
-    'status': '', 'docs': '', 'src': '', 'rel_name': '',
-    'rel_url_charmhub': '', 'rel_url_schema': '', 'description': '',
-}
-
-
 def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     reference_dir = pathlib.Path(docs_dir) / 'reference'
     generated_dir = reference_dir / 'generated'
     generated_dir.mkdir(exist_ok=True)
     with (reference_dir / 'libs.yaml').open() as f:
         data = yaml.safe_load(f)
-    interface_entries: list[_InterfaceCSVRow] = [
-        {**_INTERFACE_LIB_DEFAULTS, **e} for e in data['interface-libs']  # type: ignore
-    ]
-    general_entries: list[_GeneralCSVRow] = [
-        {**_GENERAL_LIB_DEFAULTS, **e} for e in data['general-libs']  # type: ignore
-    ]
+    interface_entries: list[_InterfaceCSVRow] = data['interface-libs']  # type: ignore
+    general_entries: list[_GeneralCSVRow] = data['general-libs']  # type: ignore
     _write_if_needed(
         path=(generated_dir / 'interface-libs-table.rst'),
         content=_get_interface_libs_table(interface_entries),
