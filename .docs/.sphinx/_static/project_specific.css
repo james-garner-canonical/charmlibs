@@ -8,13 +8,6 @@
 }
 
 /**
- * Prevent DataTables from recalculating column widths when search filters rows.
- */
-table.sphinx-datatable {
-  table-layout: fixed;
-}
-
-/**
  * Show emoji-tooltip as floating text when hovering over emoji-div.
  *
  * These classes are used in `non-relation-libs-table.rst`.
