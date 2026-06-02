@@ -290,7 +290,7 @@ general:
   status: ''
   url: https://charmhub.io/zookeeper/libraries/client
   docs: ''
-  src: http://github.com/canonical/zookeeper-operator
+  src: https://github.com/canonical/zookeeper-operator
   kind: Charmhub
   machine: true
   K8s: true
@@ -542,7 +542,7 @@ general:
   kind: Charmhub
   machine: true
   K8s: true
-  description: Shared code between the ``posgresql`` and ``postgresql-k8s`` charms.
+  description: Shared code between the ``postgresql`` and ``postgresql-k8s`` charms.
 - name: charms.rolling_ops.rollingops
   status: legacy
   url: https://charmhub.io/rolling-ops/libraries/rollingops
@@ -923,7 +923,7 @@ interfaces:
   docs: ''
   src: https://github.com/canonical/glauth-utils
   kind: Charmhub
-  rel_name: glauth_auxilary
+  rel_name: glauth_auxiliary
   rel_url_charmhub: https://charmhub.io/integrations/glauth_auxiliary
   rel_url_schema: ''
   description: ''
@@ -1218,7 +1218,7 @@ interfaces:
   rel_name: pgsql
   rel_url_charmhub: ''
   rel_url_schema: ''
-  description: Modern charms should use the ``mysql_client`` interface, using the
+  description: Modern charms should use the ``postgresql_client`` interface, using the
     ``data_interfaces`` lib from ``data-platform-helpers``.
 - name: ops.interface_kube_control
   status: ''
@@ -1239,7 +1239,7 @@ interfaces:
   rel_name: parca_scrape
   rel_url_charmhub: https://charmhub.io/integrations/parca_scrape
   rel_url_schema: ''
-  description: Deprecated in favour of the ``parca-k8s`` charm's ``parka_scrape``
+  description: Deprecated in favour of the ``parca-k8s`` charm's ``parca_scrape``
     lib.
 - name: charms.parca_k8s.parca_scrape
   status: ''

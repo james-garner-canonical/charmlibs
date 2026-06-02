@@ -82,7 +82,7 @@ _STATUS_SORTKEYS = {
 _FILE_HEADER = """..
     This file was automatically generated.
     It should not be manually edited!
-    Instead, edit the corresponding -raw.csv file and then rebuild the docs.
+    Instead, edit libs.yaml and then rebuild the docs.
 
 """
 _INTERFACE_LIBS_TABLE_HEADER = """.. list-table::
