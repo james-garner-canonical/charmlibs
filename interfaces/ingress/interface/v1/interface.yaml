@@ -1,7 +1,6 @@
 name: ingress
 version: 1
 status: retired
-lib: charms.traefik_k8s.ingress
 
 providers:
   - name: traefik-k8s
