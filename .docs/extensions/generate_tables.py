@@ -229,8 +229,8 @@ def _get_status_key_table_dropdown(entries: Iterable[_LibEntry]) -> str:
     return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
 
 
-def _is_listed(row: _LibEntry) -> bool:
-    return row['status'] != 'unlisted'
+def _is_listed(entry: _LibEntry) -> bool:
+    return entry['status'] != 'unlisted'
 
 
 ##########
