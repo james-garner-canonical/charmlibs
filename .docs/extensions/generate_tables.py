@@ -390,7 +390,6 @@ def _general_description(
     return _rst_table_indent('\n'.join(content))
 
 
-
 def _tags_rst(tags: list[str], tag_descriptions: dict[str, str]) -> str:
     """Return RST raw HTML for a tags line, or empty string if no tags."""
     assert tags
