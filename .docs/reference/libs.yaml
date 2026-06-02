@@ -639,7 +639,7 @@ interfaces:
   rel_url_charmhub: https://charmhub.io/integrations/opencti_connector
   rel_url_schema: https://documentation.ubuntu.com/charmlibs/reference/interfaces/opencti_connector/v0/
   description: ''
-- name: charms.filesystem_manager.filesystem_info
+- name: charms.filesystem_client.filesystem_info
   status: ''
   url: https://charmhub.io/filesystem-client/libraries/filesystem_info
   docs: ''
@@ -1503,9 +1503,9 @@ interfaces:
   rel_url_charmhub: ''
   rel_url_schema: ''
   description: Deprecated in favour of ``charmlibs.interfaces.gateway_metadata``.
-- name: dpcharmlibs-interfaces
+- name: dpcharmlibs.interfaces
   status: ''
-  url: https://pypi.org/project/dpcharmlibs-interfaces/
+  url: https://pypi.org/project/dpcharmlibs-interfaces
   docs: ''
   src: https://github.com/canonical/data-platform-charmlibs
   kind: PyPI
