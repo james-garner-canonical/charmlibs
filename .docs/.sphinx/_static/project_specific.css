@@ -38,7 +38,7 @@
 .tag-div {
   position: relative;
   display: inline-block;
-  cursor: default;
+  cursor: pointer;
 }
 .tag-tooltip {
   display: none;

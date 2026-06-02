@@ -295,7 +295,8 @@ def _get_tags_key_table_dropdown(
     if not used_tags:
         return ''
     rows = [
-        (f'#{tag}', tag_descriptions.get(tag, ''))
+        (_rst_table_indent(_rst_raw_html(_html_tag_tooltip(f'#{tag}', None))),
+         tag_descriptions.get(tag, ''))
         for tag in sorted(used_tags)
     ]
     table = _TAGS_KEY_TABLE_HEADER + _rst_rows(rows)
@@ -469,7 +470,7 @@ def _html_no_spellcheck_span(text: object) -> str:
 
 
 def _html_tag_tooltip(tag_text: str, tooltip: str | None) -> str:
-    e = ElementTree.Element('span', attrib={'class': 'tag-div no-spellcheck'})
+    e = ElementTree.Element('a', attrib={'class': 'tag-div no-spellcheck', 'href': '#'})
     e.text = tag_text
     if tooltip is not None:
         child = ElementTree.Element('span', attrib={'class': 'tag-tooltip'})

@@ -73,6 +73,11 @@ def test_tags_key_table_with_tags():
     rows = table.findall('.//tr')
     # header + 2 unique tags (data, security)
     assert len(rows) == 3
+    # Tags in the key should be clickable <a> elements
+    tag_links = table.findall('.//a[@class="tag-div no-spellcheck"]')
+    assert len(tag_links) == 2
+    tag_texts = sorted(link.text or '' for link in tag_links)
+    assert tag_texts == ['#data', '#security']
 
 
 def test_tags_key_table_no_tags():
@@ -140,11 +145,13 @@ def test_html_link(text: str, url: str):
 )
 def test_html_tag_tooltip(tag_text: str, tooltip: str | None):
     html_content = generate_tables._html_tag_tooltip(tag_text, tooltip)
-    span = ElementTree.fromstring(html_content)
-    assert 'tag-div' in span.attrib['class']
-    assert 'no-spellcheck' in span.attrib['class']
-    assert span.text == tag_text
-    children = list(span)
+    a = ElementTree.fromstring(html_content)
+    assert a.tag == 'a'
+    assert a.attrib['href'] == '#'
+    assert 'tag-div' in a.attrib['class']
+    assert 'no-spellcheck' in a.attrib['class']
+    assert a.text == tag_text
+    children = list(a)
     if tooltip is not None:
         assert len(children) == 1
         assert 'tag-tooltip' in children[0].attrib['class']
