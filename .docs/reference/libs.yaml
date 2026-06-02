@@ -1,4 +1,4 @@
-general-libs:
+general:
 - name: charms.operator_libs_linux.apt
   status: legacy
   url: https://charmhub.io/operator-libs-linux/libraries/apt
@@ -628,7 +628,7 @@ general-libs:
   machine: true
   K8s: true
   description: Manage in-place upgrades. Deprecated in favor of ``charm-refresh``.
-interface-libs:
+interfaces:
 - name: charms.opencti.opencti_connector
   status: ''
   url: https://charmhub.io/opencti/libraries/opencti_connector

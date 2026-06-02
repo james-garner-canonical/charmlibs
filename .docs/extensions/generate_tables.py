@@ -118,7 +118,7 @@ _KEY_DROPDOWN_HEADER = f""".. dropdown:: {_KEY_MSG}
 """
 
 
-class _CSVRow(typing.TypedDict, total=True):
+class _LibEntry(typing.TypedDict, total=True):
     name: str
     status: str
     url: str
@@ -128,15 +128,20 @@ class _CSVRow(typing.TypedDict, total=True):
     description: str
 
 
-class _InterfaceCSVRow(_CSVRow, total=True):
+class _InterfaceLibEntry(_LibEntry, total=True):
     rel_name: str
     rel_url_charmhub: str
     rel_url_schema: str
 
 
-class _GeneralCSVRow(_CSVRow, total=True):
+class _GeneralLibEntry(_LibEntry, total=True):
     machine: bool
     K8s: bool
+
+
+class _LibsYaml(typing.TypedDict):
+    general: list[_GeneralLibEntry]
+    interfaces: list[_InterfaceLibEntry]
 
 
 class _TableRow(typing.NamedTuple):
@@ -150,10 +155,9 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     reference_dir = pathlib.Path(docs_dir) / 'reference'
     generated_dir = reference_dir / 'generated'
     generated_dir.mkdir(exist_ok=True)
-    with (reference_dir / 'libs.yaml').open() as f:
-        data = yaml.safe_load(f)
-    interface_entries: list[_InterfaceCSVRow] = data['interface-libs']  # type: ignore
-    general_entries: list[_GeneralCSVRow] = data['general-libs']  # type: ignore
+    data: _LibsYaml = yaml.safe_load((reference_dir / 'libs.yaml').read_text())
+    interface_entries = data['interfaces']
+    general_entries = data['general']
     _write_if_needed(
         path=(generated_dir / 'interface-libs-table.rst'),
         content=_get_interface_libs_table(interface_entries),
@@ -188,7 +192,7 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
 ##########
 
 
-def _get_interface_libs_table(entries: Iterable[_InterfaceCSVRow]) -> str:
+def _get_interface_libs_table(entries: Iterable[_InterfaceLibEntry]) -> str:
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, _kind, desc = row
         return status, desc
@@ -201,7 +205,7 @@ def _get_interface_libs_table(entries: Iterable[_InterfaceCSVRow]) -> str:
     return _INTERFACE_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_general_libs_table(entries: Iterable[_GeneralCSVRow]) -> str:
+def _get_general_libs_table(entries: Iterable[_GeneralLibEntry]) -> str:
     def key(row: _TableRow) -> tuple[str, ...]:
         return row.status, row.kind, row.name, row.description
 
@@ -213,7 +217,7 @@ def _get_general_libs_table(entries: Iterable[_GeneralCSVRow]) -> str:
     return _GENERAL_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
+def _get_status_key_table_dropdown(entries: Iterable[_LibEntry]) -> str:
     used_statuses = {entry['status'] for entry in entries}
     rows = [
         (_status({'status': s}), _STATUS_TOOLTIPS[s])  # type: ignore
@@ -225,7 +229,7 @@ def _get_status_key_table_dropdown(entries: Iterable[_CSVRow]) -> str:
     return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
 
 
-def _is_listed(row: _CSVRow) -> bool:
+def _is_listed(row: _LibEntry) -> bool:
     return row['status'] != 'unlisted'
 
 
@@ -234,7 +238,7 @@ def _is_listed(row: _CSVRow) -> bool:
 ##########
 
 
-def _status(entry: _CSVRow) -> str:
+def _status(entry: _LibEntry) -> str:
     status = entry['status']
     html_lines = [_html_hidden_span(_STATUS_SORTKEYS[status])]
     if status in _EMOJIS:
@@ -242,7 +246,7 @@ def _status(entry: _CSVRow) -> str:
     return _rst_table_indent(_rst_raw_html('\n'.join(html_lines)))
 
 
-def _name(entry: _CSVRow) -> str:
+def _name(entry: _LibEntry) -> str:
     name = entry['name'] if entry['kind'] != 'Charmhub' else entry['name'].removeprefix('charms.')
     link = _html_link(name, entry['url'])
     extras = ', '.join(_html_link(s, url) for s in ('docs', 'src') if (url := entry[s]))
@@ -251,7 +255,7 @@ def _name(entry: _CSVRow) -> str:
     return _rst_table_indent(_rst_raw_html('\n'.join(html_lines)))
 
 
-def _kind(entry: _CSVRow) -> str:
+def _kind(entry: _LibEntry) -> str:
     kind = entry['kind']
     content = [_rst_raw_html(_html_hidden_span(_KIND_SORTKEYS[kind]))]
     if kind_str := _EMOJIS.get(kind, '') + kind:
@@ -259,7 +263,7 @@ def _kind(entry: _CSVRow) -> str:
     return _rst_table_indent('\n'.join(content))
 
 
-def _interface_description(entry: _InterfaceCSVRow) -> str:
+def _interface_description(entry: _InterfaceLibEntry) -> str:
     sortkeys = [
         entry['rel_name'].ljust(64, 'z'),
         str(_STATUS_SORTKEYS[entry['status']]),
@@ -275,7 +279,7 @@ def _interface_description(entry: _InterfaceCSVRow) -> str:
     return _rst_table_indent('\n'.join(content))
 
 
-def _rel_links(entry: _InterfaceCSVRow) -> str:
+def _rel_links(entry: _InterfaceLibEntry) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
@@ -287,7 +291,7 @@ def _rel_links(entry: _InterfaceCSVRow) -> str:
     return f'{main_link} ({schema_link})'
 
 
-def _general_description(entry: _GeneralCSVRow) -> str:
+def _general_description(entry: _GeneralLibEntry) -> str:
     substrates = ('machine', 'K8s')
     sortkeys = [
         *('0' if entry[s] else '1' for s in substrates),

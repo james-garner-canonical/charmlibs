@@ -400,9 +400,8 @@ def _get_interface_version(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT) 
 @functools.cache
 def _lib_urls() -> dict[str, str]:
     result: dict[str, str] = {}
-    with (_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').open() as f:
-        data = yaml.safe_load(f)
-    for entry in [*data['general-libs'], *data['interface-libs']]:
+    data = yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
+    for entry in (*data['general'], *data['interfaces']):
         # Library names should be unique, but we currently have an entry for
         # charms.data_platform_libs.data_interfaces for each interface it supports
         # This doesn't break our lookups though, since they all have the same metadata
