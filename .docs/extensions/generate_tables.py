@@ -118,6 +118,14 @@ _KEY_DROPDOWN_HEADER = f""".. dropdown:: {_KEY_MSG}
 """
 
 
+class _TagInfo(typing.TypedDict):
+    description: str
+    criteria: str
+
+
+_TagsYaml = dict[str, dict[str, _TagInfo]]
+
+
 class _LibEntry(typing.TypedDict, total=True):
     name: str
     status: str
@@ -152,16 +160,27 @@ class _TableRow(typing.NamedTuple):
     description: str
 
 
+def _load_tag_descriptions(reference_dir: pathlib.Path) -> dict[str, str]:
+    """Load tags.yaml and return a flat mapping of tag name to description."""
+    tags_data: _TagsYaml = yaml.safe_load((reference_dir / 'tags.yaml').read_text())
+    tag_descriptions: dict[str, str] = {}
+    for _category_key in ('domain-tags', 'audience-tags'):
+        for tag_name, tag_info in tags_data.get(_category_key, {}).items():
+            tag_descriptions[tag_name] = tag_info['description']
+    return tag_descriptions
+
+
 def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     reference_dir = pathlib.Path(docs_dir) / 'reference'
     generated_dir = reference_dir / 'generated'
     generated_dir.mkdir(exist_ok=True)
     data: _LibsYaml = yaml.safe_load((reference_dir / 'libs.yaml').read_text())
+    tag_descriptions = _load_tag_descriptions(reference_dir)
     interface_entries = data['interfaces']
     general_entries = data['general']
     _write_if_needed(
         path=(generated_dir / 'interface-libs-table.rst'),
-        content=_get_interface_libs_table(interface_entries),
+        content=_get_interface_libs_table(interface_entries, tag_descriptions),
     )
     _write_if_needed(
         path=(generated_dir / 'interface-libs-status-key-table.rst'),
@@ -169,7 +188,7 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     )
     _write_if_needed(
         path=(generated_dir / 'general-libs-table.rst'),
-        content=_get_general_libs_table(general_entries),
+        content=_get_general_libs_table(general_entries, tag_descriptions),
     )
     _write_if_needed(
         path=(generated_dir / 'general-libs-status-key-table.rst'),
@@ -193,25 +212,41 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
 ##########
 
 
-def _get_interface_libs_table(entries: Iterable[_InterfaceLibEntry]) -> str:
+def _get_interface_libs_table(
+    entries: Iterable[_InterfaceLibEntry],
+    tag_descriptions: dict[str, str],
+) -> str:
     def key(row: tuple[str, ...]) -> tuple[str, ...]:
         status, _name, _kind, desc = row
         return status, desc
 
     rows = [
-        (_status(entry), _name(entry), _kind(entry), _interface_description(entry))
+        (
+            _status(entry),
+            _name(entry),
+            _kind(entry),
+            _interface_description(entry, tag_descriptions),
+        )
         for entry in entries
         if _is_listed(entry)
     ]
     return _INTERFACE_LIBS_TABLE_HEADER + _rst_rows(sorted(rows, key=key))
 
 
-def _get_general_libs_table(entries: Iterable[_GeneralLibEntry]) -> str:
+def _get_general_libs_table(
+    entries: Iterable[_GeneralLibEntry],
+    tag_descriptions: dict[str, str],
+) -> str:
     def key(row: _TableRow) -> tuple[str, ...]:
         return row.status, row.kind, row.name, row.description
 
     rows = [
-        _TableRow(_status(entry), _name(entry), _kind(entry), _general_description(entry))
+        _TableRow(
+            _status(entry),
+            _name(entry),
+            _kind(entry),
+            _general_description(entry, tag_descriptions),
+        )
         for entry in entries
         if _is_listed(entry)
     ]
@@ -264,7 +299,10 @@ def _kind(entry: _LibEntry) -> str:
     return _rst_table_indent('\n'.join(content))
 
 
-def _interface_description(entry: _InterfaceLibEntry) -> str:
+def _interface_description(
+    entry: _InterfaceLibEntry,
+    tag_descriptions: dict[str, str],
+) -> str:
     sortkeys = [
         entry['rel_name'].ljust(64, 'z'),
         str(_STATUS_SORTKEYS[entry['status']]),
@@ -277,7 +315,7 @@ def _interface_description(entry: _InterfaceLibEntry) -> str:
     if desc := entry['description']:
         content.append(_rst_lines(desc))
     if tags := entry['tags']:
-        content.append(_tags_rst(tags))
+        content.append(_tags_rst(tags, tag_descriptions))
     return _rst_table_indent('\n'.join(content))
 
 
@@ -293,7 +331,10 @@ def _rel_links(entry: _InterfaceLibEntry) -> str:
     return f'{main_link} ({schema_link})'
 
 
-def _general_description(entry: _GeneralLibEntry) -> str:
+def _general_description(
+    entry: _GeneralLibEntry,
+    tag_descriptions: dict[str, str],
+) -> str:
     substrates = ('machine', 'K8s')
     sortkeys = [
         *('0' if entry[s] else '1' for s in substrates),
@@ -307,15 +348,19 @@ def _general_description(entry: _GeneralLibEntry) -> str:
     if desc := entry['description']:
         content.append(_rst_lines(desc))
     if tags := entry['tags']:
-        content.append(_tags_rst(tags))
+        content.append(_tags_rst(tags, tag_descriptions))
     return _rst_table_indent('\n'.join(content))
 
 
 
-def _tags_rst(tags: list[str]) -> str:
+def _tags_rst(tags: list[str], tag_descriptions: dict[str, str]) -> str:
     """Return RST raw HTML for a tags line, or empty string if no tags."""
     assert tags
-    return _rst_raw_html(_html_no_spellcheck_span(' '.join(f'#{t}' for t in tags)))
+    tag_htmls = [
+        _html_tag_tooltip(f'#{t}', tag_descriptions.get(t))
+        for t in tags
+    ]
+    return _rst_raw_html(' '.join(tag_htmls))
 
 
 #######
@@ -383,4 +428,14 @@ def _html_link(text: str, url: str) -> str:
 def _html_no_spellcheck_span(text: object) -> str:
     e = ElementTree.Element('span', attrib={'class': 'no-spellcheck'})
     e.text = str(text)
+    return ElementTree.tostring(e, encoding='unicode')
+
+
+def _html_tag_tooltip(tag_text: str, tooltip: str | None) -> str:
+    e = ElementTree.Element('span', attrib={'class': 'tag-div no-spellcheck'})
+    e.text = tag_text
+    if tooltip is not None:
+        child = ElementTree.Element('span', attrib={'class': 'tag-tooltip'})
+        child.text = tooltip
+        e.append(child)
     return ElementTree.tostring(e, encoding='unicode')

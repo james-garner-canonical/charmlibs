@@ -80,3 +80,22 @@ def test_html_link(text: str, url: str):
     a = ElementTree.fromstring(html_content)
     assert a.attrib['href'] == url
     assert a.text == text
+
+
+@pytest.mark.parametrize(
+    ('tag_text', 'tooltip'),
+    [('#security', 'TLS certificate management'), ('#data', None)],
+)
+def test_html_tag_tooltip(tag_text: str, tooltip: str | None):
+    html_content = generate_tables._html_tag_tooltip(tag_text, tooltip)
+    span = ElementTree.fromstring(html_content)
+    assert 'tag-div' in span.attrib['class']
+    assert 'no-spellcheck' in span.attrib['class']
+    assert span.text == tag_text
+    children = list(span)
+    if tooltip is not None:
+        assert len(children) == 1
+        assert 'tag-tooltip' in children[0].attrib['class']
+        assert children[0].text == tooltip
+    else:
+        assert len(children) == 0

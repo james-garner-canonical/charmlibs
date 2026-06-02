@@ -31,3 +31,27 @@
   display: block;
   z-index: 9999;
 }
+
+/**
+ * Show tag-tooltip as floating text when hovering over tag-div.
+ */
+.tag-div {
+  position: relative;
+  display: inline-block;
+  cursor: default;
+}
+.tag-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  background-color: #EBEBEB;
+  color: #000000;
+  padding: 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.tag-div:hover .tag-tooltip {
+  display: block;
+  z-index: 9999;
+}
