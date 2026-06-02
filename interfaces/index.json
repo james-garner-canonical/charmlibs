@@ -522,8 +522,8 @@
   {
     "name": "s3",
     "version": "1",
-    "lib": "",
-    "lib_url": "",
+    "lib": "charms.data_platform_libs.s3",
+    "lib_url": "https://charmhub.io/data-platform-libs/libraries/s3",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/s3/",
     "summary": "",
     "description": "",
