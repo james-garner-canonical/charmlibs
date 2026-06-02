@@ -314,8 +314,7 @@ def _general_description(entry: _GeneralLibEntry) -> str:
 
 def _tags_rst(tags: list[str]) -> str:
     """Return RST raw HTML for a tags line, or empty string if no tags."""
-    if not tags:
-        return ''
+    assert tags
     return _rst_raw_html(_html_no_spellcheck_span(' '.join(f'#{t}' for t in tags)))
 
 
