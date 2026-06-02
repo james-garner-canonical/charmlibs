@@ -66,7 +66,7 @@ class Info:
     description: str = ''
     status: str = ''
     schema_path: str = ''
-    tags: list[str] = dataclasses.field(default_factory=list)
+    tags: list[str] = dataclasses.field(default_factory=list[str])
 
     def to_dict(self, *fields: str) -> dict[str, object]:
         """Return dictionary containing only specified fields."""
@@ -400,10 +400,22 @@ def _get_interface_version(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT) 
     return max((v.removeprefix('v') for v in versions), key=int)
 
 
+@functools.cache
+def _pyproject_toml(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT):
+    with (root / package / 'pyproject.toml').open('rb') as f:
+        return tomllib.load(f)
+
+
+@functools.cache
+def _interface_yaml(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT):
+    version = _get_interface_version(path, root=root)
+    with (root / path / 'interface' / f'v{version}' / 'interface.yaml').open() as f:
+        return yaml.safe_load(f)
+
+
 def _lib_urls() -> dict[str, str]:
     result: dict[str, str] = {}
-    data = yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
-    for entry in (*data['general'], *data['interfaces']):
+    for entry in (*_libs_yaml()['general'], *_libs_yaml()['interfaces']):
         # Library names should be unique, but we currently have an entry for
         # charms.data_platform_libs.data_interfaces for each interface it supports
         # This doesn't break our lookups though, since they all have the same metadata
@@ -417,24 +429,15 @@ def _lib_urls() -> dict[str, str]:
 
 
 def _lib_tags() -> dict[str, list[str]]:
-    data = yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
     return {
         entry['name']: sorted(entry.get('tags') or [])
-        for entry in (*data['general'], *data['interfaces'])
+        for entry in (*_libs_yaml()['general'], *_libs_yaml()['interfaces'])
     }
 
 
 @functools.cache
-def _pyproject_toml(package: pathlib.Path, root: pathlib.Path = _REPO_ROOT):
-    with (root / package / 'pyproject.toml').open('rb') as f:
-        return tomllib.load(f)
-
-
-@functools.cache
-def _interface_yaml(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT):
-    version = _get_interface_version(path, root=root)
-    with (root / path / 'interface' / f'v{version}' / 'interface.yaml').open() as f:
-        return yaml.safe_load(f)
+def _libs_yaml():
+    return yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
 
 
 def _normalize(name: str) -> str:
