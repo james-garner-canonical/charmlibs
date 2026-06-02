@@ -14,14 +14,15 @@
 
 # ruff: noqa: S405 (suspicious-xml-etree-import )
 
-"""Generate source .rst files for lib tables, from CSV files in the reference directory."""
+"""Generate source .rst files for lib tables, from libs.yaml in the reference directory."""
 
 from __future__ import annotations
 
-import csv
 import pathlib
 import typing
 from xml.etree import ElementTree
+
+import yaml
 
 ####################
 # Sphinx extension #
@@ -134,8 +135,8 @@ class _InterfaceCSVRow(_CSVRow, total=True):
 
 
 class _GeneralCSVRow(_CSVRow, total=True):
-    machine: str
-    K8s: str
+    machine: bool
+    K8s: bool
 
 
 class _TableRow(typing.NamedTuple):
@@ -145,13 +146,27 @@ class _TableRow(typing.NamedTuple):
     description: str
 
 
+_GENERAL_LIB_DEFAULTS: dict[str, object] = {
+    'status': '', 'docs': '', 'src': '', 'machine': False, 'K8s': False, 'description': '',
+}
+_INTERFACE_LIB_DEFAULTS: dict[str, object] = {
+    'status': '', 'docs': '', 'src': '', 'rel_name': '',
+    'rel_url_charmhub': '', 'rel_url_schema': '', 'description': '',
+}
+
+
 def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     reference_dir = pathlib.Path(docs_dir) / 'reference'
     generated_dir = reference_dir / 'generated'
     generated_dir.mkdir(exist_ok=True)
-    # interface libs
-    with (reference_dir / 'interface-libs.csv').open() as f:
-        interface_entries: list[_InterfaceCSVRow] = list(csv.DictReader(f))  # type: ignore
+    with (reference_dir / 'libs.yaml').open() as f:
+        data = yaml.safe_load(f)
+    interface_entries: list[_InterfaceCSVRow] = [
+        {**_INTERFACE_LIB_DEFAULTS, **e} for e in data['interface-libs']  # type: ignore
+    ]
+    general_entries: list[_GeneralCSVRow] = [
+        {**_GENERAL_LIB_DEFAULTS, **e} for e in data['general-libs']  # type: ignore
+    ]
     _write_if_needed(
         path=(generated_dir / 'interface-libs-table.rst'),
         content=_get_interface_libs_table(interface_entries),
@@ -160,9 +175,6 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
         path=(generated_dir / 'interface-libs-status-key-table.rst'),
         content=_get_status_key_table_dropdown(interface_entries),
     )
-    # general libs
-    with (reference_dir / 'general-libs.csv').open() as f:
-        general_entries: list[_GeneralCSVRow] = list(csv.DictReader(f))  # type: ignore
     _write_if_needed(
         path=(generated_dir / 'general-libs-table.rst'),
         content=_get_general_libs_table(general_entries),
