@@ -400,8 +400,6 @@ def _get_interface_version(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT) 
     return max((v.removeprefix('v') for v in versions), key=int)
 
 
-
-
 def _lib_urls() -> dict[str, str]:
     result: dict[str, str] = {}
     data = yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
