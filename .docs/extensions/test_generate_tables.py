@@ -40,6 +40,58 @@ def test_status_key_table():
     assert table is not None
 
 
+def test_tags_key_table_with_tags():
+    entries: list[generate_tables._LibEntry] = [
+        {
+            'name': 'lib1',
+            'status': '',
+            'url': '',
+            'docs': '',
+            'src': '',
+            'kind': '',
+            'description': '',
+            'tags': ['security', 'data'],
+        },
+        {
+            'name': 'lib2',
+            'status': '',
+            'url': '',
+            'docs': '',
+            'src': '',
+            'kind': '',
+            'description': '',
+            'tags': ['security'],
+        },
+    ]
+    tag_descriptions = {'security': 'Security stuff', 'data': 'Data stuff'}
+    rst = generate_tables._get_tags_key_table_dropdown(entries, tag_descriptions)
+    assert rst  # non-empty
+    dropdown_contents = '\n'.join(rst.split('\n')[1:])
+    html_content = rst_to_html(dropdown_contents)
+    table = ElementTree.fromstring(html.unescape(html_content)).find('.//table')
+    assert table is not None
+    rows = table.findall('.//tr')
+    # header + 2 unique tags (data, security)
+    assert len(rows) == 3
+
+
+def test_tags_key_table_no_tags():
+    entries: list[generate_tables._LibEntry] = [
+        {
+            'name': 'lib1',
+            'status': '',
+            'url': '',
+            'docs': '',
+            'src': '',
+            'kind': '',
+            'description': '',
+            'tags': [],
+        },
+    ]
+    rst = generate_tables._get_tags_key_table_dropdown(entries, {})
+    assert rst == ''
+
+
 @pytest.mark.parametrize('rows', ([('r1c1', 'r1c2'), ('r2c1', 'r2c2')],))
 def test_rst_rows(rows: list[tuple[str, ...]]):
     rst = generate_tables._rst_rows(rows)

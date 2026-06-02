@@ -116,6 +116,17 @@ _KEY_MSG = 'Library status is shown in the left column. See tooltips, or click h
 _KEY_DROPDOWN_HEADER = f""".. dropdown:: {_KEY_MSG}
 
 """
+_TAGS_KEY_TABLE_HEADER = """.. list-table::
+   :widths: 1, 100
+   :header-rows: 1
+
+   * - Tag
+     - Description
+"""
+_TAGS_KEY_MSG = 'Tags are shown in the description column. See tooltips, or click here for a key.'
+_TAGS_KEY_DROPDOWN_HEADER = f""".. dropdown:: {_TAGS_KEY_MSG}
+
+"""
 
 
 class _TagInfo(typing.TypedDict):
@@ -194,6 +205,14 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
         path=(generated_dir / 'general-libs-status-key-table.rst'),
         content=_get_status_key_table_dropdown(general_entries),
     )
+    _write_if_needed(
+        path=(generated_dir / 'interface-libs-tags-key-table.rst'),
+        content=_get_tags_key_table_dropdown(interface_entries, tag_descriptions),
+    )
+    _write_if_needed(
+        path=(generated_dir / 'general-libs-tags-key-table.rst'),
+        content=_get_tags_key_table_dropdown(general_entries, tag_descriptions),
+    )
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:
@@ -263,6 +282,24 @@ def _get_status_key_table_dropdown(entries: Iterable[_LibEntry]) -> str:
     rows.append(('', 'None of the above.'))
     table = _KEY_TABLE_HEADER + _rst_rows(rows)
     return _KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
+
+
+def _get_tags_key_table_dropdown(
+    entries: Iterable[_LibEntry],
+    tag_descriptions: dict[str, str],
+) -> str:
+    used_tags: set[str] = set()
+    for entry in entries:
+        if _is_listed(entry):
+            used_tags.update(entry['tags'])
+    if not used_tags:
+        return ''
+    rows = [
+        (f'#{tag}', tag_descriptions.get(tag, ''))
+        for tag in sorted(used_tags)
+    ]
+    table = _TAGS_KEY_TABLE_HEADER + _rst_rows(rows)
+    return _TAGS_KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
 
 
 def _is_listed(entry: _LibEntry) -> bool:

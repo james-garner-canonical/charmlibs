@@ -8,5 +8,9 @@ This page lists [non-interface libraries](#charm-libs-general). The search box s
 ```
 
 ```{eval-rst}
+.. include:: generated/general-libs-tags-key-table.rst
+```
+
+```{eval-rst}
 .. include:: generated/general-libs-table.rst
 ```

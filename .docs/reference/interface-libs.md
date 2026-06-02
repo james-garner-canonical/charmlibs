@@ -10,5 +10,9 @@ In future, this page will show which libraries are officially recommended based 
 ```
 
 ```{eval-rst}
+.. include:: generated/interface-libs-tags-key-table.rst
+```
+
+```{eval-rst}
 .. include:: generated/interface-libs-table.rst
 ```
