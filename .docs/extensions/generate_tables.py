@@ -125,6 +125,7 @@ class _CSVRow(typing.TypedDict, total=True):
     src: str
     kind: str
     description: str
+    tags: str
 
 
 class _InterfaceCSVRow(_CSVRow, total=True):
@@ -151,7 +152,7 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     generated_dir.mkdir(exist_ok=True)
     # interface libs
     with (reference_dir / 'interface-libs.csv').open() as f:
-        interface_entries: list[_InterfaceCSVRow] = list(csv.DictReader(f))  # type: ignore
+        interface_entries: list[_InterfaceCSVRow] = list(csv.DictReader(f, restval=''))  # type: ignore
     _write_if_needed(
         path=(generated_dir / 'interface-libs-table.rst'),
         content=_get_interface_libs_table(interface_entries),
@@ -162,7 +163,7 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     )
     # general libs
     with (reference_dir / 'general-libs.csv').open() as f:
-        general_entries: list[_GeneralCSVRow] = list(csv.DictReader(f))  # type: ignore
+        general_entries: list[_GeneralCSVRow] = list(csv.DictReader(f, restval=''))  # type: ignore
     _write_if_needed(
         path=(generated_dir / 'general-libs-table.rst'),
         content=_get_general_libs_table(general_entries),
@@ -267,12 +268,13 @@ def _interface_description(entry: _InterfaceCSVRow) -> str:
         entry['name'],
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
-    html_lines = [_html_hidden_span(''.join(sortkeys))]
+    content = [_rst_raw_html(_html_hidden_span(''.join(sortkeys)))]
     if rel_links := _rel_links(entry):
-        html_lines.append(rel_links)
-    content = [_rst_raw_html('\n'.join(html_lines))]
+        content.append(_rst_raw_html(f'<p>{rel_links}</p>'))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
+    if tags_rst := _tags_rst(_parse_tags(entry['tags'])):
+        content.append(tags_rst)
     return _rst_table_indent('\n'.join(content))
 
 
@@ -301,7 +303,24 @@ def _general_description(entry: _GeneralCSVRow) -> str:
         content.append(_rst_lines(firstline))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
+    if tags_rst := _tags_rst(_parse_tags(entry['tags'])):
+        content.append(tags_rst)
     return _rst_table_indent('\n'.join(content))
+
+
+def _parse_tags(tags_str: str) -> list[str]:
+    """Parse semicolon-separated tags string into a sorted list.
+
+    Accepts list[str] directly once the CSV source is replaced with YAML.
+    """
+    return sorted(t.strip() for t in tags_str.split(';') if t.strip())
+
+
+def _tags_rst(tags: list[str]) -> str:
+    """Return RST raw HTML for a tags line, or empty string if no tags."""
+    if not tags:
+        return ''
+    return _rst_raw_html(_html_no_spellcheck_span(' '.join(f'#{t}' for t in tags)))
 
 
 #######
