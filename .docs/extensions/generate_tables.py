@@ -295,8 +295,10 @@ def _get_tags_key_table_dropdown(
     if not used_tags:
         return ''
     rows = [
-        (_rst_table_indent(_rst_raw_html(_html_tag_tooltip(f'#{tag}', None))),
-         tag_descriptions.get(tag, ''))
+        (
+            _rst_table_indent(_rst_raw_html(_html_tag_tooltip(f'#{tag}', None))),
+            tag_descriptions.get(tag, ''),
+        )
         for tag in sorted(used_tags)
     ]
     table = _TAGS_KEY_TABLE_HEADER + _rst_rows(rows)
@@ -393,10 +395,7 @@ def _general_description(
 def _tags_rst(tags: list[str], tag_descriptions: dict[str, str]) -> str:
     """Return RST raw HTML for a tags line, or empty string if no tags."""
     assert tags
-    tag_htmls = [
-        _html_tag_tooltip(f'#{t}', tag_descriptions.get(t))
-        for t in tags
-    ]
+    tag_htmls = [_html_tag_tooltip(f'#{t}', tag_descriptions.get(t)) for t in tags]
     return _rst_raw_html(' '.join(tag_htmls))
 
 
