@@ -282,8 +282,8 @@
   {
     "name": "k8s-service",
     "version": "0",
-    "lib": "",
-    "lib_url": "",
+    "lib": "charms.mlops_libs.k8s_service_info",
+    "lib_url": "https://charmhub.io/mlops-libs/libraries/k8s_service_info",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/k8s-service/",
     "summary": "",
     "description": "",
@@ -342,8 +342,8 @@
   {
     "name": "kubeflow_dashboard_links",
     "version": "0",
-    "lib": "",
-    "lib_url": "",
+    "lib": "charms.kubeflow_dashboard.kubeflow_dashboard_links",
+    "lib_url": "https://charmhub.io/kubeflow-dashboard/libraries/kubeflow_dashboard_links",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kubeflow_dashboard_links/",
     "summary": "",
     "description": "",
