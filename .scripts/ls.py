@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import csv
 import dataclasses
 import functools
 import io
@@ -401,37 +400,29 @@ def _get_interface_version(path: pathlib.Path, root: pathlib.Path = _REPO_ROOT) 
     return max((v.removeprefix('v') for v in versions), key=int)
 
 
-@functools.cache
-def _general_libs_csv() -> list[dict[str, str]]:
-    with (_REPO_ROOT / '.docs' / 'reference' / 'general-libs.csv').open() as f:
-        return list(csv.DictReader(f, restval=''))
-
-
-@functools.cache
-def _interface_libs_csv() -> list[dict[str, str]]:
-    with (_REPO_ROOT / '.docs' / 'reference' / 'interface-libs.csv').open() as f:
-        return list(csv.DictReader(f, restval=''))
 
 
 def _lib_urls() -> dict[str, str]:
     result: dict[str, str] = {}
-    for row in [*_general_libs_csv(), *_interface_libs_csv()]:
+    data = yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
+    for entry in (*data['general'], *data['interfaces']):
         # Library names should be unique, but we currently have an entry for
-        # charms.data_platform_libs.data_interfaces for each interface it supports.
+        # charms.data_platform_libs.data_interfaces for each interface it supports
         # This doesn't break our lookups though, since they all have the same metadata
-        # (aside from the interface column).
+        # (aside from the interface column)
         assert (
-            row['name'] not in result
-            or row['name'] == 'charms.data_platform_libs.data_interfaces'
+            entry['name'] not in result
+            or entry['name'] == 'charms.data_platform_libs.data_interfaces'
         )
-        result[row['name']] = row['url']
+        result[entry['name']] = entry['url']
     return result
 
 
 def _lib_tags() -> dict[str, list[str]]:
+    data = yaml.safe_load((_REPO_ROOT / '.docs' / 'reference' / 'libs.yaml').read_text())
     return {
-        row['name']: sorted({t.strip() for t in row['tags'].split(';') if t.strip()})
-        for row in [*_general_libs_csv(), *_interface_libs_csv()]
+        entry['name']: sorted(entry.get('tags') or [])
+        for entry in (*data['general'], *data['interfaces'])
     }
 
 
