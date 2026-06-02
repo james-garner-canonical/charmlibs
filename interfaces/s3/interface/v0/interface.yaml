@@ -1,6 +1,7 @@
 name: s3
 version: 0
 status: draft
+lib: charms.data_platform_libs.s3
 summary: Access S3-compatible object storage providers.
 description: |
   The `s3` interface allows charms to access S3-compatible object storage providers with bucket-specific credentials and connection details.

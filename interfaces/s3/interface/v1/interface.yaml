@@ -1,6 +1,7 @@
 name: s3
 version: 1
 status: draft
+lib: charms.data_platform_libs.s3
 
 providers:
   - name: s3-integrator
