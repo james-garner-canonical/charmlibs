@@ -276,8 +276,8 @@ def _interface_description(entry: _InterfaceLibEntry) -> str:
         content.append(_rst_raw_html(f'<p>{rel_links}</p>'))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
-    if tags_rst := _tags_rst(entry['tags']):
-        content.append(tags_rst)
+    if tags := entry['tags']:
+        content.append(_tags_rst(tags))
     return _rst_table_indent('\n'.join(content))
 
 
@@ -306,8 +306,8 @@ def _general_description(entry: _GeneralLibEntry) -> str:
         content.append(_rst_lines(firstline))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
-    if tags_rst := _tags_rst(entry['tags']):
-        content.append(tags_rst)
+    if tags := entry['tags']:
+        content.append(_tags_rst(tags))
     return _rst_table_indent('\n'.join(content))
 
 
