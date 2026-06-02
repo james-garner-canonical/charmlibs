@@ -33,6 +33,16 @@ domain-tags:
       The library implements an ingress-related relation interface or provides
       helpers for configuring external access to charmed applications.
 
+  networking:
+    description: >-
+      External connectivity, DNS, routing, and access management: ingress,
+      load balancing, reverse proxy integration, DNS record management, IP
+      routing, and service exposure.
+    criteria: >-
+      The library implements a networking-related relation interface or provides
+      helpers for external connectivity or routing. Superset of ingress: all
+      ingress-tagged libraries also carry this tag.
+
   data:
     description: >-
       Database and storage integration: relational databases, NoSQL, object
@@ -56,6 +66,15 @@ domain-tags:
     criteria: >-
       The library provides broadly applicable charm operational functionality
       and does not belong exclusively to any of the above domain tags.
+
+  telco:
+    description: >-
+      Telecommunications and 5G network function integration: interfaces for
+      5G core network functions (AMF, UPF, NRF, etc.) and SD-Core management.
+    criteria: >-
+      The library implements a relation interface for a telecommunications
+      network function or provides helpers for integrating with SD-Core or 5G
+      network components.
 
 audience-tags:
   internal:

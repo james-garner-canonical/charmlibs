@@ -59,6 +59,7 @@
     "summary": "Configure a cloudflared tunnel.",
     "description": "The `cloudflared_route` interface allows information to be exchanged between the cloudflared tunnel configurator charm and the cloudflared tunnel charm.",
     "tags": [
+      "ingress",
       "networking"
     ],
     "status": "draft"
@@ -142,14 +143,12 @@
   {
     "name": "fiveg_core_gnb",
     "version": "0",
-    "lib": "charms.sdcore_nms_k8s.fiveg_core_gnb",
-    "lib_url": "https://charmhub.io/sdcore-nms-k8s/libraries/fiveg_core_gnb",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_core_gnb/",
     "summary": "",
     "description": "",
-    "tags": [
-      "telco"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -177,14 +176,12 @@
   {
     "name": "fiveg_n2",
     "version": "0",
-    "lib": "charms.sdcore_amf_k8s.fiveg_n2",
-    "lib_url": "https://charmhub.io/sdcore-amf-k8s/libraries/fiveg_n2",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n2/",
     "summary": "",
     "description": "",
-    "tags": [
-      "telco"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -201,27 +198,23 @@
   {
     "name": "fiveg_n4",
     "version": "0",
-    "lib": "charms.sdcore_upf_k8s.fiveg_n4",
-    "lib_url": "https://charmhub.io/sdcore-upf-k8s/libraries/fiveg_n4",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_n4/",
     "summary": "",
     "description": "",
-    "tags": [
-      "telco"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
     "name": "fiveg_nrf",
     "version": "0",
-    "lib": "charms.sdcore_nrf_k8s.fiveg_nrf",
-    "lib_url": "https://charmhub.io/sdcore-nrf-k8s/libraries/fiveg_nrf",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/fiveg_nrf/",
     "summary": "",
     "description": "",
-    "tags": [
-      "telco"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -238,14 +231,12 @@
   {
     "name": "forward_auth",
     "version": "0",
-    "lib": "charms.oathkeeper.forward_auth",
-    "lib_url": "https://charmhub.io/oathkeeper/libraries/forward_auth",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/forward_auth/",
     "summary": "",
     "description": "",
-    "tags": [
-      "identity-auth"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -289,40 +280,34 @@
   {
     "name": "hydra_endpoints",
     "version": "0",
-    "lib": "charms.hydra.hydra_endpoints",
-    "lib_url": "https://charmhub.io/hydra/libraries/hydra_endpoints",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/hydra_endpoints/",
     "summary": "",
     "description": "",
-    "tags": [
-      "identity-auth"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
     "name": "ingress",
     "version": "2",
-    "lib": "charms.traefik_k8s.ingress",
-    "lib_url": "https://charmhub.io/traefik-k8s/libraries/ingress",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress/",
     "summary": "",
     "description": "",
-    "tags": [
-      "networking"
-    ],
+    "tags": [],
     "status": "published"
   },
   {
     "name": "ingress_per_unit",
     "version": "0",
-    "lib": "charms.traefik_k8s.ingress_per_unit",
-    "lib_url": "https://charmhub.io/traefik-k8s/libraries/ingress_per_unit",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/ingress_per_unit/",
     "summary": "",
     "description": "",
-    "tags": [
-      "networking"
-    ],
+    "tags": [],
     "status": "published"
   },
   {
@@ -350,14 +335,12 @@
   {
     "name": "k8s-service",
     "version": "0",
-    "lib": "charms.mlops_libs.k8s_service_info",
-    "lib_url": "https://charmhub.io/mlops-libs/libraries/k8s_service_info",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/k8s-service/",
     "summary": "",
     "description": "",
-    "tags": [
-      "networking"
-    ],
+    "tags": [],
     "status": "published"
   },
   {
@@ -410,27 +393,23 @@
   {
     "name": "kratos_info",
     "version": "0",
-    "lib": "charms.kratos.kratos_info",
-    "lib_url": "https://charmhub.io/kratos/libraries/kratos_info",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kratos_info/",
     "summary": "",
     "description": "",
-    "tags": [
-      "identity-auth"
-    ],
+    "tags": [],
     "status": "published"
   },
   {
     "name": "kubeflow_dashboard_links",
     "version": "0",
-    "lib": "charms.kubeflow_dashboard.kubeflow_dashboard_links",
-    "lib_url": "https://charmhub.io/kubeflow-dashboard/libraries/kubeflow_dashboard_links",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/kubeflow_dashboard_links/",
     "summary": "",
     "description": "",
-    "tags": [
-      "operations"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -463,14 +442,12 @@
   {
     "name": "login_ui_endpoints",
     "version": "0",
-    "lib": "charms.identity_platform_login_ui_operator.login_ui_endpoints",
-    "lib_url": "https://charmhub.io/identity-platform-login-ui-operator/libraries/login_ui_endpoints",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/login_ui_endpoints/",
     "summary": "",
     "description": "",
-    "tags": [
-      "identity-auth"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -532,6 +509,7 @@
     "summary": "Create an Nginx ingress resource in a Kubernetes cluster.",
     "description": "The `nginx_route` interface allows charms to request the creation of an Nginx ingress resource in the Kubernetes cluster.\nThe requirer charm supplies the configuration for the ingress resources.\nThe provider charm creates the resource as requested.",
     "tags": [
+      "ingress",
       "networking"
     ],
     "status": "draft"
@@ -654,14 +632,12 @@
   {
     "name": "s3",
     "version": "1",
-    "lib": "charms.data_platform_libs.s3",
-    "lib_url": "https://charmhub.io/data-platform-libs/libraries/s3",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/s3/",
     "summary": "",
     "description": "",
-    "tags": [
-      "data"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
@@ -680,27 +656,23 @@
   {
     "name": "sdcore_config",
     "version": "0",
-    "lib": "charms.sdcore_nms_k8s.sdcore_config",
-    "lib_url": "https://charmhub.io/sdcore-nms-k8s/libraries/sdcore_config",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/sdcore_config/",
     "summary": "",
     "description": "",
-    "tags": [
-      "telco"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
     "name": "sdcore_management",
     "version": "0",
-    "lib": "charms.sdcore_webui_k8s.sdcore_management",
-    "lib_url": "https://charmhub.io/sdcore-webui-k8s/libraries/sdcore_management",
+    "lib": "",
+    "lib_url": "",
     "docs_url": "https://documentation.ubuntu.com/charmlibs/reference/interfaces/sdcore_management/",
     "summary": "",
     "description": "",
-    "tags": [
-      "telco"
-    ],
+    "tags": [],
     "status": "draft"
   },
   {
