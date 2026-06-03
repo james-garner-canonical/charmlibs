@@ -37,7 +37,7 @@ The three supported categories are:
 | How-to guides | `docs/how-to/*.md` or `docs/how-to/*.rst` | Multiple files |
 | Explanations | `docs/explanation/*.md` or `docs/explanation/*.rst` | Multiple files |
 
-Only these categories are discovered. Other directories under `docs/` are ignored.
+Only these categories are discovered. Other directories under `docs/` are ignored. Within `how-to/` and `explanation/`, only files directly in the directory are picked up — nested subdirectories are not discovered.
 
 ## Give each doc a title
 
