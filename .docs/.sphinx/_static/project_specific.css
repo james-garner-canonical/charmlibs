@@ -56,3 +56,12 @@
   display: block;
   z-index: 9999;
 }
+
+/**
+ * On pages with hide-toc, expand the content area into the freed space.
+ * Furo hardcodes .content { width: 46em }, but the ToC column is still reserved.
+ * Use :has() to select the content div when its sibling toc-drawer is hidden.
+ */
+.main:has(.toc-drawer.no-toc) .content {
+  width: 62em;
+}

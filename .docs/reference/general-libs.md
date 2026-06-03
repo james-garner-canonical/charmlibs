@@ -1,3 +1,7 @@
+---
+hide-toc: true
+---
+
 (general-libs-listing)=
 # General libraries
 

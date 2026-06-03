@@ -1,3 +1,7 @@
+---
+hide-toc: true
+---
+
 (interface-libs-listing)=
 # Interface libraries
 
