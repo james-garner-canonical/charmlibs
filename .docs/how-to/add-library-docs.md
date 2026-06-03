@@ -33,7 +33,7 @@ The three supported categories are:
 
 Only these categories are discovered. Other directories under `docs/` are ignored.
 
-## Write your docs
+## Give each doc a title
 
 Each doc file must start with a top-level heading:
 
