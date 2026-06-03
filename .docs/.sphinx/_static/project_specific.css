@@ -64,7 +64,7 @@ td .chip {
   background-color: #F2F1F0;
   border: 1px solid #C6C1BB;
   border-radius: 2px;
-  padding: 0.1em 0.6em;
+  padding: 0.3em 0.6em;
   white-space: nowrap;
 }
 .chip > a[href='#'] {
