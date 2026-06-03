@@ -64,7 +64,9 @@ def test_tags_key_table_with_tags():
         },
     ]
     tag_descriptions = {'security': 'Security stuff', 'data': 'Data stuff'}
-    rst = generate_tables._get_tags_key_table_dropdown(entries, tag_descriptions, column='description')
+    rst = generate_tables._get_tags_key_table_dropdown(
+        entries, tag_descriptions, column='description'
+    )
     assert rst  # non-empty
     dropdown_contents = '\n'.join(rst.split('\n')[1:])
     html_content = rst_to_html(dropdown_contents)
