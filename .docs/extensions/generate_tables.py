@@ -390,16 +390,16 @@ def _general_description(
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
     content = [_rst_raw_html(_html_hidden_span(''.join(sortkeys)))]
-    if firstline := ' '.join(
-        f'<span class="chip"><a href="#">{_EMOJIS.get(s, "")}{s}</a></span>'
-        for s in substrates
-        if entry[s]
-    ):
-        content.append(_rst_raw_html(f'<p>{firstline}</p>'))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
-    if tags := entry['tags']:
-        content.append(_tags_rst(tags, tag_descriptions))
+    substrate_parts = [
+        f'<a class="tag-div" href="#">{_EMOJIS.get(s, "")}{s}</a>'
+        for s in substrates
+        if entry[s]
+    ]
+    tag_parts = [_html_tag_tooltip(f'#{t}', tag_descriptions.get(t)) for t in entry['tags']]
+    if substrate_parts or tag_parts:
+        content.append(_rst_raw_html(' '.join(substrate_parts + tag_parts)))
     return _rst_table_indent('\n'.join(content))
 
 
