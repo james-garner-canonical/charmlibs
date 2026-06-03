@@ -384,7 +384,9 @@ def _general_description(
         str(_KIND_SORTKEYS[entry['kind']]),
     ]
     content = [_rst_raw_html(_html_hidden_span(''.join(sortkeys)))]
-    if firstline := ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s]):
+    if firstline := ' '.join(
+        f'<span class="chip">{_EMOJIS.get(s, "")}{s}</span>' for s in substrates if entry[s]
+    ):
         content.append(_rst_raw_html(f'<p>{firstline}</p>'))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
