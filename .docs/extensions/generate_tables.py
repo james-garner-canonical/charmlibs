@@ -385,7 +385,7 @@ def _general_description(
     ]
     content = [_rst_raw_html(_html_hidden_span(''.join(sortkeys)))]
     if firstline := ' '.join(_EMOJIS.get(s, '') + s for s in substrates if entry[s]):
-        content.append(_rst_lines(firstline))
+        content.append(_rst_raw_html(f'<p>{firstline}</p>'))
     if desc := entry['description']:
         content.append(_rst_lines(desc))
     if tags := entry['tags']:
