@@ -129,11 +129,6 @@ _TAGS_KEY_TABLE_HEADER = """.. list-table::
 """
 
 
-def _tags_key_dropdown_header(column: str) -> str:
-    msg = f'Tags are shown in the {column} column. See tooltips, or click here for a key.'
-    return f'.. dropdown:: {msg}\n\n'
-
-
 class _TagInfo(typing.TypedDict):
     description: str
     criteria: str
@@ -174,16 +169,6 @@ class _TableRow(typing.NamedTuple):
     name: str
     kind: str
     description: str
-
-
-def _load_tag_descriptions(reference_dir: pathlib.Path) -> dict[str, str]:
-    """Load tags.yaml and return a flat mapping of tag name to description."""
-    tags_data: _TagsYaml = yaml.safe_load((reference_dir / 'tags.yaml').read_text())
-    tag_descriptions: dict[str, str] = {}
-    for _category_key in ('domain-tags', 'audience-tags'):
-        for tag_name, tag_info in tags_data.get(_category_key, {}).items():
-            tag_descriptions[tag_name] = tag_info['description']
-    return tag_descriptions
 
 
 def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
@@ -233,6 +218,16 @@ def _write_if_needed(path: pathlib.Path, content: str) -> None:
     to_write = _FILE_HEADER + content
     if not path.exists() or path.read_text() != to_write:
         path.write_text(to_write)
+
+
+def _load_tag_descriptions(reference_dir: pathlib.Path) -> dict[str, str]:
+    """Load tags.yaml and return a flat mapping of tag name to description."""
+    tags_data: _TagsYaml = yaml.safe_load((reference_dir / 'tags.yaml').read_text())
+    tag_descriptions: dict[str, str] = {}
+    for _category_key in ('domain-tags', 'audience-tags'):
+        for tag_name, tag_info in tags_data.get(_category_key, {}).items():
+            tag_descriptions[tag_name] = tag_info['description']
+    return tag_descriptions
 
 
 ##########
@@ -314,6 +309,11 @@ def _get_tags_key_table_dropdown(
     ]
     table = _TAGS_KEY_TABLE_HEADER + _rst_rows(rows)
     return _tags_key_dropdown_header(column) + _indent_lines(table, level=3)
+
+
+def _tags_key_dropdown_header(column: str) -> str:
+    msg = f'Tags are shown in the {column} column. See tooltips, or click here for a key.'
+    return f'.. dropdown:: {msg}\n\n'
 
 
 def _is_listed(entry: _LibEntry) -> bool:
