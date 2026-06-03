@@ -123,10 +123,9 @@ _TAGS_KEY_TABLE_HEADER = """.. list-table::
    * - Tag
      - Description
 """
-_TAGS_KEY_MSG = 'Tags are shown in the description column. See tooltips, or click here for a key.'
-_TAGS_KEY_DROPDOWN_HEADER = f""".. dropdown:: {_TAGS_KEY_MSG}
-
-"""
+def _tags_key_dropdown_header(column: str) -> str:
+    msg = f'Tags are shown in the {column} column. See tooltips, or click here for a key.'
+    return f'.. dropdown:: {msg}\n\n'
 
 
 class _TagInfo(typing.TypedDict):
@@ -207,11 +206,11 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     )
     _write_if_needed(
         path=(generated_dir / 'interface-libs-tags-key-table.rst'),
-        content=_get_tags_key_table_dropdown(interface_entries, tag_descriptions),
+        content=_get_tags_key_table_dropdown(interface_entries, tag_descriptions, column='interface'),
     )
     _write_if_needed(
         path=(generated_dir / 'general-libs-tags-key-table.rst'),
-        content=_get_tags_key_table_dropdown(general_entries, tag_descriptions),
+        content=_get_tags_key_table_dropdown(general_entries, tag_descriptions, column='description'),
     )
 
 
@@ -287,6 +286,8 @@ def _get_status_key_table_dropdown(entries: Iterable[_LibEntry]) -> str:
 def _get_tags_key_table_dropdown(
     entries: Iterable[_LibEntry],
     tag_descriptions: dict[str, str],
+    *,
+    column: str,
 ) -> str:
     used_tags: set[str] = set()
     for entry in entries:
@@ -302,7 +303,7 @@ def _get_tags_key_table_dropdown(
         for tag in sorted(used_tags)
     ]
     table = _TAGS_KEY_TABLE_HEADER + _rst_rows(rows)
-    return _TAGS_KEY_DROPDOWN_HEADER + _indent_lines(table, level=3)
+    return _tags_key_dropdown_header(column) + _indent_lines(table, level=3)
 
 
 def _is_listed(entry: _LibEntry) -> bool:
