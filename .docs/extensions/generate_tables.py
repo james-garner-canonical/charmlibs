@@ -60,6 +60,10 @@ _EMOJIS = {
     'machine': '🖥️',
     'K8s': '☸️',
 }
+_SUBSTRATE_TOOLTIPS = {
+    'machine': 'Compatible with machine charms.',
+    'K8s': 'Compatible with Kubernetes charms.',
+}
 _STATUS_TOOLTIPS = {
     'recommended': 'Recommended for use in new charms today!',
     'dep': 'Dependency of other libs, unlikely to be required directly.',
@@ -393,7 +397,7 @@ def _general_description(
     if desc := entry['description']:
         content.append(_rst_lines(desc))
     substrate_parts = [
-        f'<a class="tag-div" href="#">{_EMOJIS.get(s, "")}{s}</a>'
+        _html_tag_tooltip(f'{_EMOJIS.get(s, "")}{s}', _SUBSTRATE_TOOLTIPS.get(s))
         for s in substrates
         if entry[s]
     ]
