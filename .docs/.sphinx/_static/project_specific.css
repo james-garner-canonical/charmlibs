@@ -58,16 +58,13 @@
 }
 
 /**
- * Style interface names as subtle chips (using <kbd> element).
+ * Style interface names as subtle chips.
  */
-td kbd {
-  font-family: inherit;
-  font-size: inherit;
-  background-color: #f0f0f0;
-  border: 1px solid #d4d4d4;
-  border-radius: 1em;
+td .chip {
+  background-color: #F2F1F0;
+  border: 1px solid #C6C1BB;
+  border-radius: 2px;
   padding: 0.1em 0.6em;
-  box-shadow: none;
   white-space: nowrap;
 }
 

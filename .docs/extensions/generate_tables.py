@@ -364,12 +364,12 @@ def _rel_links(entry: _InterfaceLibEntry) -> str:
     if not (name := entry['rel_name']):
         return ''
     if not (main_url := entry['rel_url_charmhub']):
-        return f'<kbd class="no-spellcheck">{name}</kbd>'
+        return f'<span class="chip no-spellcheck">{name}</span>'
     main_link = _html_link(name, main_url)
     if not (schema_url := entry['rel_url_schema']):
-        return f'<kbd>{main_link}</kbd>'
+        return f'<span class="chip">{main_link}</span>'
     schema_link = _html_link('schema', schema_url)
-    return f'<kbd>{main_link}</kbd> ({schema_link})'
+    return f'<span class="chip">{main_link}</span> ({schema_link})'
 
 
 def _general_description(
