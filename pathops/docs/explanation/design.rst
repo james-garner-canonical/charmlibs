@@ -1,3 +1,6 @@
+.. meta::
+   :description: Why pathops models charm filesystem operations on pathlib.
+
 Design Philosophy
 =================
 

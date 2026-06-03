@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: Manage files in a charm workload with pathops.
+---
+
 # Getting Started
 
 This tutorial shows you how to use ``pathops`` to manage files in a charm workload — writing config, restarting only when something changes, and testing it all with ``ops.testing``.

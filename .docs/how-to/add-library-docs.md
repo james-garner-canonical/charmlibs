@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    description: Add tutorials, how-to guides, and explanations to your charmlibs library.
+---
+
 (how-to-add-library-docs)=
 # How to add docs to a library
 
@@ -44,6 +50,30 @@ In this tutorial, you'll learn how to ...
 ````
 
 The heading text is used as the page title in the docs site, prefixed with your library name. For example, a tutorial in `pathops/docs/tutorial.md` with heading `# Getting Started` will appear as **pathops: Getting Started** in the site navigation.
+
+## Add a meta description
+
+Each doc should have a short meta description for search engines and link previews. In a Markdown file, add a `description` to the front matter, before the top-level heading:
+
+````markdown
+---
+myst:
+  html_meta:
+    description: Manage files in a charm workload with pathops.
+---
+
+# Getting Started
+````
+
+In a reStructuredText file, use the `meta` directive instead:
+
+```rst
+.. meta::
+   :description: Manage files in a charm workload with pathops.
+
+Getting Started
+===============
+```
 
 ### Linking to other docs
 
