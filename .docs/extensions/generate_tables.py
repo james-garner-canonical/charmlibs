@@ -478,12 +478,6 @@ def _html_link(text: str, url: str) -> str:
     return f'<a href="{url}" class="no-spellcheck">{text}</a>'
 
 
-def _html_no_spellcheck_span(text: object) -> str:
-    e = ElementTree.Element('span', attrib={'class': 'no-spellcheck'})
-    e.text = str(text)
-    return ElementTree.tostring(e, encoding='unicode')
-
-
 def _html_tag_tooltip(tag_text: str, tooltip: str | None) -> str:
     e = ElementTree.Element('a', attrib={'class': 'tag-div no-spellcheck', 'href': '#'})
     e.text = tag_text
