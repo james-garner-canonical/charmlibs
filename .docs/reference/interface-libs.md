@@ -8,6 +8,8 @@ hide-toc: true
      Expand .content into the freed column (46 + 16 = 62em). -->
 <style>.main .content { width: 62em; }</style>
 ```
+
+(interface-libs-listing)=
 # Interface libraries
 
 This page lists [interface libraries](#charm-libs-interface). The search box supports regular expressions.
