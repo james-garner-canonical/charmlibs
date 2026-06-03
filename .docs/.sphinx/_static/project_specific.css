@@ -58,6 +58,20 @@
 }
 
 /**
+ * Style interface names as subtle chips (using <kbd> element).
+ */
+td kbd {
+  font-family: inherit;
+  font-size: inherit;
+  background-color: #f0f0f0;
+  border: 1px solid #d4d4d4;
+  border-radius: 1em;
+  padding: 0.1em 0.6em;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+/**
  * On pages with hide-toc, expand the content area into the freed space.
  * Furo hardcodes .content { width: 46em }, but the ToC column is still reserved.
  * Use :has() to select the content div when its sibling toc-drawer is hidden.
