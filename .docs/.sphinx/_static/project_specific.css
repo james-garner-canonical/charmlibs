@@ -66,6 +66,14 @@ td .chip {
   border-radius: 2px;
   padding: 0.1em 0.6em;
   white-space: nowrap;
+  cursor: pointer;
+}
+a.chip {
+  text-decoration: none;
+  color: inherit;
+}
+a.chip:hover {
+  text-decoration: none;
 }
 
 /**

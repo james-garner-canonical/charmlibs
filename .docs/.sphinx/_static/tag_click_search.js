@@ -1,6 +1,6 @@
 // Click a tag (e.g. #security) to search the DataTable for that tag.
 $(document).ready(function () {
-    $(document).on("click", ".tag-div", function (e) {
+    $(document).on("click", ".tag-div, a.chip", function (e) {
         e.preventDefault();
         var tag = $(this).clone().children().remove().end().text().trim();
         var table = $(this).closest("table.dataTable");
