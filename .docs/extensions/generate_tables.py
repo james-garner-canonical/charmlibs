@@ -403,7 +403,8 @@ def _general_description(
     ]
     tag_parts = [_html_tag_tooltip(f'#{t}', tag_descriptions.get(t)) for t in entry['tags']]
     if substrate_parts or tag_parts:
-        content.append(_rst_raw_html(' '.join(substrate_parts + tag_parts)))
+        joined = ' '.join(substrate_parts + tag_parts)
+        content.append(_rst_raw_html(f'<span class="tag-group">{joined}</span>'))
     return _rst_table_indent('\n'.join(content))
 
 
@@ -411,7 +412,8 @@ def _tags_rst(tags: list[str], tag_descriptions: dict[str, str]) -> str:
     """Return RST raw HTML for a tags line, or empty string if no tags."""
     assert tags
     tag_htmls = [_html_tag_tooltip(f'#{t}', tag_descriptions.get(t)) for t in tags]
-    return _rst_raw_html(' '.join(tag_htmls))
+    joined = ' '.join(tag_htmls)
+    return _rst_raw_html(f'<span class="tag-group">{joined}</span>')
 
 
 #######

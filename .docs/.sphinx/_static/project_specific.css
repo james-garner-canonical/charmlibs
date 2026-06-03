@@ -35,6 +35,11 @@
 /**
  * Show tag-tooltip as floating text when hovering over tag-div.
  */
+.tag-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
 .tag-div {
   position: relative;
   display: inline-block;
