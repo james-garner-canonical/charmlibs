@@ -123,6 +123,8 @@ _TAGS_KEY_TABLE_HEADER = """.. list-table::
    * - Tag
      - Description
 """
+
+
 def _tags_key_dropdown_header(column: str) -> str:
     msg = f'Tags are shown in the {column} column. See tooltips, or click here for a key.'
     return f'.. dropdown:: {msg}\n\n'
@@ -206,11 +208,15 @@ def _generate_libs_tables(docs_dir: str | pathlib.Path) -> None:
     )
     _write_if_needed(
         path=(generated_dir / 'interface-libs-tags-key-table.rst'),
-        content=_get_tags_key_table_dropdown(interface_entries, tag_descriptions, column='interface'),
+        content=_get_tags_key_table_dropdown(
+            interface_entries, tag_descriptions, column='interface'
+        ),
     )
     _write_if_needed(
         path=(generated_dir / 'general-libs-tags-key-table.rst'),
-        content=_get_tags_key_table_dropdown(general_entries, tag_descriptions, column='description'),
+        content=_get_tags_key_table_dropdown(
+            general_entries, tag_descriptions, column='description'
+        ),
     )
 
 
@@ -385,7 +391,9 @@ def _general_description(
     ]
     content = [_rst_raw_html(_html_hidden_span(''.join(sortkeys)))]
     if firstline := ' '.join(
-        f'<span class="chip"><a href="#">{_EMOJIS.get(s, "")}{s}</a></span>' for s in substrates if entry[s]
+        f'<span class="chip"><a href="#">{_EMOJIS.get(s, "")}{s}</a></span>'
+        for s in substrates
+        if entry[s]
     ):
         content.append(_rst_raw_html(f'<p>{firstline}</p>'))
     if desc := entry['description']:
