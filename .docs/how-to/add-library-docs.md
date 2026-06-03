@@ -39,6 +39,8 @@ The three supported categories are:
 
 Only these categories are discovered. Other directories under `docs/` are ignored. Within `how-to/` and `explanation/`, only files directly in the directory are picked up — nested subdirectories are not discovered.
 
+Each doc can be written in Markdown (`.md`) or reStructuredText (`.rst`). See the [MyST syntax guide](https://documentation.ubuntu.com/sphinx-stack/latest/reference/myst-syntax/) and the [reStructuredText syntax guide](https://documentation.ubuntu.com/sphinx-stack/latest/reference/rst-syntax/) for the available markup.
+
 ## Give each doc a title
 
 Each doc file must start with a top-level heading:
