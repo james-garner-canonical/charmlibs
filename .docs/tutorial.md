@@ -360,7 +360,8 @@ You'll be prompted to do this if you visit `https://github.com/<USERNAME>/charml
 The {ref}`interface library listing <interface-libs-listing>` and {ref}`general library listing <general-libs-listing>` are generated from `.docs/reference/libs.yaml`.
 Add an entry for your library so it appears in the listing.
 The entry includes your library's name, status, URLs, description, and tags.
-See `.docs/reference/tags.yaml` for the full list of available tags and their criteria.
+See `.docs/reference/tags.yaml` for the full list of available tags and their assignment criteria.
+Don't invent new tags, only use tags defined in `tags.yaml`.
 
 ## Next steps
 
