@@ -2,7 +2,12 @@
 hide-toc: true
 ---
 
-(general-libs-listing)=
+```{raw} html
+<!-- hide-toc hides the RHS table of contents but doesn't reclaim the space.
+     Furo hardcodes .content { width: 46em } and .toc-drawer { width: 15em }.
+     Expand .content into the freed column (46 + 16 = 62em). -->
+<style>.main .content { width: 62em; }</style>
+```
 # General libraries
 
 This page lists [non-interface libraries](#charm-libs-general). The search box supports regular expressions.
