@@ -75,7 +75,7 @@ Getting Started
 ===============
 ```
 
-### Linking to other docs
+## Link to other docs
 
 Use relative links to reference other files in your library or in the repo. The build system rewrites these links automatically:
 
