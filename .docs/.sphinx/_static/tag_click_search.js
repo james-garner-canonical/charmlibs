@@ -4,6 +4,10 @@ $(document).ready(function () {
         e.preventDefault();
         var tag = $(this).clone().children().remove().end().text().trim();
         var table = $(this).closest("table.dataTable");
+        if (!table.length) {
+            // Clicked from outside the table (e.g. the dropdown key).
+            table = $("table.dataTable");
+        }
         if (table.length) {
             var dt = table.DataTable();
             dt.search(tag).draw();
