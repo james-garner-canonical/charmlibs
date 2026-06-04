@@ -8,7 +8,7 @@ myst:
 
 This tutorial shows you how to use ``pathops`` to manage files in a charm workload — writing config, restarting only when something changes, and testing it all with ``ops.testing``.
 
-## Write a config file with ensure_contents
+## Write a config file with ``ensure_contents``
 
 The most common thing charms do with files is write a configuration file and restart the workload if the file changed. ``pathops.ensure_contents`` does exactly this — it compares the file's current contents, permissions, and ownership against what you pass in, only writes if something differs, and returns ``True`` if any changes were made.
 
@@ -48,13 +48,32 @@ class MyK8sCharm(MyCharmBase):
 
     @property
     def root(self) -> pathops.ContainerPath:
-        return pathops.ContainerPath('/', container=self.unit.get_container('myapp'))
+        container = self.unit.get_container('myapp')
+        return pathops.ContainerPath('/', container=container)
 
     def _restart_workload(self) -> None:
-        self.unit.get_container('myapp').restart('myapp')
+        container = self.unit.get_container('myapp')
+        container.restart('myapp')
 ```
 
-## Test it with ops.testing
+## Make it work on machines too
+
+The same pattern works for machine charms — just implement the stubs with ``LocalPath``:
+
+```python
+class MyMachineCharm(MyCharmBase):
+
+    @property
+    def root(self) -> pathops.LocalPath:
+        return pathops.LocalPath('/')
+
+    def _restart_workload(self) -> None:
+        subprocess.run(['systemctl', 'restart', 'myapp'], check=True)
+```
+
+The ``_on_config_changed`` handler in the base class works unchanged — ``ensure_contents`` accepts any ``PathProtocol``, which both ``ContainerPath`` and ``LocalPath`` satisfy.
+
+## Test it with ``ops.testing``
 
 Because ``pathops`` works through the standard ``ops.Container`` interface, ``ops.testing`` state-transition tests work out of the box — no extra mocking needed:
 
@@ -77,19 +96,7 @@ def test_config_changed_writes_config():
 
 ``get_filesystem`` returns a ``pathlib.Path`` to the temporary directory that ``ops.testing`` uses to simulate the container filesystem. Files written by ``pathops.ContainerPath`` during the event handler end up there, so you can assert on them with plain ``pathlib``.
 
-## Make it work on machines too
+## See also
 
-The same pattern works for machine charms — just implement the stubs with ``LocalPath``:
-
-```python
-class MyMachineCharm(MyCharmBase):
-
-    @property
-    def root(self) -> pathops.LocalPath:
-        return pathops.LocalPath('/')
-
-    def _restart_workload(self) -> None:
-        subprocess.run(['systemctl', 'restart', 'myapp'], check=True)
-```
-
-The ``_on_config_changed`` handler in the base class works unchanged — ``ensure_contents`` accepts any ``PathProtocol``, which both ``ContainerPath`` and ``LocalPath`` satisfy.
+- {external+ops:ref}`files-in-containers`
+- {external+ops:ref}`write-unit-tests-for-a-charm`
