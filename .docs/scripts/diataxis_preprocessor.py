@@ -94,7 +94,7 @@ def _copy_category(
     entries: list[str] = []
     for source in sources:
         content = source.read_text()
-        title = _extract_h1(content, source.suffix)
+        title = _extract_h1(content, source)
         content = _prefix_h1(content, lib_path.name, source.suffix)
         content = _rewrite_links(content, source, sphinx_map)
         (out_dir / source.name).write_text(content)
@@ -102,14 +102,14 @@ def _copy_category(
     return entries
 
 
-def _extract_h1(content: str, ext: str) -> str:
+def _extract_h1(content: str, source: pathlib.Path) -> str:
     """Extract the first H1 heading text from content."""
-    if ext == '.md':
+    if source.suffix == '.md':
         match = re.search(r'^# (.+)$', content, re.MULTILINE)
     else:
         match = re.search(r'^(.+)\n(?:=+|-+)$', content, re.MULTILINE)
     if not match:
-        raise ValueError(f'no {ext} title found')
+        raise ValueError(f'no title found in {source}')
     return match.group(1).strip()
 
 

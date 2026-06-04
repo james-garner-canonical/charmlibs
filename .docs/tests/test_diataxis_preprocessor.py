@@ -62,21 +62,25 @@ def test_build_sphinx_map_interface_version_readme(
 
 
 def test_extract_h1_md():
-    assert pp._extract_h1('# Getting Started\n\nText.\n', '.md') == 'Getting Started'
+    assert pp._extract_h1('# Getting Started\n\nText.\n', pathlib.Path('tutorial.md')) == (
+        'Getting Started'
+    )
 
 
 def test_extract_h1_md_no_heading():
-    with pytest.raises(ValueError):
-        pp._extract_h1('No heading here.\n', '.md')
+    with pytest.raises(ValueError, match='tutorial.md'):
+        pp._extract_h1('No heading here.\n', pathlib.Path('tutorial.md'))
 
 
 def test_extract_h1_rst():
-    assert pp._extract_h1('My Title\n========\n\nText.\n', '.rst') == 'My Title'
+    assert pp._extract_h1('My Title\n========\n\nText.\n', pathlib.Path('tutorial.rst')) == (
+        'My Title'
+    )
 
 
 def test_extract_h1_rst_no_heading():
-    with pytest.raises(ValueError):
-        pp._extract_h1('No heading here.\n', '.rst')
+    with pytest.raises(ValueError, match='tutorial.rst'):
+        pp._extract_h1('No heading here.\n', pathlib.Path('tutorial.rst'))
 
 
 # --- _prefix_h1 ---
