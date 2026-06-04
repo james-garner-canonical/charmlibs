@@ -18,12 +18,22 @@
 
 from __future__ import annotations
 
+import types
 import typing
+
+import diataxis_docs_fallback as fallback
 
 if typing.TYPE_CHECKING:
     import pathlib
 
+    import sphinx.application
+
 CATEGORIES = ('tutorials', 'how-to', 'explanation')
+
+
+def _app(confdir: pathlib.Path) -> sphinx.application.Sphinx:
+    """A minimal stand-in for the Sphinx app: ``_fallback`` only reads ``confdir``."""
+    return typing.cast('sphinx.application.Sphinx', types.SimpleNamespace(confdir=str(confdir)))
 
 
 def test_fallback_writes_empty_include_when_missing(tmp_path: pathlib.Path):
@@ -31,11 +41,7 @@ def test_fallback_writes_empty_include_when_missing(tmp_path: pathlib.Path):
     for category in CATEGORIES:
         (tmp_path / category).mkdir()
 
-    # Simulate fallback logic
-    for category in CATEGORIES:
-        path = tmp_path / category / f'_lib-{category}.md'
-        if not path.exists():
-            path.write_text('')
+    fallback._fallback(_app(tmp_path))
 
     for category in CATEGORIES:
         path = tmp_path / category / f'_lib-{category}.md'
@@ -49,11 +55,7 @@ def test_fallback_skips_when_include_exists(tmp_path: pathlib.Path):
         (tmp_path / category).mkdir()
         (tmp_path / category / f'_lib-{category}.md').write_text('existing')
 
-    # Simulate fallback logic
-    for category in CATEGORIES:
-        path = tmp_path / category / f'_lib-{category}.md'
-        if not path.exists():
-            path.write_text('')
+    fallback._fallback(_app(tmp_path))
 
     for category in CATEGORIES:
         path = tmp_path / category / f'_lib-{category}.md'
