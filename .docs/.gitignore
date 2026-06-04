@@ -29,8 +29,7 @@ charmlibs/
 interfaces/
 generated/
 
-# generated per-library diataxis include files and fallback placeholders
+# generated per-library diataxis include files
 _lib-*.md
-_placeholder.md
 .~lock.*
 .save/
