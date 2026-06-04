@@ -102,7 +102,7 @@ just docs html mylib
 
 This runs the preprocessor (which copies your docs into the Sphinx source tree) and builds the site. Your docs will appear under the corresponding category pages.
 
-Listing a package only limits which packages get their reference docs generated. The preprocessor always copies the diataxis docs for *every* package, so tutorials, how-to guides, and explanations from other libraries will still appear in the build.
+Listing a package only limits which packages get their reference docs generated. The preprocessor always copies the Diátaxis docs for *every* package, so tutorials, how-to guides, and explanations from other libraries will still appear in the build.
 
 To build docs for all packages:
 

@@ -10,8 +10,7 @@ Explanations provide background, context, details, and design rationale. They he
 
 Good explanation topics include: design philosophy, how the library relates to the broader Juju ecosystem, and complicated implementation details that are important for advanced users.
 
-If the design is straightforward enough to cover in the package docstring,
-prefer that over a separate explanation page.
+If the design is straightforward enough to cover in the package docstring, prefer that over a separate explanation page.
 
 Delete this file (and the `explanation/` directory) if no explanations are needed.
 

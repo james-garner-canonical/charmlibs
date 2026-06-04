@@ -4,13 +4,13 @@ myst:
     description: Manage files in a charm workload with pathops.
 ---
 
-# Getting Started
+# Getting started
 
 This tutorial shows you how to use ``pathops`` to manage files in a charm workload — writing config, restarting only when something changes, and testing it all with ``ops.testing``.
 
 ## Write a config file with ensure_contents
 
-The most common thing charms do with files is write a configuration file and restart the workload if it changed. ``pathops.ensure_contents`` does exactly this — it compares the file's current contents, permissions, and ownership against what you pass in, only writes if something differs, and returns ``True`` if any changes were made.
+The most common thing charms do with files is write a configuration file and restart the workload if the file changed. ``pathops.ensure_contents`` does exactly this — it compares the file's current contents, permissions, and ownership against what you pass in, only writes if something differs, and returns ``True`` if any changes were made.
 
 Start with a base charm class that defines the config-changed handler and stubs out ``root`` and ``_restart_workload`` for subclasses to implement:
 
@@ -56,7 +56,7 @@ class MyK8sCharm(MyCharmBase):
 
 ## Test it with ops.testing
 
-Because ``pathops`` works through the standard ``ops.Container`` interface, Scenario tests work out of the box — no extra mocking needed:
+Because ``pathops`` works through the standard ``ops.Container`` interface, ``ops.testing`` state-transition tests work out of the box — no extra mocking needed:
 
 ```python
 from ops import testing
@@ -75,7 +75,7 @@ def test_config_changed_writes_config():
     assert (fs / 'etc' / 'myapp' / 'config.yaml').read_text() == 'port: 8080\n'
 ```
 
-``get_filesystem`` returns a ``pathlib.Path`` to the temporary directory that Scenario uses to simulate the container filesystem. Files written by ``pathops.ContainerPath`` during the event handler end up there, so you can assert on them with plain ``pathlib``.
+``get_filesystem`` returns a ``pathlib.Path`` to the temporary directory that ``ops.testing`` uses to simulate the container filesystem. Files written by ``pathops.ContainerPath`` during the event handler end up there, so you can assert on them with plain ``pathlib``.
 
 ## Make it work on machines too
 

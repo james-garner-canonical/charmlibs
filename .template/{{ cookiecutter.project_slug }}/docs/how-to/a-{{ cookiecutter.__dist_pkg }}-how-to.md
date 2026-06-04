@@ -10,7 +10,7 @@ How-to guides are goal-oriented: each one answers "how do I do X?" for a user wh
 
 Common how-to topics include: configuring advanced options, migrating from a previous version, integrating with another library, or handling a specific edge case.
 
-If the procedure is short enough to fit in a docstring prefer that over a separate how-to page.
+If the procedure is short enough to fit in a docstring, prefer that over a separate how-to page.
 
 Delete this file (and the `how-to/` directory) if no how-to guides are needed.
 

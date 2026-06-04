@@ -1,7 +1,7 @@
 .. meta::
    :description: Why pathops models charm filesystem operations on pathlib.
 
-Design Philosophy
+Design philosophy
 =================
 
 :mod:`pathops` provides a :mod:`pathlib`-like interface for working with files in both local and remote (Pebble-based) filesystems. This document explains the design choices behind the library.
@@ -11,7 +11,7 @@ A pathlib-like interface
 
 The core goal of :mod:`pathops` is to let charm authors write filesystem code once and have it work on both Kubernetes and machine charms. To achieve this, :class:`~pathops.ContainerPath` mirrors the :class:`pathlib.PurePosixPath` and :class:`pathlib.Path` APIs as closely as possible.
 
-Python developers understand :mod:`pathlib`. By matching its interface — the ``/`` operator for joining, :meth:`~pathlib.Path.read_text` and :meth:`~pathlib.Path.write_text` for file I/O, :meth:`~pathlib.Path.mkdir` for directory creation, :meth:`~pathlib.Path.glob` for matching — :mod:`pathops` avoids introducing new concepts. Code that works with :class:`pathlib.Path` should look almost identical when ported to :class:`~pathops.ContainerPath`.
+``pathlib`` has a familiar interface — the ``/`` operator for joining, :meth:`~pathlib.Path.read_text` and :meth:`~pathlib.Path.write_text` for file I/O, :meth:`~pathlib.Path.mkdir` for directory creation, :meth:`~pathlib.Path.glob` for matching. By matching ``pathlib``'s interface, ``pathops`` avoids introducing new concepts. Code that works with ``pathlib.Path`` should look almost identical when ported to ``ContainerPath``.
 
 Where :mod:`pathops` diverges from :mod:`pathlib`, it's because the underlying Pebble API imposes constraints:
 
@@ -36,6 +36,6 @@ You might think ``LocalPath | ContainerPath`` would work just as well, but in pr
 
 .. note::
 
-   :class:`~pathops.PathProtocol` is not designed to be implemented by third parties. We don't guarantee backwards compatibility for new methods added to the protocol — adding a method is a minor version bump, not a major one. Use it as a type annotation, not as a base class.
+   :class:`~pathops.PathProtocol` is not designed to be implemented by third parties. We don't guarantee compatibility for third-party implementations when we add new methods to the protocol. One example: adding a method to the protocol only a minor version bump (it's a feature for users of the concrete classes), not a major one (it's a potentially breaking change for implementations of the protocol). Treat the protocol as a convenient type annotation for the ``pathops`` classes, not an compatibility guarantee for other implementations.
 
 :class:`~pathops.LocalPath` is a concrete subclass of :class:`pathlib.PosixPath` that extends its write methods — :meth:`~pathlib.Path.write_text`, :meth:`~pathlib.Path.write_bytes`, and :meth:`~pathlib.Path.mkdir` — with ``mode=``, ``user=``, and ``group=`` keyword arguments for setting permissions and ownership at write time. This means it inherits all of :mod:`pathlib`'s functionality while matching the permission-setting interface that :class:`~pathops.ContainerPath` uses. :class:`~pathops.PathProtocol` captures the subset of that functionality that both types share.
