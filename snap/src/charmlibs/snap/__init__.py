@@ -17,8 +17,15 @@
 Use :func:`ensure` or :func:`ensure_revision` to ensure that a snap is installed.
 
 Manually manage snap installation with :func:`install`, :func:`refresh`, and :func:`remove`.
+Use :func:`info` to query the current state of an installed snap.
 
-Retrieve snap service logs with :func:`logs`.
+Also manage:
+
+- Automatic refreshes with :func:`hold` and :func:`unhold`.
+- Services with :func:`start`, :func:`stop`, and :func:`restart`.
+- Config with :func:`config_get`, :func:`config_set`, and :func:`config_unset`.
+- Connections between snaps with :func:`connect` and :func:`disconnect`.
+- Application aliases with :func:`alias` and :func:`unalias`.
 
 Exceptions
 ----------
@@ -48,6 +55,7 @@ from ._errors import (
     SnapNeedsClassicError,
     SnapNotFoundError,
     SnapNotInstalledError,
+    SnapOptionNotFoundError,
     SnapRevisionNotAvailableError,
     SnapTimeoutError,
 )
@@ -55,18 +63,41 @@ from ._functions import (
     ensure,
     ensure_revision,
 )
+from ._snapd_aliases import (
+    alias,
+    unalias,
+)
+from ._snapd_apps import (
+    restart,
+    start,
+    stop,
+)
+from ._snapd_conf import (
+    get,
+    set,  # noqa: A004 (shadowing a Python builtin)
+    unset,
+)
+from ._snapd_interfaces import (
+    connect,
+    disconnect,
+)
 from ._snapd_logs import (
     LogEntry,
     logs,
 )
 from ._snapd_snaps import (
+    Info,
+    hold,
+    info,
     install,
     refresh,
     remove,
+    unhold,
 )
 from ._version import __version__ as __version__
 
 __all__ = [
+    'Info',
     'LogEntry',
     'SnapAPIError',
     'SnapAppNotFoundError',
@@ -78,12 +109,26 @@ __all__ = [
     'SnapNeedsClassicError',
     'SnapNotFoundError',
     'SnapNotInstalledError',
+    'SnapOptionNotFoundError',
     'SnapRevisionNotAvailableError',
     'SnapTimeoutError',
+    'alias',
+    'connect',
+    'disconnect',
     'ensure',
     'ensure_revision',
+    'get',
+    'hold',
+    'info',
     'install',
     'logs',
     'refresh',
     'remove',
+    'restart',
+    'set',
+    'start',
+    'stop',
+    'unalias',
+    'unhold',
+    'unset',
 ]

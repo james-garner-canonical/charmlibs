@@ -14,9 +14,11 @@ from charmlibs.snap._errors import (
     SnapNeedsClassicError,
     SnapNotFoundError,
     SnapNotInstalledError,
+    SnapOptionNotFoundError,
     SnapRevisionNotAvailableError,
     _error_type_from_result_kind,
     _SnapAlreadyInstalledError,
+    _SnapInterfacesUnchangedError,
     _SnapNoUpdatesAvailableError,
 )
 
@@ -24,6 +26,9 @@ from charmlibs.snap._errors import (
 class TestErrorTypeFromResultKind:
     def test_snap_already_installed(self):
         assert _error_type_from_result_kind('snap-already-installed') is _SnapAlreadyInstalledError
+
+    def test_option_not_found(self):
+        assert _error_type_from_result_kind('option-not-found') is SnapOptionNotFoundError
 
     def test_snap_needs_classic(self):
         assert _error_type_from_result_kind('snap-needs-classic') is SnapNeedsClassicError
@@ -38,6 +43,11 @@ class TestErrorTypeFromResultKind:
         assert (
             _error_type_from_result_kind('snap-no-update-available')
             is _SnapNoUpdatesAvailableError
+        )
+
+    def test_interfaces_unchanged(self):
+        assert (
+            _error_type_from_result_kind('interfaces-unchanged') is _SnapInterfacesUnchangedError
         )
 
     def test_snap_channel_not_available(self):
@@ -69,6 +79,7 @@ class TestErrorTypeFromResultKind:
             'snap-not-installed',
             'snap-no-update-available',
             'snap-revision-not-available',
+            'interfaces-unchanged',
             'bogus-kind',
             '',
         ]
@@ -153,7 +164,9 @@ class TestSnapError:
             SnapNotFoundError,
             SnapNotInstalledError,
             SnapNeedsClassicError,
+            SnapOptionNotFoundError,
             _SnapNoUpdatesAvailableError,
+            _SnapInterfacesUnchangedError,
         ]:
             assert issubclass(cls, SnapAPIError), cls
             assert issubclass(cls, SnapError), cls
