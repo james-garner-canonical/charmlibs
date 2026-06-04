@@ -68,7 +68,7 @@ def test_extract_h1_md():
 
 
 def test_extract_h1_md_no_heading():
-    with pytest.raises(ValueError, match='tutorial.md'):
+    with pytest.raises(ValueError, match=r'tutorial\.md'):
         pp._extract_h1('No heading here.\n', pathlib.Path('tutorial.md'))
 
 
@@ -79,7 +79,7 @@ def test_extract_h1_rst():
 
 
 def test_extract_h1_rst_no_heading():
-    with pytest.raises(ValueError, match='tutorial.rst'):
+    with pytest.raises(ValueError, match=r'tutorial\.rst'):
         pp._extract_h1('No heading here.\n', pathlib.Path('tutorial.rst'))
 
 
