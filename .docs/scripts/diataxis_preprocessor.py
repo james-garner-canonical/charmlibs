@@ -28,14 +28,17 @@ files containing toctree entries that the index pages pull in via
 
 Run from ``just docs``; see ``docs.just`` for the invocation.
 
-This is a standalone script rather than a Sphinx extension because it runs
-once, up front, before the per-package reference-doc builds (``just docs``
-invokes ``sphinx-build`` once per package, each in its own isolated
-environment). Copying the source files and rewriting links is a one-time
-preparation of the source tree, so doing it in an extension would repeat the
-work on every per-package build. The companion ``diataxis_docs_fallback``
-extension only writes empty ``_lib-*.md`` placeholders when this script
-hasn't run, so the ``{include}`` directives still resolve.
+This is a standalone preprocessor script rather than a Sphinx extension. A
+preprocessor step is simpler and more maintainable than an extension in
+general, and it's a particularly good fit here: we want this work to run only
+once (an extension would need extra machinery to enable/disable itself per
+build, like the package reference docs do), and we need it to run very early
+— before Sphinx has started building a docs tree of any kind. Copying the
+source files and rewriting links is a one-time preparation of the source tree
+that a final, straightforward Sphinx build then consumes. The companion
+``diataxis_docs_fallback`` extension only writes empty ``_lib-*.md``
+placeholders when this script hasn't written anything, so the ``{include}``
+directives still resolve.
 """
 
 from __future__ import annotations
