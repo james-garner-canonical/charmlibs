@@ -2,4 +2,3 @@
 typeCheckingMode = "strict"
 reportPrivateUsage = false
 reportUnnecessaryTypeIgnoreComment = "error"
-extraPaths = [".."]
