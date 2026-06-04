@@ -27,6 +27,15 @@ files containing toctree entries that the index pages pull in via
 ``{include}``.
 
 Run from ``just docs``; see ``docs.just`` for the invocation.
+
+This is a standalone script rather than a Sphinx extension because it runs
+once, up front, before the per-package reference-doc builds (``just docs``
+invokes ``sphinx-build`` once per package, each in its own isolated
+environment). Copying the source files and rewriting links is a one-time
+preparation of the source tree, so doing it in an extension would repeat the
+work on every per-package build. The companion ``diataxis_docs_fallback``
+extension only writes empty ``_lib-*.md`` placeholders when this script
+hasn't run, so the ``{include}`` directives still resolve.
 """
 
 from __future__ import annotations
