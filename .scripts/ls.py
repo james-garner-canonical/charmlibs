@@ -350,8 +350,8 @@ def _get_lib_name(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     if category == 'packages':
         if path.name == '.package':
             # .package -> () -> 'charmlibs'
-            # interfaces/.package -> ('interfaces') -> 'charmlibs.interface'
-            parts, _ = path.parts
+            # interfaces/.package -> ('interfaces',) -> 'charmlibs.interface'
+            parts = path.parts[:-1]
         else:
             # For special cases like '.tutorial' -> ('tutorial') -> 'charmlibs.tutorial'
             parts = tuple(p.removeprefix('.') for p in path.parts)
