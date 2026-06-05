@@ -34,7 +34,7 @@ If you're new to charms, see {ref}`Juju | Charm <juju:charm>`.
 ````{grid} 1 1 2 2
 
 ```{grid-item-card} [Tutorials](tutorials/index)
-**Start here:** Write your first charm library and contribute it to the monorepo.
+**Start here:** [Write your first charm library](tutorial) and contribute it to the monorepo.
 ```
 
 ```{grid-item-card} [How-to guides](how-to/index)
