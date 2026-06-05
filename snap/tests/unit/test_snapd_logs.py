@@ -39,11 +39,23 @@ class TestLogs:
         query = mock_client.get.call_args.kwargs['query']
         assert query['names'] == 'lxd,vlc'
 
-    def test_logs_custom_num_lines(self, mock_client: MockClient):
+    def test_logs_custom_limit(self, mock_client: MockClient):
         mock_client.get.return_value = []
-        _snapd_logs.logs('lxd', num_lines=50)
+        _snapd_logs.logs('lxd', limit=50)
         query = mock_client.get.call_args.kwargs['query']
         assert query['n'] == 50
+
+    def test_logs_limit_none_passes_minus_one(self, mock_client: MockClient):
+        mock_client.get.return_value = []
+        _snapd_logs.logs('lxd', limit=None)
+        query = mock_client.get.call_args.kwargs['query']
+        assert query['n'] == -1
+
+    @pytest.mark.parametrize('limit', [0, -1, -10])
+    def test_logs_non_positive_limit_raises(self, limit: int, mock_client: MockClient):
+        with pytest.raises(ValueError, match='positive integer or None'):
+            _snapd_logs.logs('lxd', limit=limit)
+        mock_client.get.assert_not_called()
 
     def test_logs_parses_entries(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('logs_lxd.json')

@@ -66,20 +66,34 @@ class LogEntry:
         return f'{self._timestamp} {self._sid}[{self._pid}]: {self._message}'
 
 
-def logs(*snaps: str, num_lines: int = 10) -> list[LogEntry]:
+def logs(*snaps: str, limit: int | None = 10) -> list[LogEntry]:
     """Retrieve recent log entries for one or more snaps.
+
+    Log entries are returned in chronological order: oldest first, newest last.
 
     Args:
         snaps: Snap names to retrieve logs for. If omitted, returns system-wide snap logs.
-        num_lines: Maximum number of log lines to return. Must be a positive integer,
-            or ``-1`` to retrieve all available log lines (equivalent to ``snap logs -n all``).
+        limit: Maximum number of log entries to return. Must be a positive integer, or
+            ``None`` to retrieve all available log entries (equivalent to ``snap logs -n all``).
+
+    Returns:
+        A list of :class:`LogEntry` objects, ordered oldest first. The list may contain
+        fewer entries than ``limit`` if fewer are available. Malformed entries returned by
+        snapd are skipped (and logged as warnings) rather than raising.
 
     Raises:
+        ValueError: If ``limit`` is not ``None`` and is not a positive integer.
         NotFoundError: If a specified snap is not installed.
         AppNotFoundError: If a specified snap has no services.
-        APIError: If ``num_lines`` is invalid (e.g. zero or less than -1).
     """
-    query: dict[str, Any] = {'n': num_lines}
+    if limit is None:
+        # snapd treats n=-1 as "no limit": return all available log entries.
+        n = -1
+    elif limit <= 0:
+        raise ValueError(f'limit must be a positive integer or None, not {limit!r}')
+    else:
+        n = limit
+    query: dict[str, Any] = {'n': n}
     if snaps:
         query['names'] = ','.join(snaps)
     result = _client.get('/v2/logs', query=query)

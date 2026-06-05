@@ -23,13 +23,13 @@ _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
 
 def test_logs_returns_log_entries():
     ensure_installed(_SNAP, classic=True)
-    entries = _snapd_logs.logs(_SNAP, num_lines=5)
+    entries = _snapd_logs.logs(_SNAP, limit=5)
     assert isinstance(entries, list)
 
 
 def test_logs_entries_have_expected_fields():
     ensure_installed(_SNAP, classic=True)
-    entries = _snapd_logs.logs(_SNAP, num_lines=5)
+    entries = _snapd_logs.logs(_SNAP, limit=5)
     for entry in entries:
         assert isinstance(entry, _snapd_logs.LogEntry)
         assert entry.timestamp
@@ -38,39 +38,56 @@ def test_logs_entries_have_expected_fields():
         assert isinstance(entry.pid, int)
 
 
-def test_logs_num_lines():
-    # The num_lines parameter limits the number of results returned.
+def test_logs_limit():
+    # The limit parameter limits the number of results returned.
     ensure_installed(_SNAP, classic=True)
-    entries = _snapd_logs.logs(_SNAP, num_lines=3)
+    entries = _snapd_logs.logs(_SNAP, limit=3)
     assert len(entries) <= 3
+
+
+def test_logs_limit_above_default():
+    # The limit parameter is not capped at the snapd default of 10: requesting more
+    # returns more (provided enough log entries are available).
+    ensure_installed(_SNAP, classic=True)
+    entries = _snapd_logs.logs(_SNAP, limit=50)
+    # kube-proxy is chatty enough to produce well over 10 entries shortly after install.
+    assert len(entries) > 10
+
+
+def test_logs_ordered_oldest_first():
+    # Log entries are returned in chronological order: oldest first, newest last.
+    ensure_installed(_SNAP, classic=True)
+    entries = _snapd_logs.logs(_SNAP, limit=50)
+    timestamps = [entry.timestamp for entry in entries]
+    assert timestamps == sorted(timestamps)
 
 
 def test_logs_multiple_snaps():
     # Requesting logs for multiple snaps should not raise.
     ensure_installed(_SNAP, classic=True)
     ensure_installed('lxd')
-    entries = _snapd_logs.logs(_SNAP, 'lxd', num_lines=10)
+    entries = _snapd_logs.logs(_SNAP, 'lxd', limit=10)
     assert isinstance(entries, list)
 
 
-def test_logs_num_lines_zero_raises():
-    # snapd rejects n=0 as invalid.
-    ensure_installed(_SNAP, classic=True)
-    with pytest.raises(_errors.APIError) as ctx:
-        _snapd_logs.logs(_SNAP, num_lines=0)
-    assert 'invalid value for n' in ctx.value.message
+def test_logs_limit_zero_raises():
+    # A non-positive limit is rejected client-side with a ValueError.
+    with pytest.raises(ValueError, match='positive integer or None'):
+        _snapd_logs.logs(_SNAP, limit=0)
 
 
-def test_logs_negative_num_lines():
-    # snapd accepts negative num_lines without error.
+def test_logs_limit_none_returns_all():
+    # limit=None retrieves all available log entries (no limit).
     ensure_installed(_SNAP, classic=True)
-    entries = _snapd_logs.logs(_SNAP, num_lines=-1)
-    assert isinstance(entries, list)
+    all_entries = _snapd_logs.logs(_SNAP, limit=None)
+    limited = _snapd_logs.logs(_SNAP, limit=5)
+    assert isinstance(all_entries, list)
+    assert len(all_entries) >= len(limited)
 
 
 def test_logs_no_snap_args():
     # Calling logs() with no snap arguments returns system-wide logs.
-    entries = _snapd_logs.logs(num_lines=3)
+    entries = _snapd_logs.logs(limit=3)
     assert isinstance(entries, list)
 
 
