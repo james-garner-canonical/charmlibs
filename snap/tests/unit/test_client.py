@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import logging
 import urllib.error
@@ -22,18 +23,18 @@ if TYPE_CHECKING:
 
 from charmlibs.snap import _client
 from charmlibs.snap._errors import (
-    SnapAPIError,
-    SnapAppNotFoundError,
-    SnapBadResponseError,
-    SnapChangeError,
-    SnapChannelNotAvailableError,
-    SnapConnectionError,
-    SnapError,
-    SnapNeedsClassicError,
-    SnapNotFoundError,
-    SnapOptionNotFoundError,
-    SnapTimeoutError,
-    _SnapAlreadyInstalledError,
+    APIError,
+    AppNotFoundError,
+    BadResponseError,
+    ChangeError,
+    ChannelNotAvailableError,
+    ConnectionError,  # noqa: A004 (shadowing a Python builtin)
+    Error,
+    NeedsClassicError,
+    NotFoundError,
+    OptionNotFoundError,
+    TimeoutError,  # noqa: A004 (shadowing a Python builtin)
+    _AlreadyInstalledError,
 )
 from conftest import FIXTURES_DIR, load_fixture
 
@@ -86,7 +87,7 @@ class TestPost:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(_SnapAlreadyInstalledError):
+        with pytest.raises(_AlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert mock_raw.call_args.args[0] == 'POST'
 
@@ -94,7 +95,7 @@ class TestPost:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(_SnapAlreadyInstalledError):
+        with pytest.raises(_AlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         sent = mock_raw.call_args.kwargs['data']
         assert json.loads(sent) == {'action': 'install'}
@@ -103,7 +104,7 @@ class TestPost:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(_SnapAlreadyInstalledError):
+        with pytest.raises(_AlreadyInstalledError):
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         headers = mock_raw.call_args.kwargs['headers']
         assert headers['Content-Type'] == 'application/json'
@@ -161,7 +162,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(_SnapAlreadyInstalledError) as exc_info:
+        with pytest.raises(_AlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert 'already installed' in str(exc_info.value)
 
@@ -169,7 +170,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_needs_classic_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapNeedsClassicError):
+        with pytest.raises(NeedsClassicError):
             _client.post('/v2/snaps/just', body={'action': 'install'})
 
     def test_snap_not_found(self, mock_raw: MagicMock):
@@ -184,14 +185,14 @@ class TestErrorResponses:
             },
         }
         mock_raw.return_value = _fake_response(fixture, status=404, reason='Not Found')
-        with pytest.raises(SnapNotFoundError):
+        with pytest.raises(NotFoundError):
             _client.get('/v2/snaps/nope')
 
     def test_option_not_found(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response(
             load_fixture('conf_option_not_found_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapOptionNotFoundError):
+        with pytest.raises(OptionNotFoundError):
             _client.get('/v2/snaps/lxd/conf', query={'keys': 'keydoesnotexist01'})
 
     def test_unknown_error_kind_raises_snap_error(self, mock_raw: MagicMock):
@@ -202,15 +203,15 @@ class TestErrorResponses:
             'result': {'message': 'something unexpected', 'kind': 'unknown-kind', 'value': ''},
         }
         mock_raw.return_value = _fake_response(fixture, status=500, reason='Internal Server Error')
-        with pytest.raises(SnapAPIError) as exc_info:
+        with pytest.raises(APIError) as exc_info:
             _client.get('/v2/snaps/hello-world')
-        assert type(exc_info.value) is SnapAPIError
+        assert type(exc_info.value) is APIError
 
     def test_error_preserves_status_code(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(_SnapAlreadyInstalledError) as exc_info:
+        with pytest.raises(_AlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert exc_info.value._status_code == 400
 
@@ -218,7 +219,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_needs_classic_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(SnapNeedsClassicError) as exc_info:
+        with pytest.raises(NeedsClassicError) as exc_info:
             _client.post('/v2/snaps/just', body={'action': 'install'})
         assert exc_info.value.kind == 'snap-needs-classic'
 
@@ -226,32 +227,34 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
         )
-        with pytest.raises(_SnapAlreadyInstalledError) as exc_info:
+        with pytest.raises(_AlreadyInstalledError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert exc_info.value.value == 'hello-world'
 
     def test_invalid_json_raises_snap_api_error(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response(b'not json at all', status=200, reason='OK')
-        with pytest.raises(SnapBadResponseError) as exc_info:
+        with pytest.raises(BadResponseError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert 'Invalid JSON' in exc_info.value.message
 
     def test_missing_type_key_raises_snap_api_error(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response({'status-code': 200, 'result': {}})
-        with pytest.raises(SnapBadResponseError) as exc_info:
+        with pytest.raises(BadResponseError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert 'Missing expected key' in exc_info.value.message
 
     def test_non_dict_response_raises_snap_api_error(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response(b'[1, 2, 3]', status=200, reason='OK')
-        with pytest.raises(SnapBadResponseError) as exc_info:
+        with pytest.raises(BadResponseError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert 'Unexpected response type' in exc_info.value.message
 
     def test_request_timeout_raises_snap_timeout_error(self, mocker: MockerFixture):
         # Patch opener.open inside _request_raw to raise TimeoutError, exercising the conversion.
-        mocker.patch('urllib.request.OpenerDirector.open', side_effect=TimeoutError('timed out'))
-        with pytest.raises(SnapTimeoutError) as exc_info:
+        mocker.patch(
+            'urllib.request.OpenerDirector.open', side_effect=builtins.TimeoutError('timed out')
+        )
+        with pytest.raises(TimeoutError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert exc_info.value.kind == 'charmlibs-snap-request-timeout'
         assert isinstance(exc_info.value, TimeoutError)
@@ -261,7 +264,7 @@ class TestErrorResponses:
     ):
         # Point _SOCKET_PATH at a real non-existent path so the real URLError fires.
         monkeypatch.setattr(_client, '_SOCKET_PATH', str(tmp_path / 'does-not-exist'))
-        with pytest.raises(SnapConnectionError) as exc_info:
+        with pytest.raises(ConnectionError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert exc_info.value.kind == 'charmlibs-snap-socket-not-found'
         assert isinstance(exc_info.value, ConnectionError)
@@ -271,19 +274,19 @@ class TestErrorResponses:
             'urllib.request.OpenerDirector.open',
             side_effect=urllib.error.URLError('connection refused'),
         )
-        with pytest.raises(SnapConnectionError) as exc_info:
+        with pytest.raises(ConnectionError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert exc_info.value.kind == 'charmlibs-snap-connection-error'
         assert isinstance(exc_info.value, ConnectionError)
 
     def test_missing_result_key_raises_snap_bad_response_error(self, mock_raw: MagicMock):
-        # A sync response with no 'result' key raises SnapBadResponseError.
+        # A sync response with no 'result' key raises BadResponseError.
         mock_raw.return_value = _fake_response({
             'type': 'sync',
             'status-code': 200,
             'status': 'OK',
         })
-        with pytest.raises(SnapBadResponseError) as exc_info:
+        with pytest.raises(BadResponseError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert 'Missing expected key' in exc_info.value.message
 
@@ -292,7 +295,7 @@ class TestErrorResponses:
         mock_raw.return_value = _fake_response(
             load_fixture('app_not_found_error.json'), status=404, reason='Not Found'
         )
-        with pytest.raises(SnapAppNotFoundError) as exc_info:
+        with pytest.raises(AppNotFoundError) as exc_info:
             _client.post('/v2/apps', body={'action': 'start', 'names': ['hello-world.svc']})
         assert exc_info.value.value == ''  # defaults to empty string
         assert exc_info.value.kind == 'app-not-found'
@@ -304,9 +307,9 @@ class TestErrorResponses:
             status=400,
             reason='Bad Request',
         )
-        with pytest.raises(SnapAPIError) as exc_info:
+        with pytest.raises(APIError) as exc_info:
             _client.post('/v2/interfaces', body={'action': 'connect'})
-        assert type(exc_info.value) is SnapAPIError  # not a subclass
+        assert type(exc_info.value) is APIError  # not a subclass
         assert exc_info.value.kind == ''
 
     def test_error_with_dict_value(self, mock_raw: MagicMock):
@@ -316,7 +319,7 @@ class TestErrorResponses:
             status=404,
             reason='Not Found',
         )
-        with pytest.raises(SnapChannelNotAvailableError) as exc_info:
+        with pytest.raises(ChannelNotAvailableError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'install'})
         assert isinstance(exc_info.value.value, dict)
         assert exc_info.value.value['channel'] == 'garbage'  # pyright: ignore[reportUnknownMemberType]
@@ -400,7 +403,7 @@ class TestAsyncChange:
             _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
             _fake_response(error_envelope),
         ]
-        with pytest.raises(SnapChangeError) as exc_info:
+        with pytest.raises(ChangeError) as exc_info:
             _client.post(
                 '/v2/aliases',
                 body={
@@ -424,7 +427,7 @@ class TestAsyncChange:
             _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
             _fake_response(error_envelope),
         ]
-        with pytest.raises(SnapChangeError) as exc_info:
+        with pytest.raises(ChangeError) as exc_info:
             _client.post(
                 '/v2/aliases',
                 body={
@@ -478,7 +481,7 @@ class TestAsyncChange:
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
             _fake_response(poll_envelope),
         ]
-        with pytest.raises(SnapBadResponseError) as exc_info:
+        with pytest.raises(BadResponseError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert 'Unexpected response type' in exc_info.value.message
 
@@ -509,7 +512,7 @@ class TestAsyncChange:
             _fake_response(undo_envelope),
             _fake_response(error_envelope),
         ]
-        with pytest.raises(SnapChangeError):
+        with pytest.raises(ChangeError):
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         # POST + poll returning undo status + poll returning error = 3 calls
         assert mock_raw.call_count == 3
@@ -534,14 +537,14 @@ class TestAsyncChange:
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
             _fake_response(doing_envelope),
         ]
-        with pytest.raises(SnapTimeoutError) as exc_info:
+        with pytest.raises(TimeoutError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert exc_info.value.kind == 'charmlibs-snap-change-timeout'
         assert 'snap change' in exc_info.value.message
         assert isinstance(exc_info.value, TimeoutError)
 
     def test_async_unknown_status_raises_snap_change_error(self, mock_raw: MagicMock):
-        # An unrecognised change status raises SnapChangeError with the 'unknown' kind.
+        # An unrecognised change status raises ChangeError with the 'unknown' kind.
         unknown_result = {
             'id': '42',
             'kind': 'install-snap',
@@ -559,7 +562,7 @@ class TestAsyncChange:
             _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
             _fake_response(unknown_envelope),
         ]
-        with pytest.raises(SnapChangeError) as exc_info:
+        with pytest.raises(ChangeError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert exc_info.value.kind == 'charmlibs-snap-change-unknown'
         assert 'Halted' in exc_info.value.message
@@ -576,7 +579,7 @@ class TestAsyncChange:
             _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
             _fake_response(error_envelope),
         ]
-        with pytest.raises(SnapChangeError) as exc_info:
+        with pytest.raises(ChangeError) as exc_info:
             _client.post('/v2/aliases', body={'action': 'alias'})
         assert 'already enabled for' in exc_info.value.message
         assert exc_info.value.value == '96'
@@ -594,6 +597,6 @@ class TestLogsEndpoint:
     def test_logs_error_response_raises(self, mock_raw: MagicMock):
         raw = (FIXTURES_DIR / 'app_not_found_raw.bin').read_bytes()
         mock_raw.return_value = _fake_response(raw)
-        with pytest.raises(SnapError) as exc_info:
+        with pytest.raises(Error) as exc_info:
             _client.get('/v2/logs', query={'n': 10, 'names': 'hello-world'})
         assert exc_info.value.kind == 'app-not-found'

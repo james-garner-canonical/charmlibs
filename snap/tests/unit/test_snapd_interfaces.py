@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from charmlibs.snap import _snapd_interfaces
-from charmlibs.snap._errors import _SnapInterfacesUnchangedError
+from charmlibs.snap._errors import _InterfacesUnchangedError
 from charmlibs.snap._snapd_interfaces import _Plug, _Slot
 from conftest import result_of
 
@@ -73,9 +73,9 @@ class TestDisconnect:
         assert body['action'] == 'disconnect'
 
     def test_disconnect_interfaces_unchanged_suppressed(self, mock_client: MockClient):
-        # The try/except in disconnect() suppresses _SnapInterfacesUnchangedError
+        # The try/except in disconnect() suppresses _InterfacesUnchangedError
         # to make disconnect symmetric with connect (both are no-ops when nothing changes).
-        mock_client.post.side_effect = _SnapInterfacesUnchangedError(
+        mock_client.post.side_effect = _InterfacesUnchangedError(
             'nothing to do',
             kind='interfaces-unchanged',
             value='',
@@ -85,8 +85,8 @@ class TestDisconnect:
         _snapd_interfaces.disconnect('vlc', 'mount-observe')  # should not raise
 
     def test_disconnect_interfaces_unchanged_suppressed_with_forget(self, mock_client: MockClient):
-        # _SnapInterfacesUnchangedError is suppressed even when forget=True.
-        mock_client.post.side_effect = _SnapInterfacesUnchangedError(
+        # _InterfacesUnchangedError is suppressed even when forget=True.
+        mock_client.post.side_effect = _InterfacesUnchangedError(
             'nothing to do',
             kind='interfaces-unchanged',
             value='',

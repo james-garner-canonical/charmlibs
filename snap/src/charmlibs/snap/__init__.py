@@ -30,12 +30,12 @@ Also manage:
 Exceptions
 ----------
 
-All functions will raise a :class:`SnapError` subclass if the snapd API returns an error response.
+All functions will raise a :class:`Error` subclass if the snapd API returns an error response.
 
 Functions will raise specific subclasses where possible to allow callers to handle logical errors.
 Check the documentation for each function for details on which exceptions it may raise.
 
-The :class:`SnapAPIError` subclass will be raised if the snapd API returns a malformed response.
+The :class:`APIError` subclass will be raised if the snapd API returns a malformed response.
 Callers will not be able to resolve this error directly, but may want to catch it for logging,
 or to trigger retries if the error may be transient. If retries are not successful,
 user intervention may be required.
@@ -45,19 +45,19 @@ something is badly wrong with the system, and user intervention is almost certai
 """
 
 from ._errors import (
-    SnapAPIError,
-    SnapAppNotFoundError,
-    SnapBadResponseError,
-    SnapChangeError,
-    SnapChannelNotAvailableError,
-    SnapConnectionError,
-    SnapError,
-    SnapNeedsClassicError,
-    SnapNotFoundError,
-    SnapNotInstalledError,
-    SnapOptionNotFoundError,
-    SnapRevisionNotAvailableError,
-    SnapTimeoutError,
+    APIError,
+    AppNotFoundError,
+    BadResponseError,
+    ChangeError,
+    ChannelNotAvailableError,
+    ConnectionError,  # noqa: A004 (shadowing a Python builtin)
+    Error,
+    NeedsClassicError,
+    NotFoundError,
+    NotInstalledError,
+    OptionNotFoundError,
+    RevisionNotAvailableError,
+    TimeoutError,  # noqa: A004 (shadowing a Python builtin)
 )
 from ._functions import (
     ensure,
@@ -97,21 +97,21 @@ from ._snapd_snaps import (
 from ._version import __version__ as __version__
 
 __all__ = [
+    'APIError',
+    'AppNotFoundError',
+    'BadResponseError',
+    'ChangeError',
+    'ChannelNotAvailableError',
+    'ConnectionError',
+    'Error',
     'Info',
     'LogEntry',
-    'SnapAPIError',
-    'SnapAppNotFoundError',
-    'SnapBadResponseError',
-    'SnapChangeError',
-    'SnapChannelNotAvailableError',
-    'SnapConnectionError',
-    'SnapError',
-    'SnapNeedsClassicError',
-    'SnapNotFoundError',
-    'SnapNotInstalledError',
-    'SnapOptionNotFoundError',
-    'SnapRevisionNotAvailableError',
-    'SnapTimeoutError',
+    'NeedsClassicError',
+    'NotFoundError',
+    'NotInstalledError',
+    'OptionNotFoundError',
+    'RevisionNotAvailableError',
+    'TimeoutError',
     'alias',
     'connect',
     'disconnect',

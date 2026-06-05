@@ -37,14 +37,14 @@ def test_get_returns_dict():
 
 def test_post_sync_error_snap_already_installed():
     ensure_installed('hello-world')
-    with pytest.raises(_errors._SnapAlreadyInstalledError) as ctx:
+    with pytest.raises(_errors._AlreadyInstalledError) as ctx:
         _client.post('/v2/snaps/hello-world', body={'action': 'install'})
     assert ctx.value.kind == 'snap-already-installed'
 
 
 def test_post_sync_error_app_not_found():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _client.post(
             '/v2/apps', body={'action': 'start', 'names': ['hello-world.nonexistentservice']}
         )
@@ -54,16 +54,16 @@ def test_post_sync_error_app_not_found():
 def test_post_sync_error_no_kind():
     # An invalid action returns an error with no 'kind'.
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapError) as ctx:
+    with pytest.raises(_errors.Error) as ctx:
         _client.post('/v2/snaps/hello-world', body={'action': 'invalid-action'})
     assert not ctx.value.kind
-    assert not isinstance(ctx.value, _errors.SnapBadResponseError)
+    assert not isinstance(ctx.value, _errors.BadResponseError)
 
 
 def test_post_snap_no_update_available():
     # snap-no-update-available is raised (not suppressed) at the _client level.
     ensure_installed('hello-world', channel='latest/stable')
-    with pytest.raises(_errors._SnapNoUpdatesAvailableError) as ctx:
+    with pytest.raises(_errors._NoUpdatesAvailableError) as ctx:
         _client.post(
             '/v2/snaps/hello-world', body={'action': 'refresh', 'channel': 'latest/stable'}
         )
@@ -76,7 +76,7 @@ def test_post_waits_for_async_change():
     ensure_installed('hello-world')
     _client.post('/v2/snaps/hello-world', body={'action': 'remove'})
     # Verify the snap is actually gone.
-    with pytest.raises(_errors.SnapNotFoundError):
+    with pytest.raises(_errors.NotFoundError):
         _client.get('/v2/snaps/hello-world')
 
 
@@ -86,29 +86,29 @@ def test_post_waits_for_async_change():
 
 
 def test_get_sync_error_snap_not_found():
-    # GET for an absent snap raises SnapNotFoundError.
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    # GET for an absent snap raises NotFoundError.
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _client.get(f'/v2/snaps/{_ABSENT_SNAP}')
     assert ctx.value.kind == 'snap-not-found'
 
 
 def test_get_sync_error_no_kind():
-    # An error response with no 'kind' field maps to the base SnapError.
-    with pytest.raises(_errors.SnapError) as ctx:
+    # An error response with no 'kind' field maps to the base Error.
+    with pytest.raises(_errors.Error) as ctx:
         _client.get('/v2/nonexistent-endpoint')
     assert not ctx.value.kind
 
 
 def test_put_sync_error_snap_not_found():
-    # PUT conf on an absent snap raises SnapNotFoundError.
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    # PUT conf on an absent snap raises NotFoundError.
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _client.put(f'/v2/snaps/{_ABSENT_SNAP}/conf', body={'key': 'value'})
     assert ctx.value.kind == 'snap-not-found'
 
 
 def test_get_logs_error_snap_not_found():
-    # Requesting logs for an absent snap raises SnapNotFoundError.
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    # Requesting logs for an absent snap raises NotFoundError.
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _client.get('/v2/logs', query={'names': _ABSENT_SNAP, 'n': 10})
     assert ctx.value.kind == 'snap-not-found'
 
@@ -120,7 +120,7 @@ def test_get_logs_error_snap_not_found():
 
 def test_post_sync_error_snap_needs_classic():
     ensure_removed('charmcraft')
-    with pytest.raises(_errors.SnapNeedsClassicError) as ctx:
+    with pytest.raises(_errors.NeedsClassicError) as ctx:
         _client.post('/v2/snaps/charmcraft', body={'action': 'install'})
     assert ctx.value.kind == 'snap-needs-classic'
 
@@ -156,9 +156,9 @@ def test_get_with_query_params():
 
 
 def test_post_async_change_error_raises_snap_change_error():
-    # An async change that fails raises SnapChangeError.
+    # An async change that fails raises ChangeError.
     ensure_installed('lxd')
-    with pytest.raises(_errors.SnapChangeError):
+    with pytest.raises(_errors.ChangeError):
         _client.post(
             '/v2/aliases',
             body={
@@ -182,9 +182,9 @@ def test_put_waits_for_async_change():
 
 
 def test_put_no_body_raises():
-    # PUT with no body (None) raises a base SnapError: snapd can't decode EOF as patch values.
+    # PUT with no body (None) raises a base Error: snapd can't decode EOF as patch values.
     ensure_installed('lxd')
-    with pytest.raises(_errors.SnapError) as ctx:
+    with pytest.raises(_errors.Error) as ctx:
         _client.put('/v2/snaps/lxd/conf')
     assert 'EOF' in ctx.value.message
     assert not ctx.value.kind
@@ -202,7 +202,7 @@ def test_change_timeout_raises_snap_timeout_error():
     ensure_installed('lxd')
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(_client, '_CHANGE_TIMEOUT', 0)
-        with pytest.raises(_errors.SnapTimeoutError) as ctx:
+        with pytest.raises(_errors.TimeoutError) as ctx:
             _client.put('/v2/snaps/lxd/conf', body={'test-change-timeout-key': 'value'})
     assert ctx.value.kind == 'charmlibs-snap-change-timeout'
     assert isinstance(ctx.value, TimeoutError)
@@ -221,6 +221,6 @@ def test_get_logs_returns_list():
 def test_get_logs_error_app_not_found():
     # A snap with no services returns an app-not-found error via the log stream.
     ensure_installed('htop')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _client.get('/v2/logs', query={'names': 'htop', 'n': 10})
     assert ctx.value.kind == 'app-not-found'

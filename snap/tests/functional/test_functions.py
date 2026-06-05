@@ -111,13 +111,13 @@ def test_ensure_installs_at_specified_channel():
 
 def test_ensure_bad_channel_raises():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapAPIError):
+    with pytest.raises(_errors.APIError):
         _functions.ensure('hello-world', channel='not/a/real/channel')
 
 
 def test_ensure_revision_bad_revision_raises():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapRevisionNotAvailableError):
+    with pytest.raises(_errors.RevisionNotAvailableError):
         _functions.ensure_revision('hello-world', revision=99999999)
 
 
@@ -134,7 +134,7 @@ def test_ensure_revision_installs_classic():
 
 def test_ensure_needs_classic_raises():
     ensure_removed('charmcraft')
-    with pytest.raises(_errors.SnapNeedsClassicError):
+    with pytest.raises(_errors.NeedsClassicError):
         _functions.ensure('charmcraft')
 
 
@@ -150,7 +150,7 @@ def test_ensure_installs_classic():
 
 
 def test_ensure_bad_snap_name_raises():
-    with pytest.raises(_errors.SnapNotFoundError):
+    with pytest.raises(_errors.NotFoundError):
         _functions.ensure(_ABSENT_SNAP)
 
 

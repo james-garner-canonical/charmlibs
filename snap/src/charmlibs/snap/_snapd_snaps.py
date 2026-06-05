@@ -98,19 +98,19 @@ def info(snap: str, *, missing_ok: bool = False) -> Info | None:
     Args:
         snap: the name of the snap.
         missing_ok: if ``True``, return ``None`` if the snap is not installed.
-            if ``False`` (default), raise ``SnapNotFoundError`` instead.
+            if ``False`` (default), raise ``NotFoundError`` instead.
 
     Returns:
         An Info object with information about the snap,
             or None if the snap is not installed and missing_ok is ``True``.
 
     Raises:
-        SnapNotFoundError: if the snap is not installed and ``missing_ok`` is ``False``.
-        SnapError: (or a subtype) if the information could not be retrieved for another reason.
+        NotFoundError: if the snap is not installed and ``missing_ok`` is ``False``.
+        Error: (or a subtype) if the information could not be retrieved for another reason.
     """
     try:
         info_dict = _client.get(f'/v2/snaps/{snap}')
-    except _errors.SnapNotFoundError:
+    except _errors.NotFoundError:
         if missing_ok:
             return None
         raise
@@ -142,11 +142,11 @@ def install(
 
     Raises:
         ValueError: if both channel and revision are specified.
-        SnapNotFoundError: if the snap does not exist in the store.
-        SnapRevisionNotAvailableError: if the specified revision is not available.
-        SnapChannelNotAvailableError: if the specified channel is not available.
-        SnapNeedsClassicError: if the snap requires classic confinement and ``classic`` is not set.
-        SnapError: (or a subtype) if the snap could not be installed for another reason.
+        NotFoundError: if the snap does not exist in the store.
+        RevisionNotAvailableError: if the specified revision is not available.
+        ChannelNotAvailableError: if the specified channel is not available.
+        NeedsClassicError: if the snap requires classic confinement and ``classic`` is not set.
+        Error: (or a subtype) if the snap could not be installed for another reason.
     """
     if channel is not None and revision is not None:
         # NOTE: Revision silently takes precedence over channel in the snapd API.
@@ -162,7 +162,7 @@ def install(
     # NOTE: Unlike the API, the CLI doesn't error if it's already installed (just prints a msg).
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors._SnapAlreadyInstalledError:
+    except _errors._AlreadyInstalledError:
         return False
     return True
 
@@ -174,7 +174,7 @@ def remove(snap: str, *, purge: bool = False) -> bool:
         True if the snap was removed, False if it was not installed.
 
     Raises:
-        SnapError: (or a subtype) if the snap could not be removed as requested.
+        Error: (or a subtype) if the snap could not be removed as requested.
     """
     data: dict[str, Any] = {'action': 'remove'}
     if purge:
@@ -182,7 +182,7 @@ def remove(snap: str, *, purge: bool = False) -> bool:
     # NOTE: Unlike the API, the CLI doesn't error if the snap isn't installed (just prints a msg).
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors.SnapNotInstalledError:
+    except _errors.NotInstalledError:
         return False
     return True
 
@@ -206,9 +206,9 @@ def refresh(
 
     Raises:
         ValueError: if both channel and revision are specified.
-        SnapRevisionNotAvailableError: if the specified revision is not available.
-        SnapChannelNotAvailableError: if the specified channel is not available.
-        SnapError: (or a subtype) if the snap could not be refreshed for another reason.
+        RevisionNotAvailableError: if the specified revision is not available.
+        ChannelNotAvailableError: if the specified channel is not available.
+        Error: (or a subtype) if the snap could not be refreshed for another reason.
     """
     if channel is not None and revision is not None:
         # NOTE: Revision silently takes precedence over channel in the snapd API.
@@ -222,7 +222,7 @@ def refresh(
     # NOTE: Unlike the API, the CLI doesn't error if there are no updates (just prints a msg).
     try:
         _client.post(f'/v2/snaps/{snap}', body=data)
-    except _errors._SnapNoUpdatesAvailableError:
+    except _errors._NoUpdatesAvailableError:
         return False
     return True
 
@@ -233,7 +233,7 @@ def hold(snap: str, duration: datetime.timedelta | int | float | None = None) ->
     Does not prevent manual refreshes.
 
     Raises:
-        SnapNotFoundError: If the snap is not installed.
+        NotFoundError: If the snap is not installed.
     """
     # https://forum.snapcraft.io/t/snapd-rest-api/17954
     if duration is None:
@@ -247,7 +247,7 @@ def hold(snap: str, duration: datetime.timedelta | int | float | None = None) ->
     data = {'action': 'hold', 'hold-level': 'general', 'time': until}
     # NOTE: The API returns an error with no 'kind' when holding a non-installed snap.
     # The CLI raises an error in this case, so we pre-emptively check if the snap is installed.
-    info(snap)  # Raise SnapNotFoundError if not installed.
+    info(snap)  # Raise NotFoundError if not installed.
     _client.post(f'/v2/snaps/{snap}', body=data)
 
 

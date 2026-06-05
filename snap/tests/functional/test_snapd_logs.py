@@ -56,7 +56,7 @@ def test_logs_multiple_snaps():
 def test_logs_num_lines_zero_raises():
     # snapd rejects n=0 as invalid.
     ensure_installed(_SNAP, classic=True)
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         _snapd_logs.logs(_SNAP, num_lines=0)
     assert 'invalid value for n' in ctx.value.message
 
@@ -80,9 +80,9 @@ def test_logs_no_snap_args():
 
 
 def test_logs_snap_with_no_services_raises():
-    # A snap with no services raises SnapAppNotFoundError.
+    # A snap with no services raises AppNotFoundError.
     ensure_installed('htop')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_logs.logs('htop')
     assert ctx.value.kind == 'app-not-found'
 
@@ -93,7 +93,7 @@ def test_logs_snap_with_no_services_raises():
 
 
 def test_logs_not_installed_snap_raises():
-    # Requesting logs for an uninstalled snap raises SnapNotFoundError.
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    # Requesting logs for an uninstalled snap raises NotFoundError.
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd_logs.logs(_ABSENT_SNAP)
     assert ctx.value.kind == 'snap-not-found'

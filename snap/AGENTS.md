@@ -157,7 +157,7 @@ Use `read_file` directly on the JSON files — no terminal command needed, no ap
 Edit the capture tests in-place — replace the `_run_and_capture` calls with proper `pytest.raises` assertions. Remove the capture infrastructure (`_CAPTURE_DIR`, `_run_and_capture`, `_exc_dict`, the extra imports) once all capture tests are converted.
 
 For each error test:
-- Use the **most specific** error class (e.g. `SnapNotInstalledError` not `SnapAPIError`).
+- Use the **most specific** error class (e.g. `NotInstalledError` not `APIError`).
 - Assert on `kind`, `message` content, and `value` where they carry meaningful information.
 - Use a different snap from the module's main test snap to avoid install/uninstall churn. `hello-world` is a good lightweight choice for most not-installed tests.
 
@@ -166,7 +166,7 @@ Example:
 ```python
 def test_alias_not_installed_snap_raises():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotInstalledError) as ctx:
+    with pytest.raises(_errors.NotInstalledError) as ctx:
         _snapd_aliases.alias('hello-world', 'hello', 'test-not-installed-alias')
     assert ctx.value.kind == 'snap-not-installed'
     assert 'not installed' in ctx.value.message
@@ -180,32 +180,32 @@ The unit test conftest (`snap/tests/unit/conftest.py`) provides a `mock_client` 
 
 ```python
 def test_alias_not_installed_raises(self, mock_client: MockClient):
-    mock_client.post.side_effect = SnapNotInstalledError(
+    mock_client.post.side_effect = NotInstalledError(
         'snap "hello-world" is not installed',
         kind='snap-not-installed',
         value='hello-world',
         status_code=400,
         status='Bad Request',
     )
-    with pytest.raises(SnapNotInstalledError):
+    with pytest.raises(NotInstalledError):
         _snapd_aliases.alias('hello-world', 'hello', 'test-alias')
 ```
 
 ### Step 5: Consider adding new error classes
 
-Review every new error kind discovered. For each kind that falls through to base `SnapAPIError`, ask: would a dedicated public subclass be useful for charm authors who want to catch this error specifically?
+Review every new error kind discovered. For each kind that falls through to base `APIError`, ask: would a dedicated public subclass be useful for charm authors who want to catch this error specifically?
 
 **Criteria for adding a new class:**
 - The kind is distinct and meaningful (e.g. `snap-channel-not-available`, not a generic catch-all).
-- A charm author might reasonably want to catch it separately from other `SnapAPIError`s.
+- A charm author might reasonably want to catch it separately from other `APIError`s.
 - It is parallel to existing specific subclasses.
 
 **If a new class is warranted:**
 
-1. Add it to `snap/src/charmlibs/snap/_errors.py` — subclass `SnapAPIError`, one-line docstring.
+1. Add it to `snap/src/charmlibs/snap/_errors.py` — subclass `APIError`, one-line docstring.
 2. Add a `case 'kind-string': return NewErrorClass` entry to `_error_type_from_result_kind` in the same file.
 3. Export it from `snap/src/charmlibs/snap/__init__.py` — add to both the import block and `__all__`.
-4. Update all tests to use the new specific class instead of `SnapAPIError` where applicable.
+4. Update all tests to use the new specific class instead of `APIError` where applicable.
 
 ### Step 6: Update docstrings
 

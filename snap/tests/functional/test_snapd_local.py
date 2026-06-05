@@ -160,7 +160,7 @@ def test_install_local(snap_v1: Path):
 
 
 def test_install_local_already_installed(snap_v1: Path):
-    # Sideloading does not raise SnapAlreadyInstalledError when the snap is present.
+    # Sideloading does not raise _AlreadyInstalledError when the snap is present.
     ensure_removed('test-snap')
     install_local(snap_v1, dangerous=True)
     install_local(snap_v1, dangerous=True)  # second call must succeed
@@ -177,7 +177,7 @@ def test_install_local_upgrades(snap_v1: Path, snap_v2: Path):
 
 def test_install_local_without_dangerous_raises(snap_v1: Path):
     ensure_removed('test-snap')
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         install_local(snap_v1)  # dangerous=False by default
     assert 'cannot find signatures with metadata' in ctx.value.message
     assert ctx.value.kind == ''
@@ -190,7 +190,7 @@ def test_install_local_without_dangerous_raises(snap_v1: Path):
 
 def test_install_local_classic_without_classic_flag_raises(classic_snap_v1: Path):
     ensure_removed('test-classic-snap')
-    with pytest.raises(_errors.SnapNeedsClassicError):
+    with pytest.raises(_errors.NeedsClassicError):
         install_local(classic_snap_v1, dangerous=True)
 
 

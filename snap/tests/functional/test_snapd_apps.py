@@ -43,7 +43,7 @@ def _stop_and_disable() -> None:
     kube-proxy.daemon exits immediately after starting (no running k8s cluster),
     so `active` state is only reliable right after a `start` from a disabled state.
     Rapid start/stop cycles hit systemd's StartLimitBurst (default: 5 in 10 s),
-    causing SnapChangeError on subsequent starts. We call `systemctl reset-failed`
+    causing ChangeError on subsequent starts. We call `systemctl reset-failed`
     after disabling to clear the failure counter so the next start will succeed.
     """
     _snapd_apps.stop(_SNAP, _SERVICE, disable=True)
@@ -89,13 +89,13 @@ def test_start_with_enable():
 
 def test_start_nonexistent_service_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.start('hello-world', 'nonexistentservice')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_start_nonexistent_snap_raises():
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.start('nonexistent-snap-xyz', 'service')
     assert ctx.value.kind == 'app-not-found'
 
@@ -137,13 +137,13 @@ def test_stop_with_disable():
 
 def test_stop_nonexistent_service_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.stop('hello-world', 'nonexistentservice')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_stop_nonexistent_snap_raises():
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.stop('nonexistent-snap-xyz', 'service')
     assert ctx.value.kind == 'app-not-found'
 
@@ -178,14 +178,14 @@ def test_restart_whole_snap():
 
 def test_restart_nonexistent_service_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.restart('hello-world', 'nonexistentservice')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_restart_nonexistent_snap_raises():
     # kube-proxy has no snap "service" app, so this triggers app-not-found.
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.restart('nonexistent-snap-xyz', 'service')
     assert ctx.value.kind == 'app-not-found'
 
@@ -210,19 +210,19 @@ def test_list_services_returns_list():
 
 
 def test_start_not_installed_snap_raises_app_not_found():
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.start(_ABSENT_SNAP, 'svc')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_stop_not_installed_snap_raises_app_not_found():
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.stop(_ABSENT_SNAP, 'svc')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_restart_not_installed_snap_raises_app_not_found():
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.restart(_ABSENT_SNAP, 'svc')
     assert ctx.value.kind == 'app-not-found'
 
@@ -237,14 +237,14 @@ def test_list_services_no_snap_returns_all():
 def test_list_services_snap_with_no_services_raises():
     # The API raises app-not-found for a snap with no services.
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps._list_services('hello-world')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_list_services_uninstalled_snap_raises():
     # The API raises snap-not-found for an uninstalled snap.
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd_apps._list_services('nonexistent-snap-xyz')
     assert ctx.value.kind == 'snap-not-found'
 
@@ -270,22 +270,22 @@ def test_stop_all_services_of_snap():
 
 
 def test_start_snap_with_no_services_raises():
-    # Starting a snap that has no services raises SnapAppNotFoundError.
+    # Starting a snap that has no services raises AppNotFoundError.
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.start('hello-world')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_stop_snap_with_no_services_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.stop('hello-world')
     assert ctx.value.kind == 'app-not-found'
 
 
 def test_restart_snap_with_no_services_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapAppNotFoundError) as ctx:
+    with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.restart('hello-world')
     assert ctx.value.kind == 'app-not-found'

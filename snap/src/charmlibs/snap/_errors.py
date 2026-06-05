@@ -16,8 +16,10 @@
 
 from __future__ import annotations
 
+import builtins
 
-class SnapError(Exception):
+
+class Error(Exception):
     """Base class for all library errors, not raised directly.
 
     Args:
@@ -51,7 +53,7 @@ class SnapError(Exception):
 
     def __repr__(self) -> str:
         return (
-            f'{type(self).__name__}('
+            f'{type(self).__module__}.{type(self).__name__}('
             f'{self.message!r}'
             f', kind={self.kind!r}'
             f', value={self.value!r}'
@@ -61,7 +63,7 @@ class SnapError(Exception):
         )
 
 
-class SnapBadResponseError(SnapError):
+class BadResponseError(Error):
     """Raised manually when the snapd API returns a response we don't understand.
 
     Callers will not be able to resolve this error directly, but may want to catch it for logging,
@@ -69,14 +71,14 @@ class SnapBadResponseError(SnapError):
     """
 
 
-class SnapConnectionError(SnapError, ConnectionError):
+class ConnectionError(Error, builtins.ConnectionError):  # noqa: A001 (shadowing a Python builtin)
     """Raised when a connection to the snapd socket fails.
 
     This typically indicates that snapd is not installed or running.
     """
 
 
-class SnapTimeoutError(SnapError, TimeoutError):
+class TimeoutError(Error, builtins.TimeoutError):  # noqa: A001 (shadowing a Python builtin)
     """Raised when a snapd request or change times out.
 
     This typically indicates that snapd is waiting on the snap store, which may indicate
@@ -85,46 +87,46 @@ class SnapTimeoutError(SnapError, TimeoutError):
     """
 
 
-class SnapAPIError(SnapError):
+class APIError(Error):
     """Raised when the snapd API returns an error response."""
 
 
-class _SnapAlreadyInstalledError(SnapAPIError):
+class _AlreadyInstalledError(APIError):
     """Raised via the API when an install is attempted for a snap that is already installed."""
 
 
-class SnapAppNotFoundError(SnapAPIError):
+class AppNotFoundError(APIError):
     """Raised via the API when a specified app is not found within an installed snap."""
 
 
-class SnapNotFoundError(SnapAPIError):
+class NotFoundError(APIError):
     """Raised via the API when a snap is not found in the store."""
 
 
-class SnapNotInstalledError(SnapAPIError):
+class NotInstalledError(APIError):
     """Raised via the API when a snap is not installed on the system."""
 
 
-class SnapNeedsClassicError(SnapAPIError):
+class NeedsClassicError(APIError):
     """Raised via the API if classic is not specified for a classic confinement snap.
 
     This can occur for a snap install or refresh.
     """
 
 
-class SnapChannelNotAvailableError(SnapAPIError):
+class ChannelNotAvailableError(APIError):
     """Raised via the API when no snap revision is available on the specified channel."""
 
 
-class SnapRevisionNotAvailableError(SnapAPIError):
+class RevisionNotAvailableError(APIError):
     """Raised via the API when the specified snap revision is not available."""
 
 
-class _SnapNoUpdatesAvailableError(SnapAPIError):
+class _NoUpdatesAvailableError(APIError):
     """Raised via the API when a refresh is attempted but no updates are available."""
 
 
-class _SnapInterfacesUnchangedError(SnapAPIError):
+class _InterfacesUnchangedError(APIError):
     """Raised via the API when a connect/disconnect would result in no change.
 
     This class is private because the public disconnect function suppresses this error,
@@ -132,41 +134,41 @@ class _SnapInterfacesUnchangedError(SnapAPIError):
     """
 
 
-class SnapOptionNotFoundError(SnapAPIError):
+class OptionNotFoundError(APIError):
     """Raised via the API when the specified snap config option is not found.
 
-    Note that ``SnapOptionNotFoundError.value`` is typically a ``dict``,
+    Note that ``OptionNotFoundError.value`` is typically a ``dict``,
     rather than the usual ``str``::
 
         {'SnapName': snap_name, 'Key': key}.
     """
 
 
-class SnapChangeError(SnapAPIError):
+class ChangeError(APIError):
     """Raised when a snap change results in an error or has an unexpected status."""
 
 
-def _error_type_from_result_kind(kind: str) -> type[SnapAPIError]:  # pyright: ignore[reportUnusedFunction]
+def _error_type_from_result_kind(kind: str) -> type[APIError]:  # pyright: ignore[reportUnusedFunction]
     match kind:
         case 'snap-already-installed':
-            return _SnapAlreadyInstalledError
+            return _AlreadyInstalledError
         case 'app-not-found':
-            return SnapAppNotFoundError
+            return AppNotFoundError
         case 'option-not-found':
-            return SnapOptionNotFoundError
+            return OptionNotFoundError
         case 'snap-channel-not-available':
-            return SnapChannelNotAvailableError
+            return ChannelNotAvailableError
         case 'snap-needs-classic':
-            return SnapNeedsClassicError
+            return NeedsClassicError
         case 'snap-not-found':
-            return SnapNotFoundError
+            return NotFoundError
         case 'snap-not-installed':
-            return SnapNotInstalledError
+            return NotInstalledError
         case 'snap-no-update-available':
-            return _SnapNoUpdatesAvailableError
+            return _NoUpdatesAvailableError
         case 'snap-revision-not-available':
-            return SnapRevisionNotAvailableError
+            return RevisionNotAvailableError
         case 'interfaces-unchanged':
-            return _SnapInterfacesUnchangedError
+            return _InterfacesUnchangedError
         case _:
-            return SnapAPIError
+            return APIError

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from charmlibs.snap import _snapd_conf
-from charmlibs.snap._errors import SnapOptionNotFoundError
+from charmlibs.snap._errors import OptionNotFoundError
 from conftest import result_of
 
 if TYPE_CHECKING:
@@ -48,14 +48,14 @@ class TestGetOne:
         assert result == '[::]:8443'
 
     def test_get_one_missing(self, mock_client: MockClient):
-        mock_client.get.side_effect = SnapOptionNotFoundError(
+        mock_client.get.side_effect = OptionNotFoundError(
             'snap "lxd" has no "keydoesnotexist01" configuration option',
             kind='option-not-found',
             value='',
             status_code=400,
             status='Bad Request',
         )
-        with pytest.raises(SnapOptionNotFoundError):
+        with pytest.raises(OptionNotFoundError):
             _snapd_conf._get_one('lxd', 'keydoesnotexist01')
 
 

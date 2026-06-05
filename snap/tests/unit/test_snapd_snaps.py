@@ -12,11 +12,11 @@ import pytest
 
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import (
-    SnapError,
-    SnapNotFoundError,
-    SnapNotInstalledError,
-    _SnapAlreadyInstalledError,
-    _SnapNoUpdatesAvailableError,
+    Error,
+    NotFoundError,
+    NotInstalledError,
+    _AlreadyInstalledError,
+    _NoUpdatesAvailableError,
 )
 from conftest import result_of
 
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 def _make_snap_not_found():
-    return SnapNotFoundError(
+    return NotFoundError(
         'snap "hello-world" is not installed',
         kind='snap-not-found',
         value='',
@@ -122,7 +122,7 @@ class TestInfo:
 
     def test_info_missing_ok_false(self, mock_client: MockClient):
         mock_client.get.side_effect = _make_snap_not_found()
-        with pytest.raises(SnapNotFoundError):
+        with pytest.raises(NotFoundError):
             _snapd.info('hello-world')
 
     def test_info_missing_ok_true(self, mock_client: MockClient):
@@ -131,14 +131,14 @@ class TestInfo:
         assert result is None
 
     def test_info_other_error_propagates(self, mock_client: MockClient):
-        mock_client.get.side_effect = SnapError(
+        mock_client.get.side_effect = Error(
             'internal error',
             kind='internal-error',
             value='',
             status_code=500,
             status='Internal Server Error',
         )
-        with pytest.raises(SnapError):
+        with pytest.raises(Error):
             _snapd.info('hello-world', missing_ok=True)
 
 
@@ -171,7 +171,7 @@ class TestInstall:
         mock_client.post.assert_not_called()
 
     def test_install_already_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = _SnapAlreadyInstalledError('', kind='', value='')
+        mock_client.post.side_effect = _AlreadyInstalledError('', kind='', value='')
         result = _snapd.install('hello-world')
         assert result is False
 
@@ -190,9 +190,7 @@ class TestRemove:
         assert body['purge'] is True
 
     def test_remove_not_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNotInstalledError(
-            '', kind='snap-not-installed', value=''
-        )
+        mock_client.post.side_effect = NotInstalledError('', kind='snap-not-installed', value='')
         result = _snapd.remove('hello-world')
         assert result is False
 
@@ -219,7 +217,7 @@ class TestRefresh:
             _snapd.refresh('hello-world', channel='edge', revision=42)  # type: ignore[call-overload]
 
     def test_refresh_no_updates_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = _SnapNoUpdatesAvailableError(
+        mock_client.post.side_effect = _NoUpdatesAvailableError(
             'snap "hello-world" has no updates available',
             kind='snap-no-update-available',
             value='',
@@ -269,9 +267,9 @@ class TestHold:
         assert hold_time > before + datetime.timedelta(days=1)
 
     def test_hold_not_installed(self, mock_client: MockClient, mocker: MockerFixture):
-        snap_not_found = SnapNotFoundError('', kind='snap-not-found', value='')
+        snap_not_found = NotFoundError('', kind='snap-not-found', value='')
         mocker.patch('charmlibs.snap._snapd_snaps.info', side_effect=snap_not_found)
-        with pytest.raises(SnapNotFoundError):
+        with pytest.raises(NotFoundError):
             _snapd.hold('hello-world')
         mock_client.post.assert_not_called()
 
@@ -317,7 +315,7 @@ class TestListChannels:
 
 class TestRemoveAdditionalCases:
     def test_remove_purge_not_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = SnapNotInstalledError(
+        mock_client.post.side_effect = NotInstalledError(
             'snap "hello-world" is not installed',
             kind='snap-not-installed',
             value='hello-world',

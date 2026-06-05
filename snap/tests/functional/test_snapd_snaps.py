@@ -65,14 +65,14 @@ def test_refresh_channel():
 
 def test_refresh_invalid_channel_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapChannelNotAvailableError) as ctx:
+    with pytest.raises(_errors.ChannelNotAvailableError) as ctx:
         _snapd.refresh('hello-world', channel='garbage')
     assert ctx.value.kind == 'snap-channel-not-available'
 
 
 def test_refresh_revision_not_available_raises():
     ensure_installed('hello-world')
-    with pytest.raises(_errors.SnapRevisionNotAvailableError) as ctx:
+    with pytest.raises(_errors.RevisionNotAvailableError) as ctx:
         _snapd.refresh('hello-world', revision=99999999)
     assert ctx.value.kind == 'snap-revision-not-available'
 
@@ -123,7 +123,7 @@ def test_remove():
 
 def test_info_missing_ok_false_raises_by_default():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd.info('hello-world')
     assert ctx.value.kind == 'snap-not-found'
 
@@ -149,9 +149,9 @@ def test_remove_purge_not_installed_returns_false():
 
 def test_refresh_not_installed_raises_base_snap_error():
     # The API returns an error with no 'kind' when refreshing a non-installed snap.
-    # This is distinct from SnapNotFoundError; it's a base SnapError.
+    # This is distinct from NotFoundError; it's a base Error.
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapError) as ctx:
+    with pytest.raises(_errors.Error) as ctx:
         _snapd.refresh('hello-world')
     # No kind is set -- the message contains "is not installed" but snapd omits the kind field.
     assert not ctx.value.kind
@@ -159,9 +159,9 @@ def test_refresh_not_installed_raises_base_snap_error():
 
 
 def test_hold_not_installed_raises_snap_not_found_error():
-    # hold() calls info() first, which raises SnapNotFoundError with a proper kind.
+    # hold() calls info() first, which raises NotFoundError with a proper kind.
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd.hold('hello-world')
     assert ctx.value.kind == 'snap-not-found'
 
@@ -174,7 +174,7 @@ def test_unhold_not_installed_no_error():
 
 def test_install_invalid_channel_raises():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapChannelNotAvailableError) as ctx:
+    with pytest.raises(_errors.ChannelNotAvailableError) as ctx:
         _snapd.install('hello-world', channel='garbage')
     assert ctx.value.kind == 'snap-channel-not-available'
     assert 'channel' in ctx.value.message or 'no snap revision' in ctx.value.message
@@ -182,7 +182,7 @@ def test_install_invalid_channel_raises():
 
 def test_install_revision_not_available_raises():
     ensure_removed('hello-world')
-    with pytest.raises(_errors.SnapRevisionNotAvailableError) as ctx:
+    with pytest.raises(_errors.RevisionNotAvailableError) as ctx:
         _snapd.install('hello-world', revision=99999999)
     assert ctx.value.kind == 'snap-revision-not-available'
 
@@ -222,7 +222,7 @@ def test_install_revision():
 
 def test_install_needs_classic_raises():
     ensure_removed('charmcraft')
-    with pytest.raises(_errors.SnapNeedsClassicError) as ctx:
+    with pytest.raises(_errors.NeedsClassicError) as ctx:
         _snapd.install('charmcraft')
     assert ctx.value.kind == 'snap-needs-classic'
 
@@ -240,7 +240,7 @@ def test_install_classic():
 
 
 def test_install_nonexistent_snap_raises():
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd.install(_ABSENT_SNAP)
     assert ctx.value.kind == 'snap-not-found'
     assert ctx.value.value == _ABSENT_SNAP
@@ -257,6 +257,6 @@ def test_refresh_channel_and_revision_raises():
 
 
 def test_list_channels_nonexistent_snap_raises():
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd._list_channels(_ABSENT_SNAP)
     assert ctx.value.kind == 'snap-not-found'

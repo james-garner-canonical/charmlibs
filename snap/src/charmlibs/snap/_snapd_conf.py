@@ -31,7 +31,7 @@ def get(snap: str, /, *keys: str) -> dict[str, Any]:
     """Get snap configuration.
 
     Raises:
-        SnapOptionNotFoundError: if the snap is not installed, or if a requested key is not set.
+        OptionNotFoundError: if the snap is not installed, or if a requested key is not set.
     """
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
@@ -49,7 +49,7 @@ def unset(snap: str, key: str, /, *keys: str) -> None:
     """Unset snap configuration keys.
 
     Raises:
-        SnapNotFoundError: if the snap is not installed.
+        NotFoundError: if the snap is not installed.
     """
     _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 
@@ -67,6 +67,6 @@ def set(snap: str, config: dict[str, Any], /) -> None:  # noqa: A001 (shadowing 
     """Set snap configuration.
 
     Raises:
-        SnapNotFoundError: if the snap is not installed.
+        NotFoundError: if the snap is not installed.
     """
     _client.put(f'/v2/snaps/{snap}/conf', body=config)

@@ -89,7 +89,7 @@ def test_set_null_unsets_key():
     _snapd_conf.set(_SNAP, {_KEY: 'hello'})
     assert _snapd_conf.get(_SNAP, _KEY).get(_KEY) == 'hello'
     _snapd_conf.set(_SNAP, {_KEY: None})
-    with pytest.raises(_errors.SnapOptionNotFoundError):
+    with pytest.raises(_errors.OptionNotFoundError):
         _snapd_conf.get(_SNAP, _KEY)
 
 
@@ -129,7 +129,7 @@ def test_get_multiple_specific_keys():
 
 def test_get_option_not_found_raises():
     ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapOptionNotFoundError) as ctx:
+    with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_SNAP, 'key-that-should-not-exist')
     assert ctx.value.kind == 'option-not-found'
     assert ctx.value.message
@@ -137,7 +137,7 @@ def test_get_option_not_found_raises():
 
 def test_get_option_not_found_value_contains_snap_and_key():
     ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapOptionNotFoundError) as ctx:
+    with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_SNAP, 'key-that-should-not-exist')
     exc = ctx.value
     di = typing.cast('dict[str, str]', exc.value)
@@ -147,7 +147,7 @@ def test_get_option_not_found_value_contains_snap_and_key():
 
 def test_get_not_installed_snap_raises_option_not_found():
     # Config GET for a non-installed snap returns option-not-found (not snap-not-found).
-    with pytest.raises(_errors.SnapOptionNotFoundError) as ctx:
+    with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_ABSENT_SNAP, 'any-key')
     assert ctx.value.kind == 'option-not-found'
 
@@ -167,7 +167,7 @@ def test_get_one():
 
 def test_get_one_option_not_found_raises():
     ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapOptionNotFoundError):
+    with pytest.raises(_errors.OptionNotFoundError):
         _snapd_conf._get_one(_SNAP, 'nonexistent-key')
 
 
@@ -181,7 +181,7 @@ def test_unset_key():
     _snapd_conf.set(_SNAP, {_KEY: 'hello'})
     assert _snapd_conf.get(_SNAP, _KEY).get(_KEY) == 'hello'
     _snapd_conf.unset(_SNAP, _KEY)
-    with pytest.raises(_errors.SnapOptionNotFoundError):
+    with pytest.raises(_errors.OptionNotFoundError):
         _snapd_conf.get(_SNAP, _KEY)
 
 
@@ -195,9 +195,9 @@ def test_unset_multiple_keys():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: 'val1', _KEY2: 'val2'})
     _snapd_conf.unset(_SNAP, _KEY, _KEY2)
-    with pytest.raises(_errors.SnapOptionNotFoundError):
+    with pytest.raises(_errors.OptionNotFoundError):
         _snapd_conf.get(_SNAP, _KEY)
-    with pytest.raises(_errors.SnapOptionNotFoundError):
+    with pytest.raises(_errors.OptionNotFoundError):
         _snapd_conf.get(_SNAP, _KEY2)
 
 
@@ -207,13 +207,13 @@ def test_unset_multiple_keys():
 
 
 def test_set_not_installed_snap_raises_snap_not_found():
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd_conf.set(_ABSENT_SNAP, {'test-key': 'value'})
     assert ctx.value.kind == 'snap-not-found'
 
 
 def test_unset_not_installed_snap_raises_snap_not_found():
-    with pytest.raises(_errors.SnapNotFoundError) as ctx:
+    with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd_conf.unset(_ABSENT_SNAP, 'test-key')
     assert ctx.value.kind == 'snap-not-found'
 
@@ -244,7 +244,7 @@ def test_get_mixed_keys_raises_option_not_found():
     # for the first missing key rather than returning partial results.
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: 'exists'})
-    with pytest.raises(_errors.SnapOptionNotFoundError) as ctx:
+    with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_SNAP, _KEY, 'key-that-does-not-exist-xyz')
     assert ctx.value.kind == 'option-not-found'
     _cleanup()

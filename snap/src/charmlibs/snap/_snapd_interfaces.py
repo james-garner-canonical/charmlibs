@@ -30,7 +30,7 @@ def connect(
     """Connect a snap and plug, to a target snap and slot.
 
     Raises:
-        SnapAPIError: if the snap is not installed or the plug/slot is not found.
+        APIError: if the snap is not installed or the plug/slot is not found.
     """
     data = {
         'action': 'connect',
@@ -52,7 +52,7 @@ def disconnect(
     """Disconnect a plug from a slot.
 
     Raises:
-        SnapAPIError: if the snap is not installed or the plug/slot is not found.
+        APIError: if the snap is not installed or the plug/slot is not found.
     """
     data: dict[str, Any] = {'action': 'disconnect'}
     if slot_snap is None:
@@ -70,7 +70,7 @@ def disconnect(
     # We suppress this to make disconnect symmetric with connect (following the snap CLI).
     try:
         _client.post('/v2/interfaces', body=data)
-    except _errors._SnapInterfacesUnchangedError:
+    except _errors._InterfacesUnchangedError:
         pass  # Follow the snap CLI's lead and suppress this error.
 
 

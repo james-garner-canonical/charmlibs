@@ -16,7 +16,7 @@
 
 Synchronous results are returned directly, as basic Python types decoded from JSON.
 Async operations are waited on until completion and then the final result is returned.
-Errors are converted into :class:`SnapError` exceptions, with specific subclasses where possible.
+Errors are converted into :class:`Error` exceptions, with specific subclasses where possible.
 """
 
 from __future__ import annotations
@@ -101,7 +101,7 @@ def _request(
         # otherwise we expect a single JSON object
         response_dict: dict[str, Any] = json.loads(response_bytes)
     except json.JSONDecodeError as e:
-        raise _errors.SnapBadResponseError(
+        raise _errors.BadResponseError(
             message=f'Invalid JSON in response for path {path!r}: {e}',
             kind='charmlibs-snap',
             value=response_bytes.decode(errors='replace'),
@@ -109,7 +109,7 @@ def _request(
             status=response.reason,
         ) from None
     if not isinstance(response_dict, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
-        raise _errors.SnapBadResponseError(
+        raise _errors.BadResponseError(
             message=f"Unexpected response type {type(response_dict).__name__!r} for path {path!r}, expected a 'dict'",  # noqa: E501
             kind='charmlibs-snap',
             value=str(response_dict),
@@ -125,7 +125,7 @@ def _request(
             case _:
                 return response_dict['result']
     except KeyError as e:
-        raise _errors.SnapBadResponseError(
+        raise _errors.BadResponseError(
             message=f'Missing expected key {e} in response for path {path!r}',
             kind='charmlibs-snap',
             value=str(response_dict),
@@ -160,19 +160,19 @@ def _request_raw(
     try:
         return opener.open(request, timeout=_REQUEST_TIMEOUT)
     except TimeoutError:
-        raise _errors.SnapTimeoutError(
+        raise _errors.TimeoutError(
             f'Request to snapd timed out after {_REQUEST_TIMEOUT}s: {method} {path}',
             kind='charmlibs-snap-request-timeout',
             value='',
         ) from None
     except urllib.error.URLError as e:
         if e.args and isinstance(e.args[0], FileNotFoundError):
-            raise _errors.SnapConnectionError(
+            raise _errors.ConnectionError(
                 f'Could not connect to snapd: socket not found at {_SOCKET_PATH!r}',
                 kind='charmlibs-snap-socket-not-found',
                 value='',
             ) from None
-        raise _errors.SnapConnectionError(
+        raise _errors.ConnectionError(
             str(e.reason),
             kind='charmlibs-snap-connection-error',
             value='',
@@ -188,14 +188,14 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
     deadline = time.monotonic() + _CHANGE_TIMEOUT
     while True:
         if time.monotonic() > deadline:
-            raise _errors.SnapTimeoutError(
+            raise _errors.TimeoutError(
                 f'Timed out after {_CHANGE_TIMEOUT}s waiting for snap change {change_id}',
                 kind='charmlibs-snap-change-timeout',
                 value=change_id,
             )
         response = _request('GET', f'/v2/changes/{change_id}', log=False)
         if not isinstance(response, dict):
-            raise _errors.SnapBadResponseError(
+            raise _errors.BadResponseError(
                 message=f'Unexpected response type {type(response).__name__} while waiting for change {change_id}',  # noqa: E501
                 kind='charmlibs-snap',
                 value=str(response),
@@ -210,14 +210,14 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                 logger.warning("snap change %s succeeded with status 'Wait'", change_id)
                 return response.get('data', {})
             case 'Error':
-                raise _errors.SnapChangeError(
+                raise _errors.ChangeError(
                     message=response.get('err', ''),
                     kind='charmlibs-snap-change-error',
                     value=change_id,
                     status=status,
                 )
             case _:
-                raise _errors.SnapChangeError(
+                raise _errors.ChangeError(
                     message=f'Unexpected status {status!r} for snap change {change_id}',
                     kind='charmlibs-snap-change-unknown',
                     value=change_id,
@@ -225,7 +225,7 @@ def _wait_for_change(change_id: str) -> dict[str, Any]:
                 )
 
 
-def _make_error(response: dict[str, Any]) -> _errors.SnapAPIError:
+def _make_error(response: dict[str, Any]) -> _errors.APIError:
     result = response.get('result', {})
     kind = result.get('kind', '')
     error_type = _errors._error_type_from_result_kind(kind)

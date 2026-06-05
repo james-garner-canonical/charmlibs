@@ -63,9 +63,9 @@ def test_connect_already_connected_no_error():
 
 
 def test_connect_nonexistent_plug_raises():
-    # Connecting a nonexistent plug raises a base SnapError (no kind from snapd).
+    # Connecting a nonexistent plug raises a base Error (no kind from snapd).
     ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapError) as ctx:
+    with pytest.raises(_errors.Error) as ctx:
         _snapd_interfaces.connect(_SNAP, 'nonexistent-plug')
     assert not ctx.value.kind
     assert 'nonexistent-plug' in ctx.value.message
@@ -119,7 +119,7 @@ def test_disconnect_forget_not_connected_no_error():
 def test_disconnect_nonexistent_plug_or_slot_raises():
     # disconnect: plug/slot name doesn't exist on the installed snap.
     ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         _snapd_interfaces.disconnect(_SNAP, 'nonexistent-slot')
     assert not ctx.value.kind
     assert 'no plug or slot named' in ctx.value.message
@@ -183,23 +183,23 @@ def test_list_plugs_connected_only():
 
 
 def test_connect_not_installed_snap_raises():
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         _snapd_interfaces.connect(_ABSENT_SNAP, 'home')
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
 
 
 def test_disconnect_not_installed_snap_raises():
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         _snapd_interfaces.disconnect(_ABSENT_SNAP, 'home')
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message
 
 
 def test_connect_slot_snap_not_installed_raises():
-    # connect: slot snap not installed raises SnapAPIError with empty kind.
+    # connect: slot snap not installed raises APIError with empty kind.
     ensure_installed(_SNAP)
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         _snapd_interfaces.connect(_SNAP, _PLUG, _ABSENT_SNAP, _SLOT)
     assert not ctx.value.kind
     assert 'not installed' in ctx.value.message

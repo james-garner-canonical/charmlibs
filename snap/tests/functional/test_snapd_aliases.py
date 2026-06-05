@@ -52,7 +52,7 @@ def test_alias_nonexistent_app_raises_snap_change_error():
     # Aliasing to an app that doesn't exist fails as an async change error.
     ensure_installed(_SNAP)
     _cleanup_alias()
-    with pytest.raises(_errors.SnapChangeError):
+    with pytest.raises(_errors.ChangeError):
         _snapd_aliases.alias(_SNAP, 'nonexistent-app', _ALIAS)
     _cleanup_alias()
 
@@ -81,7 +81,7 @@ def test_alias_name_conflicts_with_snap_command_namespace():
     # Using a snap's own name as the alias name conflicts with its command namespace.
     ensure_installed(_SNAP)
     _cleanup_alias()
-    with pytest.raises(_errors.SnapChangeError) as ctx:
+    with pytest.raises(_errors.ChangeError) as ctx:
         _snapd_aliases.alias(_SNAP, _APP, _SNAP)  # alias name = 'lxd'
     assert 'conflicts with the command namespace' in ctx.value.message
 
@@ -100,10 +100,10 @@ def test_unalias_removes_alias():
 
 
 def test_unalias_nonexistent_alias_raises():
-    # Unaliasing an alias that doesn't exist raises a base SnapError (no kind).
+    # Unaliasing an alias that doesn't exist raises a base Error (no kind).
     ensure_installed(_SNAP)
     _cleanup_alias()
-    with pytest.raises(_errors.SnapError) as ctx:
+    with pytest.raises(_errors.Error) as ctx:
         _snapd_aliases.unalias(_ALIAS)
     assert not ctx.value.kind
     assert 'cannot find' in ctx.value.message or _ALIAS in ctx.value.message
@@ -135,12 +135,12 @@ def test_list_aliases_includes_created_alias():
 
 
 def test_alias_duplicate_name_different_snap_raises():
-    # An alias name already claimed by another snap raises SnapChangeError.
+    # An alias name already claimed by another snap raises ChangeError.
     ensure_installed(_SNAP)
     ensure_installed('hello-world')
     _cleanup_alias()
     _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
-    with pytest.raises(_errors.SnapChangeError) as ctx:
+    with pytest.raises(_errors.ChangeError) as ctx:
         _snapd_aliases.alias('hello-world', 'hello-world', _ALIAS)
     assert 'already enabled for' in ctx.value.message
     _cleanup_alias()
@@ -152,7 +152,7 @@ def test_alias_duplicate_name_different_snap_raises():
 
 
 def test_alias_not_installed_snap_raises():
-    with pytest.raises(_errors.SnapNotInstalledError) as ctx:
+    with pytest.raises(_errors.NotInstalledError) as ctx:
         _snapd_aliases.alias(_ABSENT_SNAP, 'hello', 'test-not-installed-alias')
     assert ctx.value.kind == 'snap-not-installed'
 
@@ -169,7 +169,7 @@ def test_unalias_after_snap_removed_raises():
     _cleanup_alias()
     _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
     ensure_removed(_SNAP)
-    with pytest.raises(_errors.SnapAPIError) as ctx:
+    with pytest.raises(_errors.APIError) as ctx:
         _snapd_aliases.unalias(_ALIAS)
     assert not ctx.value.kind
     assert 'cannot find' in ctx.value.message
