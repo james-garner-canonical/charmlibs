@@ -40,7 +40,8 @@ If you want to run the Juju integration tests locally, you'll also need `charmcr
 In CI, these are installed and set up for you using [concierge](https://github.com/canonical/concierge?tab=readme-ov-file#presets), with the `microk8s` and `machine` presets.
 The `dev` preset is suitable for local development and testing of both K8s and machine charms, but you may find it easier to run the Juju integration tests in CI when following this tutorial.
 
-See more:
+Read more:
+
 - {ref}`Charmcraft | Install charmcraft <charmcraft:manage-charmcraft>`
 - {ref}`Juju | Set up your Juju deployment <juju:set-up-your-deployment>`
 - {ref}`Juju | Set up an isolated environment <juju:set-things-up>`
