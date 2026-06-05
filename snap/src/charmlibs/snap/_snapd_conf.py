@@ -68,6 +68,8 @@ def unset(snap: str, key: str, /, *keys: str) -> None:
 
     Raises:
         NotFoundError: if the snap is not installed.
+        ChangeError: if the snap's configure hook fails. This includes unsetting any
+            configuration on a snap that does not define a configure hook.
     """
     _client.put(f'/v2/snaps/{snap}/conf', body=dict.fromkeys((key, *keys)))
 
@@ -93,5 +95,7 @@ def set(snap: str, config: dict[str, Any], /) -> None:  # noqa: A001 (shadowing 
 
     Raises:
         NotFoundError: if the snap is not installed.
+        ChangeError: if the snap's configure hook fails. This includes setting any
+            configuration on a snap that does not define a configure hook.
     """
     _client.put(f'/v2/snaps/{snap}/conf', body=config)

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from charmlibs.snap import _snapd_conf
-from charmlibs.snap._errors import OptionNotFoundError
+from charmlibs.snap._errors import ChangeError, OptionNotFoundError
 from conftest import result_of
 
 if TYPE_CHECKING:
@@ -88,3 +88,25 @@ class TestUnsetAdditional:
         # unset() with a dotted-path key passes it as-is to the API.
         _snapd_conf.unset('lxd', 'parent.child')
         mock_client.put.assert_called_once_with('/v2/snaps/lxd/conf', body={'parent.child': None})
+
+
+class TestConfigureHookFailure:
+    # Setting or unsetting config runs the snap's configure hook as an async change. A failing
+    # hook (including a snap with no configure hook) surfaces as a ChangeError.
+    _CHANGE_ERROR = ChangeError(
+        'cannot perform the following tasks:\n'
+        '- Run configure hook of "hello-world" snap (snap "hello-world" has no "configure" hook)',
+        kind='charmlibs-snap-change-error',
+        value='63',
+        status='Error',
+    )
+
+    def test_set_change_error_propagates(self, mock_client: MockClient):
+        mock_client.put.side_effect = self._CHANGE_ERROR
+        with pytest.raises(ChangeError):
+            _snapd_conf.set('hello-world', {'mykey': 'myval'})
+
+    def test_unset_change_error_propagates(self, mock_client: MockClient):
+        mock_client.put.side_effect = self._CHANGE_ERROR
+        with pytest.raises(ChangeError):
+            _snapd_conf.unset('hello-world', 'mykey')

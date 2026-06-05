@@ -256,3 +256,22 @@ def test_unset_dotted_path_no_error():
     _snapd_conf.set(_SNAP, {_KEY: {'nested': 'value'}})
     _snapd_conf.unset(_SNAP, f'{_KEY}.nested')  # should not raise
     _cleanup()
+
+
+# ---------------------------------------------------------------------------
+# configure hook failure -> ChangeError
+# ---------------------------------------------------------------------------
+
+
+def test_set_no_configure_hook_raises_change_error():
+    # set/unset run the snap's configure hook as an async change. hello-world has no
+    # configure hook, so snapd fails the change and we surface it as a ChangeError.
+    ensure_installed('hello-world')
+    with pytest.raises(_errors.ChangeError):
+        _snapd_conf.set('hello-world', {'any-key': 'value'})
+
+
+def test_unset_no_configure_hook_raises_change_error():
+    ensure_installed('hello-world')
+    with pytest.raises(_errors.ChangeError):
+        _snapd_conf.unset('hello-world', 'any-key')

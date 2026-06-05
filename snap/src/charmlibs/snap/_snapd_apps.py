@@ -34,6 +34,7 @@ def start(snap: str, *services: str, enable: bool = False) -> None:
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
+        ChangeError: if the change fails after starting (for example, the service fails to start).
     """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'start', 'names': names}
@@ -53,6 +54,7 @@ def stop(snap: str, *services: str, disable: bool = False) -> None:
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
+        ChangeError: if the change fails after starting (for example, the service fails to stop).
     """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'stop', 'names': names}
@@ -71,6 +73,7 @@ def restart(snap: str, *services: str) -> None:
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
+        ChangeError: if the change fails after starting (for example, the service fails to start).
     """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'restart', 'names': names}

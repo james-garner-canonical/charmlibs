@@ -33,6 +33,7 @@ def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) ->
         NotFoundError: If the snap does not exist in the store.
         RevisionNotAvailableError: If the revision does not exist.
         NeedsClassicError: If the snap requires ``classic=True``.
+        ChangeError: If the install or refresh fails after starting (for example, a hook errors).
         Error: (or a subtype) if the snap could not be installed or refreshed for another reason.
     """
     info = _snapd_snaps.info(snap, missing_ok=True)
@@ -76,6 +77,7 @@ def ensure(
         NotFoundError: If the snap does not exist in the store.
         NeedsClassicError: If the snap requires ``classic=True``.
         ChannelNotAvailableError: If the channel is invalid or unavailable.
+        ChangeError: If the install or refresh fails after starting (for example, a hook errors).
         Error: (or a subtype) if the snap could not be installed or refreshed for another reason.
     """
     info = _snapd_snaps.info(snap, missing_ok=True)

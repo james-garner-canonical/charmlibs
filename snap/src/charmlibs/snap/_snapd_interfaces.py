@@ -41,6 +41,8 @@ def connect(
     Raises:
         APIError: if the plug snap or slot snap is not installed, or the named plug or slot
             does not exist. The error has an empty ``kind``; inspect ``message`` for details.
+        ChangeError: if the connection fails after starting (for example, an interface hook
+            errors).
     """
     data = {
         'action': 'connect',
@@ -84,6 +86,8 @@ def disconnect(
     Raises:
         APIError: if a named snap is not installed, or the named plug or slot does not exist.
             The error has an empty ``kind``; inspect ``message`` for details.
+        ChangeError: if the disconnection fails after starting (for example, an interface hook
+            errors).
     """
     data: dict[str, Any] = {'action': 'disconnect'}
     if slot_snap is None:

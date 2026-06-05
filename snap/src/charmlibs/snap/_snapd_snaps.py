@@ -155,6 +155,7 @@ def install(
         RevisionNotAvailableError: if the specified revision is not available.
         ChannelNotAvailableError: if the specified channel is not available.
         NeedsClassicError: if the snap requires classic confinement and ``classic`` is not set.
+        ChangeError: if the install fails after starting (for example, an install hook errors).
         Error: (or a subtype) if the snap could not be installed for another reason.
     """
     if channel is not None and revision is not None:
@@ -187,6 +188,7 @@ def remove(snap: str, *, purge: bool = False) -> bool:
         True if the snap was removed, False if it was not installed.
 
     Raises:
+        ChangeError: if the removal fails after starting (for example, a remove hook errors).
         Error: (or a subtype) if the snap could not be removed as requested.
     """
     data: dict[str, Any] = {'action': 'remove'}
@@ -228,6 +230,7 @@ def refresh(
         ValueError: if both channel and revision are specified.
         RevisionNotAvailableError: if the specified revision is not available.
         ChannelNotAvailableError: if the specified channel is not available.
+        ChangeError: if the refresh fails after starting (for example, a refresh hook errors).
         Error: (or a subtype) if the snap could not be refreshed for another reason.
     """
     if channel is not None and revision is not None:
@@ -260,6 +263,7 @@ def hold(snap: str, duration: datetime.timedelta | int | float | None = None) ->
 
     Raises:
         NotFoundError: If the snap is not installed.
+        ChangeError: If the hold change fails after starting.
     """
     # https://forum.snapcraft.io/t/snapd-rest-api/17954
     if duration is None:
@@ -284,6 +288,9 @@ def unhold(snap: str) -> None:
 
     Args:
         snap: The name of the snap to unhold.
+
+    Raises:
+        ChangeError: If the unhold change fails after starting.
     """
     # NOTE: Neither the API nor CLI error if the snap isn't installed or held.
     _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})
