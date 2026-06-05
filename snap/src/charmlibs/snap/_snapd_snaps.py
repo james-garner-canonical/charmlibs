@@ -170,6 +170,10 @@ def install(
 def remove(snap: str, *, purge: bool = False) -> bool:
     """Remove a snap.
 
+    Args:
+        snap: The name of the snap to remove.
+        purge: If True, remove the snap without saving a snapshot of its data.
+
     Returns:
         True if the snap was removed, False if it was not installed.
 
