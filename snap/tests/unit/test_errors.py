@@ -5,162 +5,100 @@
 
 from __future__ import annotations
 
-from charmlibs.snap._errors import (
-    APIError,
-    BadResponseError,
-    ChangeError,
-    ChannelNotAvailableError,
-    Error,
-    NeedsClassicError,
-    NotFoundError,
-    NotInstalledError,
-    OptionNotFoundError,
-    RevisionNotAvailableError,
-    _AlreadyInstalledError,
-    _error_type_from_result_kind,
-    _InterfacesUnchangedError,
-    _NoUpdatesAvailableError,
-)
+import builtins
+import inspect
+
+import pytest
+
+from charmlibs.snap import _errors
+
+# Error types in the module that are intentionally outside the snapd API error hierarchy.
+_NON_API_ERROR_TYPES = frozenset({
+    _errors.Error,
+    _errors.BadResponseError,
+    _errors.ConnectionError,
+    _errors.TimeoutError,
+})
+
+
+@pytest.fixture(scope='module')
+def error_types() -> frozenset[type[BaseException]]:
+    """Every class defined in the _errors module, including private types."""
+    return frozenset(
+        obj
+        for _, obj in inspect.getmembers(_errors, inspect.isclass)
+        if obj.__module__ == _errors.__name__
+    )
+
+
+class TestErrorHierarchy:
+    def test_all_error_types_subclass_error(self, error_types: frozenset[type[BaseException]]):
+        for cls in error_types:
+            assert issubclass(cls, _errors.Error)
+
+    def test_api_error_subclasses(self, error_types: frozenset[type[BaseException]]):
+        for cls in error_types - _NON_API_ERROR_TYPES:
+            assert issubclass(cls, _errors.APIError)
+
+    def test_non_api_error_subclasses(self):
+        for cls in _NON_API_ERROR_TYPES:
+            assert not issubclass(cls, _errors.APIError)
+
+    def test_timeout_and_connection_errors_subclass_builtins(self):
+        assert issubclass(_errors.TimeoutError, builtins.TimeoutError)
+        assert issubclass(_errors.ConnectionError, builtins.ConnectionError)
 
 
 class TestErrorTypeFromResultKind:
-    def test_snap_already_installed(self):
-        assert _error_type_from_result_kind('snap-already-installed') is _AlreadyInstalledError
-
-    def test_option_not_found(self):
-        assert _error_type_from_result_kind('option-not-found') is OptionNotFoundError
-
-    def test_snap_needs_classic(self):
-        assert _error_type_from_result_kind('snap-needs-classic') is NeedsClassicError
-
-    def test_snap_not_found(self):
-        assert _error_type_from_result_kind('snap-not-found') is NotFoundError
-
-    def test_snap_not_installed(self):
-        assert _error_type_from_result_kind('snap-not-installed') is NotInstalledError
-
-    def test_snap_no_update_available(self):
-        assert _error_type_from_result_kind('snap-no-update-available') is _NoUpdatesAvailableError
-
-    def test_interfaces_unchanged(self):
-        assert _error_type_from_result_kind('interfaces-unchanged') is _InterfacesUnchangedError
-
-    def test_snap_channel_not_available(self):
-        assert (
-            _error_type_from_result_kind('snap-channel-not-available') is ChannelNotAvailableError
-        )
-
-    def test_snap_revision_not_available(self):
-        assert (
-            _error_type_from_result_kind('snap-revision-not-available')
-            is RevisionNotAvailableError
-        )
-
-    def test_unknown_kind(self):
-        assert _error_type_from_result_kind('bogus-kind') is APIError
-
-    def test_empty_string(self):
-        assert _error_type_from_result_kind('') is APIError
-
-    def test_all_results_are_snap_api_error_subclasses(self):
-        kinds = [
-            'snap-already-installed',
-            'app-not-found',
-            'option-not-found',
-            'snap-channel-not-available',
-            'snap-needs-classic',
-            'snap-not-found',
-            'snap-not-installed',
-            'snap-no-update-available',
-            'snap-revision-not-available',
-            'interfaces-unchanged',
-            'bogus-kind',
-            '',
-        ]
-        for kind in kinds:
-            assert issubclass(_error_type_from_result_kind(kind), APIError), kind
+    @pytest.mark.parametrize(
+        ('kind', 'expected'),
+        [
+            ('snap-already-installed', _errors._AlreadyInstalledError),
+            ('app-not-found', _errors.AppNotFoundError),
+            ('option-not-found', _errors.OptionNotFoundError),
+            ('snap-channel-not-available', _errors.ChannelNotAvailableError),
+            ('snap-needs-classic', _errors.NeedsClassicError),
+            ('snap-not-found', _errors.NotFoundError),
+            ('snap-not-installed', _errors.NotInstalledError),
+            ('snap-no-update-available', _errors._NoUpdatesAvailableError),
+            ('snap-revision-not-available', _errors.RevisionNotAvailableError),
+            ('interfaces-unchanged', _errors._InterfacesUnchangedError),
+            ('bogus-kind', _errors.APIError),
+            ('', _errors.APIError),
+        ],
+    )
+    def test_error_type_from_result_kind(self, kind: str, expected: type[_errors.APIError]):
+        assert _errors._error_type_from_result_kind(kind) is expected
 
 
 class TestSnapError:
-    def _make(
-        self,
-        message: str = 'something went wrong',
-        kind: str = 'charmlibs-snap',
-        value: str = 'extra-info',
-        status_code: int | None = 400,
-        status: str | None = 'Bad Request',
-    ) -> Error:
-        return Error(
-            message=message,
-            kind=kind,
-            value=value,
-            status_code=status_code,
-            status=status,
+    def test_attributes(self):
+        err = _errors.Error(
+            'the message',
+            kind='the-kind',
+            value='the-value',
+            status_code=400,
+            status='Bad Request',
         )
-
-    def test_message(self):
-        err = self._make(message='the message')
         assert err.message == 'the message'
         assert str(err) == 'the message'
-
-    def test_kind(self):
-        err = self._make(kind='snap-not-found')
-        assert err.kind == 'snap-not-found'
-
-    def test_value(self):
-        err = self._make(value='myvalue')
-        assert err.value == 'myvalue'
-
-    def test_private_status(self):
-        err = self._make(status_code=400, status='Bad Request')
+        assert err.kind == 'the-kind'
+        assert err.value == 'the-value'
         assert err._status_code == 400
         assert err._status == 'Bad Request'
 
-    def test_none_status_code(self):
-        err = self._make(status_code=None, status=None)
-        assert err._status_code is None
-        assert err._status is None
-
     def test_repr(self):
-        err = self._make(message='msg', kind='k', value='v', status_code=400, status='Bad Request')
-        r = repr(err)
-        assert 'Error' in r
-        assert 'msg' in r
-        assert "'k'" in r
-        assert "'v'" in r
-        assert '400' in r
-        assert 'Bad Request' in r
-
-    def test_subclass_repr(self):
-        err = NotInstalledError(
-            'snap not installed',
-            kind='snap-not-installed',
-            value='',
-            status_code=404,
-            status='Not Found',
+        err = _errors.Error(
+            'my very unique error message',
+            kind='unique-kind',
+            value='unique-value',
+            status_code=400,
+            status='unique status string',
         )
-        assert 'NotInstalledError' in repr(err)
-
-    def test_snap_api_error_is_subclass_of_snap_error(self):
-        assert issubclass(APIError, Error)
-
-    def test_snap_bad_response_error_is_subclass(self):
-        assert issubclass(BadResponseError, Error)
-        assert not issubclass(BadResponseError, APIError)
-
-    def test_snap_change_error_is_subclass(self):
-        assert issubclass(ChangeError, APIError)
-        assert issubclass(ChangeError, Error)
-
-    def test_specific_errors_are_snap_api_error_subclasses(self):
-        for cls in [
-            _AlreadyInstalledError,
-            NotFoundError,
-            NotInstalledError,
-            NeedsClassicError,
-            OptionNotFoundError,
-            _NoUpdatesAvailableError,
-            _InterfacesUnchangedError,
-        ]:
-            assert issubclass(cls, APIError), cls
-            assert issubclass(cls, Error), cls
+        r = repr(err)
+        assert str(type(err).__name__) in r
+        assert 'my very unique error message' in r
+        assert "'unique-kind'" in r
+        assert "'unique-value'" in r
+        assert '400' in r
+        assert 'unique status string' in r
