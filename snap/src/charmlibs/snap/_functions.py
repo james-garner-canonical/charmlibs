@@ -20,6 +20,12 @@ from . import _snapd_snaps, _utils
 def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) -> bool:
     """Ensure the snap is installed at the specified revision.
 
+    Args:
+        snap: The name of the snap to install or update.
+        revision: The revision to ensure is installed, as an int or string.
+        classic: If ``True``, install the snap with classic confinement. Required for snaps
+            that use classic confinement.
+
     Returns:
         True if the snap was installed or updated, False otherwise.
 
@@ -27,6 +33,7 @@ def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) ->
         NotFoundError: If the snap does not exist in the store.
         RevisionNotAvailableError: If the revision does not exist.
         NeedsClassicError: If the snap requires ``classic=True``.
+        Error: (or a subtype) if the snap could not be installed or refreshed for another reason.
     """
     info = _snapd_snaps.info(snap, missing_ok=True)
     if info is None:  # Not installed.
@@ -52,6 +59,16 @@ def ensure(
     - If the snap is already installed on the specified channel (or installed at all if no
       channel is specified), it will be refreshed only if update = ``True`` (default).
 
+    Args:
+        snap: The name of the snap to install or update.
+        channel: The channel to track, for example ``latest/edge``. If ``None`` (default),
+            the snap is installed from ``latest/stable`` when not already installed, and an
+            already-installed snap's channel is left unchanged.
+        classic: If ``True``, install the snap with classic confinement. Required for snaps
+            that use classic confinement.
+        update: If ``True`` (default), refresh the snap when it is already installed on the
+            requested channel. If ``False``, leave an already-correct snap untouched.
+
     Returns:
         True if the snap was installed or updated, False otherwise.
 
@@ -59,6 +76,7 @@ def ensure(
         NotFoundError: If the snap does not exist in the store.
         NeedsClassicError: If the snap requires ``classic=True``.
         ChannelNotAvailableError: If the channel is invalid or unavailable.
+        Error: (or a subtype) if the snap could not be installed or refreshed for another reason.
     """
     info = _snapd_snaps.info(snap, missing_ok=True)
     if info is None:  # Not installed.

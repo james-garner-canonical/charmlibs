@@ -30,6 +30,16 @@ logger = logging.getLogger(__name__)
 def get(snap: str, /, *keys: str) -> dict[str, Any]:
     """Get snap configuration.
 
+    Args:
+        snap: The name of the snap to read configuration from.
+        keys: Configuration keys to read. Nested options may be accessed with dotted notation,
+            for example ``server.port``. If omitted, all top-level configuration is returned.
+
+    Returns:
+        A dict mapping each requested key to its configured value. When no keys are given,
+        the dict contains every top-level configuration option. A dotted key is returned as a
+        single entry keyed by the dotted string.
+
     Raises:
         OptionNotFoundError: if the snap is not installed, or if a requested key is not set.
     """
@@ -48,6 +58,14 @@ def _get_one(snap: str, key: str, /) -> Any:  # pyright: ignore[reportUnusedFunc
 def unset(snap: str, key: str, /, *keys: str) -> None:
     """Unset snap configuration keys.
 
+    Unsetting a key that is not currently set is a no-op and does not raise.
+
+    Args:
+        snap: The name of the snap to unset configuration on.
+        key: A configuration key to unset. Nested options may be addressed with dotted
+            notation, for example ``server.port``.
+        keys: Additional configuration keys to unset.
+
     Raises:
         NotFoundError: if the snap is not installed.
     """
@@ -65,6 +83,13 @@ def unset(snap: str, key: str, /, *keys: str) -> None:
 # Defined last to minimise the chance of meaningfully shadowing the built-in set type.
 def set(snap: str, config: dict[str, Any], /) -> None:  # noqa: A001 (shadowing a Python builtin)
     """Set snap configuration.
+
+    Args:
+        snap: The name of the snap to configure.
+        config: A mapping of configuration keys to values. Values may be any JSON-serialisable
+            type, including nested dicts and lists. Setting a key to ``None`` unsets it.
+            Nested options may be addressed with dotted keys, for example ``server.port``.
+            An empty mapping is accepted as a no-op.
 
     Raises:
         NotFoundError: if the snap is not installed.

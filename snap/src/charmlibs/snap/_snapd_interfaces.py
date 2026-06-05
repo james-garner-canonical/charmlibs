@@ -29,8 +29,18 @@ def connect(
 ) -> None:
     """Connect a snap and plug, to a target snap and slot.
 
+    Connecting an already-connected plug and slot succeeds silently.
+
+    Args:
+        plug_snap: The name of the snap providing the plug.
+        plug: The name of the plug on ``plug_snap``.
+        slot_snap: The name of the snap providing the slot. If omitted, snapd auto-resolves
+            the slot, typically to the system snap (``snapd`` or ``core``).
+        slot: The name of the slot on ``slot_snap``. If omitted, snapd auto-resolves it.
+
     Raises:
-        APIError: if the snap is not installed or the plug/slot is not found.
+        APIError: if the plug snap or slot snap is not installed, or the named plug or slot
+            does not exist. The error has an empty ``kind``; inspect ``message`` for details.
     """
     data = {
         'action': 'connect',
@@ -51,8 +61,29 @@ def disconnect(
 ) -> None:
     """Disconnect a plug from a slot.
 
+    May be called in two forms:
+
+    - ``(snap, plug_or_slot)`` disconnects everything connected to the named plug or slot
+      on ``snap``.
+    - ``(plug_snap, plug, slot_snap[, slot])`` disconnects the plug from the slot. ``slot``
+      may be omitted to disconnect the plug from any slot on ``slot_snap``.
+
+    Disconnecting a plug and slot that are not connected is a no-op and does not raise
+    (the underlying ``interfaces-unchanged`` error is suppressed, mirroring the snap CLI).
+
+    Args:
+        plug_or_slot_snap: The snap providing the plug (explicit form) or the snap providing
+            the plug or slot to disconnect (two-argument form).
+        plug_or_slot: The plug on ``plug_or_slot_snap`` (explicit form) or the plug or slot
+            name to disconnect (two-argument form).
+        slot_snap: The snap providing the slot. Omit for the two-argument form.
+        slot: The slot on ``slot_snap``. May be omitted to match any slot on ``slot_snap``.
+        forget: If ``True``, also forget any manual connection preference, so the interface
+            is not automatically reconnected on the next refresh.
+
     Raises:
-        APIError: if the snap is not installed or the plug/slot is not found.
+        APIError: if a named snap is not installed, or the named plug or slot does not exist.
+            The error has an empty ``kind``; inspect ``message`` for details.
     """
     data: dict[str, Any] = {'action': 'disconnect'}
     if slot_snap is None:

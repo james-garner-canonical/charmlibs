@@ -34,6 +34,11 @@ def alias(snap: str, app: str, alias_name: str) -> None:
     If the alias already exists for the same snap, this call succeeds silently,
     reassigning the alias to the new app if it differs.
 
+    Args:
+        snap: The name of the snap that owns the app.
+        app: The name of the app within the snap to alias.
+        alias_name: The alias (command name) to create for the app.
+
     Raises:
         NotInstalledError: if the snap is not installed.
         ChangeError: if the alias name is already claimed by a different snap,
@@ -46,6 +51,9 @@ def alias(snap: str, app: str, alias_name: str) -> None:
 
 def unalias(alias_name: str) -> None:
     """Remove an alias.
+
+    Args:
+        alias_name: The alias to remove.
 
     Raises:
         APIError: if the alias does not exist (e.g. was never created, or the snap it

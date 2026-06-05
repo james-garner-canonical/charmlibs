@@ -137,6 +137,15 @@ def install(
 ) -> bool:
     """Install a snap.
 
+    Args:
+        snap: The name of the snap to install.
+        channel: The channel to install from, for example ``latest/edge``. Mutually exclusive
+            with ``revision``. If neither is given, snapd installs from ``latest/stable``.
+        revision: The revision to install, as an int or string. Mutually exclusive with
+            ``channel``.
+        classic: If ``True``, install the snap with classic confinement. Required for snaps
+            that use classic confinement.
+
     Returns:
         True if the snap was installed, False if it was already installed.
 
@@ -205,6 +214,13 @@ def refresh(
 ) -> bool:
     """Refresh a snap.
 
+    Args:
+        snap: The name of the snap to refresh.
+        channel: The channel to refresh to, for example ``latest/edge``. Mutually exclusive
+            with ``revision``. If neither is given, the snap is refreshed on its current channel.
+        revision: The revision to refresh to, as an int or string. Mutually exclusive with
+            ``channel``.
+
     Returns:
         True if the snap was refreshed, False if no updates were available.
 
@@ -236,6 +252,12 @@ def hold(snap: str, duration: datetime.timedelta | int | float | None = None) ->
 
     Does not prevent manual refreshes.
 
+    Args:
+        snap: The name of the snap to hold.
+        duration: How long to hold automatic refreshes for, measured from now. May be a
+            :class:`datetime.timedelta`, or a number of seconds as an int or float. If ``None``
+            (default), the snap is held indefinitely.
+
     Raises:
         NotFoundError: If the snap is not installed.
     """
@@ -259,6 +281,9 @@ def unhold(snap: str) -> None:
     """Unhold a snap to allow it to be refreshed.
 
     Does not raise if the snap is not installed or not held.
+
+    Args:
+        snap: The name of the snap to unhold.
     """
     # NOTE: Neither the API nor CLI error if the snap isn't installed or held.
     _client.post(f'/v2/snaps/{snap}', body={'action': 'unhold'})

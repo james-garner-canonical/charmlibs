@@ -26,6 +26,12 @@ from . import _client
 def start(snap: str, *services: str, enable: bool = False) -> None:
     """Start snap services.
 
+    Args:
+        snap: The name of the snap whose services to start.
+        services: Names of services within the snap to start. If omitted, all of the snap's
+            services are started.
+        enable: If ``True``, also enable the services to start automatically at boot.
+
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
     """
@@ -39,6 +45,12 @@ def start(snap: str, *services: str, enable: bool = False) -> None:
 def stop(snap: str, *services: str, disable: bool = False) -> None:
     """Stop snap services.
 
+    Args:
+        snap: The name of the snap whose services to stop.
+        services: Names of services within the snap to stop. If omitted, all of the snap's
+            services are stopped.
+        disable: If ``True``, also disable the services from starting automatically at boot.
+
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
     """
@@ -51,6 +63,11 @@ def stop(snap: str, *services: str, disable: bool = False) -> None:
 
 def restart(snap: str, *services: str) -> None:
     """Restart snap services.
+
+    Args:
+        snap: The name of the snap whose services to restart.
+        services: Names of services within the snap to restart. If omitted, all of the snap's
+            services are restarted.
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
