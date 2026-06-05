@@ -206,7 +206,7 @@ This is also run as part of `just check`. The full docs site (all packages) is b
 
 When writing or editing docstrings in `__init__.py` or other public modules, remember they appear verbatim in the published reference at [documentation.ubuntu.com/charmlibs](https://documentation.ubuntu.com/charmlibs). Keep them informative for library users, not implementation notes.
 
-Don't use block quotes (`>`) for "Read more", "See also", or similar cross-reference sections. Instead, use bare text like `Read more: {ref}\`some-page\`` or, for multiple links, a comma-separated list or a bulleted list. For example:
+Don't use block quotes (`>`) for "Read more", "See also", or similar cross-reference sections. Instead, use bare text like `Read more: {ref}\`some-page\`` or, for two links, a comma-separated list or, for three or more links a bulleted list. For example:
 
 ```
 Read more: {ref}`how-to-customize-integration-tests`
