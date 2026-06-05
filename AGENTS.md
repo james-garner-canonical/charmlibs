@@ -222,95 +222,14 @@ This is also run as part of `just check`. The full docs site (all packages) is b
 
 When writing or editing docstrings in `__init__.py` or other public modules, remember they appear verbatim in the published reference at [documentation.ubuntu.com/charmlibs](https://documentation.ubuntu.com/charmlibs). Keep them informative for library users, not implementation notes.
 
-### Importing docs from Discourse
+### Migrating a library's docs
 
-Some charms keep their documentation on Discourse (discourse.charmhub.io). When migrating an interface library, you may want to bring that content into the library's `docs/` directory. There are two parts: **locating** the source topics (exploratory, done up front) and **migrating** them (a deterministic, disposable script).
+To bring an existing library's tutorials, how-to guides, and explanations into the monorepo, follow the **Migrate your library's docs** section of [How to migrate to the charmlibs monorepo](https://documentation.ubuntu.com/charmlibs/how-to/migrate/). In short:
 
-#### Locate the source topics
+- For Charmhub-hosted docs, download each Discourse topic with `uv run .scripts/import-discourse-docs.py <discourse-url> <output-file>`, choosing a diataxis category (and so an output path) for each.
+- Then edit the imported pages to fit charmlibs conventions, following [How to add docs to a library](https://documentation.ubuntu.com/charmlibs/how-to/add-library-docs/).
 
-This step is exploratory and can't be fully scripted:
-
-1. Start from the charm's Charmhub page, e.g. `https://charmhub.io/<charm>`.
-2. Follow the **"Help improve this document in the forum"** link at the bottom of the page — it points to the Discourse *root topic* for the charm's docs.
-3. The root topic contains a table of contents linking each child topic. Charmhub renders the charm's docs from this structure, so it usually already encodes a diataxis-like layout (tutorial / how-to / explanation / reference) that you can carry over.
-4. From the table of contents, build the `TOPICS` mapping used by the script below. Each topic's ID is the number in its Discourse URL (`https://discourse.charmhub.io/t/<slug>/<topic_id>`). Deciding each topic's diataxis category is the main judgment call.
-
-Not every charm is a candidate. Some use a Read the Docs / Sphinx site instead of Discourse — that content isn't available through the Discourse JSON API, but it's easier to migrate anyway: copy the doc site's source files into the library's `docs/` directory and adapt them.
-
-#### Migrate the topics
-
-Fill in `TOPICS`, run the script, then review the output. The mechanical steps — fetch JSON, extract the raw markdown, resolve `upload://` image links — are deterministic; the steps that need judgment (categorisation, post-import editing) are captured as comments rather than code.
-
-```python
-# /// script
-# requires-python = ">=3.12"
-# ///
-"""Import charm docs from Discourse into a library's docs/ directory.
-
-Disposable: fill in LIB and TOPICS, run, review the output, then delete this
-script and the downloaded JSON before merging.
-"""
-
-import json
-import pathlib
-import re
-import time
-import urllib.request
-
-# Target library path, relative to the repo root.
-LIB = pathlib.Path('interfaces/tls-certificates')
-
-# JUDGMENT STEP: read the root topic's table of contents and map each child
-# topic to its output file (which encodes the diataxis category) and title.
-# topic_id -> (path relative to <LIB>/docs/, page title)
-TOPICS: dict[int, tuple[str, str]] = {
-    15537: ('tutorial.md', 'Getting Started'),
-    15539: ('explanation/tls-certificates-interface.md', 'TLS Certificates Interface'),
-    # ...
-}
-
-DOCS_DIR = LIB / 'docs'
-JSON_DIR = DOCS_DIR / 'discourse-json'  # cache; delete after import
-
-
-def fetch(topic_id: int) -> dict:
-    """Download a Discourse topic as JSON, caching it under JSON_DIR."""
-    url = f'https://discourse.charmhub.io/t/{topic_id}.json?include_raw=true'
-    data = json.loads(urllib.request.urlopen(url, timeout=30).read())
-    JSON_DIR.mkdir(parents=True, exist_ok=True)
-    (JSON_DIR / f'{topic_id}.json').write_text(json.dumps(data))
-    time.sleep(2)  # rate-limit: be nice to Discourse
-    return data
-
-
-def resolve_images(raw: str, cooked: str) -> str:
-    """Rewrite upload:// shortcodes to real URLs using the cooked HTML."""
-    uploads = re.findall(r'upload://[^\s)]+', raw)
-    img_urls = re.findall(r'<img[^>]+src=["\']([^"\'\s]+)', cooked)
-    for upload, url in zip(uploads, img_urls):  # matched positionally
-        raw = raw.replace(upload, url)
-    # Strip Discourse's |WIDTHxHEIGHT suffix from image alt text.
-    return re.sub(r'!\[([^\]]*?)\|\d+x\d+\]', r'![\1]', raw)
-
-
-def main() -> None:
-    for topic_id, (rel_path, _title) in TOPICS.items():
-        post = fetch(topic_id)['post_stream']['posts'][0]
-        markdown = resolve_images(post['raw'], post['cooked'])
-        out = DOCS_DIR / rel_path
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(markdown)
-
-    # MANUAL STEP: review and edit the imported markdown to fit charmlibs
-    # conventions (add H1 titles and meta descriptions, fix cross-references,
-    # confirm diataxis categorisation), then delete this script and JSON_DIR.
-
-
-if __name__ == '__main__':
-    main()
-```
-
-After running, do the manual review noted at the end of the script, then delete the script and the downloaded JSON before merging.
+There is no `reference` docs category — reference docs are generated from docstrings.
 
 ## Common pitfalls
 
