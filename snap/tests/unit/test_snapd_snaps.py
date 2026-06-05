@@ -36,21 +36,18 @@ def _make_snap_not_found():
     )
 
 
-def _minimal_info_dict(**overrides: Any) -> dict[str, Any]:
-    base: dict[str, Any] = {
-        'name': 'hello-world',
-        'version': '6.4',
-        'channel': 'latest/stable',
-        'revision': '29',
-        'confinement': 'strict',
-    }
-    base.update(overrides)
-    return base
+_MINIMAL_INFO_DICT: dict[str, Any] = {
+    'name': 'hello-world',
+    'version': '6.4',
+    'channel': 'latest/stable',
+    'revision': '29',
+    'confinement': 'strict',
+}
 
 
 class TestInfoFromDict:
     def test_basic_fields(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict())
+        info = _snapd.Info._from_dict(_MINIMAL_INFO_DICT)
         assert info.name == 'hello-world'
         assert info.version == '6.4'
         assert info.channel == 'latest/stable'
@@ -58,25 +55,17 @@ class TestInfoFromDict:
         assert info.classic is False
         assert info.hold is None
 
-    def test_revision_is_str(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict(revision='29'))
-        assert isinstance(info.revision, str)
-        assert info.revision == '29'
-
     def test_local_revision(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict(revision='x1'))
+        info = _snapd.Info._from_dict({**_MINIMAL_INFO_DICT, 'revision': 'x1'})
         assert info.revision == 'x1'
 
-    def test_strict_not_classic(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict(confinement='strict'))
+    @pytest.mark.parametrize('confinement', ['strict', 'devmode'])
+    def test_non_classic_confinement(self, confinement: str):
+        info = _snapd.Info._from_dict({**_MINIMAL_INFO_DICT, 'confinement': confinement})
         assert info.classic is False
 
-    def test_devmode_not_classic(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict(confinement='devmode'))
-        assert info.classic is False
-
-    def test_classic(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict(confinement='classic'))
+    def test_classic_confinement(self):
+        info = _snapd.Info._from_dict({**_MINIMAL_INFO_DICT, 'confinement': 'classic'})
         assert info.classic is True
 
     def test_hold_present(self):
@@ -84,21 +73,17 @@ class TestInfoFromDict:
         assert info.hold is not None
         assert info.hold.year == 2318
 
-    def test_hold_absent(self):
-        info = _snapd.Info._from_dict(_minimal_info_dict())
-        assert info.hold is None
-
     def test_extra_fields_ignored(self):
-        d = _minimal_info_dict()
-        d.update({
+        info_dict: dict[str, Any] = {
+            **_MINIMAL_INFO_DICT,
             'tracking-channel': 'latest/stable',
             'type': 'app',
             'devmode': False,
             'jailmode': False,
             'enabled': True,
             'status': 'active',
-        })
-        info = _snapd.Info._from_dict(d)
+        }
+        info = _snapd.Info._from_dict(info_dict)
         assert info.name == 'hello-world'
 
 
@@ -150,20 +135,16 @@ class TestInstall:
         )
         assert result is True
 
-    def test_install_channel(self, mock_client: MockClient):
-        _snapd.install('hello-world', channel='edge')
+    def test_install_passes_channel_and_classic(self, mock_client: MockClient):
+        _snapd.install('hello-world', channel='edge', classic=True)
         body = mock_client.post.call_args.kwargs['body']
         assert body['channel'] == 'edge'
+        assert body['classic'] is True
 
     def test_install_revision(self, mock_client: MockClient):
         _snapd.install('hello-world', revision=5)
         body = mock_client.post.call_args.kwargs['body']
         assert body['revision'] == '5'  # sent as string per snapd API convention
-
-    def test_install_classic(self, mock_client: MockClient):
-        _snapd.install('hello-world', classic=True)
-        body = mock_client.post.call_args.kwargs['body']
-        assert body['classic'] is True
 
     def test_install_both_raises(self, mock_client: MockClient):
         with pytest.raises(ValueError):
@@ -189,10 +170,10 @@ class TestRemove:
         body = mock_client.post.call_args.kwargs['body']
         assert body['purge'] is True
 
-    def test_remove_not_installed_returns_false(self, mock_client: MockClient):
+    @pytest.mark.parametrize('purge', [False, True])
+    def test_remove_not_installed_returns_false(self, mock_client: MockClient, purge: bool):
         mock_client.post.side_effect = NotInstalledError('', kind='snap-not-installed', value='')
-        result = _snapd.remove('hello-world')
-        assert result is False
+        assert _snapd.remove('hello-world', purge=purge) is False
 
 
 class TestRefresh:
@@ -233,36 +214,21 @@ class TestHold:
     def mock_info(self, mocker: MockerFixture):
         mocker.patch('charmlibs.snap._snapd_snaps.info')
 
-    def test_hold_forever(self, mock_client: MockClient):
-        _snapd.hold('hello-world')
-        body = mock_client.post.call_args.kwargs['body']
-        assert body['time'] == 'forever'
-
-    def test_hold_action_level(self, mock_client: MockClient):
+    def test_hold_forever_by_default(self, mock_client: MockClient):
         _snapd.hold('hello-world')
         body = mock_client.post.call_args.kwargs['body']
         assert body['action'] == 'hold'
         assert body['hold-level'] == 'general'
+        assert body['time'] == 'forever'
 
-    def test_hold_timedelta(self, mock_client: MockClient):
+    @pytest.mark.parametrize('duration', [datetime.timedelta(days=2), 172800, 172800.0])
+    def test_hold_duration(
+        self, mock_client: MockClient, duration: datetime.timedelta | int | float
+    ):
         before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=datetime.timedelta(days=2))
+        _snapd.hold('hello-world', duration=duration)  # each value expresses 2 days
         body = mock_client.post.call_args.kwargs['body']
         assert body['time'] != 'forever'
-        hold_time = datetime.datetime.fromisoformat(body['time'])
-        assert hold_time > before + datetime.timedelta(days=1)
-
-    def test_hold_int_seconds(self, mock_client: MockClient):
-        before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=172800)  # 2 days in seconds
-        body = mock_client.post.call_args.kwargs['body']
-        hold_time = datetime.datetime.fromisoformat(body['time'])
-        assert hold_time > before + datetime.timedelta(days=1)
-
-    def test_hold_float_seconds(self, mock_client: MockClient):
-        before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=172800.0)
-        body = mock_client.post.call_args.kwargs['body']
         hold_time = datetime.datetime.fromisoformat(body['time'])
         assert hold_time > before + datetime.timedelta(days=1)
 
@@ -283,44 +249,22 @@ class TestUnhold:
 
 
 class TestListSnaps:
-    def test_list_snaps_returns_info_objects(self, mock_client: MockClient):
+    def test_list_snaps(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('snaps_list.json')
         snaps = _snapd._list_snaps()
-        assert len(snaps) == 2
-        assert all(isinstance(s, _snapd.Info) for s in snaps)
         mock_client.get.assert_called_once_with('/v2/snaps')
-
-    def test_list_snaps_names(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('snaps_list.json')
-        snaps = _snapd._list_snaps()
+        assert all(isinstance(s, _snapd.Info) for s in snaps)
         assert {s.name for s in snaps} == {'hello-world', 'kube-proxy'}
 
 
 class TestListChannels:
-    def test_list_channels_returns_info_per_channel(self, mock_client: MockClient):
+    def test_list_channels(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('find_hello_world.json')
         channels = _snapd._list_channels('hello-world')
+        mock_client.get.assert_called_once_with('/v2/find', query={'name': 'hello-world'})
         assert set(channels) == {'latest/stable', 'latest/candidate', 'latest/beta', 'latest/edge'}
         assert all(isinstance(v, _snapd.Info) for v in channels.values())
-        mock_client.get.assert_called_once_with('/v2/find', query={'name': 'hello-world'})
-
-    def test_list_channels_info_fields(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('find_hello_world.json')
-        channels = _snapd._list_channels('hello-world')
         info = channels['latest/stable']
         assert info.name == 'hello-world'
         assert info.revision == '29'
         assert info.classic is False
-
-
-class TestRemoveAdditionalCases:
-    def test_remove_purge_not_installed_returns_false(self, mock_client: MockClient):
-        mock_client.post.side_effect = NotInstalledError(
-            'snap "hello-world" is not installed',
-            kind='snap-not-installed',
-            value='hello-world',
-            status_code=404,
-            status='Not Found',
-        )
-        result = _snapd.remove('hello-world', purge=True)
-        assert result is False
