@@ -31,11 +31,11 @@ see the "Migrate your library's docs" section of the migration how-to guide:
 https://documentation.ubuntu.com/charmlibs/how-to/migrate/
 
 Usage:
-    uv run .scripts/import-discourse-docs.py <discourse-url> <output-file>
+    .scripts/import_discourse_docs.py <discourse-url> <output-file>
 
 For example:
-    uv run .scripts/import-discourse-docs.py \\
-        https://discourse.charmhub.io/t/tls-certificates-interface/15539 \\
+    .scripts/import_discourse_docs.py \
+        https://discourse.charmhub.io/t/tls-certificates-interface/15539 \
         interfaces/tls-certificates/docs/explanation/tls-certificates-interface.md
 """
 

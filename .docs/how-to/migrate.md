@@ -289,13 +289,13 @@ Some charms host their docs on a Read the Docs / Sphinx site instead of Discours
 Download each Discourse topic into your library's `docs/` directory:
 
 ```bash
-uv run .scripts/import-discourse-docs.py <discourse-url> <library path>/docs/<category>/<page>.md
+.scripts/import_discourse_docs.py <discourse-url> <library path>/docs/<category>/<page>.md
 ```
 
 For example:
 
 ```bash
-uv run .scripts/import-discourse-docs.py \
+.scripts/import_discourse_docs.py \
     https://discourse.charmhub.io/t/tls-certificates-interface/15539 \
     interfaces/tls-certificates/docs/explanation/tls-certificates-interface.md
 ```

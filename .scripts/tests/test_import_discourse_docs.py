@@ -14,7 +14,7 @@
 
 # ruff: noqa: D103 (function docstrings)
 
-"""Unit tests for the import-discourse-docs script."""
+"""Unit tests for the import_discourse_docs script."""
 
 import pathlib
 
@@ -85,7 +85,7 @@ def test_main_writes_resolved_markdown(tmp_path: pathlib.Path, monkeypatch: pyte
     monkeypatch.setattr(ids, '_fetch', fake_fetch)
     monkeypatch.setattr(
         'sys.argv',
-        ['import-discourse-docs.py', 'https://discourse.charmhub.io/t/slug/15539', str(out)],
+        ['import_discourse_docs.py', 'https://discourse.charmhub.io/t/slug/15539', str(out)],
     )
 
     ids.main()
