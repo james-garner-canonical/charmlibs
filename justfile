@@ -92,61 +92,18 @@ static package *args:
         pyright --pythonversion='{{python}}' "${@}"
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
-unit package +flags='-rA': (_coverage package 'unit' flags)
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+unit *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/unit.py' --python='{{ python }}' "$@"
 
 [doc("Run functional tests with `coverage`, e.g. `just python=3.10 functional pathops`.")]
-[positional-arguments]  # pass recipe args to recipe script positionally to enable correct quoting when forwarding variadic args
-functional package +flags='-rA':
-    #!/usr/bin/env -S bash -xueo pipefail
-    shift 1  # drop $1 (package) from $@ it's just +flags
-    cd '{{package}}'
-    if [ -e tests/functional/setup.sh ]; then
-        source ./tests/functional/setup.sh
-    fi
-    set +e  # don't exit if the tests fail
-    just --justfile='{{justfile()}}' python='{{python}}' _coverage '{{package}}' functional "${@}"
-    EXITCODE=$?
-    set -e  # do exit if anything goes wrong now
-    if [ -e tests/functional/teardown.sh ]; then
-        source ./tests/functional/teardown.sh
-    fi
-    exit $EXITCODE
-
-[doc("Use uv to install and run coverage for the specified package's tests.")]
-_coverage package test_suite +flags:
-    #!/usr/bin/env -S bash -xueo pipefail
-    cd '{{package}}'
-    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
-    export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
-    DATA_FILE=".report/coverage-$(basename {{test_suite}})-{{python}}.db"
-    {{_uv_run_with_test_requirements}} $LOCKED --group {{test_suite}} \
-        coverage run --data-file="$DATA_FILE" --source='src' \
-        -m pytest --tb=native -vv {{flags}} 'tests/{{test_suite}}'
-    {{_uv_run_with_test_requirements}} $LOCKED --group {{test_suite}} \
-        coverage report --data-file="$DATA_FILE"
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+functional *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/functional.py' --python='{{ python }}' "$@"
 
 [doc("Combine `coverage` reports, e.g. `just python=3.10 combine-coverage pathops`.")]
 combine-coverage package:
-    #!/usr/bin/env -S bash -xueo pipefail
-    : 'Collect the coverage data files that exist for this package.'
-    cd '{{package}}'
-    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
-    data_files=()
-    for test_id in unit functional juju; do
-        data_file=".report/coverage-$test_id-{{python}}.db"
-        if [ -e "$data_file" ]; then
-            data_files+=("$data_file")
-        fi
-    done
-    : 'Combine coverage.'
-    export COVERAGE_RCFILE='{{justfile_directory()}}/pyproject.toml'
-    DATA_FILE='.report/coverage-all-{{python}}.db'
-    HTML_DIR='.report/htmlcov-all-{{python}}'
-    {{_uv_run_with_test_requirements}} $LOCKED coverage combine --keep --data-file="$DATA_FILE" "${data_files[@]}"
-    {{_uv_run_with_test_requirements}} $LOCKED coverage xml --data-file="$DATA_FILE" -o '.report/coverage-all-{{python}}.xml'
-    rm -rf "$HTML_DIR"  # let coverage create html directory from scratch
-    {{_uv_run_with_test_requirements}} $LOCKED coverage html --data-file="$DATA_FILE" --show-contexts --directory="$HTML_DIR"
-    {{_uv_run_with_test_requirements}} $LOCKED coverage report --data-file="$DATA_FILE"
+    @'{{ justfile_dir() }}/.scripts/recipes/combine_coverage.py' --python='{{ python }}' '{{ package }}'
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
 pack-k8s package *args: (_pack package 'k8s' args)
