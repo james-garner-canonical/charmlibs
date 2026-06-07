@@ -19,19 +19,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Coverage logic shared by the `unit`, `functional`, and `combine-coverage` recipes.
+"""Run a package's test suite under coverage.
 
-`run_coverage` and `combine` are imported by the sibling recipe scripts. This module is also
-runnable directly (`_coverage.py <package> <suite> [pytest args...]`): the `functional` recipe
-invokes it that way so the coverage run happens inside the shell that has sourced the package's
-`setup.sh`/`teardown.sh` (see `functional.py`).
+`run_coverage` is imported by `unit.py`. This module is also runnable directly
+(`_coverage.py <package> <suite> [pytest args...]`): the `functional` recipe invokes it that way
+via `_functional.sh`, so the coverage run happens inside the shell that has sourced the package's
+`setup.sh`/`teardown.sh`. See `README.md`.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
-import shutil
 import sys
 from typing import TYPE_CHECKING
 
@@ -77,74 +76,14 @@ def run_coverage(package: str, suite: str, python: str, pytest_args: Sequence[st
     )
 
 
-def combine(package: str, python: str) -> None:
-    """Combine the unit/functional/juju coverage data files into a single report.
-
-    Produces a combined `.db`, an XML report, and a freshly rebuilt HTML report, then prints the
-    terminal report. Any step failing aborts the process (as `set -e` did before).
-    """
-    package_dir = _common.REPO_ROOT / package
-    data_files = [
-        f
-        for f in (
-            f'.report/coverage-{test_id}-{python}.db' for test_id in ('unit', 'functional', 'juju')
-        )
-        if (package_dir / f).exists()
-    ]
-    env = {**os.environ, 'COVERAGE_RCFILE': str(_common.COVERAGE_RCFILE)}
-    prefix = _common.uv_run_prefix(package_dir, python)
-    data_file = f'.report/coverage-all-{python}.db'
-    html_dir = f'.report/htmlcov-all-{python}'
-    _common.run(
-        [*prefix, 'coverage', 'combine', '--keep', f'--data-file={data_file}', *data_files],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-    _common.run(
-        [
-            *prefix,
-            'coverage',
-            'xml',
-            f'--data-file={data_file}',
-            '-o',
-            f'.report/coverage-all-{python}.xml',
-        ],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-    shutil.rmtree(
-        package_dir / html_dir, ignore_errors=True
-    )  # let coverage create it from scratch
-    _common.run(
-        [
-            *prefix,
-            'coverage',
-            'html',
-            f'--data-file={data_file}',
-            '--show-contexts',
-            f'--directory={html_dir}',
-        ],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-    _common.run(
-        [*prefix, 'coverage', 'report', f'--data-file={data_file}'],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-
-
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default='3.10')
+    parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     parser.add_argument('suite', help='Test suite name, e.g. `unit` or `functional`.')
     args, pytest_args = parser.parse_known_args()
-    sys.exit(run_coverage(args.package, args.suite, args.python, pytest_args or ['-rA']))
+    python = _common.resolve_python(args.package, args.python)
+    sys.exit(run_coverage(args.package, args.suite, python, pytest_args or ['-rA']))
 
 
 if __name__ == '__main__':

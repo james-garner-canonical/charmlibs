@@ -16,13 +16,12 @@
 
 Stdlib-only by design. These helpers are imported by sibling PEP 723 scripts (e.g. `unit.py`),
 which each declare their own third-party dependencies. Keeping this module dependency-free means
-the sibling import works without any package/lockfile machinery. See `thin-justfile-notes.md`.
+the sibling import works without any package/lockfile machinery. See `README.md`.
 """
 
 from __future__ import annotations
 
 import pathlib
-import shlex
 import subprocess
 import sys
 from typing import TYPE_CHECKING
@@ -34,6 +33,17 @@ if TYPE_CHECKING:
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
 COVERAGE_RCFILE = REPO_ROOT / 'pyproject.toml'
+DEFAULT_PYTHON = '3.10'
+
+
+def resolve_python(package: str, python: str | None) -> str:
+    """Return the Python version to test `package` with.
+
+    For now this is the explicitly requested `python`, falling back to `DEFAULT_PYTHON`. The
+    `package` is accepted (and will be used) for a planned change: defaulting to the package's own
+    minimum supported version, read from its `pyproject.toml` `requires-python`. See `README.md`.
+    """
+    return python or DEFAULT_PYTHON
 
 
 def uv_run_prefix(
@@ -62,11 +72,11 @@ def run(
 ) -> int:
     """Echo and run a command, returning its exit code.
 
-    The echoed line is `shlex.quote`d so it can be copy-pasted, matching the visibility that
-    `set -x` gave the old bash recipes. When `check` is true, exit this process with the
-    command's exit code on failure (mirroring `set -e`).
+    The command is echoed (to stderr) as the list of its arguments, so argument boundaries are
+    unambiguous. When `check` is true, exit this process with the command's exit code on failure
+    (mirroring the old recipes' `set -e`).
     """
-    print('+', shlex.join(str(part) for part in cmd), file=sys.stderr, flush=True)
+    print([str(part) for part in cmd], file=sys.stderr, flush=True)
     returncode = subprocess.call(cmd, cwd=cwd, env=env)
     if check and returncode != 0:
         sys.exit(returncode)
