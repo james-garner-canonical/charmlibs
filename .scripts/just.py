@@ -161,7 +161,7 @@ def check(argv: list[str]) -> int:
     """`lint`, `unit` test, and build the `docs` for a package."""
     args = _package_parser(check.__doc__).parse_args(argv)
     python = _resolve_python(args.package, args.python)
-    if (failures := lint([args.package, '--python', python])):
+    if failures := lint([args.package, '--python', python]):
         sys.exit(failures)
     for cmd in _coverage_cmds(args.package, 'unit', python, ['-rA']):
         _run(cmd, cwd=REPO_ROOT / args.package, env=_coverage_env())
@@ -232,16 +232,11 @@ def _fast_lint(path: str) -> int:
 
 def _static(package: str, python: str, pyright_args: Sequence[str]) -> int:
     """Run `pyright` for a package against the given Python version, returning its exit code."""
-    return _uv_run(
-        [
-            *('--with', 'pytest-interface-tester'),
-            *('pyright', f'--pythonversion={python}', *pyright_args),
-        ],
-        pkg_dir=REPO_ROOT / package,
-        python=python,
-        groups=['lint', 'unit', 'functional', 'integration'],
-        check=False,
-    )
+    pkg_dir = REPO_ROOT / package
+    cmd = ['--with', 'pytest-interface-tester'] if pkg_dir.parent.name == 'interfaces' else []
+    cmd.extend(['pyright', f'--pythonversion={python}', *pyright_args])
+    groups=['lint', 'unit', 'functional', 'integration']
+    return _uv_run(cmd, pkg_dir=pkg_dir, python=python, groups=groups, check=False)
 
 
 # --- Coverage recipes ---------------------------------------------------------------------------
@@ -308,7 +303,7 @@ def combine_coverage(argv: list[str]) -> int:
     env = _coverage_env()
     data_files = [
         f
-        for test_id in ('unit', 'functional', 'juju')
+        for test_id in ('unit', 'functional')
         if (pkg_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
     ]
 
@@ -465,7 +460,7 @@ def _resolve_python(package: str, python: str | None) -> str:
 def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
     """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
     pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
-    requires_python = pyproject_toml.get('project', {})['requires-python']
+    requires_python = pyproject_toml['project']['requires-python']
     regex = (
         r'(?:>=|~=)'  # a `>=` or `~=` operator: the ones that set a lower bound
         r'\s*'  # optional whitespace between the operator and the version
