@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=all
 
-VENV=".sphinx/venv/bin/activate"
+VENV="_dev/venv/bin/activate"
 
 files=0
 words=0

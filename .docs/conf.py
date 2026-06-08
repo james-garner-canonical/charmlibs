@@ -71,8 +71,8 @@ html_context = {
     },
 }
 # Template and asset locations
-html_static_path = [".sphinx/_static"]
-templates_path = [".sphinx/_templates"]
+html_static_path = ["_dev/_static"]
+templates_path = ["_dev/_templates"]
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
 html_baseurl = 'https://documentation.ubuntu.com/charmlibs/'
@@ -147,7 +147,7 @@ linkcheck_retries = 3
 #       extensions that were previously auto-enabled by canonical-sphinx[full];
 #       only myst_parser is still activated automatically. Every other extension
 #       must now be declared explicitly below (and installed via
-#       .sphinx/requirements.txt).
+#       _dev/requirements.txt).
 extensions = [
     "canonical_sphinx",
     # Previously auto-enabled by canonical-sphinx[full]
