@@ -74,18 +74,13 @@ vale *paths: (_vale '.Level=="error" and .Name!="Canonical.500-Repeated-words" a
 [doc('Check for non-inclusive language with Vale.')]
 woke *paths: (_vale '.Name=="Canonical.400-Enforce-inclusive-terms"' paths)
 
-[doc('Download the Canonical Vale style guide (styles + vale.ini) unless already present.')]
-_vale-conf:
+# Run Vale over the tracked .md/.rst files (or those matching the given pathspecs), applying
+# the custom wordlist and the given filter. Downloads the Canonical Vale style guide (styles +
+# vale.ini) if needed. Generated reference docs are untracked, so they are excluded automatically.
+_vale filter *paths:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -f _dev/vale.ini ] || python3 _dev/get_vale_conf.py
-
-# Run Vale over the tracked .md/.rst files (or those matching the given pathspecs), applying
-# the custom wordlist and the given filter. Generated reference docs are untracked, so they
-# are excluded automatically.
-_vale filter *paths: _vale-conf
-    #!/usr/bin/env bash
-    set -euo pipefail
     accept='_dev/styles/config/vocabularies/Canonical/accept.txt'
     cp "$accept" "$accept.bak"
     trap 'mv "$accept.bak" "$accept"' EXIT
