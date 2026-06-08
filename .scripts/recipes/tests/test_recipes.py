@@ -24,9 +24,15 @@ import sys
 
 import _common
 import _coverage
+import add
 import combine_coverage
+import fast_lint
 import functional
+import integration
+import lint
+import pack
 import pytest
+import static
 
 # --- _common.uv_run_prefix ---------------------------------------------------------------------
 
@@ -163,4 +169,166 @@ def test_functional_runs_coverage_through_wrapper(monkeypatch):
     assert cmd[cmd.index('--python') + 1] == '3.12'
     assert '-k' in cmd
     assert 'foo' in cmd
+    assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
+
+
+# --- fast_lint.fast_lint -----------------------------------------------------------------------
+
+
+def _run_returning(codes):
+    """Build a fake `_common.run` that returns the given exit codes in order, recording calls."""
+    calls = []
+    iterator = iter(codes)
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        calls.append(list(cmd))
+        return next(iterator)
+
+    return fake_run, calls
+
+
+def test_fast_lint_counts_check_and_format_failures(monkeypatch):
+    # ruff check, ruff check --diff, ruff format --diff -> only check and format count.
+    fake_run, calls = _run_returning([1, 0, 1])
+    monkeypatch.setattr(_common, 'run', fake_run)
+    assert fast_lint.fast_lint('pathops') == 2
+    assert len(calls) == 3
+    assert calls[0][-2:] == ['check', 'pathops']
+    assert calls[1][-3:] == ['check', '--diff', 'pathops']
+    assert calls[2][-3:] == ['format', '--diff', 'pathops']
+
+
+def test_fast_lint_ignores_check_diff_exit_code(monkeypatch):
+    # A non-zero `ruff check --diff` (the informational diff) must not count as a failure.
+    fake_run, _calls = _run_returning([0, 1, 0])
+    monkeypatch.setattr(_common, 'run', fake_run)
+    assert fast_lint.fast_lint('pathops') == 0
+
+
+# --- static.static -----------------------------------------------------------------------------
+
+
+def test_static_builds_pyright_command(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        return 0
+
+    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
+    monkeypatch.setattr(_common, 'run', fake_run)
+    assert static.static('pathops', '3.11', ['--verifytypes']) == 0
+    cmd = captured['cmd']
+    assert cmd[0] == 'PREFIX'
+    assert cmd[cmd.index('--with') + 1] == 'pytest-interface-tester'
+    assert 'pyright' in cmd
+    assert '--pythonversion=3.11' in cmd
+    assert cmd[-1] == '--verifytypes'
+    assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
+
+
+def test_static_requests_all_dependency_groups(monkeypatch):
+    captured = {}
+
+    def fake_prefix(package_dir, python, *, groups=()):
+        captured['groups'] = list(groups)
+        return ['PREFIX']
+
+    monkeypatch.setattr(_common, 'uv_run_prefix', fake_prefix)
+    monkeypatch.setattr(_common, 'run', lambda *a, **k: 0)
+    static.static('pathops', '3.10', [])
+    assert captured['groups'] == ['lint', 'unit', 'functional', 'integration']
+
+
+# --- lint._main --------------------------------------------------------------------------------
+
+
+def test_lint_sums_fast_lint_and_static_failures(monkeypatch):
+    monkeypatch.setattr(fast_lint, 'fast_lint', lambda package: 2)
+    monkeypatch.setattr(static, 'static', lambda package, python, args: 1)
+    monkeypatch.setattr(sys, 'argv', ['lint.py', '--python', '3.10', 'pathops'])
+    with pytest.raises(SystemExit) as exc_info:
+        lint._main()
+    assert exc_info.value.code == 3  # 2 from fast_lint + 1 because static failed
+
+
+def test_lint_passes_when_both_succeed(monkeypatch):
+    monkeypatch.setattr(fast_lint, 'fast_lint', lambda package: 0)
+    monkeypatch.setattr(static, 'static', lambda package, python, args: 0)
+    monkeypatch.setattr(sys, 'argv', ['lint.py', 'pathops'])
+    with pytest.raises(SystemExit) as exc_info:
+        lint._main()
+    assert exc_info.value.code == 0
+
+
+# --- add._main ---------------------------------------------------------------------------------
+
+
+def test_add_runs_uv_add_with_constraints(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['add.py', 'pathops', 'pydantic>=2'])
+    with pytest.raises(SystemExit) as exc_info:
+        add._main()
+    assert exc_info.value.code == 0
+    cmd = captured['cmd']
+    assert cmd[:2] == ['uv', 'add']
+    assert cmd[cmd.index('--constraints') + 1] == str(_common.TEST_REQUIREMENTS)
+    assert cmd[-1] == 'pydantic>=2'
+    assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
+
+
+# --- pack._main --------------------------------------------------------------------------------
+
+
+def test_pack_runs_pack_script_with_substrate_env(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        captured['env'] = env
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['pack.py', '--substrate=k8s', '--tag=24.04', 'pathops'])
+    with pytest.raises(SystemExit) as exc_info:
+        pack._main()
+    assert exc_info.value.code == 0
+    assert captured['cmd'] == ['./pack.sh']
+    assert captured['cwd'] == _common.REPO_ROOT / 'pathops' / 'tests' / 'integration'
+    assert captured['env']['CHARMLIBS_SUBSTRATE'] == 'k8s'
+    assert captured['env']['CHARMLIBS_TAG'] == '24.04'
+
+
+# --- integration._main -------------------------------------------------------------------------
+
+
+def test_integration_selects_marker_for_substrate(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        captured['env'] = env
+        return 0
+
+    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['integration.py', '--substrate=machine', 'pathops', '-x'])
+    with pytest.raises(SystemExit) as exc_info:
+        integration._main()
+    assert exc_info.value.code == 0
+    cmd = captured['cmd']
+    assert cmd[cmd.index('-m') + 1] == 'not k8s_only'
+    assert 'tests/integration' in cmd
+    assert cmd[-1] == '-x'  # forwarded pytest arg comes after tests/integration
+    assert captured['env']['CHARMLIBS_SUBSTRATE'] == 'machine'
     assert captured['cwd'] == _common.REPO_ROOT / 'pathops'

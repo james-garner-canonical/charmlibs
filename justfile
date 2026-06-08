@@ -44,52 +44,29 @@ init *args:
 
 [doc('Run `ruff`, failing afterwards if any errors are found.')]
 fast-lint path='.':
-    #!/usr/bin/env -S bash -xueo pipefail
-    FAILURES=0
-    uv run --only-group=fast-lint ruff check '{{path}}' || ((FAILURES+=1))
-    uv run --only-group=fast-lint ruff check --diff '{{path}}' || : 'Printed diff of changes to fix `ruff check` issues.'
-    uv run --only-group=fast-lint ruff format --diff '{{path}}' || ((FAILURES+=1))
-    : "$FAILURES command(s) failed."
-    exit $FAILURES
+    @'{{ justfile_dir() }}/.scripts/recipes/fast_lint.py' '{{ path }}'
 
 [doc('`lint`, `unit` test, and build the `docs` for a package.')]
 check package: (lint package) (unit package) (docs::html package)
 
 [doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
 format package='.':
-    uv run --only-group=fast-lint ruff format '{{package}}'
-    uv run --only-group=fast-lint ruff check --fix '{{package}}'
+    @'{{ justfile_dir() }}/.scripts/recipes/format.py' '{{ package }}'
 
 [doc("Run `uv add` for package, respecting repo-level version constraints, e.g. `just add pathops 'pydantic>=2'`.")]
-[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
 add package +args:
-    #!/usr/bin/env -S bash -xueo pipefail
-    shift 1  # drop $1 (package) from $@ it's just +args
-    cd '{{package}}'
-    uv add --constraints {{quote(join(justfile_dir(), 'test-requirements.txt'))}} "${@}"
+    @'{{ justfile_dir() }}/.scripts/recipes/add.py' "$@"
 
 [doc('Run linting and static analysis for a specific package, e.g. `just python=3.10 lint interfaces/tls-certificates`.')]
-[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
 lint package *pyright_args:
-    #!/usr/bin/env -S bash -xueo pipefail
-    shift 1  # drop $1 (package) from $@ it's just *args
-    FAILURES=0
-    just --justfile='{{justfile()}}' python='{{python}}' fast-lint '{{package}}' || ((FAILURES+=$?))
-    just --justfile='{{justfile()}}' python='{{python}}' static '{{package}}' "${@}" || ((FAILURES+=1))
-    : "$FAILURES command(s) failed."
-    exit $FAILURES
+    @'{{ justfile_dir() }}/.scripts/recipes/lint.py' --python='{{ python }}' "$@"
 
 [doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
-[positional-arguments]  # pass recipe args to recipe script positionally (so we can get correct quoting)
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
 static package *args:
-    #!/usr/bin/env -S bash -xueo pipefail
-    shift 1  # drop $1 (package) from $@ it's just *args
-    cd '{{package}}'
-    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
-    {{_uv_run_with_test_requirements}} $LOCKED \
-        --group lint --group unit --group functional --group integration \
-        --with pytest-interface-tester \
-        pyright --pythonversion='{{python}}' "${@}"
+    @'{{ justfile_dir() }}/.scripts/recipes/static.py' --python='{{ python }}' "$@"
 
 [doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
@@ -106,30 +83,24 @@ combine-coverage package:
     @'{{ justfile_dir() }}/.scripts/recipes/combine_coverage.py' --python='{{ python }}' '{{ package }}'
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
-pack-k8s package *args: (_pack package 'k8s' args)
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+pack-k8s package *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/pack.py' --substrate=k8s --tag='{{ tag }}' "$@"
 
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
-pack-machine package *args: (_pack package 'machine' args)
-
-[doc("Execute the pack script for the given package, setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG.")]
-_pack package substrate *args:
-    #!/usr/bin/env -S bash -xueo pipefail
-    cd '{{package}}/tests/integration'
-    CHARMLIBS_SUBSTRATE='{{substrate}}' CHARMLIBS_TAG='{{tag}}' ./pack.sh {{args}}
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+pack-machine package *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/pack.py' --substrate=machine --tag='{{ tag }}' "$@"
 
 [doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not machine_only'.")]
-integration-k8s package +flags='-rA': (_integration package 'k8s' 'not machine_only' flags)
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+integration-k8s package *flags:
+    @'{{ justfile_dir() }}/.scripts/recipes/integration.py' --substrate=k8s --tag='{{ tag }}' --python='{{ python }}' "$@"
 
 [doc("Run juju integration tests for packed machine charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not k8s_only'.")]
-integration-machine package +flags='-rA': (_integration package 'machine' 'not k8s_only' flags)
-
-[doc("Run juju integration tests. Requires `juju`.")]
-_integration package substrate label +flags:
-    #!/usr/bin/env -S bash -xueo pipefail
-    cd '{{package}}'
-    if [ -f uv.lock ]; then LOCKED='--locked'; else LOCKED=''; fi
-    CHARMLIBS_SUBSTRATE={{substrate}} CHARMLIBS_TAG='{{tag}}' {{_uv_run_with_test_requirements}} $LOCKED --group integration \
-        pytest --tb=native -vv -m '{{label}}' tests/integration  {{flags}}
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+integration-machine package *flags:
+    @'{{ justfile_dir() }}/.scripts/recipes/integration.py' --substrate=machine --tag='{{ tag }}' --python='{{ python }}' "$@"
 
 [doc("Make .interfaces.json file.")]
 interfaces-json:
@@ -149,4 +120,4 @@ interfaces-json:
 [doc('Run unit tests for the repository tooling scripts in `.scripts/`.')]
 scripts-unit +flags='-rA':
     {{_uv_run_with_test_requirements}} \
-        pytest --tb=native -vv {{flags}} .scripts/tests
+        pytest --tb=native -vv {{flags}} .scripts/tests .scripts/recipes/tests

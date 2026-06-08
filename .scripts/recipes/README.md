@@ -6,12 +6,15 @@ logic lives in maintainable, testable Python instead of inline bash.
 
 ## Layout
 
-- **Entry scripts** — one per public recipe (e.g. `unit.py`, `functional.py`, `combine_coverage.py`).
-  Each is an executable [PEP 723](https://peps.python.org/pep-0723/) script with an
-  `#!/usr/bin/env -S uv run --script --no-project` shebang, so the `justfile` can run it directly.
-  Entry scripts are deliberately thin: parse args, then call into a shared module.
+- **Entry scripts** — one per public recipe (e.g. `lint.py`, `static.py`, `unit.py`, `functional.py`,
+  `pack.py`, `integration.py`). Each is an executable [PEP 723](https://peps.python.org/pep-0723/)
+  script with an `#!/usr/bin/env -S uv run --script --no-project` shebang, so the `justfile` can run
+  it directly. Entry scripts are deliberately thin: parse args, then call into a shared module or a
+  function defined alongside `_main`. Some scripts back more than one recipe by taking a flag — for
+  example `pack.py` and `integration.py` take `--substrate=k8s|machine`.
 - **Shared modules** — underscore-prefixed (`_common.py`, `_coverage.py`). Imported by the entry
-  scripts; not invoked as recipes themselves.
+  scripts; not invoked as recipes themselves. Entry scripts may also import each other: `lint.py`
+  reuses `fast_lint.fast_lint` and `static.static`.
 - **`_functional.sh`** — the one irreducible piece of bash (see below).
 
 ## Conventions
