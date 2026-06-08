@@ -170,7 +170,7 @@ def check(argv: list[str]) -> int:
 
 
 @_register
-def format(argv: list[str]) -> int:
+def format(argv: list[str]) -> int:  # noqa: A001
     """Run `ruff check --fix` and `ruff format`, modifying files in place."""
     parser = argparse.ArgumentParser(description=format.__doc__)
     parser.add_argument(
