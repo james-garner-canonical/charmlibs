@@ -21,6 +21,7 @@ command and handles control flow, without invoking `uv`, `pytest`, or `coverage`
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 import _common
 import _coverage
@@ -39,10 +40,14 @@ import pytest
 import scripts_unit
 import static
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+    from pathlib import Path
+
 # --- _common.uv_run_prefix ---------------------------------------------------------------------
 
 
-def test_uv_run_prefix_without_lock(tmp_path):
+def test_uv_run_prefix_without_lock(tmp_path: Path) -> None:
     cmd = _common.uv_run_prefix(tmp_path, '3.11')
     assert cmd[:2] == ['uv', 'run']
     assert '--with-requirements' in cmd
@@ -51,7 +56,7 @@ def test_uv_run_prefix_without_lock(tmp_path):
     assert '--group' not in cmd
 
 
-def test_uv_run_prefix_with_lock_and_groups(tmp_path):
+def test_uv_run_prefix_with_lock_and_groups(tmp_path: Path) -> None:
     (tmp_path / 'uv.lock').touch()
     cmd = _common.uv_run_prefix(tmp_path, '3.10', groups=['unit', 'lint'])
     assert '--locked' in cmd
@@ -63,24 +68,24 @@ def test_uv_run_prefix_with_lock_and_groups(tmp_path):
 # --- _common.resolve_python --------------------------------------------------------------------
 
 
-def test_resolve_python_falls_back_to_default():
+def test_resolve_python_falls_back_to_default() -> None:
     assert _common.resolve_python('pathops', None) == _common.DEFAULT_PYTHON
     assert _common.resolve_python('pathops', '') == _common.DEFAULT_PYTHON
 
 
-def test_resolve_python_uses_explicit_value():
+def test_resolve_python_uses_explicit_value() -> None:
     assert _common.resolve_python('pathops', '3.13') == '3.13'
 
 
 # --- _common.run -------------------------------------------------------------------------------
 
 
-def test_run_returns_command_exit_code(tmp_path):
+def test_run_returns_command_exit_code(tmp_path: Path) -> None:
     assert _common.run(['true'], cwd=tmp_path) == 0
     assert _common.run(['false'], cwd=tmp_path) != 0
 
 
-def test_run_check_exits_on_failure(tmp_path):
+def test_run_check_exits_on_failure(tmp_path: Path) -> None:
     with pytest.raises(SystemExit) as exc_info:
         _common.run(['false'], cwd=tmp_path, check=True)
     assert exc_info.value.code != 0
@@ -89,7 +94,7 @@ def test_run_check_exits_on_failure(tmp_path):
 # --- _coverage.run_coverage --------------------------------------------------------------------
 
 
-def test_run_coverage_builds_run_then_report(monkeypatch):
+def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -110,7 +115,7 @@ def test_run_coverage_builds_run_then_report(monkeypatch):
     assert '--data-file=.report/coverage-unit-3.11.db' in report_cmd
 
 
-def test_run_coverage_skips_report_when_tests_fail(monkeypatch):
+def test_run_coverage_skips_report_when_tests_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -126,7 +131,9 @@ def test_run_coverage_skips_report_when_tests_fail(monkeypatch):
 # --- combine_coverage.combine ------------------------------------------------------------------
 
 
-def test_combine_uses_only_existing_data_files(monkeypatch, tmp_path):
+def test_combine_uses_only_existing_data_files(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     report = tmp_path / 'pkg' / '.report'
     report.mkdir(parents=True)
     (report / 'coverage-unit-3.10.db').touch()
@@ -153,7 +160,7 @@ def test_combine_uses_only_existing_data_files(monkeypatch, tmp_path):
 # --- functional._main --------------------------------------------------------------------------
 
 
-def test_functional_runs_coverage_through_wrapper(monkeypatch):
+def test_functional_runs_coverage_through_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -180,7 +187,7 @@ def test_functional_runs_coverage_through_wrapper(monkeypatch):
 # --- fast_lint.fast_lint -----------------------------------------------------------------------
 
 
-def _run_returning(codes):
+def _run_returning(codes: Sequence[int]) -> tuple[Callable[..., int], list[list[str]]]:
     """Build a fake `_common.run` that returns the given exit codes in order, recording calls."""
     calls = []
     iterator = iter(codes)
@@ -192,7 +199,7 @@ def _run_returning(codes):
     return fake_run, calls
 
 
-def test_fast_lint_counts_check_and_format_failures(monkeypatch):
+def test_fast_lint_counts_check_and_format_failures(monkeypatch: pytest.MonkeyPatch) -> None:
     # ruff check, ruff check --diff, ruff format --diff -> only check and format count.
     fake_run, calls = _run_returning([1, 0, 1])
     monkeypatch.setattr(_common, 'run', fake_run)
@@ -203,7 +210,7 @@ def test_fast_lint_counts_check_and_format_failures(monkeypatch):
     assert calls[2][-3:] == ['format', '--diff', 'pathops']
 
 
-def test_fast_lint_ignores_check_diff_exit_code(monkeypatch):
+def test_fast_lint_ignores_check_diff_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     # A non-zero `ruff check --diff` (the informational diff) must not count as a failure.
     fake_run, _calls = _run_returning([0, 1, 0])
     monkeypatch.setattr(_common, 'run', fake_run)
@@ -213,7 +220,7 @@ def test_fast_lint_ignores_check_diff_exit_code(monkeypatch):
 # --- static.static -----------------------------------------------------------------------------
 
 
-def test_static_builds_pyright_command(monkeypatch):
+def test_static_builds_pyright_command(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -233,7 +240,7 @@ def test_static_builds_pyright_command(monkeypatch):
     assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
 
 
-def test_static_requests_all_dependency_groups(monkeypatch):
+def test_static_requests_all_dependency_groups(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_prefix(package_dir, python, *, groups=()):
@@ -249,7 +256,7 @@ def test_static_requests_all_dependency_groups(monkeypatch):
 # --- lint._main --------------------------------------------------------------------------------
 
 
-def test_lint_sums_fast_lint_and_static_failures(monkeypatch):
+def test_lint_sums_fast_lint_and_static_failures(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(fast_lint, 'fast_lint', lambda package: 2)
     monkeypatch.setattr(static, 'static', lambda package, python, args: 1)
     monkeypatch.setattr(sys, 'argv', ['lint.py', '--python', '3.10', 'pathops'])
@@ -258,7 +265,7 @@ def test_lint_sums_fast_lint_and_static_failures(monkeypatch):
     assert exc_info.value.code == 3  # 2 from fast_lint + 1 because static failed
 
 
-def test_lint_passes_when_both_succeed(monkeypatch):
+def test_lint_passes_when_both_succeed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(fast_lint, 'fast_lint', lambda package: 0)
     monkeypatch.setattr(static, 'static', lambda package, python, args: 0)
     monkeypatch.setattr(sys, 'argv', ['lint.py', 'pathops'])
@@ -270,7 +277,7 @@ def test_lint_passes_when_both_succeed(monkeypatch):
 # --- add._main ---------------------------------------------------------------------------------
 
 
-def test_add_runs_uv_add_with_constraints(monkeypatch):
+def test_add_runs_uv_add_with_constraints(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -293,7 +300,7 @@ def test_add_runs_uv_add_with_constraints(monkeypatch):
 # --- _pack.main --------------------------------------------------------------------------------
 
 
-def test_pack_runs_pack_script_with_substrate_env(monkeypatch):
+def test_pack_runs_pack_script_with_substrate_env(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -312,7 +319,7 @@ def test_pack_runs_pack_script_with_substrate_env(monkeypatch):
     assert captured['env']['CHARMLIBS_TAG'] == '24.04'
 
 
-def test_pack_tag_defaults_to_charmlibs_tag_env(monkeypatch):
+def test_pack_tag_defaults_to_charmlibs_tag_env(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -327,7 +334,7 @@ def test_pack_tag_defaults_to_charmlibs_tag_env(monkeypatch):
     assert captured['env']['CHARMLIBS_TAG'] == '22.04'  # taken from the env, not the (absent) flag
 
 
-def test_pack_requires_a_substrate():
+def test_pack_requires_a_substrate() -> None:
     with pytest.raises(SystemExit) as exc_info:
         _pack.main(['pathops'])  # neither --k8s nor --machine
     assert exc_info.value.code == 2  # argparse usage error
@@ -336,7 +343,7 @@ def test_pack_requires_a_substrate():
 # --- _integration.main -------------------------------------------------------------------------
 
 
-def test_integration_selects_marker_for_substrate(monkeypatch):
+def test_integration_selects_marker_for_substrate(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -361,7 +368,7 @@ def test_integration_selects_marker_for_substrate(monkeypatch):
 # --- scripts_unit._main ------------------------------------------------------------------------
 
 
-def test_scripts_unit_runs_pytest_without_locked(monkeypatch):
+def test_scripts_unit_runs_pytest_without_locked(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -387,7 +394,9 @@ def test_scripts_unit_runs_pytest_without_locked(monkeypatch):
 # --- interfaces_json._main ---------------------------------------------------------------------
 
 
-def test_interfaces_json_redirects_ls_output_to_file(monkeypatch, tmp_path):
+def test_interfaces_json_redirects_ls_output_to_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     (tmp_path / 'interfaces').mkdir()
     captured = {}
 
@@ -414,7 +423,9 @@ def test_interfaces_json_redirects_ls_output_to_file(monkeypatch, tmp_path):
 # --- init._main --------------------------------------------------------------------------------
 
 
-def test_init_prints_guidance_and_runs_cookiecutter(monkeypatch, tmp_path, capsys):
+def test_init_prints_guidance_and_runs_cookiecutter(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     captured = {}
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -442,13 +453,15 @@ def test_init_prints_guidance_and_runs_cookiecutter(monkeypatch, tmp_path, capsy
 # --- help._summary / help._recipes -------------------------------------------------------------
 
 
-def test_help_summary_reads_first_docstring_line(tmp_path):
+def test_help_summary_reads_first_docstring_line(tmp_path: Path) -> None:
     script = tmp_path / 'foo.py'
     script.write_text('"""Do the foo thing.\n\nMore detail here.\n"""\n')
     assert help_recipe._summary(script) == 'Do the foo thing.'
 
 
-def test_help_recipes_map_names_to_scripts_in_order(monkeypatch, tmp_path):
+def test_help_recipes_map_names_to_scripts_in_order(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     recipes_dir = tmp_path / '.scripts' / 'recipes'
     recipes_dir.mkdir(parents=True)
     (recipes_dir / 'foo.py').write_text('"""Do the foo thing."""\n')
@@ -469,7 +482,7 @@ def test_help_recipes_map_names_to_scripts_in_order(monkeypatch, tmp_path):
 # --- check._main -------------------------------------------------------------------------------
 
 
-def test_check_runs_lint_unit_docs_in_order(monkeypatch):
+def test_check_runs_lint_unit_docs_in_order(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -487,7 +500,7 @@ def test_check_runs_lint_unit_docs_in_order(monkeypatch):
     assert calls[2] == ['just', 'docs', 'html', 'pathops']  # docs not yet migrated
 
 
-def test_check_fails_fast_on_first_failure(monkeypatch):
+def test_check_fails_fast_on_first_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
     def fake_run(cmd, *, cwd, env=None, check=False):
@@ -502,7 +515,7 @@ def test_check_fails_fast_on_first_failure(monkeypatch):
     assert len(calls) == 1  # stopped after lint failed, never ran unit or docs
 
 
-def test_check_forwards_python_flag(monkeypatch):
+def test_check_forwards_python_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
     def fake_run(cmd, *, cwd, env=None, check=False):
