@@ -161,10 +161,10 @@ def check(argv: list[str]) -> int:
     """`lint`, `unit` test, and build the `docs` for a package."""
     args = _package_parser(check.__doc__).parse_args(argv)
     python = _resolve_python(args.package, args.python)
-    failures = lint([args.package, '--python', python])
-    if failures:
+    if (failures := lint([args.package, '--python', python])):
         sys.exit(failures)
-    _coverage_cmds(args.package, 'unit', python, ['-rA'])
+    for cmd in _coverage_cmds(args.package, 'unit', python, ['-rA']):
+        _run(cmd, cwd=REPO_ROOT / args.package, env=_coverage_env())
     _run(['just', 'docs', 'html', args.package])
     return 0
 
