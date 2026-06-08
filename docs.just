@@ -45,6 +45,10 @@ _packages *packages:
             '-d', '_dev/.doctrees',
             '-D', 'language=en',
             '-D', f'package={package}',
+            # llms.txt is only generated in the final combined pass (the `html` recipe).
+            # Leaving it enabled here triggers a nested base-mode build that regenerates the
+            # interface reference docs, deleting the placeholder this package pass depends on.
+            '-D', 'llms_txt_enabled=0',
             '-D', 'suppress_warnings=ref.ref,ref.doc,myst.xref_missing',
             '.', '{{build_dir}}/html',
         ]
