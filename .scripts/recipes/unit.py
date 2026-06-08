@@ -23,17 +23,12 @@
 
 from __future__ import annotations
 
-import argparse
-
 import _common
 import _coverage
 
 
 def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pytest_args = parser.parse_known_args()
+    args, pytest_args = _common.parser(__doc__).parse_known_args()
     python = _common.resolve_python(args.package, args.python)
     _coverage.run_coverage(args.package, 'unit', python, pytest_args or ['-rA'])
 

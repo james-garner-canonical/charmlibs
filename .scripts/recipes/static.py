@@ -23,7 +23,6 @@
 
 from __future__ import annotations
 
-import argparse
 import sys
 from typing import TYPE_CHECKING
 
@@ -34,10 +33,7 @@ if TYPE_CHECKING:
 
 
 def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pyright_args = parser.parse_known_args()
+    args, pyright_args = _common.parser(__doc__).parse_known_args()
     python = _common.resolve_python(args.package, args.python)
     sys.exit(static(args.package, python, pyright_args))
 

@@ -24,6 +24,7 @@ third-party dependency is the signal to promote this directory to a real `uv`-ma
 
 from __future__ import annotations
 
+import argparse
 import os
 import pathlib
 import re
@@ -46,6 +47,18 @@ _REQUIRES_PYTHON_LOWER_BOUND = re.compile(
     r'\s*'  # optional whitespace between the operator and the version
     r'(\d+\.\d+)'  # capture just `major.minor`, stopping before any patch component
 )
+
+
+def parser(doc: str | None) -> argparse.ArgumentParser:
+    """Return an `ArgumentParser` with the `--python` and `package` arguments the recipes share.
+
+    `doc` becomes the parser's description (pass the recipe's `__doc__`). Recipes that take extra
+    arguments can add them to the returned parser before parsing.
+    """
+    parser = argparse.ArgumentParser(description=doc)
+    parser.add_argument('--python', default=None)
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    return parser
 
 
 def resolve_python(package: str, python: str | None) -> str:

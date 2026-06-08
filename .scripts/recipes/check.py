@@ -23,16 +23,11 @@
 
 from __future__ import annotations
 
-import argparse
-
 import _common
 
 
 def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args = parser.parse_args()
+    args = _common.parser(__doc__).parse_args()
     python = _common.resolve_python(args.package, args.python)
     for cmd in [
         [_common.REPO_ROOT / '.scripts' / 'recipes' / 'lint.py', args.package, '--python', python],
