@@ -24,10 +24,9 @@
 from __future__ import annotations
 
 import argparse
-import os
-import shutil
 
 import _common
+import _coverage
 
 
 def _main() -> None:
@@ -35,36 +34,7 @@ def _main() -> None:
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args = parser.parse_args()
-    combine(args.package, _common.resolve_python(args.package, args.python))
-
-
-def combine(package: str, python: str) -> None:
-    """Combine the unit/functional/juju coverage data files into a single report.
-
-    Produces a combined `.db`, an XML report, and a freshly rebuilt HTML report, then prints the
-    terminal report. Any step failing aborts the process (as `set -e` did in the old recipe).
-    """
-    package_dir = _common.REPO_ROOT / package
-    data_files: list[str] = [
-        f
-        for test_id in ('unit', 'functional', 'juju')
-        if (package_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
-    ]
-    env = {**os.environ, 'COVERAGE_RCFILE': str(_common.COVERAGE_RCFILE)}
-
-    def _uv(cmd: list[str]) -> int:
-        return _common.uv_run(cmd, package_dir=package_dir, python=python, env=env, check=True)
-
-    # Combine reports and generate XML.
-    data_file = f'--data-file=.report/coverage-all-{python}.db'
-    _uv(['coverage', 'combine', '--keep', data_file, *data_files])
-    _uv(['coverage', 'xml', data_file, '-o', f'.report/coverage-all-{python}.xml'])
-    # Rebuild the HTML report from scratch (let coverage recreate the directory).
-    html_dir = f'.report/htmlcov-all-{python}'
-    shutil.rmtree(package_dir / html_dir, ignore_errors=True)
-    _uv(['coverage', 'html', data_file, '--show-contexts', f'--directory={html_dir}'])
-    # Print the report last.
-    _uv(['coverage', 'report', data_file])
+    _coverage.combine(args.package, _common.resolve_python(args.package, args.python))
 
 
 if __name__ == '__main__':

@@ -35,7 +35,6 @@ if TYPE_CHECKING:
 # `.scripts/recipes/_common.py` -> repo root is three parents up.
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
-COVERAGE_RCFILE = REPO_ROOT / 'pyproject.toml'
 DEFAULT_PYTHON = '3.10'
 
 
@@ -86,12 +85,12 @@ def uv_run(
     package has a `uv.lock` and a `--group` for each of `groups`. `args` are appended to that
     prefix, then the whole command is handed to `run` (see it for `env`, `check`, and `stdout`).
     """
-    prefix = ['uv', 'run', '--with-requirements', str(TEST_REQUIREMENTS), '--python', python]
+    uv = ['uv', 'run', '--with-requirements', str(TEST_REQUIREMENTS), '--python', python]
     if (package_dir / 'uv.lock').exists():
-        prefix.append('--locked')
+        uv.append('--locked')
     for group in groups:
-        prefix += ['--group', group]
-    return run([*prefix, *args], cwd=package_dir, env=env, check=check, stdout=stdout)
+        uv.extend(['--group', group])
+    return run([*uv, *args], cwd=package_dir, env=env, check=check, stdout=stdout)
 
 
 def resolve_python(package: str, python: str | None) -> str:

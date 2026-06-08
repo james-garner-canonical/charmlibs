@@ -29,7 +29,6 @@ import _integration
 import _pack
 import add
 import check
-import combine_coverage
 import fast_lint
 import functional
 import help as help_recipe  # aliased: `help` shadows a builtin
@@ -148,7 +147,7 @@ def test_run_coverage_skips_report_when_tests_fail(monkeypatch: pytest.MonkeyPat
     assert len(calls) == 1  # report step skipped, matching the old `set -e` behaviour
 
 
-# --- combine_coverage.combine ------------------------------------------------------------------
+# --- _coverage.combine -------------------------------------------------------------------------
 
 
 def test_combine_uses_only_existing_data_files(
@@ -168,7 +167,7 @@ def test_combine_uses_only_existing_data_files(
 
     monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
     monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
-    combine_coverage.combine('pkg', '3.10')
+    _coverage.combine('pkg', '3.10')
     assert len(calls) == 4  # combine, xml, html, report
     combine_args = calls[0]
     assert '.report/coverage-unit-3.10.db' in combine_args
