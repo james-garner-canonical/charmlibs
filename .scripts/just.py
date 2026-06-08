@@ -58,7 +58,7 @@ _QUICK_START = f"""
 {BOLD}Charmlibs is Canonical's charm library monorepo{NORMAL}
 
 {BOLD}List all commands with {CYAN}just help{NORMAL}{BOLD}, or:{NORMAL}
-- Create a new package: {CYAN}just init{NORMAL} or {CYAN}just interface init{NORMAL}
+- Create a new package: {CYAN}just init{NORMAL} or {CYAN}just init --interface{NORMAL}
 - Add a dependency to a package: {CYAN}just add <package> <dependency>{NORMAL}
 - Lint, unit test, and build docs for a package: {CYAN}just check <package>{NORMAL}
 - Run {CYAN}ruff{NORMAL} for all packages: {CYAN}just fast-lint{NORMAL}
