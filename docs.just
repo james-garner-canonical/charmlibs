@@ -58,7 +58,7 @@ help:
 [doc('Watch, build, and serve the docs -- does not rebuild package reference docs automatically.')]
 run: _packages
     uvx --with-requirements=.sphinx/requirements.txt --from=sphinx \
-        sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml . '{{build_dir}}/html'
+        sphinx-autobuild --watch .. --ignore '**/generated/*' -b dirhtml -D llms_txt_enabled=0 . '{{build_dir}}/html'
 
 [doc('Check links.')]
 linkcheck *sphinx_args: _packages

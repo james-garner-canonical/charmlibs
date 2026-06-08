@@ -1,6 +1,8 @@
 import datetime
+import os
 import pathlib
 import sys
+import textwrap
 
 # local extensions
 sys.path.insert(0, str(pathlib.Path(__file__).parent / 'extensions'))
@@ -60,6 +62,13 @@ html_context = {
     "repo_folder": "/.docs/",
     "display_contributors": False,
     'github_issues': 'enabled',  # Required for feedback button
+    # Passes the top-level 'author' value to the theme
+    "author": author,
+    # Documentation license information
+    "license": {
+        "name": "CC-BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    },
 }
 # Template and asset locations
 html_static_path = [".sphinx/_static"]
@@ -91,6 +100,24 @@ sitemap_excludes = [  # Exclude generated pages from the sitemap:
 #       the sphinx_reredirects extension will be disabled.
 
 redirects = {}
+
+############################
+# sphinx-llm configuration #
+############################
+
+# This description is included in llms.txt to provide some initial context for the
+# documentation.
+llms_txt_description = textwrap.dedent(
+    """\
+    This is the documentation for charmlibs, the home of Canonical's charm libraries:
+    reusable Python packages for Juju charms, published on PyPI from the charmlibs
+    monorepo.
+    """
+)
+
+# The base URL for references built by sphinx-markdown-builder.
+if os.environ.get("READTHEDOCS"):
+    markdown_http_base = html_baseurl
 
 ###########################
 # Link checker exceptions #
@@ -131,6 +158,8 @@ extensions = [
     "sphinxext.opengraph",
     # Previously bundled as canonical-sphinx-extensions
     "sphinx_related_links",
+    # llms.txt generation (Sphinx Stack 2.0)
+    "sphinx_llm.txt",
     # charmlibs-specific extensions
     "sphinxcontrib.cairosvgconverter",
     "sphinxcontrib.mermaid",

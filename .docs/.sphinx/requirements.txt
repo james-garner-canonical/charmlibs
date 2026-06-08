@@ -19,3 +19,6 @@ sphinxcontrib-svg2pdfconverter[CairoSVG]
 sphinx-last-updated-by-git
 sphinx-datatables>=0.3
 sphinx-sitemap~=2.9
+
+# llms.txt generation (Sphinx Stack 2.0)
+sphinx-llm~=0.4
