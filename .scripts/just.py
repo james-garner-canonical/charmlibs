@@ -52,6 +52,30 @@ BOLD = '\033[1m'
 NORMAL = '\033[0m'
 CYAN = '\033[36m'
 
+# Shown when `just.py` runs with no recipe. Modeled on the justfile's `_short_help`; some wording
+# differs slightly to keep each line within the line-length limit.
+_QUICK_START = f"""
+{BOLD}Charmlibs is Canonical's charm library monorepo{NORMAL}
+
+{BOLD}List all commands with {CYAN}just help{NORMAL}{BOLD}, or:{NORMAL}
+- Create a new package: {CYAN}just init{NORMAL} or {CYAN}just interface init{NORMAL}
+- Add a dependency to a package: {CYAN}just add <package> <dependency>{NORMAL}
+- Lint, unit test, and build docs for a package: {CYAN}just check <package>{NORMAL}
+- Run {CYAN}ruff{NORMAL} for all packages: {CYAN}just fast-lint{NORMAL}
+
+{BOLD}Run individual checks for a package:{NORMAL}
+- {CYAN}just lint <package>{NORMAL} (fix errors with {CYAN}just format <package>{NORMAL})
+- {CYAN}just unit <package>{NORMAL}
+- {CYAN}just functional <package>{NORMAL} (may require extra software like {CYAN}pebble{NORMAL})
+
+{BOLD}Run integration tests{NORMAL} (requires a Juju controller and a cloud):
+- Pack: {CYAN}just pack-k8s <package>{NORMAL} or {CYAN}just pack-machine <package>{NORMAL}
+- Run: {CYAN}just integration-k8s <package>{NORMAL} or {CYAN}just integration-machine{NORMAL}
+
+{BOLD}Build the docs: {CYAN}just docs{NORMAL}
+- For specific packages only: {CYAN}just docs html <packages>{NORMAL}
+""".strip()
+
 
 # --- Entry point --------------------------------------------------------------------------------
 
@@ -59,12 +83,13 @@ CYAN = '\033[36m'
 def main(argv: list[str]) -> int:
     """Dispatch `argv` to the named recipe, returning its exit code."""
     if not argv or argv[0] in ('-h', '--help'):
-        return _quick_start()
+        print(_QUICK_START)
+        return 0
     name, *args = argv
     func = RECIPES.get(name)
     if func is None:
         print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
-        _quick_start()
+        print(_QUICK_START)
         return 2
     return func(args)
 
@@ -75,10 +100,6 @@ RECIPES: dict[str, Callable[[list[str]], int]] = {}
 def _register(fn: _F) -> _F:
     RECIPES[fn.__name__.replace('_', '-')] = fn
     return fn
-
-
-def _quick_start() -> int:
-    return 0
 
 
 # --- Recipes -------------------------------------------------------------------------------------
