@@ -24,7 +24,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
 import _common
 
@@ -35,14 +34,9 @@ def _main() -> None:
         'path', nargs='?', default='.', help='Path to format, defaults to the repo.'
     )
     args = parser.parse_args()
-    sys.exit(format_path(args.path))
-
-
-def format_path(path: str) -> int:
-    """Run `ruff format` then `ruff check --fix`, modifying files in place."""
     ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
-    _common.run([*ruff, 'format', path])
-    return _common.run([*ruff, 'check', '--fix', path])
+    _common.run([*ruff, 'format', args.path])
+    _common.run([*ruff, 'check', '--fix', args.path])
 
 
 if __name__ == '__main__':
