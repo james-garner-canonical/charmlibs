@@ -57,7 +57,7 @@ def test_uv_run_builds_prefix_without_lock(
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
-    _common.uv_run(['pyright'], package_dir=tmp_path, python='3.11')
+    _common.uv_run(['pyright'], pkg_dir=tmp_path, python='3.11')
     cmd = captured['cmd']
     assert cmd[:2] == ['uv', 'run']
     assert '--with-requirements' in cmd
@@ -77,7 +77,7 @@ def test_uv_run_adds_lock_and_groups(tmp_path: Path, monkeypatch: pytest.MonkeyP
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
-    _common.uv_run([], package_dir=tmp_path, python='3.10', groups=['unit', 'lint'])
+    _common.uv_run([], pkg_dir=tmp_path, python='3.10', groups=['unit', 'lint'])
     cmd = captured['cmd']
     assert '--locked' in cmd
     assert cmd.index('--locked') < cmd.index('--group')  # --locked precedes any group
@@ -117,7 +117,7 @@ def test_run_check_exits_on_failure(tmp_path: Path) -> None:
 def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
         calls.append((list(args), list(groups)))
         return 0
 
@@ -138,7 +138,7 @@ def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) ->
 def test_run_coverage_skips_report_when_tests_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
         calls.append(list(args))
         if check:
             sys.exit(5)  # check=True aborts the process on the failing test run
@@ -165,7 +165,7 @@ def test_combine_uses_only_existing_data_files(
 
     calls = []
 
-    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
         calls.append(list(args))
         return 0
 
@@ -245,9 +245,9 @@ def test_fast_lint_ignores_check_diff_exit_code(monkeypatch: pytest.MonkeyPatch)
 def test_static_builds_pyright_command(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
         captured['args'] = list(args)
-        captured['package_dir'] = package_dir
+        captured['pkg_dir'] = pkg_dir
         return 0
 
     monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
@@ -257,13 +257,13 @@ def test_static_builds_pyright_command(monkeypatch: pytest.MonkeyPatch) -> None:
     assert 'pyright' in args
     assert '--pythonversion=3.11' in args
     assert args[-1] == '--verifytypes'
-    assert captured['package_dir'] == _common.REPO_ROOT / 'pathops'
+    assert captured['pkg_dir'] == _common.REPO_ROOT / 'pathops'
 
 
 def test_static_requests_all_dependency_groups(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
         captured['groups'] = list(groups)
         return 0
 
@@ -365,9 +365,9 @@ def test_pack_requires_a_substrate() -> None:
 def test_integration_selects_marker_for_substrate(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
         captured['args'] = list(args)
-        captured['package_dir'] = package_dir
+        captured['pkg_dir'] = pkg_dir
         captured['env'] = env
         return 0
 
@@ -380,7 +380,7 @@ def test_integration_selects_marker_for_substrate(monkeypatch: pytest.MonkeyPatc
     assert 'tests/integration' in args
     assert args[-1] == '-x'  # forwarded pytest arg comes after tests/integration
     assert captured['env']['CHARMLIBS_SUBSTRATE'] == 'machine'
-    assert captured['package_dir'] == _common.REPO_ROOT / 'pathops'
+    assert captured['pkg_dir'] == _common.REPO_ROOT / 'pathops'
 
 
 # --- scripts_unit._main ------------------------------------------------------------------------

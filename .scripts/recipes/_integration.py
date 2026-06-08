@@ -44,7 +44,7 @@ def main(argv: list[str]) -> None:
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args, pytest_args = parser.parse_known_args(argv)
     python = _common.resolve_python(args.package, args.python)
-    package_dir = _common.REPO_ROOT / args.package
+    pkg_dir = _common.REPO_ROOT / args.package
     env = {**os.environ, 'CHARMLIBS_SUBSTRATE': args.substrate, 'CHARMLIBS_TAG': args.tag}
     cmd = [
         *('pytest', '--tb=native', '-vv'),
@@ -53,6 +53,6 @@ def main(argv: list[str]) -> None:
         *(pytest_args or ['-rA']),
     ]
     returncode = _common.uv_run(
-        cmd, package_dir=package_dir, python=python, groups=['integration'], env=env
+        cmd, pkg_dir=pkg_dir, python=python, groups=['integration'], env=env
     )
     sys.exit(returncode)

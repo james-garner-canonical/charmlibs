@@ -48,7 +48,7 @@ def static(package: str, python: str, pyright_args: Sequence[str]) -> int:
     Mirrors the old `static` recipe: run with every dependency group installed, plus
     `pytest-interface-tester`, so that pyright can resolve all of the package's test imports.
     """
-    package_dir = _common.REPO_ROOT / package
+    pkg_dir = _common.REPO_ROOT / package
     cmd = [
         *('--with', 'pytest-interface-tester'),
         'pyright',
@@ -57,7 +57,7 @@ def static(package: str, python: str, pyright_args: Sequence[str]) -> int:
     ]
     return _common.uv_run(
         cmd,
-        package_dir=package_dir,
+        pkg_dir=pkg_dir,
         python=python,
         groups=['lint', 'unit', 'functional', 'integration'],
     )

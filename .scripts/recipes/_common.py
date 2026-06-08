@@ -71,14 +71,14 @@ def run(
 def uv_run(
     args: Sequence[str | pathlib.Path],
     *,
-    package_dir: pathlib.Path,
+    pkg_dir: pathlib.Path,
     python: str,
     groups: Sequence[str] = (),
     env: dict[str, str] | None = None,
     check: bool = False,
     stdout: IO[str] | None = None,
 ) -> int:
-    """Run `uv run ... <args>` in `package_dir`, returning the exit code.
+    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code.
 
     The `uv run` prefix is the one shared by the package recipes: the repo-level
     `test-requirements.txt` constraints and the requested `python`, plus `--locked` when the
@@ -86,11 +86,11 @@ def uv_run(
     prefix, then the whole command is handed to `run` (see it for `env`, `check`, and `stdout`).
     """
     uv = ['uv', 'run', '--with-requirements', str(TEST_REQUIREMENTS), '--python', python]
-    if (package_dir / 'uv.lock').exists():
+    if (pkg_dir / 'uv.lock').exists():
         uv.append('--locked')
     for group in groups:
         uv.extend(['--group', group])
-    return run([*uv, *args], cwd=package_dir, env=env, check=check, stdout=stdout)
+    return run([*uv, *args], cwd=pkg_dir, env=env, check=check, stdout=stdout)
 
 
 def resolve_python(package: str, python: str | None) -> str:

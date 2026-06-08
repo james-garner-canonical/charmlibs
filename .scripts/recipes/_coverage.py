@@ -52,12 +52,12 @@ def run_coverage(package: str, suite: str, python: str, pytest_args: Sequence[st
     The report step is skipped if the test run fails: `check=True` aborts the process with the
     failing exit code (as `set -e` did in the old recipe).
     """
-    package_dir = _common.REPO_ROOT / package
+    pkg_dir = _common.REPO_ROOT / package
     data_file = f'.report/coverage-{suite}-{python}.db'
 
     def _uv(args: list[str]) -> int:
         return _common.uv_run(
-            args, package_dir=package_dir, python=python, groups=[suite], env=_env(), check=True
+            args, pkg_dir=pkg_dir, python=python, groups=[suite], env=_env(), check=True
         )
 
     run_cmd = [
@@ -74,15 +74,15 @@ def combine(package: str, python: str) -> None:
     Produces a combined `.db`, an XML report, and a freshly rebuilt HTML report, then prints the
     terminal report. Any step failing aborts the process (as `set -e` did in the old recipe).
     """
-    package_dir = _common.REPO_ROOT / package
+    pkg_dir = _common.REPO_ROOT / package
     data_files: list[str] = [
         f
         for test_id in ('unit', 'functional', 'juju')
-        if (package_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
+        if (pkg_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
     ]
 
     def _uv(cmd: list[str]) -> int:
-        return _common.uv_run(cmd, package_dir=package_dir, python=python, env=_env(), check=True)
+        return _common.uv_run(cmd, pkg_dir=pkg_dir, python=python, env=_env(), check=True)
 
     # Combine reports and generate XML.
     data_file = f'--data-file=.report/coverage-all-{python}.db'
@@ -90,7 +90,7 @@ def combine(package: str, python: str) -> None:
     _uv(['coverage', 'xml', data_file, '-o', f'.report/coverage-all-{python}.xml'])
     # Rebuild the HTML report from scratch (let coverage recreate the directory).
     html_dir = f'.report/htmlcov-all-{python}'
-    shutil.rmtree(package_dir / html_dir, ignore_errors=True)
+    shutil.rmtree(pkg_dir / html_dir, ignore_errors=True)
     _uv(['coverage', 'html', data_file, '--show-contexts', f'--directory={html_dir}'])
     # Print the report last.
     _uv(['coverage', 'report', data_file])
