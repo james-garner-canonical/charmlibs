@@ -22,6 +22,7 @@ third-party dependency is the signal to promote this directory to a real `uv`-ma
 
 from __future__ import annotations
 
+import os
 import pathlib
 import subprocess
 import sys
@@ -78,7 +79,14 @@ def run(
     unambiguous. Pass `stdout` (an open text file) to redirect the command's standard output, for
     example to capture generated output in a file. When `check` is true, exit this process with the
     command's exit code on failure (mirroring the old recipes' `set -e`).
+
+    `VIRTUAL_ENV` is dropped from the child environment. These recipes are themselves run via
+    `uv run --script`, which exports `VIRTUAL_ENV` pointing at the script's ephemeral environment.
+    Inheriting it would make the inner `uv` commands warn that it doesn't match the project's
+    `.venv`.
     """
+    env = dict(os.environ if env is None else env)
+    env.pop('VIRTUAL_ENV', None)
     print([str(part) for part in cmd], file=sys.stderr, flush=True)
     returncode = subprocess.call(cmd, cwd=cwd, env=env, stdout=stdout)
     if check and returncode != 0:
