@@ -510,9 +510,7 @@ def test_interfaces_json_redirects_ls_output_to_file(
     monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setattr(sys, 'argv', ['interfaces_json.py'])
-    with pytest.raises(SystemExit) as exc_info:
-        interfaces_json._main()
-    assert exc_info.value.code == 0
+    interfaces_json._main()
     cmd = captured['cmd']
     assert cmd[:2] == ['.scripts/ls.py', 'interfaces']
     assert '--indent-json' in cmd

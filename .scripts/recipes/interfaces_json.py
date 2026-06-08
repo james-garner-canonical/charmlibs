@@ -24,11 +24,10 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
 import _common
 
-# Columns to include for each interface in the generated index.
+# Outputs to include for each interface in the generated index.
 _OUTPUTS = [
     'name',
     'version',
@@ -44,14 +43,11 @@ _OUTPUTS = [
 
 def _main() -> None:
     argparse.ArgumentParser(description=__doc__).parse_args()  # takes no args, but supports `-h`
-    output_file = _common.REPO_ROOT / 'interfaces' / 'index.json'
-    cmd = ['.scripts/ls.py', 'interfaces']
-    for column in _OUTPUTS:
-        cmd += ['--output', column]
-    cmd.append('--indent-json')
-    with output_file.open('w') as f:
-        returncode = _common.run(cmd, stdout=f)
-    sys.exit(returncode)
+    cmd = ['.scripts/ls.py', 'interfaces', '--indent-json']
+    for output in _OUTPUTS:
+        cmd.extend(['--output', output])
+    with (_common.REPO_ROOT / 'interfaces' / 'index.json').open('w') as f:
+        _common.run(cmd, stdout=f)
 
 
 if __name__ == '__main__':
