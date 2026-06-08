@@ -44,10 +44,10 @@ def fast_lint(path: str) -> int:
     """
     ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
     failures = 0
-    if _common.run([*ruff, 'check', path]) != 0:
+    if _common.run([*ruff, 'check', path], check=False) != 0:
         failures += 1
-    _common.run([*ruff, 'check', '--diff', path])
-    if _common.run([*ruff, 'format', '--diff', path]) != 0:
+    _common.run([*ruff, 'check', '--diff', path], check=False)
+    if _common.run([*ruff, 'format', '--diff', path], check=False) != 0:
         failures += 1
     return failures
 

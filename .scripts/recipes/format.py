@@ -41,8 +41,8 @@ def _main() -> None:
 def format_path(path: str) -> int:
     """Run `ruff format` then `ruff check --fix`, modifying files in place."""
     ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
-    _common.run([*ruff, 'format', path], check=True)
-    return _common.run([*ruff, 'check', '--fix', path], check=True)
+    _common.run([*ruff, 'format', path])
+    return _common.run([*ruff, 'check', '--fix', path])
 
 
 if __name__ == '__main__':

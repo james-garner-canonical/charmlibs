@@ -27,7 +27,6 @@ Example: `add.py pathops 'pydantic>=2'` adds a constrained dependency to pathops
 from __future__ import annotations
 
 import argparse
-import sys
 
 import _common
 
@@ -35,10 +34,9 @@ import _common
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, uv_add_args = parser.parse_known_args()
-    package_dir = _common.REPO_ROOT / args.package
-    cmd = ['uv', 'add', '--constraints', str(_common.TEST_REQUIREMENTS), *uv_add_args]
-    sys.exit(_common.run(cmd, cwd=package_dir))
+    args, uv_args = parser.parse_known_args()
+    cmd = ['uv', 'add', '--constraints', _common.TEST_REQUIREMENTS, *uv_args]
+    _common.run(cmd, cwd=_common.REPO_ROOT / args.package)
 
 
 if __name__ == '__main__':

@@ -102,7 +102,7 @@ def test_resolve_python_uses_explicit_value() -> None:
 
 def test_run_returns_command_exit_code(tmp_path: Path) -> None:
     assert _common.run(['true'], cwd=tmp_path) == 0
-    assert _common.run(['false'], cwd=tmp_path) != 0
+    assert _common.run(['false'], cwd=tmp_path, check=False) != 0
 
 
 def test_run_check_exits_on_failure(tmp_path: Path) -> None:
@@ -306,12 +306,10 @@ def test_add_runs_uv_add_with_constraints(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setattr(sys, 'argv', ['add.py', 'pathops', 'pydantic>=2'])
-    with pytest.raises(SystemExit) as exc_info:
-        add._main()
-    assert exc_info.value.code == 0
+    add._main()
     cmd = captured['cmd']
     assert cmd[:2] == ['uv', 'add']
-    assert cmd[cmd.index('--constraints') + 1] == str(_common.TEST_REQUIREMENTS)
+    assert cmd[cmd.index('--constraints') + 1] == _common.TEST_REQUIREMENTS
     assert cmd[-1] == 'pydantic>=2'
     assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
 

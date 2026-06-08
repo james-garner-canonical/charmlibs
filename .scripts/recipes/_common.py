@@ -43,7 +43,7 @@ def run(
     *,
     cwd: pathlib.Path = REPO_ROOT,
     env: dict[str, str] | None = None,
-    check: bool = False,
+    check: bool = True,
     stdout: IO[str] | None = None,
 ) -> int:
     """Echo and run a command, returning its exit code.
@@ -51,8 +51,9 @@ def run(
     Runs from the repo root unless `cwd` says otherwise. The command is echoed (to stderr) as the
     list of its arguments, so argument boundaries are unambiguous. Pass `stdout` (an open text
     file) to redirect the command's standard output, for example to capture generated output in a
-    file. When `check` is true, exit this process with the command's exit code on failure
-    (mirroring the old recipes' `set -e`).
+    file. When `check` is true (the default), exit this process with the command's exit code on
+    failure (mirroring the old recipes' `set -e`); pass `check=False` to get the exit code back
+    and handle it yourself.
 
     `VIRTUAL_ENV` is dropped from the child environment. These recipes are themselves run via
     `uv run --script`, which exports `VIRTUAL_ENV` pointing at the script's ephemeral environment.
