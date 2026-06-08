@@ -60,6 +60,7 @@ def static(package: str, python: str, pyright_args: Sequence[str]) -> int:
         pkg_dir=pkg_dir,
         python=python,
         groups=['lint', 'unit', 'functional', 'integration'],
+        check=False,
     )
 
 

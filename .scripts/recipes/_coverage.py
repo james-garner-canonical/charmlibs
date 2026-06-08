@@ -48,9 +48,7 @@ def run_coverage(package: str, suite: str, python: str, pytest_args: list[str]) 
     data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
 
     def _uv(args: list[str]):
-        _common.uv_run(
-            args, pkg_dir=pkg_dir, python=python, groups=[suite], env=_env(), check=True
-        )
+        _common.uv_run(args, pkg_dir=pkg_dir, python=python, groups=[suite], env=_env())
 
     _uv([
         *('coverage', 'run', data_file_arg, '--source=src', '-m'),
@@ -69,7 +67,7 @@ def combine(package: str, python: str) -> None:
     ]
 
     def _uv(cmd: list[str]):
-        _common.uv_run(cmd, pkg_dir=pkg_dir, python=python, env=_env(), check=True)
+        _common.uv_run(cmd, pkg_dir=pkg_dir, python=python, env=_env())
 
     # Combine reports and generate XML.
     data_file_arg = f'--data-file=.report/coverage-all-{python}.db'

@@ -117,7 +117,7 @@ def test_run_check_exits_on_failure(tmp_path: Path) -> None:
 def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=True, stdout=None):
         calls.append((list(args), list(groups)))
         return 0
 
@@ -128,8 +128,8 @@ def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) ->
     assert run_args[:2] == ['coverage', 'run']
     assert '--data-file=.report/coverage-unit-3.11.db' in run_args
     assert '--source=src' in run_args
-    assert '-x' in run_args
-    assert run_args[-1] == 'tests/unit'
+    assert 'tests/unit' in run_args
+    assert run_args[-1] == '-x'  # forwarded pytest args come after tests/<suite>
     assert run_groups == ['unit']  # the suite is requested as a dependency group
     assert report_args[:2] == ['coverage', 'report']
     assert '--data-file=.report/coverage-unit-3.11.db' in report_args
@@ -138,7 +138,7 @@ def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) ->
 def test_run_coverage_skips_report_when_tests_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=True, stdout=None):
         calls.append(list(args))
         if check:
             sys.exit(5)  # check=True aborts the process on the failing test run
@@ -165,7 +165,7 @@ def test_combine_uses_only_existing_data_files(
 
     calls = []
 
-    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=True, stdout=None):
         calls.append(list(args))
         return 0
 
@@ -245,7 +245,7 @@ def test_fast_lint_ignores_check_diff_exit_code(monkeypatch: pytest.MonkeyPatch)
 def test_static_builds_pyright_command(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=True, stdout=None):
         captured['args'] = list(args)
         captured['pkg_dir'] = pkg_dir
         return 0
@@ -263,7 +263,7 @@ def test_static_builds_pyright_command(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_static_requests_all_dependency_groups(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=True, stdout=None):
         captured['groups'] = list(groups)
         return 0
 
@@ -365,7 +365,7 @@ def test_pack_requires_a_substrate() -> None:
 def test_integration_selects_marker_for_substrate(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=False, stdout=None):
+    def fake_uv_run(args, *, pkg_dir, python, groups=(), env=None, check=True, stdout=None):
         captured['args'] = list(args)
         captured['pkg_dir'] = pkg_dir
         captured['env'] = env

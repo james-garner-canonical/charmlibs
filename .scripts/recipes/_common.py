@@ -75,7 +75,7 @@ def uv_run(
     python: str,
     groups: Sequence[str] = (),
     env: dict[str, str] | None = None,
-    check: bool = False,
+    check: bool = True,
     stdout: IO[str] | None = None,
 ) -> int:
     """Run `uv run ... <args>` in `pkg_dir`, returning the exit code.
