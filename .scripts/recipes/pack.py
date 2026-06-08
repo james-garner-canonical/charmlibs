@@ -33,7 +33,11 @@ import _common
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--substrate', required=True, choices=['k8s', 'machine'])
-    parser.add_argument('--tag', default='', help='Value for the CHARMLIBS_TAG environment var.')
+    parser.add_argument(
+        '--tag',
+        default=os.environ.get('CHARMLIBS_TAG', ''),
+        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
+    )
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args, pack_args = parser.parse_known_args()
     integration_dir = _common.REPO_ROOT / args.package / 'tests' / 'integration'

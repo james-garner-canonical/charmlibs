@@ -36,7 +36,11 @@ _LABELS = {'k8s': 'not machine_only', 'machine': 'not k8s_only'}
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--substrate', required=True, choices=['k8s', 'machine'])
-    parser.add_argument('--tag', default='', help='Value for the CHARMLIBS_TAG environment var.')
+    parser.add_argument(
+        '--tag',
+        default=os.environ.get('CHARMLIBS_TAG', ''),
+        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
+    )
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args, pytest_args = parser.parse_known_args()

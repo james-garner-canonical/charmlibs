@@ -3,11 +3,6 @@ mod docs  # load docs module to expose docs subcommands
 
 set ignore-comments  # don't print comment lines in recipes
 
-# set on the commandline as needed, e.g. `just package=pathops python=3.10 unit`
-python := '3.10'
-# for integration tests, e.g. `just tag=24.04 pack-k8s` `just tag=foo integration-machine`
-tag := env('CHARMLIBS_TAG', '')
-
 # this is the first recipe in the file, so it will run if just is called without a recipe
 _short_help:
     @echo '{{BOLD}}Charmlibs is the Canonical charm libraries monorepo{{NORMAL}}'
@@ -40,64 +35,67 @@ init *args:
     @'{{ justfile_dir() }}/.scripts/recipes/init.py' "$@"
 
 [doc('Run `ruff`, failing afterwards if any errors are found.')]
-fast-lint path='.':
-    @'{{ justfile_dir() }}/.scripts/recipes/fast_lint.py' '{{ path }}'
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+fast-lint *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/fast_lint.py' "$@"
 
 [doc('`lint`, `unit` test, and build the `docs` for a package.')]
 check package: (lint package) (unit package) (docs::html package)
 
 [doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
-format package='.':
-    @'{{ justfile_dir() }}/.scripts/recipes/format.py' '{{ package }}'
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+format *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/format.py' "$@"
 
 [doc("Run `uv add` for package, respecting repo-level version constraints, e.g. `just add pathops 'pydantic>=2'`.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-add package +args:
+add *args:
     @'{{ justfile_dir() }}/.scripts/recipes/add.py' "$@"
 
-[doc('Run linting and static analysis for a specific package, e.g. `just python=3.10 lint interfaces/tls-certificates`.')]
+[doc('Run linting and static analysis for a package, e.g. `just lint interfaces/tls-certificates`.')]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-lint package *pyright_args:
-    @'{{ justfile_dir() }}/.scripts/recipes/lint.py' --python='{{ python }}' "$@"
+lint *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/lint.py' "$@"
 
-[doc('Run package specific static analysis only, e.g. `just python=3.10 static pathops`.')]
+[doc('Run package specific static analysis only, e.g. `just static pathops`.')]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-static package *args:
-    @'{{ justfile_dir() }}/.scripts/recipes/static.py' --python='{{ python }}' "$@"
+static *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/static.py' "$@"
 
-[doc("Run unit tests with `coverage`, e.g. `just python=3.10 unit pathops`.")]
+[doc("Run unit tests with `coverage`, e.g. `just unit pathops`.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
 unit *args:
-    @'{{ justfile_dir() }}/.scripts/recipes/unit.py' --python='{{ python }}' "$@"
+    @'{{ justfile_dir() }}/.scripts/recipes/unit.py' "$@"
 
-[doc("Run functional tests with `coverage`, e.g. `just python=3.10 functional pathops`.")]
+[doc("Run functional tests with `coverage`, e.g. `just functional pathops`.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
 functional *args:
-    @'{{ justfile_dir() }}/.scripts/recipes/functional.py' --python='{{ python }}' "$@"
+    @'{{ justfile_dir() }}/.scripts/recipes/functional.py' "$@"
 
-[doc("Combine `coverage` reports, e.g. `just python=3.10 combine-coverage pathops`.")]
-combine-coverage package:
-    @'{{ justfile_dir() }}/.scripts/recipes/combine_coverage.py' --python='{{ python }}' '{{ package }}'
+[doc("Combine `coverage` reports, e.g. `just combine-coverage pathops`.")]
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+combine-coverage *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/combine_coverage.py' "$@"
 
 [doc("Execute pack script to pack Kubernetes charm(s) for Juju integration tests.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-pack-k8s package *args:
-    @'{{ justfile_dir() }}/.scripts/recipes/pack.py' --substrate=k8s --tag='{{ tag }}' "$@"
+pack-k8s *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/pack.py' --substrate=k8s "$@"
 
 [doc("Execute pack script to pack machine charm(s) for Juju integration tests.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-pack-machine package *args:
-    @'{{ justfile_dir() }}/.scripts/recipes/pack.py' --substrate=machine --tag='{{ tag }}' "$@"
+pack-machine *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/pack.py' --substrate=machine "$@"
 
 [doc("Run juju integration tests for packed k8s charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not machine_only'.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-integration-k8s package *flags:
-    @'{{ justfile_dir() }}/.scripts/recipes/integration.py' --substrate=k8s --tag='{{ tag }}' --python='{{ python }}' "$@"
+integration-k8s *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/integration.py' --substrate=k8s "$@"
 
 [doc("Run juju integration tests for packed machine charm(s), setting CHARMLIBS_SUBSTRATE and CHARMLIBS_TAG, and selecting 'not k8s_only'.")]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-integration-machine package *flags:
-    @'{{ justfile_dir() }}/.scripts/recipes/integration.py' --substrate=machine --tag='{{ tag }}' --python='{{ python }}' "$@"
+integration-machine *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/integration.py' --substrate=machine "$@"
 
 [doc("Make .interfaces.json file.")]
 interfaces-json:
@@ -105,5 +103,5 @@ interfaces-json:
 
 [doc('Run unit tests for the repository tooling scripts in `.scripts/`.')]
 [positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
-scripts-unit *flags:
-    @'{{ justfile_dir() }}/.scripts/recipes/scripts_unit.py' --python='{{ python }}' "$@"
+scripts-unit *args:
+    @'{{ justfile_dir() }}/.scripts/recipes/scripts_unit.py' "$@"

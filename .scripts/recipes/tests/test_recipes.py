@@ -311,6 +311,21 @@ def test_pack_runs_pack_script_with_substrate_env(monkeypatch):
     assert captured['env']['CHARMLIBS_TAG'] == '24.04'
 
 
+def test_pack_tag_defaults_to_charmlibs_tag_env(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['env'] = env
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setenv('CHARMLIBS_TAG', '22.04')
+    monkeypatch.setattr(sys, 'argv', ['pack.py', '--substrate=k8s', 'pathops'])
+    with pytest.raises(SystemExit):
+        pack._main()
+    assert captured['env']['CHARMLIBS_TAG'] == '22.04'  # taken from the env, not the (absent) flag
+
+
 # --- integration._main -------------------------------------------------------------------------
 
 
