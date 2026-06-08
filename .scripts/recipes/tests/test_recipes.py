@@ -24,6 +24,8 @@ import sys
 
 import _common
 import _coverage
+import _integration
+import _pack
 import add
 import check
 import combine_coverage
@@ -31,10 +33,8 @@ import fast_lint
 import functional
 import help as help_recipe  # aliased: `help` shadows a builtin
 import init
-import integration
 import interfaces_json
 import lint
-import pack
 import pytest
 import scripts_unit
 import static
@@ -290,7 +290,7 @@ def test_add_runs_uv_add_with_constraints(monkeypatch):
     assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
 
 
-# --- pack._main --------------------------------------------------------------------------------
+# --- _pack.main --------------------------------------------------------------------------------
 
 
 def test_pack_runs_pack_script_with_substrate_env(monkeypatch):
@@ -303,9 +303,8 @@ def test_pack_runs_pack_script_with_substrate_env(monkeypatch):
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
-    monkeypatch.setattr(sys, 'argv', ['pack.py', '--substrate=k8s', '--tag=24.04', 'pathops'])
     with pytest.raises(SystemExit) as exc_info:
-        pack._main()
+        _pack.main(['--k8s', '--tag=24.04', 'pathops'])
     assert exc_info.value.code == 0
     assert captured['cmd'] == ['./pack.sh']
     assert captured['cwd'] == _common.REPO_ROOT / 'pathops' / 'tests' / 'integration'
@@ -322,13 +321,19 @@ def test_pack_tag_defaults_to_charmlibs_tag_env(monkeypatch):
 
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setenv('CHARMLIBS_TAG', '22.04')
-    monkeypatch.setattr(sys, 'argv', ['pack.py', '--substrate=k8s', 'pathops'])
     with pytest.raises(SystemExit):
-        pack._main()
+        _pack.main(['--machine', 'pathops'])
+    assert captured['env']['CHARMLIBS_SUBSTRATE'] == 'machine'
     assert captured['env']['CHARMLIBS_TAG'] == '22.04'  # taken from the env, not the (absent) flag
 
 
-# --- integration._main -------------------------------------------------------------------------
+def test_pack_requires_a_substrate():
+    with pytest.raises(SystemExit) as exc_info:
+        _pack.main(['pathops'])  # neither --k8s nor --machine
+    assert exc_info.value.code == 2  # argparse usage error
+
+
+# --- _integration.main -------------------------------------------------------------------------
 
 
 def test_integration_selects_marker_for_substrate(monkeypatch):
@@ -342,9 +347,8 @@ def test_integration_selects_marker_for_substrate(monkeypatch):
 
     monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
     monkeypatch.setattr(_common, 'run', fake_run)
-    monkeypatch.setattr(sys, 'argv', ['integration.py', '--substrate=machine', 'pathops', '-x'])
     with pytest.raises(SystemExit) as exc_info:
-        integration._main()
+        _integration.main(['--machine', 'pathops', '-x'])
     assert exc_info.value.code == 0
     cmd = captured['cmd']
     assert cmd[cmd.index('-m') + 1] == 'not k8s_only'
@@ -444,21 +448,21 @@ def test_help_summary_reads_first_docstring_line(tmp_path):
     assert help_recipe._summary(script) == 'Do the foo thing.'
 
 
-def test_help_recipes_uses_justfile_order_and_appends_substrate(monkeypatch, tmp_path):
+def test_help_recipes_map_names_to_scripts_in_order(monkeypatch, tmp_path):
     recipes_dir = tmp_path / '.scripts' / 'recipes'
     recipes_dir.mkdir(parents=True)
     (recipes_dir / 'foo.py').write_text('"""Do the foo thing."""\n')
-    (recipes_dir / 'pack.py').write_text('"""Pack it."""\n')
+    (recipes_dir / 'pack_k8s.py').write_text('"""Pack it for k8s."""\n')
     (tmp_path / 'justfile').write_text(
         'set positional-arguments\n\n'
         '_short_help:\n    @echo hi\n\n'
         'foo *args:\n    @.scripts/recipes/foo.py "$@"\n\n'
-        'pack-k8s *args:\n    @.scripts/recipes/pack.py --substrate=k8s "$@"\n'
+        'pack-k8s *args:\n    @.scripts/recipes/pack_k8s.py "$@"\n'
     )
     monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
     assert list(help_recipe._recipes()) == [
         ('foo', 'Do the foo thing.'),  # private `_short_help` is skipped
-        ('pack-k8s', 'Pack it. [k8s]'),  # substrate appended to disambiguate shared scripts
+        ('pack-k8s', 'Pack it for k8s.'),  # hyphen -> underscore maps the name to its script
     ]
 
 

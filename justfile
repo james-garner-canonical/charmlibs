@@ -59,16 +59,16 @@ combine-coverage *args:
     @.scripts/recipes/combine_coverage.py "$@"
 
 pack-k8s *args:
-    @.scripts/recipes/pack.py --substrate=k8s "$@"
+    @.scripts/recipes/pack_k8s.py "$@"
 
 pack-machine *args:
-    @.scripts/recipes/pack.py --substrate=machine "$@"
+    @.scripts/recipes/pack_machine.py "$@"
 
 integration-k8s *args:
-    @.scripts/recipes/integration.py --substrate=k8s "$@"
+    @.scripts/recipes/integration_k8s.py "$@"
 
 integration-machine *args:
-    @.scripts/recipes/integration.py --substrate=machine "$@"
+    @.scripts/recipes/integration_machine.py "$@"
 
 interfaces-json *args:
     @.scripts/recipes/interfaces_json.py "$@"

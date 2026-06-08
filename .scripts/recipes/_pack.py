@@ -1,10 +1,3 @@
-#!/usr/bin/env -S uv run --script --no-project
-
-# /// script
-# requires-python = ">=3.10"
-# dependencies = []
-# ///
-
 # Copyright 2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Pack charm(s) for a package's Juju integration tests."""
+"""Shared implementation for the `pack-k8s` and `pack-machine` recipes."""
 
 from __future__ import annotations
 
@@ -30,20 +23,22 @@ import sys
 import _common
 
 
-def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--substrate', required=True, choices=['k8s', 'machine'])
+def main(argv: list[str]) -> None:
+    """Pack the package's integration-test charm(s) for the substrate selected in `argv`.
+
+    The thin wrapper recipe passes exactly one of `--k8s` / `--machine` to select the substrate.
+    """
+    parser = argparse.ArgumentParser()
+    substrate = parser.add_mutually_exclusive_group(required=True)
+    substrate.add_argument('--k8s', dest='substrate', action='store_const', const='k8s')
+    substrate.add_argument('--machine', dest='substrate', action='store_const', const='machine')
     parser.add_argument(
         '--tag',
         default=os.environ.get('CHARMLIBS_TAG', ''),
         help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
     )
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pack_args = parser.parse_known_args()
+    args, pack_args = parser.parse_known_args(argv)
     integration_dir = _common.REPO_ROOT / args.package / 'tests' / 'integration'
     env = {**os.environ, 'CHARMLIBS_SUBSTRATE': args.substrate, 'CHARMLIBS_TAG': args.tag}
     sys.exit(_common.run(['./pack.sh', *pack_args], cwd=integration_dir, env=env))
-
-
-if __name__ == '__main__':
-    _main()

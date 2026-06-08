@@ -1,10 +1,3 @@
-#!/usr/bin/env -S uv run --script --no-project
-
-# /// script
-# requires-python = ">=3.10"
-# dependencies = []
-# ///
-
 # Copyright 2025 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run a package's Juju integration tests."""
+"""Shared implementation for the `integration-k8s` and `integration-machine` recipes."""
 
 from __future__ import annotations
 
@@ -33,9 +26,15 @@ import _common
 _LABELS = {'k8s': 'not machine_only', 'machine': 'not k8s_only'}
 
 
-def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--substrate', required=True, choices=['k8s', 'machine'])
+def main(argv: list[str]) -> None:
+    """Run the package's Juju integration tests for the substrate selected in `argv`.
+
+    The thin wrapper recipe passes exactly one of `--k8s` / `--machine` to select the substrate.
+    """
+    parser = argparse.ArgumentParser()
+    substrate = parser.add_mutually_exclusive_group(required=True)
+    substrate.add_argument('--k8s', dest='substrate', action='store_const', const='k8s')
+    substrate.add_argument('--machine', dest='substrate', action='store_const', const='machine')
     parser.add_argument(
         '--tag',
         default=os.environ.get('CHARMLIBS_TAG', ''),
@@ -43,7 +42,7 @@ def _main() -> None:
     )
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pytest_args = parser.parse_known_args()
+    args, pytest_args = parser.parse_known_args(argv)
     python = _common.resolve_python(args.package, args.python)
     package_dir = _common.REPO_ROOT / args.package
     env = {**os.environ, 'CHARMLIBS_SUBSTRATE': args.substrate, 'CHARMLIBS_TAG': args.tag}
@@ -59,7 +58,3 @@ def _main() -> None:
         *(pytest_args or ['-rA']),
     ]
     sys.exit(_common.run(command, cwd=package_dir, env=env))
-
-
-if __name__ == '__main__':
-    _main()
