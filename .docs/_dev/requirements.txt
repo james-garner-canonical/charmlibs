@@ -32,6 +32,3 @@ sphinx-llm~=0.4
 # charmlibs-specific extensions (not in the upstream pack)
 sphinxcontrib-mermaid
 sphinx-datatables>=0.3
-
-# Vale dependencies from the upstream pack (vale~=3.13, rst2html) are intentionally
-# omitted: charmlibs retains pyspelling (run via `uvx pyspelling`) for spell checking.

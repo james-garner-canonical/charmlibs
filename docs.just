@@ -65,9 +65,41 @@ linkcheck *sphinx_args: _packages
     uvx --with-requirements=_dev/requirements.txt --from=sphinx \
         sphinx-build -b linkcheck . '{{build_dir}}' {{sphinx_args}}
 
-[doc('Check spelling.')]
-spelling: html
-    uvx pyspelling -c _dev/spellingcheck.yaml -j $(nproc)
+[doc('Check spelling with Vale (flags US-English misspellings not in the custom wordlist).')]
+spelling *paths: (_vale '.Name=="Canonical.000-US-spellcheck"' paths)
+
+[doc('Check Canonical style guide compliance (errors only) with Vale.')]
+vale *paths: (_vale '.Level=="error" and .Name!="Canonical.500-Repeated-words" and .Name!="Canonical.000-US-spellcheck"' paths)
+
+[doc('Check for non-inclusive language with Vale.')]
+woke *paths: (_vale '.Name=="Canonical.400-Enforce-inclusive-terms"' paths)
+
+[doc('Download the Canonical Vale style guide (styles + vale.ini) unless already present.')]
+_vale-conf:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    [ -f _dev/vale.ini ] || python3 _dev/get_vale_conf.py
+
+# Run Vale over the tracked .md/.rst files (or those matching the given pathspecs), applying
+# the custom wordlist and the given filter. Generated reference docs are untracked, so they
+# are excluded automatically.
+_vale filter *paths: _vale-conf
+    #!/usr/bin/env bash
+    set -euo pipefail
+    accept='_dev/styles/config/vocabularies/Canonical/accept.txt'
+    cp "$accept" "$accept.bak"
+    trap 'mv "$accept.bak" "$accept"' EXIT
+    cat .custom_wordlist.txt >> "$accept"
+    if [ -n "{{paths}}" ]; then
+        files=$(git ls-files -- {{paths}} | grep -E '\.(md|rst)$' || true)
+    else
+        files=$(git ls-files '*.md' '*.rst')
+    fi
+    if [ -z "$files" ]; then
+        echo 'No tracked .md/.rst files to check.'
+        exit 0
+    fi
+    echo "$files" | xargs uvx --from 'vale~=3.13' vale --config=_dev/vale.ini --filter='{{filter}}'
 
 [doc('Remove files created by building the docs.')]
 clean:

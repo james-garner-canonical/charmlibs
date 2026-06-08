@@ -4,7 +4,6 @@ _dev/venv/
 
 # Sphinx
 _dev/warnings.txt
-_dev/.wordlist.dic
 _dev/.doctrees/
 _dev/node_modules/
 
