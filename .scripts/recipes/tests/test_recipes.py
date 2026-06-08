@@ -495,27 +495,27 @@ def test_help_recipes_map_names_to_scripts_in_order(
 def test_check_runs_lint_unit_docs_in_order(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+    def fake_run(cmd, *, cwd=None, env=None, check=True, stdout=None):
         calls.append(list(cmd))
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setattr(sys, 'argv', ['check.py', 'pathops'])
-    with pytest.raises(SystemExit) as exc_info:
-        check._main()
-    assert exc_info.value.code == 0
+    check._main()
     assert len(calls) == 3
-    assert calls[0][0].endswith('lint.py') and calls[0][1] == 'pathops'
-    assert calls[1][0].endswith('unit.py') and calls[1][1] == 'pathops'
+    assert str(calls[0][0]).endswith('lint.py') and calls[0][1] == 'pathops'
+    assert str(calls[1][0]).endswith('unit.py') and calls[1][1] == 'pathops'
     assert calls[2] == ['just', 'docs', 'html', 'pathops']  # docs not yet migrated
 
 
 def test_check_fails_fast_on_first_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+    def fake_run(cmd, *, cwd=None, env=None, check=True, stdout=None):
         calls.append(list(cmd))
-        return 1  # the first step (lint) fails
+        if check:
+            sys.exit(1)  # the first step (lint) fails and run aborts
+        return 1
 
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setattr(sys, 'argv', ['check.py', 'pathops'])
@@ -528,13 +528,12 @@ def test_check_fails_fast_on_first_failure(monkeypatch: pytest.MonkeyPatch) -> N
 def test_check_forwards_python_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+    def fake_run(cmd, *, cwd=None, env=None, check=True, stdout=None):
         calls.append(list(cmd))
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setattr(sys, 'argv', ['check.py', 'pathops', '--python', '3.11'])
-    with pytest.raises(SystemExit):
-        check._main()
+    check._main()
     assert calls[0][-2:] == ['--python', '3.11']  # forwarded to lint
     assert calls[1][-2:] == ['--python', '3.11']  # forwarded to unit

@@ -24,7 +24,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
 import _common
 
@@ -34,20 +33,13 @@ def _main() -> None:
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args = parser.parse_args()
-    recipes = _common.REPO_ROOT / '.scripts' / 'recipes'
-    python_flag = ['--python', args.python] if args.python is not None else []
-    steps = [
-        [str(recipes / 'lint.py'), args.package, *python_flag],
-        [str(recipes / 'unit.py'), args.package, *python_flag],
-        # docs.just isn't migrated yet, so delegate the docs build to the `docs` just module.
+    python = _common.resolve_python(args.package, args.python)
+    for cmd in [
+        [_common.REPO_ROOT / '.scripts' / 'recipes' / 'lint.py', args.package, '--python', python],
+        [_common.REPO_ROOT / '.scripts' / 'recipes' / 'unit.py', args.package, '--python', python],
         ['just', 'docs', 'html', args.package],
-    ]
-    returncode = 0
-    for cmd in steps:
-        returncode = _common.run(cmd)
-        if returncode != 0:
-            break  # fail fast, like the old dependency recipe
-    sys.exit(returncode)
+    ]:
+        _common.run(cmd)
 
 
 if __name__ == '__main__':
