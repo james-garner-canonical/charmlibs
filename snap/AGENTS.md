@@ -10,18 +10,15 @@ Familiarise yourself with the codebase by reading everything under snap/src.
 
 ## Running checks
 
-Always run these checks. Use `.scripts/output-wrapper.sh` to capture output to `.out` — read `.out` selectively (e.g. with `grep` or `tail`) only if a command fails:
+Always run these checks:
 ```
 just format snap
-.scripts/output-wrapper.sh just lint snap
-# read .out to check
-.scripts/output-wrapper.sh just unit snap
-# read .out to check
+just lint snap
+just unit snap
 ```
 Also run tests against the real snapd API like this if the change is substantial, and before reporting completion. These are a bit slow so run them less frequently than the unit tests. Select specific tests with `-k '<expression>'`.
 ```
-.scripts/output-wrapper.sh workshop run resolute -- functional snap
-# read .out to check
+workshop run resolute -- functional snap
 ```
 If workshop isn't launched yet, run `workshop launch resolute` first. If workshop isn't available, you must either stop and ask the user, or proceed without functional tests (only if appropriate).
 
@@ -143,7 +140,7 @@ Key points about the capture pattern:
 ### Step 2: Run capture tests
 
 ```bash
-.scripts/output-wrapper.sh workshop run resolute -- functional snap -k _capture
+workshop run resolute -- functional snap -k _capture
 ```
 
 Run this with `mode=sync` and `timeout=360000`.
@@ -215,12 +212,9 @@ For any function where a new raisable error was discovered, add it to the functi
 
 ```bash
 just format snap
-.scripts/output-wrapper.sh just lint snap
-# check .out
-.scripts/output-wrapper.sh just unit snap
-# check .out
-.scripts/output-wrapper.sh workshop run resolute -- functional snap
-# check .out
+just lint snap
+just unit snap
+workshop run resolute -- functional snap
 ```
 
 All three must pass before reporting completion.
