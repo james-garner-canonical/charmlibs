@@ -233,10 +233,23 @@ def test_fast_lint_counts_check_and_format_failures(monkeypatch: pytest.MonkeyPa
 
 
 def test_fast_lint_ignores_check_diff_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
-    # A non-zero `ruff check --diff` (the informational diff) must not count as a failure.
-    fake_run, _calls = _run_returning([0, 1, 0])
+    # When `ruff check` fails, the informational `ruff check --diff` runs but its non-zero exit
+    # code must not count as a second failure.
+    fake_run, calls = _run_returning([1, 1, 0])
+    monkeypatch.setattr(_common, 'run', fake_run)
+    assert fast_lint.fast_lint('pathops') == 1
+    assert len(calls) == 3
+    assert calls[1][-3:] == ['check', '--diff', 'pathops']
+
+
+def test_fast_lint_skips_check_diff_when_check_passes(monkeypatch: pytest.MonkeyPatch) -> None:
+    # `ruff check --diff` is only informative when `ruff check` failed, so skip it otherwise.
+    fake_run, calls = _run_returning([0, 0])
     monkeypatch.setattr(_common, 'run', fake_run)
     assert fast_lint.fast_lint('pathops') == 0
+    assert len(calls) == 2
+    assert calls[0][-2:] == ['check', 'pathops']
+    assert calls[1][-3:] == ['format', '--diff', 'pathops']
 
 
 # --- static.static -----------------------------------------------------------------------------
