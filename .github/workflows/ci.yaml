@@ -161,7 +161,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - working-directory: interfaces
         run: |
-          uvx --from rust-just just interface init --no-input project_slug=example-interface
+          uvx --from rust-just just init --interface --no-input project_slug=example-interface
           rm -rf .example
           mv example-interface .example
           # check if tracked files changed, or any new files were added
