@@ -7,4 +7,4 @@ help:
 
 [doc('Create the files for a new charmlibs.interfaces package interactively.')]
 init *args:
-    @.scripts/recipes/init.py --interface "$@"
+    @.scripts/just.py init --interface "$@"
