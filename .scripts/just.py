@@ -21,12 +21,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Single-file implementation of every charmlibs `just` recipe.
-
-Usage: `.scripts/just.py <recipe> [args...]`. Each recipe mirrors the matching script in
-`.scripts/recipes/`; this file exists to compare the one-script-per-recipe layout against a
-single dispatcher. Run `.scripts/just.py help` to list the available recipes.
-"""
+"""Developer tooling for charmlibs; run `just` for quickstart info."""
 
 from __future__ import annotations
 
@@ -38,48 +33,24 @@ import shlex
 import shutil
 import subprocess
 import sys
+import textwrap
 import tomllib
-from typing import TYPE_CHECKING
+import typing
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+    from types import FunctionType
     from typing import IO
 
+    _F = typing.TypeVar('_F', bound=FunctionType)
+
 # `.scripts/just.py` -> repo root is two parents up.
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
-COVERAGE_RCFILE = REPO_ROOT / 'pyproject.toml'
 
-# Lower bound of a `requires-python` specifier (see `_requires_python_minimum`).
-_REQUIRES_PYTHON_LOWER_BOUND = re.compile(
-    r'(?:>=|~=)'  # a `>=` or `~=` operator: the ones that set a lower bound
-    r'\s*'  # optional whitespace between the operator and the version
-    r'(\d+\.\d+)'  # capture just `major.minor`, stopping before any patch component
-)
-
-# Each integration substrate skips the tests marked as only applying to the other substrate.
-_INTEGRATION_LABELS = {'k8s': 'not machine_only', 'machine': 'not k8s_only'}
-
-# Source a package's functional test setup.sh/teardown.sh around the test command, mirroring
-# `.scripts/recipes/_functional.sh`. The command is substituted in place of `@@COMMAND@@`.
-_FUNCTIONAL_WRAPPER = """\
-set -xueo pipefail
-if [ -e tests/functional/setup.sh ]; then
-    source ./tests/functional/setup.sh
-fi
-set +e  # Allow the command to fail.
-@@COMMAND@@
-returncode=$?
-set -e  # Exit on error again.
-if [ -e tests/functional/teardown.sh ]; then
-    source ./tests/functional/teardown.sh
-fi
-exit "$returncode"
-"""
-
-_BOLD = '\033[1m'
-_NORMAL = '\033[0m'
-_CYAN = '\033[36m'
+BOLD = '\033[1m'
+NORMAL = '\033[0m'
+CYAN = '\033[36m'
 
 
 # --- Entry point --------------------------------------------------------------------------------
@@ -88,22 +59,35 @@ _CYAN = '\033[36m'
 def main(argv: list[str]) -> int:
     """Dispatch `argv` to the named recipe, returning its exit code."""
     if not argv or argv[0] in ('-h', '--help'):
-        return help_([])
-    name, *rest = argv
+        return _quick_start()
+    name, *args = argv
     func = RECIPES.get(name)
     if func is None:
         print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
-        help_([])
+        _quick_start()
         return 2
-    return func(rest)
+    return func(args)
+
+
+RECIPES: dict[str, Callable[[list[str]], int]] = {}
+
+
+def _register(fn: _F) -> _F:
+    RECIPES[fn.__name__.replace('_', '-')] = fn
+    return fn
+
+
+def _quick_start() -> int:
+    return 0
 
 
 # --- Recipes -------------------------------------------------------------------------------------
 
 
-def help_(argv: list[str]) -> int:
+@_register
+def help(argv: list[str]) -> int:  # noqa: A001
     """Describe usage and list the available recipes."""
-    argparse.ArgumentParser(description=help_.__doc__).parse_args(argv)
+    argparse.ArgumentParser(description=help.__doc__).parse_args(argv)
     print('All recipes require `uv` to be available.\n')
     print('Available recipes:')
     width = max(len(name) for name in RECIPES)
@@ -113,6 +97,7 @@ def help_(argv: list[str]) -> int:
     return 0
 
 
+@_register
 def init(argv: list[str]) -> int:
     """Scaffold a new charmlibs package interactively (forwards extra args to cookiecutter)."""
     parser = argparse.ArgumentParser(description=init.__doc__)
@@ -124,13 +109,13 @@ def init(argv: list[str]) -> int:
     args, cookiecutter_args = parser.parse_known_args(argv)
     if args.interface:
         print(
-            f'✨{_BOLD}IMPORTANT{_NORMAL}✨ The project name should be the canonical interface'
-            f' name, as used in {_CYAN}charmcraft.yaml{_NORMAL} files.'
+            f'✨{BOLD}IMPORTANT{NORMAL}✨ The project name should be the canonical interface'
+            f' name, as used in {CYAN}charmcraft.yaml{NORMAL} files.'
         )
     else:
         print(
-            f'✨{_BOLD}IMPORTANT{_NORMAL}✨ The project name should be the import package name,'
-            f' without the {_CYAN}charmlibs.{_NORMAL} namespace.'
+            f'✨{BOLD}IMPORTANT{NORMAL}✨ The project name should be the import package name,'
+            f' without the {CYAN}charmlibs.{NORMAL} namespace.'
         )
     print('You can press enter to accept the default, shown in brackets.')
     template = REPO_ROOT / '.template'
@@ -145,39 +130,7 @@ def init(argv: list[str]) -> int:
     return 0
 
 
-def fast_lint(argv: list[str]) -> int:
-    """Run `ruff`, failing afterwards if any errors are found."""
-    parser = argparse.ArgumentParser(description=fast_lint.__doc__)
-    parser.add_argument('path', nargs='?', default='.', help='Path to lint, defaults to the repo.')
-    args = parser.parse_args(argv)
-    return _fast_lint(args.path)
-
-
-def check(argv: list[str]) -> int:
-    """`lint`, `unit` test, and build the `docs` for a package."""
-    args = _package_parser(check.__doc__).parse_args(argv)
-    python = _resolve_python(args.package, args.python)
-    failures = lint([args.package, '--python', python])
-    if failures:
-        sys.exit(failures)
-    _run_coverage(args.package, 'unit', python, ['-rA'])
-    _run(['just', 'docs', 'html', args.package])
-    return 0
-
-
-def format_(argv: list[str]) -> int:
-    """Run `ruff check --fix` and `ruff format`, modifying files in place."""
-    parser = argparse.ArgumentParser(description=format_.__doc__)
-    parser.add_argument(
-        'path', nargs='?', default='.', help='Path to format, defaults to the repo.'
-    )
-    args = parser.parse_args(argv)
-    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
-    _run([*ruff, 'format', args.path])
-    _run([*ruff, 'check', '--fix', args.path])
-    return 0
-
-
+@_register
 def add(argv: list[str]) -> int:
     """Run `uv add` for a package, respecting repo-level version constraints.
 
@@ -191,44 +144,156 @@ def add(argv: list[str]) -> int:
     return 0
 
 
+@_register
+def check(argv: list[str]) -> int:
+    """`lint`, `unit` test, and build the `docs` for a package."""
+    args = _package_parser(check.__doc__).parse_args(argv)
+    python = _resolve_python(args.package, args.python)
+    failures = lint([args.package, '--python', python])
+    if failures:
+        sys.exit(failures)
+    _coverage_cmds(args.package, 'unit', python, ['-rA'])
+    _run(['just', 'docs', 'html', args.package])
+    return 0
+
+
+@_register
+def format_(argv: list[str]) -> int:
+    """Run `ruff check --fix` and `ruff format`, modifying files in place."""
+    parser = argparse.ArgumentParser(description=format_.__doc__)
+    parser.add_argument(
+        'path', nargs='?', default='.', help='Path to format, defaults to the repo.'
+    )
+    args = parser.parse_args(argv)
+    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
+    _run([*ruff, 'format', args.path])
+    _run([*ruff, 'check', '--fix', args.path])
+    return 0
+
+
+# --- Linting recipes ---------------------------------------------------------------------------
+
+
+@_register
 def lint(argv: list[str]) -> int:
-    """Run linting (`ruff`) and static analysis (`pyright`) for a package."""
+    """Run fast linting (`ruff`) and static analysis (`pyright`) for a package."""
     args, pyright_args = _package_parser(lint.__doc__).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
     failures = _fast_lint(args.package)
-    if _static_check(args.package, python, pyright_args) != 0:
+    if _static(args.package, python, pyright_args) != 0:
         failures += 1
     return failures
 
 
+@_register
+def fast_lint(argv: list[str]) -> int:
+    """Run `ruff`, failing afterwards if any errors are found."""
+    parser = argparse.ArgumentParser(description=fast_lint.__doc__)
+    parser.add_argument('path', nargs='?', default='.', help='Path to lint, defaults to the repo.')
+    args = parser.parse_args(argv)
+    return _fast_lint(args.path)
+
+
+@_register
 def static(argv: list[str]) -> int:
     """Run `pyright` static analysis for a package."""
     args, pyright_args = _package_parser(static.__doc__).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
-    return _static_check(args.package, python, pyright_args)
+    return _static(args.package, python, pyright_args)
 
 
+def _fast_lint(path: str) -> int:
+    """Run `ruff check` and `ruff format --diff`, returning the number of failing commands.
+
+    The `ruff check --diff` output (the fixes that would resolve `ruff check` issues) is printed
+    for information, but never counts as a failure.
+    """
+    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
+    failures = 0
+    if _run([*ruff, 'check', path], check=False) != 0:
+        _run([*ruff, 'check', '--diff', path], check=False)
+        failures += 1
+    if _run([*ruff, 'format', '--diff', path], check=False) != 0:
+        failures += 1
+    return failures
+
+
+def _static(package: str, python: str, pyright_args: Sequence[str]) -> int:
+    """Run `pyright` for a package against the given Python version, returning its exit code."""
+    return _uv_run(
+        [
+            *('--with', 'pytest-interface-tester'),
+            *('pyright', f'--pythonversion={python}', *pyright_args),
+        ],
+        pkg_dir=REPO_ROOT / package,
+        python=python,
+        groups=['lint', 'unit', 'functional', 'integration'],
+        check=False,
+    )
+
+
+# --- Coverage recipes ---------------------------------------------------------------------------
+
+
+@_register
 def unit(argv: list[str]) -> int:
     """Run unit tests with `coverage` for a package."""
     args, pytest_args = _package_parser(unit.__doc__).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
-    _run_coverage(args.package, 'unit', python, pytest_args or ['-rA'])
+    cmds = _coverage_cmds(args.package, 'unit', python, pytest_args or ['-rA'])
+    for cmd in cmds:
+        _run(cmd, cwd=REPO_ROOT / args.package, env=_coverage_env())
     return 0
 
 
+@_register
 def functional(argv: list[str]) -> int:
     """Run functional tests with `coverage` for a package."""
     args, pytest_args = _package_parser(functional.__doc__).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
-    _run_coverage(args.package, 'functional', python, pytest_args or ['-rA'], functional=True)
+    cmds = _coverage_cmds(args.package, 'functional', python, pytest_args or ['-rA'])
+    joined = ' && '.join(shlex.join(str(part) for part in cmd) for cmd in cmds)
+    script = textwrap.dedent(
+        f"""
+        set -xueo pipefail
+        if [ -e tests/functional/setup.sh ]; then
+            source ./tests/functional/setup.sh
+        fi
+        set +e  # Allow the command to fail.
+        {joined}
+        returncode=$?
+        set -e  # Exit on error again.
+        if [ -e tests/functional/teardown.sh ]; then
+            source ./tests/functional/teardown.sh
+        fi
+        exit "$returncode"
+        """
+    ).strip()
+    _run(['bash', '-c', script], cwd=REPO_ROOT / args.package, env=_coverage_env())
     return 0
 
 
+def _coverage_cmds(package: str, suite: str, python: str, pytest_args: list[str]):
+    """Return cmds for `coverage run -m pytest` and `coverage report` for package and suite."""
+    pkg_dir = REPO_ROOT / package
+    data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
+    run = [
+        *('coverage', 'run', data_file_arg, '--source=src', '-m'),
+        *('pytest', '--tb=native', '-vv', f'tests/{suite}', *pytest_args),
+    ]
+    run_cmd = _uv_cmd(run, pkg_dir=pkg_dir, python=python, groups=[suite])
+    report = ['coverage', 'report', data_file_arg]
+    report_cmd = _uv_cmd(report, pkg_dir=pkg_dir, python=python, groups=[suite])
+    return run_cmd, report_cmd
+
+
+@_register
 def combine_coverage(argv: list[str]) -> int:
     """Combine a package's `coverage` reports."""
     args = _package_parser(combine_coverage.__doc__).parse_args(argv)
-    python = _resolve_python(args.package, args.python)
     pkg_dir = REPO_ROOT / args.package
+    python = _resolve_python(args.package, args.python)
+    env = _coverage_env()
     data_files = [
         f
         for test_id in ('unit', 'functional', 'juju')
@@ -236,7 +301,7 @@ def combine_coverage(argv: list[str]) -> int:
     ]
 
     def uv(cmd: list[str]) -> None:
-        _uv_run(cmd, pkg_dir=pkg_dir, python=python, env=_coverage_env())
+        _uv_run(cmd, pkg_dir=pkg_dir, python=python, env=env)
 
     # Combine reports and generate XML.
     data_file_arg = f'--data-file=.report/coverage-all-{python}.db'
@@ -251,26 +316,83 @@ def combine_coverage(argv: list[str]) -> int:
     return 0
 
 
+def _coverage_env() -> dict[str, str]:
+    """Return the environment with `COVERAGE_RCFILE` pointing at the repo `pyproject.toml`."""
+    return {**os.environ, 'COVERAGE_RCFILE': str(REPO_ROOT / 'pyproject.toml')}
+
+
+# --- Pack recipes ------------------------------------------------------------------------------
+
+
+@_register
 def pack_k8s(argv: list[str]) -> int:
     """Pack Kubernetes charm(s) for a package's Juju integration tests."""
     return _pack('k8s', argv)
 
 
+@_register
 def pack_machine(argv: list[str]) -> int:
     """Pack machine charm(s) for a package's Juju integration tests."""
     return _pack('machine', argv)
 
 
+def _pack(substrate: str, argv: list[str]) -> int:
+    """Pack the package's integration-test charm(s) for the given substrate."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--tag',
+        default=os.environ.get('CHARMLIBS_TAG', ''),
+        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
+    )
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    args, pack_args = parser.parse_known_args(argv)
+    integration_dir = REPO_ROOT / args.package / 'tests' / 'integration'
+    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
+    return _run(['./pack.sh', *pack_args], cwd=integration_dir, env=env)
+
+
+# --- Integration recipes ------------------------------------------------------------------------
+
+
+@_register
 def integration_k8s(argv: list[str]) -> int:
     """Run a package's Kubernetes Juju integration tests."""
     return _integration('k8s', argv)
 
 
+@_register
 def integration_machine(argv: list[str]) -> int:
     """Run a package's machine Juju integration tests."""
     return _integration('machine', argv)
 
 
+def _integration(substrate: str, argv: list[str]) -> int:
+    """Run the package's Juju integration tests for the given substrate."""
+    parser = _package_parser()
+    parser.add_argument(
+        '--tag',
+        default=os.environ.get('CHARMLIBS_TAG', ''),
+        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
+    )
+    args, pytest_args = parser.parse_known_args(argv)
+    return _uv_run(
+        [
+            *('pytest', '--tb=native', '-vv'),
+            *('-m', {'k8s': 'not machine_only', 'machine': 'not k8s_only'}[substrate]),
+            'tests/integration',
+            *(pytest_args or ['-rA']),
+        ],
+        pkg_dir=REPO_ROOT / args.package,
+        python=_resolve_python(args.package, args.python),
+        groups=['integration'],
+        env={**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag},
+    )
+
+
+# --- Other recipes -----------------------------------------------------------------------------
+
+
+@_register
 def interfaces_json(argv: list[str]) -> int:
     """Generate `interfaces/index.json` from the interface libraries."""
     argparse.ArgumentParser(description=interfaces_json.__doc__).parse_args(argv)  # supports `-h`
@@ -293,6 +415,7 @@ def interfaces_json(argv: list[str]) -> int:
     return 0
 
 
+@_register
 def scripts_unit(argv: list[str]) -> int:
     """Run the unit tests for the repository tooling in `.scripts/`."""
     tests = ('.scripts/tests', '.scripts/recipes/tests')
@@ -303,37 +426,18 @@ def scripts_unit(argv: list[str]) -> int:
     return 0
 
 
-# Recipe name (as in the justfile) -> handler. Order matches the justfile, which `help` mirrors.
-RECIPES: dict[str, Callable[[list[str]], int]] = {
-    'help': help_,
-    'init': init,
-    'fast-lint': fast_lint,
-    'check': check,
-    'format': format_,
-    'add': add,
-    'lint': lint,
-    'static': static,
-    'unit': unit,
-    'functional': functional,
-    'combine-coverage': combine_coverage,
-    'pack-k8s': pack_k8s,
-    'pack-machine': pack_machine,
-    'integration-k8s': integration_k8s,
-    'integration-machine': integration_machine,
-    'interfaces-json': interfaces_json,
-    'scripts-unit': scripts_unit,
-}
+# --- Parser ------------------------------------------------------------------------------------
 
 
-# --- Shared helpers ------------------------------------------------------------------------------
-
-
-def _package_parser(description: str | None) -> argparse.ArgumentParser:
+def _package_parser(description: str | None = None) -> argparse.ArgumentParser:
     """Return an `ArgumentParser` with the common `--python` and `package` arguments."""
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     return parser
+
+
+# --- Resolve Python version --------------------------------------------------------------------
 
 
 def _resolve_python(package: str, python: str | None) -> str:
@@ -345,6 +449,38 @@ def _resolve_python(package: str, python: str | None) -> str:
         return python
     minimum = _requires_python_minimum(REPO_ROOT / package)
     return max('3.10', minimum, key=lambda s: tuple(int(p) for p in s.split('.')))
+
+
+def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
+    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
+    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
+    requires_python = pyproject_toml.get('project', {})['requires-python']
+    regex = (
+        r'(?:>=|~=)'  # a `>=` or `~=` operator: the ones that set a lower bound
+        r'\s*'  # optional whitespace between the operator and the version
+        r'(\d+\.\d+)'  # capture just `major.minor`, stopping before any patch component
+    )
+    match = re.search(regex, requires_python)
+    assert match is not None
+    return match.group(1)
+
+
+# --- uv run ------------------------------------------------------------------------------------
+
+
+def _uv_run(
+    args: Sequence[str | pathlib.Path],
+    *,
+    pkg_dir: pathlib.Path,
+    python: str,
+    groups: Sequence[str] = (),
+    env: dict[str, str] | None = None,
+    check: bool = True,
+    stdout: IO[str] | None = None,
+) -> int:
+    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code."""
+    cmd = _uv_cmd(args, pkg_dir=pkg_dir, python=python, groups=groups)
+    return _run(cmd, cwd=pkg_dir, env=env, check=check, stdout=stdout)
 
 
 def _run(
@@ -383,143 +519,10 @@ def _uv_cmd(
     return [*cmd, *args]
 
 
-def _uv_run(
-    args: Sequence[str | pathlib.Path],
-    *,
-    pkg_dir: pathlib.Path,
-    python: str,
-    groups: Sequence[str] = (),
-    env: dict[str, str] | None = None,
-    check: bool = True,
-    stdout: IO[str] | None = None,
-) -> int:
-    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code."""
-    cmd = _uv_cmd(args, pkg_dir=pkg_dir, python=python, groups=groups)
-    return _run(cmd, cwd=pkg_dir, env=env, check=check, stdout=stdout)
-
-
 def _dependency_groups(pkg_dir: pathlib.Path) -> set[str]:
     """Return the PEP 735 dependency group names declared in `pyproject.toml`."""
     pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
     return set(pyproject_toml.get('dependency-groups', ()))
-
-
-def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
-    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
-    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
-    requires_python = pyproject_toml.get('project', {})['requires-python']
-    match = _REQUIRES_PYTHON_LOWER_BOUND.search(requires_python)
-    assert match is not None
-    return match.group(1)
-
-
-def _coverage_env() -> dict[str, str]:
-    """Return the environment with `COVERAGE_RCFILE` pointing at the repo `pyproject.toml`."""
-    return {**os.environ, 'COVERAGE_RCFILE': str(COVERAGE_RCFILE)}
-
-
-def _run_coverage(
-    package: str, suite: str, python: str, pytest_args: list[str], *, functional: bool = False
-) -> None:
-    """Run `coverage run -m pytest` then `coverage report` for a package's test suite.
-
-    When `functional` is set, the commands are wrapped so that the package's
-    `tests/functional/setup.sh` and `teardown.sh` are sourced around them.
-    """
-    pkg_dir = REPO_ROOT / package
-    data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
-    run_cmd = _uv_cmd(
-        [
-            *('coverage', 'run', data_file_arg, '--source=src', '-m'),
-            *('pytest', '--tb=native', '-vv', f'tests/{suite}', *pytest_args),
-        ],
-        pkg_dir=pkg_dir,
-        python=python,
-        groups=[suite],
-    )
-    report_cmd = _uv_cmd(
-        ['coverage', 'report', data_file_arg], pkg_dir=pkg_dir, python=python, groups=[suite]
-    )
-    if functional:
-        joined = f'{_shlex_join(run_cmd)} && {_shlex_join(report_cmd)}'
-        script = _FUNCTIONAL_WRAPPER.replace('@@COMMAND@@', joined)
-        _run(['bash', '-c', script], cwd=pkg_dir, env=_coverage_env())
-    else:
-        _run(run_cmd, cwd=pkg_dir, env=_coverage_env())
-        _run(report_cmd, cwd=pkg_dir, env=_coverage_env())
-
-
-def _shlex_join(cmd: Sequence[str | pathlib.Path]) -> str:
-    """Quote and join a command list into a single shell-safe string."""
-    return shlex.join(str(part) for part in cmd)
-
-
-def _fast_lint(path: str) -> int:
-    """Run `ruff check` and `ruff format --diff`, returning the number of failing commands.
-
-    The `ruff check --diff` output (the fixes that would resolve `ruff check` issues) is printed
-    for information, but never counts as a failure.
-    """
-    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
-    failures = 0
-    if _run([*ruff, 'check', path], check=False) != 0:
-        _run([*ruff, 'check', '--diff', path], check=False)
-        failures += 1
-    if _run([*ruff, 'format', '--diff', path], check=False) != 0:
-        failures += 1
-    return failures
-
-
-def _static_check(package: str, python: str, pyright_args: Sequence[str]) -> int:
-    """Run `pyright` for a package against the given Python version, returning its exit code."""
-    return _uv_run(
-        [
-            *('--with', 'pytest-interface-tester'),
-            *('pyright', f'--pythonversion={python}', *pyright_args),
-        ],
-        pkg_dir=REPO_ROOT / package,
-        python=python,
-        groups=['lint', 'unit', 'functional', 'integration'],
-        check=False,
-    )
-
-
-def _pack(substrate: str, argv: list[str]) -> int:
-    """Pack the package's integration-test charm(s) for the given substrate."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--tag',
-        default=os.environ.get('CHARMLIBS_TAG', ''),
-        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
-    )
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pack_args = parser.parse_known_args(argv)
-    integration_dir = REPO_ROOT / args.package / 'tests' / 'integration'
-    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
-    return _run(['./pack.sh', *pack_args], cwd=integration_dir, env=env)
-
-
-def _integration(substrate: str, argv: list[str]) -> int:
-    """Run the package's Juju integration tests for the given substrate."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--tag',
-        default=os.environ.get('CHARMLIBS_TAG', ''),
-        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
-    )
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pytest_args = parser.parse_known_args(argv)
-    python = _resolve_python(args.package, args.python)
-    pkg_dir = REPO_ROOT / args.package
-    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
-    cmd = [
-        *('pytest', '--tb=native', '-vv'),
-        *('-m', _INTEGRATION_LABELS[substrate]),
-        'tests/integration',
-        *(pytest_args or ['-rA']),
-    ]
-    return _uv_run(cmd, pkg_dir=pkg_dir, python=python, groups=['integration'], env=env)
 
 
 if __name__ == '__main__':
