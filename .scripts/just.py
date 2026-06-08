@@ -82,170 +82,20 @@ _NORMAL = '\033[0m'
 _CYAN = '\033[36m'
 
 
-# --- Shared helpers ------------------------------------------------------------------------------
+# --- Entry point --------------------------------------------------------------------------------
 
 
-def _package_parser(description: str | None) -> argparse.ArgumentParser:
-    """Return an `ArgumentParser` with the common `--python` and `package` arguments."""
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    return parser
-
-
-def _resolve_python(package: str, python: str | None) -> str:
-    """Return the Python version to test `package` with.
-
-    If `python` is `None`, return the higher of 3.10 and the package's minimum Python version.
-    """
-    if python:
-        return python
-    minimum = _requires_python_minimum(REPO_ROOT / package)
-    return max('3.10', minimum, key=lambda s: tuple(int(p) for p in s.split('.')))
-
-
-def _run(
-    cmd: Sequence[str | pathlib.Path],
-    *,
-    cwd: pathlib.Path = REPO_ROOT,
-    env: dict[str, str] | None = None,
-    check: bool = True,
-    stdout: IO[str] | None = None,
-) -> int:
-    """Echo and run a command, returning its exit code."""
-    env = dict(os.environ if env is None else env)
-    env.pop('VIRTUAL_ENV', None)  # Don't propagate script's ephemeral venv.
-    print([str(part) for part in cmd], file=sys.stderr, flush=True)
-    returncode = subprocess.call(cmd, cwd=cwd, env=env, stdout=stdout)
-    if check and returncode != 0:
-        sys.exit(returncode)
-    return returncode
-
-
-def _uv_cmd(
-    args: Sequence[str | pathlib.Path],
-    *,
-    pkg_dir: pathlib.Path,
-    python: str,
-    groups: Sequence[str] = (),
-) -> list[str | pathlib.Path]:
-    """Build a `uv run ... <args>` command list to be executed in `pkg_dir`."""
-    cmd: list[str | pathlib.Path] = [
-        'uv',
-        'run',
-        '--with-requirements',
-        TEST_REQUIREMENTS,
-        '--python',
-        python,
-    ]
-    if (pkg_dir / 'uv.lock').exists():
-        cmd.append('--locked')
-    available = _dependency_groups(pkg_dir)
-    for group in groups:
-        if group in available:
-            cmd.extend(['--group', group])
-    return [*cmd, *args]
-
-
-def _uv_run(
-    args: Sequence[str | pathlib.Path],
-    *,
-    pkg_dir: pathlib.Path,
-    python: str,
-    groups: Sequence[str] = (),
-    env: dict[str, str] | None = None,
-    check: bool = True,
-    stdout: IO[str] | None = None,
-) -> int:
-    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code."""
-    cmd = _uv_cmd(args, pkg_dir=pkg_dir, python=python, groups=groups)
-    return _run(cmd, cwd=pkg_dir, env=env, check=check, stdout=stdout)
-
-
-def _dependency_groups(pkg_dir: pathlib.Path) -> set[str]:
-    """Return the PEP 735 dependency group names declared in `pyproject.toml`."""
-    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
-    return set(pyproject_toml.get('dependency-groups', ()))
-
-
-def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
-    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
-    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
-    requires_python = pyproject_toml.get('project', {})['requires-python']
-    match = _REQUIRES_PYTHON_LOWER_BOUND.search(requires_python)
-    assert match is not None
-    return match.group(1)
-
-
-def _coverage_env() -> dict[str, str]:
-    """Return the environment with `COVERAGE_RCFILE` pointing at the repo `pyproject.toml`."""
-    return {**os.environ, 'COVERAGE_RCFILE': str(COVERAGE_RCFILE)}
-
-
-def _run_coverage(
-    package: str, suite: str, python: str, pytest_args: list[str], *, functional: bool = False
-) -> None:
-    """Run `coverage run -m pytest` then `coverage report` for a package's test suite.
-
-    When `functional` is set, the commands are wrapped so that the package's
-    `tests/functional/setup.sh` and `teardown.sh` are sourced around them.
-    """
-    pkg_dir = REPO_ROOT / package
-    data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
-    run_cmd = _uv_cmd(
-        [
-            *('coverage', 'run', data_file_arg, '--source=src', '-m'),
-            *('pytest', '--tb=native', '-vv', f'tests/{suite}', *pytest_args),
-        ],
-        pkg_dir=pkg_dir,
-        python=python,
-        groups=[suite],
-    )
-    report_cmd = _uv_cmd(
-        ['coverage', 'report', data_file_arg], pkg_dir=pkg_dir, python=python, groups=[suite]
-    )
-    if functional:
-        joined = f'{_shlex_join(run_cmd)} && {_shlex_join(report_cmd)}'
-        script = _FUNCTIONAL_WRAPPER.replace('@@COMMAND@@', joined)
-        _run(['bash', '-c', script], cwd=pkg_dir, env=_coverage_env())
-    else:
-        _run(run_cmd, cwd=pkg_dir, env=_coverage_env())
-        _run(report_cmd, cwd=pkg_dir, env=_coverage_env())
-
-
-def _shlex_join(cmd: Sequence[str | pathlib.Path]) -> str:
-    """Quote and join a command list into a single shell-safe string."""
-    return shlex.join(str(part) for part in cmd)
-
-
-def _fast_lint(path: str) -> int:
-    """Run `ruff check` and `ruff format --diff`, returning the number of failing commands.
-
-    The `ruff check --diff` output (the fixes that would resolve `ruff check` issues) is printed
-    for information, but never counts as a failure.
-    """
-    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
-    failures = 0
-    if _run([*ruff, 'check', path], check=False) != 0:
-        _run([*ruff, 'check', '--diff', path], check=False)
-        failures += 1
-    if _run([*ruff, 'format', '--diff', path], check=False) != 0:
-        failures += 1
-    return failures
-
-
-def _static_check(package: str, python: str, pyright_args: Sequence[str]) -> int:
-    """Run `pyright` for a package against the given Python version, returning its exit code."""
-    return _uv_run(
-        [
-            *('--with', 'pytest-interface-tester'),
-            *('pyright', f'--pythonversion={python}', *pyright_args),
-        ],
-        pkg_dir=REPO_ROOT / package,
-        python=python,
-        groups=['lint', 'unit', 'functional', 'integration'],
-        check=False,
-    )
+def main(argv: list[str]) -> int:
+    """Dispatch `argv` to the named recipe, returning its exit code."""
+    if not argv or argv[0] in ('-h', '--help'):
+        return help_([])
+    name, *rest = argv
+    func = RECIPES.get(name)
+    if func is None:
+        print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
+        help_([])
+        return 2
+    return func(rest)
 
 
 # --- Recipes -------------------------------------------------------------------------------------
@@ -401,21 +251,6 @@ def combine_coverage(argv: list[str]) -> int:
     return 0
 
 
-def _pack(substrate: str, argv: list[str]) -> int:
-    """Pack the package's integration-test charm(s) for the given substrate."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--tag',
-        default=os.environ.get('CHARMLIBS_TAG', ''),
-        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
-    )
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pack_args = parser.parse_known_args(argv)
-    integration_dir = REPO_ROOT / args.package / 'tests' / 'integration'
-    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
-    return _run(['./pack.sh', *pack_args], cwd=integration_dir, env=env)
-
-
 def pack_k8s(argv: list[str]) -> int:
     """Pack Kubernetes charm(s) for a package's Juju integration tests."""
     return _pack('k8s', argv)
@@ -424,29 +259,6 @@ def pack_k8s(argv: list[str]) -> int:
 def pack_machine(argv: list[str]) -> int:
     """Pack machine charm(s) for a package's Juju integration tests."""
     return _pack('machine', argv)
-
-
-def _integration(substrate: str, argv: list[str]) -> int:
-    """Run the package's Juju integration tests for the given substrate."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--tag',
-        default=os.environ.get('CHARMLIBS_TAG', ''),
-        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
-    )
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args, pytest_args = parser.parse_known_args(argv)
-    python = _resolve_python(args.package, args.python)
-    pkg_dir = REPO_ROOT / args.package
-    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
-    cmd = [
-        *('pytest', '--tb=native', '-vv'),
-        *('-m', _INTEGRATION_LABELS[substrate]),
-        'tests/integration',
-        *(pytest_args or ['-rA']),
-    ]
-    return _uv_run(cmd, pkg_dir=pkg_dir, python=python, groups=['integration'], env=env)
 
 
 def integration_k8s(argv: list[str]) -> int:
@@ -513,17 +325,201 @@ RECIPES: dict[str, Callable[[list[str]], int]] = {
 }
 
 
-def main(argv: list[str]) -> int:
-    """Dispatch `argv` to the named recipe, returning its exit code."""
-    if not argv or argv[0] in ('-h', '--help'):
-        return help_([])
-    name, *rest = argv
-    func = RECIPES.get(name)
-    if func is None:
-        print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
-        help_([])
-        return 2
-    return func(rest)
+# --- Shared helpers ------------------------------------------------------------------------------
+
+
+def _package_parser(description: str | None) -> argparse.ArgumentParser:
+    """Return an `ArgumentParser` with the common `--python` and `package` arguments."""
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('--python', default=None)
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    return parser
+
+
+def _resolve_python(package: str, python: str | None) -> str:
+    """Return the Python version to test `package` with.
+
+    If `python` is `None`, return the higher of 3.10 and the package's minimum Python version.
+    """
+    if python:
+        return python
+    minimum = _requires_python_minimum(REPO_ROOT / package)
+    return max('3.10', minimum, key=lambda s: tuple(int(p) for p in s.split('.')))
+
+
+def _run(
+    cmd: Sequence[str | pathlib.Path],
+    *,
+    cwd: pathlib.Path = REPO_ROOT,
+    env: dict[str, str] | None = None,
+    check: bool = True,
+    stdout: IO[str] | None = None,
+) -> int:
+    """Echo and run a command, returning its exit code."""
+    env = dict(os.environ if env is None else env)
+    env.pop('VIRTUAL_ENV', None)  # Don't propagate script's ephemeral venv.
+    print([str(part) for part in cmd], file=sys.stderr, flush=True)
+    returncode = subprocess.call(cmd, cwd=cwd, env=env, stdout=stdout)
+    if check and returncode != 0:
+        sys.exit(returncode)
+    return returncode
+
+
+def _uv_cmd(
+    args: Sequence[str | pathlib.Path],
+    *,
+    pkg_dir: pathlib.Path,
+    python: str,
+    groups: Sequence[str] = (),
+) -> list[str | pathlib.Path]:
+    """Build a `uv run ... <args>` command list to be executed in `pkg_dir`."""
+    cmd = ['uv', 'run', '--with-requirements', TEST_REQUIREMENTS, '--python', python]
+    if (pkg_dir / 'uv.lock').exists():
+        cmd.append('--locked')
+    available = _dependency_groups(pkg_dir)
+    for group in groups:
+        if group in available:
+            cmd.extend(['--group', group])
+    return [*cmd, *args]
+
+
+def _uv_run(
+    args: Sequence[str | pathlib.Path],
+    *,
+    pkg_dir: pathlib.Path,
+    python: str,
+    groups: Sequence[str] = (),
+    env: dict[str, str] | None = None,
+    check: bool = True,
+    stdout: IO[str] | None = None,
+) -> int:
+    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code."""
+    cmd = _uv_cmd(args, pkg_dir=pkg_dir, python=python, groups=groups)
+    return _run(cmd, cwd=pkg_dir, env=env, check=check, stdout=stdout)
+
+
+def _dependency_groups(pkg_dir: pathlib.Path) -> set[str]:
+    """Return the PEP 735 dependency group names declared in `pyproject.toml`."""
+    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
+    return set(pyproject_toml.get('dependency-groups', ()))
+
+
+def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
+    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
+    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
+    requires_python = pyproject_toml.get('project', {})['requires-python']
+    match = _REQUIRES_PYTHON_LOWER_BOUND.search(requires_python)
+    assert match is not None
+    return match.group(1)
+
+
+def _coverage_env() -> dict[str, str]:
+    """Return the environment with `COVERAGE_RCFILE` pointing at the repo `pyproject.toml`."""
+    return {**os.environ, 'COVERAGE_RCFILE': str(COVERAGE_RCFILE)}
+
+
+def _run_coverage(
+    package: str, suite: str, python: str, pytest_args: list[str], *, functional: bool = False
+) -> None:
+    """Run `coverage run -m pytest` then `coverage report` for a package's test suite.
+
+    When `functional` is set, the commands are wrapped so that the package's
+    `tests/functional/setup.sh` and `teardown.sh` are sourced around them.
+    """
+    pkg_dir = REPO_ROOT / package
+    data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
+    run_cmd = _uv_cmd(
+        [
+            *('coverage', 'run', data_file_arg, '--source=src', '-m'),
+            *('pytest', '--tb=native', '-vv', f'tests/{suite}', *pytest_args),
+        ],
+        pkg_dir=pkg_dir,
+        python=python,
+        groups=[suite],
+    )
+    report_cmd = _uv_cmd(
+        ['coverage', 'report', data_file_arg], pkg_dir=pkg_dir, python=python, groups=[suite]
+    )
+    if functional:
+        joined = f'{_shlex_join(run_cmd)} && {_shlex_join(report_cmd)}'
+        script = _FUNCTIONAL_WRAPPER.replace('@@COMMAND@@', joined)
+        _run(['bash', '-c', script], cwd=pkg_dir, env=_coverage_env())
+    else:
+        _run(run_cmd, cwd=pkg_dir, env=_coverage_env())
+        _run(report_cmd, cwd=pkg_dir, env=_coverage_env())
+
+
+def _shlex_join(cmd: Sequence[str | pathlib.Path]) -> str:
+    """Quote and join a command list into a single shell-safe string."""
+    return shlex.join(str(part) for part in cmd)
+
+
+def _fast_lint(path: str) -> int:
+    """Run `ruff check` and `ruff format --diff`, returning the number of failing commands.
+
+    The `ruff check --diff` output (the fixes that would resolve `ruff check` issues) is printed
+    for information, but never counts as a failure.
+    """
+    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
+    failures = 0
+    if _run([*ruff, 'check', path], check=False) != 0:
+        _run([*ruff, 'check', '--diff', path], check=False)
+        failures += 1
+    if _run([*ruff, 'format', '--diff', path], check=False) != 0:
+        failures += 1
+    return failures
+
+
+def _static_check(package: str, python: str, pyright_args: Sequence[str]) -> int:
+    """Run `pyright` for a package against the given Python version, returning its exit code."""
+    return _uv_run(
+        [
+            *('--with', 'pytest-interface-tester'),
+            *('pyright', f'--pythonversion={python}', *pyright_args),
+        ],
+        pkg_dir=REPO_ROOT / package,
+        python=python,
+        groups=['lint', 'unit', 'functional', 'integration'],
+        check=False,
+    )
+
+
+def _pack(substrate: str, argv: list[str]) -> int:
+    """Pack the package's integration-test charm(s) for the given substrate."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--tag',
+        default=os.environ.get('CHARMLIBS_TAG', ''),
+        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
+    )
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    args, pack_args = parser.parse_known_args(argv)
+    integration_dir = REPO_ROOT / args.package / 'tests' / 'integration'
+    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
+    return _run(['./pack.sh', *pack_args], cwd=integration_dir, env=env)
+
+
+def _integration(substrate: str, argv: list[str]) -> int:
+    """Run the package's Juju integration tests for the given substrate."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--tag',
+        default=os.environ.get('CHARMLIBS_TAG', ''),
+        help='Value for the CHARMLIBS_TAG environment var (defaults to $CHARMLIBS_TAG).',
+    )
+    parser.add_argument('--python', default=None)
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    args, pytest_args = parser.parse_known_args(argv)
+    python = _resolve_python(args.package, args.python)
+    pkg_dir = REPO_ROOT / args.package
+    env = {**os.environ, 'CHARMLIBS_SUBSTRATE': substrate, 'CHARMLIBS_TAG': args.tag}
+    cmd = [
+        *('pytest', '--tb=native', '-vv'),
+        *('-m', _INTEGRATION_LABELS[substrate]),
+        'tests/integration',
+        *(pytest_args or ['-rA']),
+    ]
+    return _uv_run(cmd, pkg_dir=pkg_dir, python=python, groups=['integration'], env=env)
 
 
 if __name__ == '__main__':
