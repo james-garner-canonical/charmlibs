@@ -170,9 +170,9 @@ def check(argv: list[str]) -> int:
 
 
 @_register
-def format_(argv: list[str]) -> int:
+def format(argv: list[str]) -> int:
     """Run `ruff check --fix` and `ruff format`, modifying files in place."""
-    parser = argparse.ArgumentParser(description=format_.__doc__)
+    parser = argparse.ArgumentParser(description=format.__doc__)
     parser.add_argument(
         'path', nargs='?', default='.', help='Path to format, defaults to the repo.'
     )
@@ -430,10 +430,9 @@ def interfaces_json(argv: list[str]) -> int:
 @_register
 def scripts_unit(argv: list[str]) -> int:
     """Run the unit tests for the repository tooling in `.scripts/`."""
-    tests = ('.scripts/tests', '.scripts/recipes/tests')
     _run([
         *('uv', 'run', '--with-requirements', TEST_REQUIREMENTS, '--python', '3.12'),
-        *('pytest', '--tb=native', '-vv', *tests, *(argv or ['-rA'])),
+        *('pytest', '--tb=native', '-vv', '.scripts/tests', *(argv or ['-rA'])),
     ])
     return 0
 
