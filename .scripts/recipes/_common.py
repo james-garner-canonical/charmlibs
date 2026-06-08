@@ -14,13 +14,7 @@
 
 # ruff: noqa: I001  # tomllib is first-party in 3.11+
 
-"""Shared helpers for the charmlibs `just` recipe scripts in `.scripts/recipes/`.
-
-Stdlib-only by design. These helpers are imported by sibling PEP 723 scripts (e.g. `unit.py`),
-which each declare their own third-party dependencies. Keeping this module dependency-free means
-the sibling import works without any package/lockfile machinery. A shared helper needing a
-third-party dependency is the signal to promote this directory to a real `uv`-managed tool.
-"""
+"""Shared helpers for the charmlibs `just` recipe scripts in `.scripts/recipes/`."""
 
 from __future__ import annotations
 
@@ -49,13 +43,9 @@ _REQUIRES_PYTHON_LOWER_BOUND = re.compile(
 )
 
 
-def parser(doc: str | None) -> argparse.ArgumentParser:
-    """Return an `ArgumentParser` with the `--python` and `package` arguments the recipes share.
-
-    `doc` becomes the parser's description (pass the recipe's `__doc__`). Recipes that take extra
-    arguments can add them to the returned parser before parsing.
-    """
-    parser = argparse.ArgumentParser(description=doc)
+def parser(description: str | None) -> argparse.ArgumentParser:
+    """Return an `ArgumentParser` with the common `--python` and `package` arguments."""
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     return parser

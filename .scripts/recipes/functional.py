@@ -19,16 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run functional tests with `coverage` for a package.
-
-Functional tests often need a package-provided `tests/functional/setup.sh` and `teardown.sh`,
-which must be *sourced* by a single long-lived shell: they export environment variables, set the
-umask, and start/stop background processes (e.g. pebble) whose lifetime spans the whole test run.
-
-That sourcing is the one piece of irreducible bash, kept in `_functional.sh`. We run it with the
-working directory set to the package, passing `_coverage.py` as the command to run between setup
-and teardown.
-"""
+"""Run functional tests with `coverage` for a package."""
 
 from __future__ import annotations
 
