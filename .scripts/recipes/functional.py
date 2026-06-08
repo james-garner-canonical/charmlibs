@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run functional tests with coverage, sourcing the package's setup/teardown scripts.
+"""Run functional tests with `coverage` for a package.
 
 Functional tests often need a package-provided `tests/functional/setup.sh` and `teardown.sh`,
 which must be *sourced* by a single long-lived shell: they export environment variables, set the

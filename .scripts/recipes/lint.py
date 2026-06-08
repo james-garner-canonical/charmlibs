@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run `ruff` (fast-lint) and `pyright` (static) for a package, e.g. `lint.py pathops`."""
+"""Run linting (`ruff`) and static analysis (`pyright`) for a package."""
 
 from __future__ import annotations
 

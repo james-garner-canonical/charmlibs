@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run unit tests with coverage for a package, e.g. `unit.py pathops -x -k test_copy`."""
+"""Run unit tests with `coverage` for a package."""
 
 from __future__ import annotations
 

@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Pack charm(s) for a package's Juju integration tests, e.g. `pack.py --substrate=k8s pathops`."""
+"""Pack charm(s) for a package's Juju integration tests."""
 
 from __future__ import annotations
 

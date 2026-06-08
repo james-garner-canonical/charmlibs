@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run the unit tests for the `.scripts/` tooling, e.g. `scripts_unit.py -k test_run`."""
+"""Run the unit tests for the repository tooling in `.scripts/`."""
 
 from __future__ import annotations
 

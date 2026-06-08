@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Combine a package's coverage reports, e.g. `combine_coverage.py pathops`."""
+"""Combine a package's `coverage` reports."""
 
 from __future__ import annotations
 

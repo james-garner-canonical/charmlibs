@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run `pyright` static analysis for a package, e.g. `static.py pathops`."""
+"""Run `pyright` static analysis for a package."""
 
 from __future__ import annotations
 

@@ -29,6 +29,7 @@ import check
 import combine_coverage
 import fast_lint
 import functional
+import help as help_recipe  # aliased: `help` shadows a builtin
 import init
 import integration
 import interfaces_json
@@ -432,6 +433,33 @@ def test_init_prints_guidance_and_runs_cookiecutter(monkeypatch, tmp_path, capsy
     printed = capsys.readouterr().out
     assert 'IMPORTANT' in printed
     assert 'charmlibs.' in printed
+
+
+# --- help._summary / help._recipes -------------------------------------------------------------
+
+
+def test_help_summary_reads_first_docstring_line(tmp_path):
+    script = tmp_path / 'foo.py'
+    script.write_text('"""Do the foo thing.\n\nMore detail here.\n"""\n')
+    assert help_recipe._summary(script) == 'Do the foo thing.'
+
+
+def test_help_recipes_uses_justfile_order_and_appends_substrate(monkeypatch, tmp_path):
+    recipes_dir = tmp_path / '.scripts' / 'recipes'
+    recipes_dir.mkdir(parents=True)
+    (recipes_dir / 'foo.py').write_text('"""Do the foo thing."""\n')
+    (recipes_dir / 'pack.py').write_text('"""Pack it."""\n')
+    (tmp_path / 'justfile').write_text(
+        'set positional-arguments\n\n'
+        '_short_help:\n    @echo hi\n\n'
+        'foo *args:\n    @.scripts/recipes/foo.py "$@"\n\n'
+        'pack-k8s *args:\n    @.scripts/recipes/pack.py --substrate=k8s "$@"\n'
+    )
+    monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
+    assert list(help_recipe._recipes()) == [
+        ('foo', 'Do the foo thing.'),  # private `_short_help` is skipped
+        ('pack-k8s', 'Pack it. [k8s]'),  # substrate appended to disambiguate shared scripts
+    ]
 
 
 # --- check._main -------------------------------------------------------------------------------

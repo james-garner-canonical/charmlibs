@@ -19,7 +19,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run `uv add` for a package with repo-level constraints, e.g. `add.py pathops 'pydantic>=2'`."""
+"""Run `uv add` for a package, respecting repo-level version constraints.
+
+Example: `add.py pathops 'pydantic>=2'` adds a constrained dependency to pathops.
+"""
 
 from __future__ import annotations
 

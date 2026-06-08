@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""`lint`, `unit` test, and build the `docs` for a package, e.g. `check.py pathops`."""
+"""`lint`, `unit` test, and build the `docs` for a package."""
 
 from __future__ import annotations
 

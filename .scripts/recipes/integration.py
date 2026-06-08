@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run a package's Juju integration tests, e.g. `integration.py --substrate=k8s pathops`."""
+"""Run a package's Juju integration tests."""
 
 from __future__ import annotations
 

@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generate `interfaces/index.json` from the interface libraries, e.g. `interfaces_json.py`."""
+"""Generate `interfaces/index.json` from the interface libraries."""
 
 from __future__ import annotations
 

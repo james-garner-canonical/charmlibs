@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run `ruff` checks for a path, e.g. `fast_lint.py pathops`."""
+"""Run `ruff`, failing afterwards if any errors are found."""
 
 from __future__ import annotations
 
