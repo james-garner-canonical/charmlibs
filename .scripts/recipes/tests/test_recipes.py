@@ -70,6 +70,7 @@ def test_uv_run_builds_prefix_without_lock(
 
 def test_uv_run_adds_lock_and_groups(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / 'uv.lock').touch()
+    (tmp_path / 'pyproject.toml').write_text('[dependency-groups]\nunit = []\nlint = []\n')
     captured = {}
 
     def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
@@ -83,6 +84,36 @@ def test_uv_run_adds_lock_and_groups(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert cmd.index('--locked') < cmd.index('--group')  # --locked precedes any group
     assert cmd.count('--group') == 2
     assert cmd[cmd.index('--group') + 1] == 'unit'
+
+
+def test_uv_run_skips_undeclared_groups(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / 'pyproject.toml').write_text('[dependency-groups]\nunit = []\n')
+    captured = {}
+
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+        captured['cmd'] = list(cmd)
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    _common.uv_run([], pkg_dir=tmp_path, python='3.10', groups=['unit', 'lint'])
+    cmd = captured['cmd']
+    assert cmd.count('--group') == 1  # only the declared `unit` group is passed
+    assert cmd[cmd.index('--group') + 1] == 'unit'
+    assert 'lint' not in cmd
+
+
+def test_uv_run_skips_all_groups_without_pyproject(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured = {}
+
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+        captured['cmd'] = list(cmd)
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    _common.uv_run([], pkg_dir=tmp_path, python='3.10', groups=['unit', 'lint'])
+    assert '--group' not in captured['cmd']
 
 
 # --- _common.resolve_python --------------------------------------------------------------------
@@ -405,17 +436,15 @@ def test_scripts_unit_runs_pytest_without_locked(monkeypatch: pytest.MonkeyPatch
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
-    monkeypatch.setattr(sys, 'argv', ['scripts_unit.py', '--python', '3.11'])
-    with pytest.raises(SystemExit) as exc_info:
-        scripts_unit._main()
-    assert exc_info.value.code == 0
+    monkeypatch.setattr(sys, 'argv', ['scripts_unit.py'])
+    scripts_unit._main()
     cmd = captured['cmd']
     assert cmd[:2] == ['uv', 'run']
     assert '--locked' not in cmd  # not a package recipe, so no lockfile pinning
     assert '--group' not in cmd
-    assert cmd[cmd.index('--python') + 1] == '3.11'
-    assert '-rA' in cmd  # default pytest args
-    assert cmd[-2:] == ['.scripts/tests', '.scripts/recipes/tests']
+    assert cmd[cmd.index('--python') + 1] == '3.12'
+    # test dirs precede the forwarded pytest args, which default to `-rA`
+    assert cmd[-3:] == ['.scripts/tests', '.scripts/recipes/tests', '-rA']
 
 
 # --- interfaces_json._main ---------------------------------------------------------------------

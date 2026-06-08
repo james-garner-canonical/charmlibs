@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script --no-project
 
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.12"
 # dependencies = []
 # ///
 
@@ -23,29 +23,18 @@
 
 from __future__ import annotations
 
-import argparse
 import sys
 
 import _common
 
-# Test directories for the repository tooling scripts.
-_TEST_DIRS = ['.scripts/tests', '.scripts/recipes/tests']
+_TESTS = ('.scripts/tests', '.scripts/recipes/tests')
 
 
 def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default=None)
-    args, pytest_args = parser.parse_known_args()
-    # These tests aren't tied to a package: run from the repo root, without `--locked` or any
-    # dependency groups, so this builds the `uv run` command directly rather than via
-    # `_common.uv_run` (which is shaped for the per-package recipes).
-    python = args.python or _common.DEFAULT_PYTHON
-    cmd = [
-        *('uv', 'run', '--with-requirements', str(_common.TEST_REQUIREMENTS), '--python', python),
-        *('pytest', '--tb=native', '-vv', *(pytest_args or ['-rA'])),
-        *_TEST_DIRS,
-    ]
-    sys.exit(_common.run(cmd))
+    _common.run([
+        *('uv', 'run', '--with-requirements', _common.TEST_REQUIREMENTS, '--python', '3.12'),
+        *('pytest', '--tb=native', '-vv', *_TESTS, *(sys.argv[1:] or ['-rA'])),
+    ])
 
 
 if __name__ == '__main__':

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# ruff: noqa: I001  # tomllib is first-party in 3.11+
+
 """Shared helpers for the charmlibs `just` recipe scripts in `.scripts/recipes/`.
 
 Stdlib-only by design. These helpers are imported by sibling PEP 723 scripts (e.g. `unit.py`),
@@ -26,6 +28,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import tomllib
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -83,15 +86,33 @@ def uv_run(
 
     The `uv run` prefix is the one shared by the package recipes: the repo-level
     `test-requirements.txt` constraints and the requested `python`, plus `--locked` when the
-    package has a `uv.lock` and a `--group` for each of `groups`. `args` are appended to that
-    prefix, then the whole command is handed to `run` (see it for `env`, `check`, and `stdout`).
+    package has a `uv.lock` and a `--group` for each of `groups` that the package declares in its
+    `pyproject.toml`. Requested groups the package doesn't declare are skipped, so a recipe can
+    ask for an optional group (e.g. `unit`) without every package needing to define it. `args` are
+    appended to that prefix, then the whole command is handed to `run` (see it for `env`, `check`,
+    and `stdout`).
     """
     uv = ['uv', 'run', '--with-requirements', str(TEST_REQUIREMENTS), '--python', python]
     if (pkg_dir / 'uv.lock').exists():
         uv.append('--locked')
+    available = _dependency_groups(pkg_dir)
     for group in groups:
-        uv.extend(['--group', group])
+        if group in available:
+            uv.extend(['--group', group])
     return run([*uv, *args], cwd=pkg_dir, env=env, check=check, stdout=stdout)
+
+
+def _dependency_groups(pkg_dir: pathlib.Path) -> set[str]:
+    """Return the PEP 735 dependency group names declared in `pkg_dir`'s `pyproject.toml`.
+
+    Reads the `[dependency-groups]` table. Returns an empty set if the file or table is absent.
+    """
+    pyproject = pkg_dir / 'pyproject.toml'
+    if not pyproject.exists():
+        return set()
+    with pyproject.open('rb') as f:
+        data = tomllib.load(f)
+    return set(data.get('dependency-groups', {}))
 
 
 def resolve_python(package: str, python: str | None) -> str:
