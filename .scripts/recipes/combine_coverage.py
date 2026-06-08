@@ -24,7 +24,6 @@
 from __future__ import annotations
 
 import argparse
-import functools
 import os
 import shutil
 
@@ -46,33 +45,26 @@ def combine(package: str, python: str) -> None:
     terminal report. Any step failing aborts the process (as `set -e` did in the old recipe).
     """
     package_dir = _common.REPO_ROOT / package
-    data_files: list[str] = []
-    for test_id in ('unit', 'functional', 'juju'):
-        data_file = f'.report/coverage-{test_id}-{python}.db'
-        if (package_dir / data_file).exists():
-            data_files.append(data_file)
+    data_files: list[str] = [
+        f
+        for test_id in ('unit', 'functional', 'juju')
+        if (package_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
+    ]
     env = {**os.environ, 'COVERAGE_RCFILE': str(_common.COVERAGE_RCFILE)}
-    uv = functools.partial(
-        _common.uv_run, package_dir=package_dir, python=python, env=env, check=True
-    )
-    combined = f'.report/coverage-all-{python}.db'
-    xml_file = f'.report/coverage-all-{python}.xml'
-    html_dir = f'.report/htmlcov-all-{python}'
-    # Merge the per-suite data files into a single combined data file.
-    uv(['coverage', 'combine', '--keep', f'--data-file={combined}', *data_files])
-    # Write the XML report (consumed by CI and coverage services).
-    uv(['coverage', 'xml', f'--data-file={combined}', '-o', xml_file])
+
+    def _uv(cmd: list[str]) -> int:
+        return _common.uv_run(cmd, package_dir=package_dir, python=python, env=env, check=True)
+
+    # Combine reports and generate XML.
+    data_file = f'--data-file=.report/coverage-all-{python}.db'
+    _uv(['coverage', 'combine', '--keep', data_file, *data_files])
+    _uv(['coverage', 'xml', data_file, '-o', f'.report/coverage-all-{python}.xml'])
     # Rebuild the HTML report from scratch (let coverage recreate the directory).
+    html_dir = f'.report/htmlcov-all-{python}'
     shutil.rmtree(package_dir / html_dir, ignore_errors=True)
-    uv([
-        'coverage',
-        'html',
-        f'--data-file={combined}',
-        '--show-contexts',
-        f'--directory={html_dir}',
-    ])
-    # Print the terminal summary.
-    uv(['coverage', 'report', f'--data-file={combined}'])
+    _uv(['coverage', 'html', data_file, '--show-contexts', f'--directory={html_dir}'])
+    # Print the report last.
+    _uv(['coverage', 'report', data_file])
 
 
 if __name__ == '__main__':

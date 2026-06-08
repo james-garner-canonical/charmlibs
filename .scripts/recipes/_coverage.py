@@ -30,7 +30,6 @@ via `_functional.sh`, so the coverage run happens inside the shell that has sour
 from __future__ import annotations
 
 import argparse
-import functools
 import os
 import sys
 from typing import TYPE_CHECKING
@@ -60,17 +59,20 @@ def run_coverage(package: str, suite: str, python: str, pytest_args: Sequence[st
     package_dir = _common.REPO_ROOT / package
     data_file = f'.report/coverage-{suite}-{python}.db'
     env = {**os.environ, 'COVERAGE_RCFILE': str(_common.COVERAGE_RCFILE)}
-    uv = functools.partial(
-        _common.uv_run, package_dir=package_dir, python=python, groups=[suite], env=env
-    )
+
+    def _uv(args: list[str]) -> int:
+        return _common.uv_run(
+            args, package_dir=package_dir, python=python, groups=[suite], env=env
+        )
+
     run_cmd = [
         *('coverage', 'run', f'--data-file={data_file}', '--source=src'),
         *('-m', 'pytest', '--tb=native', '-vv', *pytest_args, f'tests/{suite}'),
     ]
-    returncode = uv(run_cmd)
+    returncode = _uv(run_cmd)
     if returncode != 0:
         return returncode  # skip the report step if the tests failed
-    return uv(['coverage', 'report', f'--data-file={data_file}'])
+    return _uv(['coverage', 'report', f'--data-file={data_file}'])
 
 
 if __name__ == '__main__':
