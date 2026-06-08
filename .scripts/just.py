@@ -235,7 +235,7 @@ def _static(package: str, python: str, pyright_args: Sequence[str]) -> int:
     pkg_dir = REPO_ROOT / package
     cmd = ['--with', 'pytest-interface-tester'] if pkg_dir.parent.name == 'interfaces' else []
     cmd.extend(['pyright', f'--pythonversion={python}', *pyright_args])
-    groups=['lint', 'unit', 'functional', 'integration']
+    groups = ['lint', 'unit', 'functional', 'integration']
     return _uv_run(cmd, pkg_dir=pkg_dir, python=python, groups=groups, check=False)
 
 
