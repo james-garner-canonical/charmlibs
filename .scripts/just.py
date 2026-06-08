@@ -47,14 +47,12 @@ if typing.TYPE_CHECKING:
 # `.scripts/just.py` -> repo root is two parents up.
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
-
+# ANSI escape codes for formatting the messages.
 BOLD = '\033[1m'
 NORMAL = '\033[0m'
 CYAN = '\033[36m'
-
-# Shown when `just.py` runs with no recipe. Modeled on the justfile's `_short_help`; some wording
-# differs slightly to keep each line within the line-length limit.
-_QUICK_START = f"""
+# Quick start message printed when called with no arguments.
+QUICK_START = f"""
 {BOLD}Charmlibs is Canonical's charm library monorepo{NORMAL}
 
 {BOLD}List all commands with {CYAN}just help{NORMAL}{BOLD}, or:{NORMAL}
@@ -75,25 +73,7 @@ _QUICK_START = f"""
 {BOLD}Build the docs: {CYAN}just docs{NORMAL}
 - For specific packages only: {CYAN}just docs html <packages>{NORMAL}
 """.strip()
-
-
-# --- Entry point --------------------------------------------------------------------------------
-
-
-def main(argv: list[str]) -> int:
-    """Dispatch `argv` to the named recipe, returning its exit code."""
-    if not argv or argv[0] in ('-h', '--help'):
-        print(_QUICK_START)
-        return 0
-    name, *args = argv
-    func = RECIPES.get(name)
-    if func is None:
-        print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
-        print(_QUICK_START)
-        return 2
-    return func(args)
-
-
+# Mapping of recipe names to their functions, populated by the `_register` decorator.
 RECIPES: dict[str, Callable[[list[str]], int]] = {}
 
 
@@ -102,7 +82,18 @@ def _register(fn: _F) -> _F:
     return fn
 
 
-# --- Recipes -------------------------------------------------------------------------------------
+def main(argv: list[str]) -> int:
+    """Dispatch `argv` to the named recipe, returning its exit code."""
+    if not argv or argv[0] in ('-h', '--help'):
+        print(QUICK_START)
+        return 0
+    name, *args = argv
+    func = RECIPES.get(name)
+    if func is None:
+        print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
+        print(QUICK_START)
+        return 2
+    return func(args)
 
 
 @_register
