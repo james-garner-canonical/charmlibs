@@ -28,6 +28,10 @@ import os
 
 import _common
 
+_BOLD = '\033[1m'
+_NORMAL = '\033[0m'
+_CYAN = '\033[36m'
+
 
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -37,20 +41,18 @@ def _main() -> None:
         help='Scaffold a charmlibs.interfaces package instead of a general charmlibs package.',
     )
     args, cookiecutter_args = parser.parse_known_args()
-    bold, normal, cyan = '\033[1m', '\033[0m', '\033[36m'
     if args.interface:
         print(
-            f'✨{bold}IMPORTANT{normal}✨ The project name should be the canonical interface name,'
-            f' as used in {cyan}charmcraft.yaml{normal} files.'
+            f'✨{_BOLD}IMPORTANT{_NORMAL}✨ The project name should be the canonical interface name,'
+            f' as used in {_CYAN}charmcraft.yaml{_NORMAL} files.'
         )
     else:
         print(
-            f'✨{bold}IMPORTANT{normal}✨ The project name should be the import package name,'
-            f' without the {cyan}charmlibs.{normal} namespace.'
+            f'✨{_BOLD}IMPORTANT{_NORMAL}✨ The project name should be the import package name,'
+            f' without the {_CYAN}charmlibs.{_NORMAL} namespace.'
         )
     print('You can press enter to accept the default, shown in brackets.')
     template = _common.REPO_ROOT / '.template'
-    env = {**os.environ, 'CHARMLIBS_TEMPLATE': str(template.resolve())}
     cmd = ['uvx', 'cookiecutter']
     if args.interface:
         cmd.extend(['--output-dir', 'interfaces'])
@@ -58,7 +60,7 @@ def _main() -> None:
     if args.interface:
         cmd.append('_interface=True')
     cmd.extend(cookiecutter_args)
-    _common.run(cmd, env=env)
+    _common.run(cmd, env={**os.environ, 'CHARMLIBS_TEMPLATE': str(template.resolve())})
 
 
 if __name__ == '__main__':
