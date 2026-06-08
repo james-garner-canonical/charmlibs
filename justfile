@@ -5,73 +5,56 @@ set ignore-comments  # don't print comment lines in recipes
 set positional-arguments  # forward recipe args to scripts as argv ("$@"), so quoting is preserved
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
-_short_help:
-    @echo '{{BOLD}}Charmlibs is the Canonical charm libraries monorepo{{NORMAL}}'
-    @echo ''
-    @echo '{{BOLD}}List all commands with {{CYAN}}just help{{NORMAL}}{{BOLD}}, or:{{NORMAL}}'
-    @echo '- Create a new package: {{CYAN}}just init{{NORMAL}} or {{CYAN}}just interface init{{NORMAL}}'
-    @echo '- Run {{CYAN}}ruff{{NORMAL}} for all packages: {{CYAN}}just fast-lint{{NORMAL}}'
-    @echo '- Lint, unit test, and build docs for a package: {{CYAN}}just check <package>{{NORMAL}}'
-    @echo ''
-    @echo '{{BOLD}}Run individual checks for a package:{{NORMAL}}'
-    @echo '- {{CYAN}}just lint <package>{{NORMAL}} (fix errors with {{CYAN}}just format <package>{{NORMAL}})'
-    @echo '- {{CYAN}}just unit <package>{{NORMAL}}'
-    @echo '- {{CYAN}}just functional <package>{{NORMAL}} (may require additional software like {{CYAN}}pebble{{NORMAL}})'
-    @echo ''
-    @echo '{{BOLD}}Run integration tests{{NORMAL}} (requires a Juju controller and a cloud):'
-    @echo '- Pack: {{CYAN}}just pack-k8s <package>{{NORMAL}} or {{CYAN}}just pack-machine <package>{{NORMAL}}'
-    @echo '- Run: {{CYAN}}just integration-k8s <package>{{NORMAL}} or {{CYAN}}just integration-machine <package>{{NORMAL}}'
-    @echo ''
-    @echo '{{BOLD}}Build the docs: {{CYAN}}just docs{{NORMAL}}'
-    @echo '- For specific packages only: {{CYAN}}just docs html <packages>{{NORMAL}}'
+_quick_start:
+    @.scripts/just.py
 
 help *args:
-    @.scripts/recipes/help.py "$@"
+    @.scripts/just.py help "$@"
 
 init *args:
-    @.scripts/recipes/init.py "$@"
+    @.scripts/just.py init "$@"
 
 fast-lint *args:
-    @.scripts/recipes/fast_lint.py "$@"
+    @.scripts/just.py fast-lint "$@"
 
 check *args:
-    @.scripts/recipes/check.py "$@"
+    @.scripts/just.py check "$@"
 
 format *args:
-    @.scripts/recipes/format.py "$@"
+    @.scripts/just.py format "$@"
 
 add *args:
-    @.scripts/recipes/add.py "$@"
+    @.scripts/just.py add "$@"
 
 lint *args:
-    @.scripts/recipes/lint.py "$@"
+    @.scripts/just.py lint "$@"
 
 static *args:
-    @.scripts/recipes/static.py "$@"
+    @.scripts/just.py static "$@"
 
 unit *args:
-    @.scripts/recipes/unit.py "$@"
+    @.scripts/just.py unit "$@"
 
 functional *args:
-    @.scripts/recipes/functional.py "$@"
+    @.scripts/just.py functional "$@"
 
 combine-coverage *args:
-    @.scripts/recipes/combine_coverage.py "$@"
+    @.scripts/just.py combine-coverage "$@"
 
 pack-k8s *args:
-    @.scripts/recipes/pack_k8s.py "$@"
+    @.scripts/just.py pack-k8s "$@"
 
 pack-machine *args:
-    @.scripts/recipes/pack_machine.py "$@"
+    @.scripts/just.py pack-machine "$@"
 
 integration-k8s *args:
-    @.scripts/recipes/integration_k8s.py "$@"
+    @.scripts/just.py integration-k8s "$@"
 
 integration-machine *args:
-    @.scripts/recipes/integration_machine.py "$@"
+    @.scripts/just.py integration-machine "$@"
 
 interfaces-json *args:
-    @.scripts/recipes/interfaces_json.py "$@"
+    @.scripts/just.py interfaces-json "$@"
 
 scripts-unit *args:
-    @.scripts/recipes/scripts_unit.py "$@"
+    @.scripts/just.py scripts-unit "$@"
