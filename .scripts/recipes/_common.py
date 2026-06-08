@@ -16,7 +16,8 @@
 
 Stdlib-only by design. These helpers are imported by sibling PEP 723 scripts (e.g. `unit.py`),
 which each declare their own third-party dependencies. Keeping this module dependency-free means
-the sibling import works without any package/lockfile machinery. See `README.md`.
+the sibling import works without any package/lockfile machinery. A shared helper needing a
+third-party dependency is the signal to promote this directory to a real `uv`-managed tool.
 """
 
 from __future__ import annotations
@@ -42,7 +43,7 @@ def resolve_python(package: str, python: str | None) -> str:
 
     For now this is the explicitly requested `python`, falling back to `DEFAULT_PYTHON`. The
     `package` is accepted (and will be used) for a planned change: defaulting to the package's own
-    minimum supported version, read from its `pyproject.toml` `requires-python`. See `README.md`.
+    minimum supported version, read from its `pyproject.toml` `requires-python`.
     """
     return python or DEFAULT_PYTHON
 
