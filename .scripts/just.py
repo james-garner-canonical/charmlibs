@@ -99,7 +99,7 @@ def main(argv: list[str]) -> int:
 @_register
 def help(argv: list[str]) -> int:  # noqa: A001
     """Describe usage and list the available recipes."""
-    argparse.ArgumentParser(description=help.__doc__).parse_args(argv)
+    _parser(help).parse_args(argv)
     print('All recipes require `uv` to be available.\n')
     print('Available recipes:')
     width = max(len(name) for name in RECIPES)
@@ -112,7 +112,7 @@ def help(argv: list[str]) -> int:  # noqa: A001
 @_register
 def init(argv: list[str]) -> int:
     """Scaffold a new charmlibs package interactively (forwards extra args to cookiecutter)."""
-    parser = argparse.ArgumentParser(description=init.__doc__)
+    parser = _parser(init)
     parser.add_argument(
         '--interface',
         action='store_true',
@@ -148,7 +148,7 @@ def add(argv: list[str]) -> int:
 
     Example: `add pathops 'pydantic>=2'` adds a constrained dependency to pathops.
     """
-    parser = argparse.ArgumentParser(description=add.__doc__)
+    parser = _parser(add)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args, uv_args = parser.parse_known_args(argv)
     cmd = ['uv', 'add', '--constraints', TEST_REQUIREMENTS, *uv_args]
@@ -159,7 +159,7 @@ def add(argv: list[str]) -> int:
 @_register
 def check(argv: list[str]) -> int:
     """`lint`, `unit` test, and build the `docs` for a package."""
-    args = _package_parser(check.__doc__).parse_args(argv)
+    args = _package_parser(check).parse_args(argv)
     python = _resolve_python(args.package, args.python)
     if failures := lint([args.package, '--python', python]):
         sys.exit(failures)
@@ -172,7 +172,7 @@ def check(argv: list[str]) -> int:
 @_register
 def format(argv: list[str]) -> int:  # noqa: A001
     """Run `ruff check --fix` and `ruff format`, modifying files in place."""
-    parser = argparse.ArgumentParser(description=format.__doc__)
+    parser = _parser(format)
     parser.add_argument(
         'path', nargs='?', default='.', help='Path to format, defaults to the repo.'
     )
@@ -197,7 +197,7 @@ def format(argv: list[str]) -> int:  # noqa: A001
 @_register
 def lint(argv: list[str]) -> int:
     """Run fast linting (`ruff`) and static analysis (`pyright`) for a package."""
-    args, pyright_args = _package_parser(lint.__doc__).parse_known_args(argv)
+    args, pyright_args = _package_parser(lint).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
     failures = _fast_lint(args.package)
     if _static(args.package, python, pyright_args) != 0:
@@ -208,7 +208,7 @@ def lint(argv: list[str]) -> int:
 @_register
 def fast_lint(argv: list[str]) -> int:
     """Run `ruff`, failing afterwards if any errors are found."""
-    parser = argparse.ArgumentParser(description=fast_lint.__doc__)
+    parser = _parser(fast_lint)
     parser.add_argument('path', nargs='?', default='.', help='Path to lint, defaults to the repo.')
     args = parser.parse_args(argv)
     return _fast_lint(args.path)
@@ -217,7 +217,7 @@ def fast_lint(argv: list[str]) -> int:
 @_register
 def static(argv: list[str]) -> int:
     """Run `pyright` static analysis for a package."""
-    args, pyright_args = _package_parser(static.__doc__).parse_known_args(argv)
+    args, pyright_args = _package_parser(static).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
     return _static(args.package, python, pyright_args)
 
@@ -253,7 +253,7 @@ def _static(package: str, python: str, pyright_args: Sequence[str]) -> int:
 @_register
 def unit(argv: list[str]) -> int:
     """Run unit tests with `coverage` for a package."""
-    args, pytest_args = _package_parser(unit.__doc__).parse_known_args(argv)
+    args, pytest_args = _package_parser(unit).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
     cmds = _coverage_cmds(args.package, 'unit', python, pytest_args or ['-rA'])
     for cmd in cmds:
@@ -264,7 +264,7 @@ def unit(argv: list[str]) -> int:
 @_register
 def functional(argv: list[str]) -> int:
     """Run functional tests with `coverage` for a package."""
-    args, pytest_args = _package_parser(functional.__doc__).parse_known_args(argv)
+    args, pytest_args = _package_parser(functional).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
     cmds = _coverage_cmds(args.package, 'functional', python, pytest_args or ['-rA'])
     joined = ' && '.join(shlex.join(str(part) for part in cmd) for cmd in cmds)
@@ -305,7 +305,7 @@ def _coverage_cmds(package: str, suite: str, python: str, pytest_args: list[str]
 @_register
 def combine_coverage(argv: list[str]) -> int:
     """Combine a package's `coverage` reports."""
-    args = _package_parser(combine_coverage.__doc__).parse_args(argv)
+    args = _package_parser(combine_coverage).parse_args(argv)
     pkg_dir = REPO_ROOT / args.package
     python = _resolve_python(args.package, args.python)
     env = _coverage_env()
@@ -342,18 +342,18 @@ def _coverage_env() -> dict[str, str]:
 @_register
 def pack_k8s(argv: list[str]) -> int:
     """Pack Kubernetes charm(s) for a package's Juju integration tests."""
-    return _pack('k8s', argv)
+    return _pack(pack_k8s, 'k8s', argv)
 
 
 @_register
 def pack_machine(argv: list[str]) -> int:
     """Pack machine charm(s) for a package's Juju integration tests."""
-    return _pack('machine', argv)
+    return _pack(pack_machine, 'machine', argv)
 
 
-def _pack(substrate: str, argv: list[str]) -> int:
+def _pack(fn: FunctionType, substrate: str, argv: list[str]) -> int:
     """Pack the package's integration-test charm(s) for the given substrate."""
-    parser = argparse.ArgumentParser()
+    parser = _parser(fn)
     parser.add_argument(
         '--tag',
         default=os.environ.get('CHARMLIBS_TAG', ''),
@@ -372,18 +372,18 @@ def _pack(substrate: str, argv: list[str]) -> int:
 @_register
 def integration_k8s(argv: list[str]) -> int:
     """Run a package's Kubernetes Juju integration tests."""
-    return _integration('k8s', argv)
+    return _integration(integration_k8s, 'k8s', argv)
 
 
 @_register
 def integration_machine(argv: list[str]) -> int:
     """Run a package's machine Juju integration tests."""
-    return _integration('machine', argv)
+    return _integration(integration_machine, 'machine', argv)
 
 
-def _integration(substrate: str, argv: list[str]) -> int:
+def _integration(fn: FunctionType, substrate: str, argv: list[str]) -> int:
     """Run the package's Juju integration tests for the given substrate."""
-    parser = _package_parser()
+    parser = _package_parser(fn)
     parser.add_argument(
         '--tag',
         default=os.environ.get('CHARMLIBS_TAG', ''),
@@ -410,7 +410,7 @@ def _integration(substrate: str, argv: list[str]) -> int:
 @_register
 def interfaces_json(argv: list[str]) -> int:
     """Generate `interfaces/index.json` from the interface libraries."""
-    argparse.ArgumentParser(description=interfaces_json.__doc__).parse_args(argv)  # supports `-h`
+    _parser(interfaces_json).parse_args(argv)  # supports `-h`
     outputs = [
         'name',
         'version',
@@ -443,9 +443,15 @@ def scripts_unit(argv: list[str]) -> int:
 # --- Parser ------------------------------------------------------------------------------------
 
 
-def _package_parser(description: str | None = None) -> argparse.ArgumentParser:
+def _parser(fn: FunctionType) -> argparse.ArgumentParser:
+    """Return an `ArgumentParser` for recipe `fn`, deriving prog and description from it."""
+    prog = f'just {fn.__name__.replace("_", "-")}'
+    return argparse.ArgumentParser(prog=prog, description=fn.__doc__)
+
+
+def _package_parser(fn: FunctionType) -> argparse.ArgumentParser:
     """Return an `ArgumentParser` with the common `--python` and `package` arguments."""
-    parser = argparse.ArgumentParser(description=description)
+    parser = _parser(fn)
     parser.add_argument('--python', default=None)
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     return parser
