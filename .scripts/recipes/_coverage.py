@@ -26,12 +26,8 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
-from typing import TYPE_CHECKING
 
 import _common
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 COVERAGE_RCFILE = _common.REPO_ROOT / 'pyproject.toml'
 
@@ -43,37 +39,28 @@ def _main() -> None:
     parser.add_argument('suite', help='Test suite name, e.g. `unit` or `functional`.')
     args, pytest_args = parser.parse_known_args()
     python = _common.resolve_python(args.package, args.python)
-    run_coverage(args.package, args.suite, python, pytest_args or ['-rA'])
+    run_coverage(args.package, args.suite, python=python, pytest_args=pytest_args or ['-rA'])
 
 
-def run_coverage(package: str, suite: str, python: str, pytest_args: Sequence[str]) -> None:
-    """Run `coverage run -m pytest` then `coverage report` for a package's test suite.
-
-    The report step is skipped if the test run fails: `check=True` aborts the process with the
-    failing exit code (as `set -e` did in the old recipe).
-    """
+def run_coverage(package: str, suite: str, python: str, pytest_args: list[str]) -> None:
+    """Run `coverage run -m pytest` then `coverage report` for a package's test suite."""
     pkg_dir = _common.REPO_ROOT / package
-    data_file = f'.report/coverage-{suite}-{python}.db'
+    data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
 
-    def _uv(args: list[str]) -> int:
-        return _common.uv_run(
+    def _uv(args: list[str]):
+        _common.uv_run(
             args, pkg_dir=pkg_dir, python=python, groups=[suite], env=_env(), check=True
         )
 
-    run_cmd = [
-        *('coverage', 'run', f'--data-file={data_file}', '--source=src'),
-        *('-m', 'pytest', '--tb=native', '-vv', *pytest_args, f'tests/{suite}'),
-    ]
-    _uv(run_cmd)
-    _uv(['coverage', 'report', f'--data-file={data_file}'])
+    _uv([
+        *('coverage', 'run', data_file_arg, '--source=src', '-m'),
+        *('pytest', '--tb=native', '-vv', f'tests/{suite}', *pytest_args),
+    ])
+    _uv(['coverage', 'report', data_file_arg])
 
 
 def combine(package: str, python: str) -> None:
-    """Combine the unit/functional/juju coverage data files into a single report.
-
-    Produces a combined `.db`, an XML report, and a freshly rebuilt HTML report, then prints the
-    terminal report. Any step failing aborts the process (as `set -e` did in the old recipe).
-    """
+    """Combine the unit/functional/juju coverage data files into a single report."""
     pkg_dir = _common.REPO_ROOT / package
     data_files: list[str] = [
         f
@@ -81,19 +68,19 @@ def combine(package: str, python: str) -> None:
         if (pkg_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
     ]
 
-    def _uv(cmd: list[str]) -> int:
-        return _common.uv_run(cmd, pkg_dir=pkg_dir, python=python, env=_env(), check=True)
+    def _uv(cmd: list[str]):
+        _common.uv_run(cmd, pkg_dir=pkg_dir, python=python, env=_env(), check=True)
 
     # Combine reports and generate XML.
-    data_file = f'--data-file=.report/coverage-all-{python}.db'
-    _uv(['coverage', 'combine', '--keep', data_file, *data_files])
-    _uv(['coverage', 'xml', data_file, '-o', f'.report/coverage-all-{python}.xml'])
+    data_file_arg = f'--data-file=.report/coverage-all-{python}.db'
+    _uv(['coverage', 'combine', '--keep', data_file_arg, *data_files])
+    _uv(['coverage', 'xml', data_file_arg, '-o', f'.report/coverage-all-{python}.xml'])
     # Rebuild the HTML report from scratch (let coverage recreate the directory).
     html_dir = f'.report/htmlcov-all-{python}'
     shutil.rmtree(pkg_dir / html_dir, ignore_errors=True)
-    _uv(['coverage', 'html', data_file, '--show-contexts', f'--directory={html_dir}'])
+    _uv(['coverage', 'html', data_file_arg, '--show-contexts', f'--directory={html_dir}'])
     # Print the report last.
-    _uv(['coverage', 'report', data_file])
+    _uv(['coverage', 'report', data_file_arg])
 
 
 def _env() -> dict[str, str]:
