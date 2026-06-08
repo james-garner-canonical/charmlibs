@@ -44,21 +44,42 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
     from pathlib import Path
 
-# --- _common.uv_run_prefix ---------------------------------------------------------------------
+# --- _common.uv_run ----------------------------------------------------------------------------
 
 
-def test_uv_run_prefix_without_lock(tmp_path: Path) -> None:
-    cmd = _common.uv_run_prefix(tmp_path, '3.11')
+def test_uv_run_builds_prefix_without_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured = {}
+
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    _common.uv_run(['pyright'], package_dir=tmp_path, python='3.11')
+    cmd = captured['cmd']
     assert cmd[:2] == ['uv', 'run']
     assert '--with-requirements' in cmd
     assert cmd[cmd.index('--python') + 1] == '3.11'
     assert '--locked' not in cmd
     assert '--group' not in cmd
+    assert cmd[-1] == 'pyright'  # args appended after the prefix
+    assert captured['cwd'] == tmp_path
 
 
-def test_uv_run_prefix_with_lock_and_groups(tmp_path: Path) -> None:
+def test_uv_run_adds_lock_and_groups(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / 'uv.lock').touch()
-    cmd = _common.uv_run_prefix(tmp_path, '3.10', groups=['unit', 'lint'])
+    captured = {}
+
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
+        captured['cmd'] = list(cmd)
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    _common.uv_run([], package_dir=tmp_path, python='3.10', groups=['unit', 'lint'])
+    cmd = captured['cmd']
     assert '--locked' in cmd
     assert cmd.index('--locked') < cmd.index('--group')  # --locked precedes any group
     assert cmd.count('--group') == 2
@@ -97,33 +118,32 @@ def test_run_check_exits_on_failure(tmp_path: Path) -> None:
 def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
-        calls.append(list(cmd))
+    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+        calls.append((list(args), list(groups)))
         return 0
 
-    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
-    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
     assert _coverage.run_coverage('pathops', 'unit', '3.11', ['-x']) == 0
     assert len(calls) == 2
-    run_cmd, report_cmd = calls
-    assert run_cmd[:3] == ['PREFIX', 'coverage', 'run']
-    assert '--data-file=.report/coverage-unit-3.11.db' in run_cmd
-    assert '--source=src' in run_cmd
-    assert '-x' in run_cmd
-    assert run_cmd[-1] == 'tests/unit'
-    assert report_cmd[:3] == ['PREFIX', 'coverage', 'report']
-    assert '--data-file=.report/coverage-unit-3.11.db' in report_cmd
+    (run_args, run_groups), (report_args, _) = calls
+    assert run_args[:2] == ['coverage', 'run']
+    assert '--data-file=.report/coverage-unit-3.11.db' in run_args
+    assert '--source=src' in run_args
+    assert '-x' in run_args
+    assert run_args[-1] == 'tests/unit'
+    assert run_groups == ['unit']  # the suite is requested as a dependency group
+    assert report_args[:2] == ['coverage', 'report']
+    assert '--data-file=.report/coverage-unit-3.11.db' in report_args
 
 
 def test_run_coverage_skips_report_when_tests_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
-        calls.append(list(cmd))
+    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+        calls.append(list(args))
         return 5
 
-    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
-    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
     assert _coverage.run_coverage('pathops', 'unit', '3.10', ['-rA']) == 5
     assert len(calls) == 1  # report step skipped, matching the old `set -e` behaviour
 
@@ -142,19 +162,18 @@ def test_combine_uses_only_existing_data_files(
 
     calls = []
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
-        calls.append(list(cmd))
+    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+        calls.append(list(args))
         return 0
 
     monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
-    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
-    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
     combine_coverage.combine('pkg', '3.10')
     assert len(calls) == 4  # combine, xml, html, report
-    combine_cmd = calls[0]
-    assert '.report/coverage-unit-3.10.db' in combine_cmd
-    assert '.report/coverage-juju-3.10.db' in combine_cmd
-    assert '.report/coverage-functional-3.10.db' not in combine_cmd
+    combine_args = calls[0]
+    assert '.report/coverage-unit-3.10.db' in combine_args
+    assert '.report/coverage-juju-3.10.db' in combine_args
+    assert '.report/coverage-functional-3.10.db' not in combine_args
 
 
 # --- functional._main --------------------------------------------------------------------------
@@ -192,7 +211,7 @@ def _run_returning(codes: Sequence[int]) -> tuple[Callable[..., int], list[list[
     calls = []
     iterator = iter(codes)
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         calls.append(list(cmd))
         return next(iterator)
 
@@ -223,32 +242,29 @@ def test_fast_lint_ignores_check_diff_exit_code(monkeypatch: pytest.MonkeyPatch)
 def test_static_builds_pyright_command(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
-        captured['cmd'] = list(cmd)
-        captured['cwd'] = cwd
+    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+        captured['args'] = list(args)
+        captured['package_dir'] = package_dir
         return 0
 
-    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
-    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
     assert static.static('pathops', '3.11', ['--verifytypes']) == 0
-    cmd = captured['cmd']
-    assert cmd[0] == 'PREFIX'
-    assert cmd[cmd.index('--with') + 1] == 'pytest-interface-tester'
-    assert 'pyright' in cmd
-    assert '--pythonversion=3.11' in cmd
-    assert cmd[-1] == '--verifytypes'
-    assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
+    args = captured['args']
+    assert args[args.index('--with') + 1] == 'pytest-interface-tester'
+    assert 'pyright' in args
+    assert '--pythonversion=3.11' in args
+    assert args[-1] == '--verifytypes'
+    assert captured['package_dir'] == _common.REPO_ROOT / 'pathops'
 
 
 def test_static_requests_all_dependency_groups(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_prefix(package_dir, python, *, groups=()):
+    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
         captured['groups'] = list(groups)
-        return ['PREFIX']
+        return 0
 
-    monkeypatch.setattr(_common, 'uv_run_prefix', fake_prefix)
-    monkeypatch.setattr(_common, 'run', lambda *a, **k: 0)
+    monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
     static.static('pathops', '3.10', [])
     assert captured['groups'] == ['lint', 'unit', 'functional', 'integration']
 
@@ -346,23 +362,22 @@ def test_pack_requires_a_substrate() -> None:
 def test_integration_selects_marker_for_substrate(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
-        captured['cmd'] = list(cmd)
-        captured['cwd'] = cwd
+    def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
+        captured['args'] = list(args)
+        captured['package_dir'] = package_dir
         captured['env'] = env
         return 0
 
-    monkeypatch.setattr(_common, 'uv_run_prefix', lambda *a, **k: ['PREFIX'])
-    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
     with pytest.raises(SystemExit) as exc_info:
         _integration.main(['--machine', 'pathops', '-x'])
     assert exc_info.value.code == 0
-    cmd = captured['cmd']
-    assert cmd[cmd.index('-m') + 1] == 'not k8s_only'
-    assert 'tests/integration' in cmd
-    assert cmd[-1] == '-x'  # forwarded pytest arg comes after tests/integration
+    args = captured['args']
+    assert args[args.index('-m') + 1] == 'not k8s_only'
+    assert 'tests/integration' in args
+    assert args[-1] == '-x'  # forwarded pytest arg comes after tests/integration
     assert captured['env']['CHARMLIBS_SUBSTRATE'] == 'machine'
-    assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
+    assert captured['package_dir'] == _common.REPO_ROOT / 'pathops'
 
 
 # --- scripts_unit._main ------------------------------------------------------------------------
@@ -371,9 +386,8 @@ def test_integration_selects_marker_for_substrate(monkeypatch: pytest.MonkeyPatc
 def test_scripts_unit_runs_pytest_without_locked(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {}
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         captured['cmd'] = list(cmd)
-        captured['cwd'] = cwd
         return 0
 
     monkeypatch.setattr(_common, 'run', fake_run)
@@ -388,7 +402,6 @@ def test_scripts_unit_runs_pytest_without_locked(monkeypatch: pytest.MonkeyPatch
     assert cmd[cmd.index('--python') + 1] == '3.11'
     assert '-rA' in cmd  # default pytest args
     assert cmd[-2:] == ['.scripts/tests', '.scripts/recipes/tests']
-    assert captured['cwd'] == _common.REPO_ROOT
 
 
 # --- interfaces_json._main ---------------------------------------------------------------------
@@ -400,9 +413,8 @@ def test_interfaces_json_redirects_ls_output_to_file(
     (tmp_path / 'interfaces').mkdir()
     captured = {}
 
-    def fake_run(cmd, *, cwd, env=None, check=False, stdout=None):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         captured['cmd'] = list(cmd)
-        captured['cwd'] = cwd
         captured['stdout'] = stdout
         return 0
 
@@ -417,7 +429,6 @@ def test_interfaces_json_redirects_ls_output_to_file(
     assert '--indent-json' in cmd
     assert cmd.count('--output') == 9
     assert captured['stdout'] is not None  # output redirected to the index file
-    assert captured['cwd'] == tmp_path
 
 
 # --- init._main --------------------------------------------------------------------------------
@@ -428,9 +439,8 @@ def test_init_prints_guidance_and_runs_cookiecutter(
 ) -> None:
     captured = {}
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         captured['cmd'] = list(cmd)
-        captured['cwd'] = cwd
         captured['env'] = env
         return 0
 
@@ -444,7 +454,6 @@ def test_init_prints_guidance_and_runs_cookiecutter(
     assert cmd[:3] == ['uvx', 'cookiecutter', '.template']
     assert cmd[-1] == '--no-input'  # forwarded to cookiecutter
     assert captured['env']['CHARMLIBS_TEMPLATE'] == str((tmp_path / '.template').resolve())
-    assert captured['cwd'] == tmp_path
     printed = capsys.readouterr().out
     assert 'IMPORTANT' in printed
     assert 'charmlibs.' in printed
@@ -485,7 +494,7 @@ def test_help_recipes_map_names_to_scripts_in_order(
 def test_check_runs_lint_unit_docs_in_order(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         calls.append(list(cmd))
         return 0
 
@@ -503,7 +512,7 @@ def test_check_runs_lint_unit_docs_in_order(monkeypatch: pytest.MonkeyPatch) -> 
 def test_check_fails_fast_on_first_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         calls.append(list(cmd))
         return 1  # the first step (lint) fails
 
@@ -518,7 +527,7 @@ def test_check_fails_fast_on_first_failure(monkeypatch: pytest.MonkeyPatch) -> N
 def test_check_forwards_python_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
-    def fake_run(cmd, *, cwd, env=None, check=False):
+    def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
         calls.append(list(cmd))
         return 0
 

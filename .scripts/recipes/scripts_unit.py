@@ -37,23 +37,15 @@ def _main() -> None:
     parser.add_argument('--python', default=None)
     args, pytest_args = parser.parse_known_args()
     # These tests aren't tied to a package: run from the repo root, without `--locked` or any
-    # dependency groups, so this builds the `uv run` prefix directly rather than via
-    # `_common.uv_run_prefix` (which is shaped for the per-package recipes).
+    # dependency groups, so this builds the `uv run` command directly rather than via
+    # `_common.uv_run` (which is shaped for the per-package recipes).
     python = args.python or _common.DEFAULT_PYTHON
-    command = [
-        'uv',
-        'run',
-        '--with-requirements',
-        str(_common.TEST_REQUIREMENTS),
-        '--python',
-        python,
-        'pytest',
-        '--tb=native',
-        '-vv',
-        *(pytest_args or ['-rA']),
+    cmd = [
+        *('uv', 'run', '--with-requirements', str(_common.TEST_REQUIREMENTS), '--python', python),
+        *('pytest', '--tb=native', '-vv', *(pytest_args or ['-rA'])),
         *_TEST_DIRS,
     ]
-    sys.exit(_common.run(command, cwd=_common.REPO_ROOT))
+    sys.exit(_common.run(cmd))
 
 
 if __name__ == '__main__':

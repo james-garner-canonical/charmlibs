@@ -30,6 +30,7 @@ via `_functional.sh`, so the coverage run happens inside the shell that has sour
 from __future__ import annotations
 
 import argparse
+import functools
 import os
 import sys
 from typing import TYPE_CHECKING
@@ -38,6 +39,16 @@ import _common
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+
+def _main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--python', default=None)
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    parser.add_argument('suite', help='Test suite name, e.g. `unit` or `functional`.')
+    args, pytest_args = parser.parse_known_args()
+    python = _common.resolve_python(args.package, args.python)
+    sys.exit(run_coverage(args.package, args.suite, python, pytest_args or ['-rA']))
 
 
 def run_coverage(package: str, suite: str, python: str, pytest_args: Sequence[str]) -> int:
@@ -49,41 +60,17 @@ def run_coverage(package: str, suite: str, python: str, pytest_args: Sequence[st
     package_dir = _common.REPO_ROOT / package
     data_file = f'.report/coverage-{suite}-{python}.db'
     env = {**os.environ, 'COVERAGE_RCFILE': str(_common.COVERAGE_RCFILE)}
-    prefix = _common.uv_run_prefix(package_dir, python, groups=[suite])
-    returncode = _common.run(
-        [
-            *prefix,
-            'coverage',
-            'run',
-            f'--data-file={data_file}',
-            '--source=src',
-            '-m',
-            'pytest',
-            '--tb=native',
-            '-vv',
-            *pytest_args,
-            f'tests/{suite}',
-        ],
-        cwd=package_dir,
-        env=env,
+    uv = functools.partial(
+        _common.uv_run, package_dir=package_dir, python=python, groups=[suite], env=env
     )
+    run_cmd = [
+        *('coverage', 'run', f'--data-file={data_file}', '--source=src'),
+        *('-m', 'pytest', '--tb=native', '-vv', *pytest_args, f'tests/{suite}'),
+    ]
+    returncode = uv(run_cmd)
     if returncode != 0:
-        return returncode
-    return _common.run(
-        [*prefix, 'coverage', 'report', f'--data-file={data_file}'],
-        cwd=package_dir,
-        env=env,
-    )
-
-
-def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    parser.add_argument('suite', help='Test suite name, e.g. `unit` or `functional`.')
-    args, pytest_args = parser.parse_known_args()
-    python = _common.resolve_python(args.package, args.python)
-    sys.exit(run_coverage(args.package, args.suite, python, pytest_args or ['-rA']))
+        return returncode  # skip the report step if the tests failed
+    return uv(['coverage', 'report', f'--data-file={data_file}'])
 
 
 if __name__ == '__main__':

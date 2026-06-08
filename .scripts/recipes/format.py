@@ -29,13 +29,6 @@ import sys
 import _common
 
 
-def format_path(path: str) -> int:
-    """Run `ruff format` then `ruff check --fix`, modifying files in place."""
-    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
-    _common.run([*ruff, 'format', path], cwd=_common.REPO_ROOT, check=True)
-    return _common.run([*ruff, 'check', '--fix', path], cwd=_common.REPO_ROOT, check=True)
-
-
 def _main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -43,6 +36,13 @@ def _main() -> None:
     )
     args = parser.parse_args()
     sys.exit(format_path(args.path))
+
+
+def format_path(path: str) -> int:
+    """Run `ruff format` then `ruff check --fix`, modifying files in place."""
+    ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
+    _common.run([*ruff, 'format', path], check=True)
+    return _common.run([*ruff, 'check', '--fix', path], check=True)
 
 
 if __name__ == '__main__':

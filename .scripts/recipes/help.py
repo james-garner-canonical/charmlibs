@@ -38,6 +38,15 @@ if TYPE_CHECKING:
 _RECIPE = re.compile(r'^([a-z][\w-]*)[^:\n]*:[ \t]*$', re.MULTILINE)
 
 
+def _main() -> None:
+    print('All recipes require `uv` to be available.\n')
+    print('Available recipes:')
+    recipes = list(_recipes())
+    width = max(len(name) for name, _ in recipes)
+    for name, summary in recipes:
+        print(f'    {name:<{width}}  {summary}')
+
+
 def _recipes() -> Iterator[tuple[str, str]]:
     """Yield (recipe, summary) for each public recipe, in justfile order.
 
@@ -55,15 +64,6 @@ def _summary(path: pathlib.Path) -> str:
     """Return the first line of a script's module docstring (read without importing it)."""
     docstring = ast.get_docstring(ast.parse(path.read_text())) or ''
     return docstring.splitlines()[0] if docstring else ''
-
-
-def _main() -> None:
-    print('All recipes require `uv` to be available.\n')
-    print('Available recipes:')
-    recipes = list(_recipes())
-    width = max(len(name) for name, _ in recipes)
-    for name, summary in recipes:
-        print(f'    {name:<{width}}  {summary}')
 
 
 if __name__ == '__main__':

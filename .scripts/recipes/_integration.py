@@ -46,15 +46,13 @@ def main(argv: list[str]) -> None:
     python = _common.resolve_python(args.package, args.python)
     package_dir = _common.REPO_ROOT / args.package
     env = {**os.environ, 'CHARMLIBS_SUBSTRATE': args.substrate, 'CHARMLIBS_TAG': args.tag}
-    prefix = _common.uv_run_prefix(package_dir, python, groups=['integration'])
-    command = [
-        *prefix,
-        'pytest',
-        '--tb=native',
-        '-vv',
-        '-m',
-        _LABELS[args.substrate],
+    cmd = [
+        *('pytest', '--tb=native', '-vv'),
+        *('-m', _LABELS[args.substrate]),
         'tests/integration',
         *(pytest_args or ['-rA']),
     ]
-    sys.exit(_common.run(command, cwd=package_dir, env=env))
+    returncode = _common.uv_run(
+        cmd, package_dir=package_dir, python=python, groups=['integration'], env=env
+    )
+    sys.exit(returncode)

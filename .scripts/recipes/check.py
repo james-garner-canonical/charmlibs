@@ -43,8 +43,8 @@ def _main() -> None:
         ['just', 'docs', 'html', args.package],
     ]
     returncode = 0
-    for command in steps:
-        returncode = _common.run(command, cwd=_common.REPO_ROOT)
+    for cmd in steps:
+        returncode = _common.run(cmd)
         if returncode != 0:
             break  # fail fast, like the old dependency recipe
     sys.exit(returncode)

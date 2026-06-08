@@ -37,8 +37,8 @@ def _main() -> None:
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args, uv_add_args = parser.parse_known_args()
     package_dir = _common.REPO_ROOT / args.package
-    command = ['uv', 'add', '--constraints', str(_common.TEST_REQUIREMENTS), *uv_add_args]
-    sys.exit(_common.run(command, cwd=package_dir))
+    cmd = ['uv', 'add', '--constraints', str(_common.TEST_REQUIREMENTS), *uv_add_args]
+    sys.exit(_common.run(cmd, cwd=package_dir))
 
 
 if __name__ == '__main__':

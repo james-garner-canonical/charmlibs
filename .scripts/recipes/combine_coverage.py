@@ -24,10 +24,19 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import os
 import shutil
 
 import _common
+
+
+def _main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--python', default=None)
+    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
+    args = parser.parse_args()
+    combine(args.package, _common.resolve_python(args.package, args.python))
 
 
 def combine(package: str, python: str) -> None:
@@ -43,58 +52,27 @@ def combine(package: str, python: str) -> None:
         if (package_dir / data_file).exists():
             data_files.append(data_file)
     env = {**os.environ, 'COVERAGE_RCFILE': str(_common.COVERAGE_RCFILE)}
-    prefix = _common.uv_run_prefix(package_dir, python)
+    uv = functools.partial(
+        _common.uv_run, package_dir=package_dir, python=python, env=env, check=True
+    )
     combined = f'.report/coverage-all-{python}.db'
+    xml_file = f'.report/coverage-all-{python}.xml'
     html_dir = f'.report/htmlcov-all-{python}'
-    _common.run(
-        [*prefix, 'coverage', 'combine', '--keep', f'--data-file={combined}', *data_files],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-    _common.run(
-        [
-            *prefix,
-            'coverage',
-            'xml',
-            f'--data-file={combined}',
-            '-o',
-            f'.report/coverage-all-{python}.xml',
-        ],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-    shutil.rmtree(
-        package_dir / html_dir, ignore_errors=True
-    )  # let coverage create it from scratch
-    _common.run(
-        [
-            *prefix,
-            'coverage',
-            'html',
-            f'--data-file={combined}',
-            '--show-contexts',
-            f'--directory={html_dir}',
-        ],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-    _common.run(
-        [*prefix, 'coverage', 'report', f'--data-file={combined}'],
-        cwd=package_dir,
-        env=env,
-        check=True,
-    )
-
-
-def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--python', default=None)
-    parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
-    args = parser.parse_args()
-    combine(args.package, _common.resolve_python(args.package, args.python))
+    # Merge the per-suite data files into a single combined data file.
+    uv(['coverage', 'combine', '--keep', f'--data-file={combined}', *data_files])
+    # Write the XML report (consumed by CI and coverage services).
+    uv(['coverage', 'xml', f'--data-file={combined}', '-o', xml_file])
+    # Rebuild the HTML report from scratch (let coverage recreate the directory).
+    shutil.rmtree(package_dir / html_dir, ignore_errors=True)
+    uv([
+        'coverage',
+        'html',
+        f'--data-file={combined}',
+        '--show-contexts',
+        f'--directory={html_dir}',
+    ])
+    # Print the terminal summary.
+    uv(['coverage', 'report', f'--data-file={combined}'])
 
 
 if __name__ == '__main__':

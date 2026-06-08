@@ -45,12 +45,12 @@ _OUTPUTS = [
 def _main() -> None:
     argparse.ArgumentParser(description=__doc__).parse_args()  # takes no args, but supports `-h`
     output_file = _common.REPO_ROOT / 'interfaces' / 'index.json'
-    command = ['.scripts/ls.py', 'interfaces']
+    cmd = ['.scripts/ls.py', 'interfaces']
     for column in _OUTPUTS:
-        command += ['--output', column]
-    command.append('--indent-json')
+        cmd += ['--output', column]
+    cmd.append('--indent-json')
     with output_file.open('w') as f:
-        returncode = _common.run(command, cwd=_common.REPO_ROOT, stdout=f)
+        returncode = _common.run(cmd, stdout=f)
     sys.exit(returncode)
 
 

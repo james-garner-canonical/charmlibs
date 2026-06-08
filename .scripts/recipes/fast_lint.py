@@ -29,6 +29,13 @@ import sys
 import _common
 
 
+def _main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('path', nargs='?', default='.', help='Path to lint, defaults to the repo.')
+    args = parser.parse_args()
+    sys.exit(fast_lint(args.path))
+
+
 def fast_lint(path: str) -> int:
     """Run `ruff check` and `ruff format --diff`, returning the number of failing commands.
 
@@ -37,19 +44,12 @@ def fast_lint(path: str) -> int:
     """
     ruff = ['uv', 'run', '--only-group=fast-lint', 'ruff']
     failures = 0
-    if _common.run([*ruff, 'check', path], cwd=_common.REPO_ROOT) != 0:
+    if _common.run([*ruff, 'check', path]) != 0:
         failures += 1
-    _common.run([*ruff, 'check', '--diff', path], cwd=_common.REPO_ROOT)
-    if _common.run([*ruff, 'format', '--diff', path], cwd=_common.REPO_ROOT) != 0:
+    _common.run([*ruff, 'check', '--diff', path])
+    if _common.run([*ruff, 'format', '--diff', path]) != 0:
         failures += 1
     return failures
-
-
-def _main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('path', nargs='?', default='.', help='Path to lint, defaults to the repo.')
-    args = parser.parse_args()
-    sys.exit(fast_lint(args.path))
 
 
 if __name__ == '__main__':

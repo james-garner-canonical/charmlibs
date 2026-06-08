@@ -48,7 +48,7 @@ def _main() -> None:
     package_dir = _common.REPO_ROOT / args.package
     source_wrapper = pathlib.Path(__file__).with_name('_functional.sh')
     coverage_script = pathlib.Path(__file__).with_name('_coverage.py')
-    command = [
+    cmd = [
         str(source_wrapper),
         str(coverage_script),
         args.package,
@@ -57,7 +57,7 @@ def _main() -> None:
         python,
         *(pytest_args or ['-rA']),
     ]
-    sys.exit(_common.run(command, cwd=package_dir))
+    sys.exit(_common.run(cmd, cwd=package_dir))
 
 
 if __name__ == '__main__':

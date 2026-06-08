@@ -41,8 +41,8 @@ def _main() -> None:
     print('You can press enter to accept the default, shown in brackets.')
     template = _common.REPO_ROOT / '.template'
     env = {**os.environ, 'CHARMLIBS_TEMPLATE': str(template.resolve())}
-    command = ['uvx', 'cookiecutter', '.template', *cookiecutter_args]
-    sys.exit(_common.run(command, cwd=_common.REPO_ROOT, env=env))
+    cmd = ['uvx', 'cookiecutter', '.template', *cookiecutter_args]
+    sys.exit(_common.run(cmd, env=env))
 
 
 if __name__ == '__main__':

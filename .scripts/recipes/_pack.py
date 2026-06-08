@@ -41,4 +41,5 @@ def main(argv: list[str]) -> None:
     args, pack_args = parser.parse_known_args(argv)
     integration_dir = _common.REPO_ROOT / args.package / 'tests' / 'integration'
     env = {**os.environ, 'CHARMLIBS_SUBSTRATE': args.substrate, 'CHARMLIBS_TAG': args.tag}
-    sys.exit(_common.run(['./pack.sh', *pack_args], cwd=integration_dir, env=env))
+    cmd = ['./pack.sh', *pack_args]
+    sys.exit(_common.run(cmd, cwd=integration_dir, env=env))
