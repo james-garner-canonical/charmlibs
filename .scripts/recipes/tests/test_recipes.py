@@ -28,10 +28,13 @@ import add
 import combine_coverage
 import fast_lint
 import functional
+import init
 import integration
+import interfaces_json
 import lint
 import pack
 import pytest
+import scripts_unit
 import static
 
 # --- _common.uv_run_prefix ---------------------------------------------------------------------
@@ -332,3 +335,84 @@ def test_integration_selects_marker_for_substrate(monkeypatch):
     assert cmd[-1] == '-x'  # forwarded pytest arg comes after tests/integration
     assert captured['env']['CHARMLIBS_SUBSTRATE'] == 'machine'
     assert captured['cwd'] == _common.REPO_ROOT / 'pathops'
+
+
+# --- scripts_unit._main ------------------------------------------------------------------------
+
+
+def test_scripts_unit_runs_pytest_without_locked(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['scripts_unit.py', '--python', '3.11'])
+    with pytest.raises(SystemExit) as exc_info:
+        scripts_unit._main()
+    assert exc_info.value.code == 0
+    cmd = captured['cmd']
+    assert cmd[:2] == ['uv', 'run']
+    assert '--locked' not in cmd  # not a package recipe, so no lockfile pinning
+    assert '--group' not in cmd
+    assert cmd[cmd.index('--python') + 1] == '3.11'
+    assert '-rA' in cmd  # default pytest args
+    assert cmd[-2:] == ['.scripts/tests', '.scripts/recipes/tests']
+    assert captured['cwd'] == _common.REPO_ROOT
+
+
+# --- interfaces_json._main ---------------------------------------------------------------------
+
+
+def test_interfaces_json_redirects_ls_output_to_file(monkeypatch, tmp_path):
+    (tmp_path / 'interfaces').mkdir()
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False, stdout=None):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        captured['stdout'] = stdout
+        return 0
+
+    monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['interfaces_json.py'])
+    with pytest.raises(SystemExit) as exc_info:
+        interfaces_json._main()
+    assert exc_info.value.code == 0
+    cmd = captured['cmd']
+    assert cmd[:2] == ['.scripts/ls.py', 'interfaces']
+    assert '--indent-json' in cmd
+    assert cmd.count('--output') == 9
+    assert captured['stdout'] is not None  # output redirected to the index file
+    assert captured['cwd'] == tmp_path
+
+
+# --- init._main --------------------------------------------------------------------------------
+
+
+def test_init_prints_guidance_and_runs_cookiecutter(monkeypatch, tmp_path, capsys):
+    captured = {}
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        captured['cmd'] = list(cmd)
+        captured['cwd'] = cwd
+        captured['env'] = env
+        return 0
+
+    monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['init.py', '--no-input'])
+    with pytest.raises(SystemExit) as exc_info:
+        init._main()
+    assert exc_info.value.code == 0
+    cmd = captured['cmd']
+    assert cmd[:3] == ['uvx', 'cookiecutter', '.template']
+    assert cmd[-1] == '--no-input'  # forwarded to cookiecutter
+    assert captured['env']['CHARMLIBS_TEMPLATE'] == str((tmp_path / '.template').resolve())
+    assert captured['cwd'] == tmp_path
+    printed = capsys.readouterr().out
+    assert 'IMPORTANT' in printed
+    assert 'charmlibs.' in printed

@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from typing import IO
 
 # `.scripts/recipes/_common.py` -> repo root is three parents up.
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -49,11 +50,10 @@ def resolve_python(package: str, python: str | None) -> str:
 def uv_run_prefix(
     package_dir: pathlib.Path, python: str, *, groups: Sequence[str] = ()
 ) -> list[str]:
-    """Build the `uv run` command prefix shared by the test recipes.
+    """Build the `uv run` command prefix shared by the package test recipes.
 
-    Mirrors the `_uv_run_with_test_requirements` justfile variable: run with the repo-level
-    `test-requirements.txt` constraints and the requested Python, adding `--locked` when the
-    package has a `uv.lock`, plus any requested dependency groups.
+    Run with the repo-level `test-requirements.txt` constraints and the requested Python, adding
+    `--locked` when the package has a `uv.lock`, plus any requested dependency groups.
     """
     cmd = ['uv', 'run', '--with-requirements', str(TEST_REQUIREMENTS), '--python', python]
     if (package_dir / 'uv.lock').exists():
@@ -69,15 +69,17 @@ def run(
     cwd: pathlib.Path,
     env: dict[str, str] | None = None,
     check: bool = False,
+    stdout: IO[str] | None = None,
 ) -> int:
     """Echo and run a command, returning its exit code.
 
     The command is echoed (to stderr) as the list of its arguments, so argument boundaries are
-    unambiguous. When `check` is true, exit this process with the command's exit code on failure
-    (mirroring the old recipes' `set -e`).
+    unambiguous. Pass `stdout` (an open text file) to redirect the command's standard output, for
+    example to capture generated output in a file. When `check` is true, exit this process with the
+    command's exit code on failure (mirroring the old recipes' `set -e`).
     """
     print([str(part) for part in cmd], file=sys.stderr, flush=True)
-    returncode = subprocess.call(cmd, cwd=cwd, env=env)
+    returncode = subprocess.call(cmd, cwd=cwd, env=env, stdout=stdout)
     if check and returncode != 0:
         sys.exit(returncode)
     return returncode

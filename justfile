@@ -8,8 +8,6 @@ python := '3.10'
 # for integration tests, e.g. `just tag=24.04 pack-k8s` `just tag=foo integration-machine`
 tag := env('CHARMLIBS_TAG', '')
 
-_uv_run_with_test_requirements := 'uv run --with-requirements ' + quote(join(justfile_dir(), 'test-requirements.txt')) + ' --python ' + python
-
 # this is the first recipe in the file, so it will run if just is called without a recipe
 _short_help:
     @echo '{{BOLD}}Charmlibs is the Canonical charm libraries monorepo{{NORMAL}}'
@@ -37,10 +35,9 @@ help:
     @just --list --unsorted --list-submodules
 
 [doc('Create the files for a new charmlibs package interactively.')]
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
 init *args:
-    @echo '✨{{BOLD}}IMPORTANT{{NORMAL}}✨ The project name should be the import package name, without the {{CYAN}}charmlibs.{{NORMAL}} namespace.'
-    @echo 'You can press enter to accept the default, shown in brackets.'
-    @env CHARMLIBS_TEMPLATE=$(realpath .template) uvx cookiecutter .template {{args}}
+    @'{{ justfile_dir() }}/.scripts/recipes/init.py' "$@"
 
 [doc('Run `ruff`, failing afterwards if any errors are found.')]
 fast-lint path='.':
@@ -104,20 +101,9 @@ integration-machine package *flags:
 
 [doc("Make .interfaces.json file.")]
 interfaces-json:
-    .scripts/ls.py interfaces \
-        --output name \
-        --output version \
-        --output lib \
-        --output lib_url \
-        --output docs_url \
-        --output summary \
-        --output description \
-        --output tags \
-        --output status \
-        --indent-json \
-        > interfaces/index.json
+    @'{{ justfile_dir() }}/.scripts/recipes/interfaces_json.py'
 
 [doc('Run unit tests for the repository tooling scripts in `.scripts/`.')]
-scripts-unit +flags='-rA':
-    {{_uv_run_with_test_requirements}} \
-        pytest --tb=native -vv {{flags}} .scripts/tests .scripts/recipes/tests
+[positional-arguments]  # forward recipe args to the script as argv, so quoting is preserved
+scripts-unit *flags:
+    @'{{ justfile_dir() }}/.scripts/recipes/scripts_unit.py' --python='{{ python }}' "$@"
