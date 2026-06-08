@@ -43,21 +43,13 @@ def _main() -> None:
 
 
 def static(package: str, python: str, pyright_args: Sequence[str]) -> int:
-    """Run `pyright` for a package against the given Python version, returning its exit code.
-
-    Mirrors the old `static` recipe: run with every dependency group installed, plus
-    `pytest-interface-tester`, so that pyright can resolve all of the package's test imports.
-    """
-    pkg_dir = _common.REPO_ROOT / package
-    cmd = [
-        *('--with', 'pytest-interface-tester'),
-        'pyright',
-        f'--pythonversion={python}',
-        *pyright_args,
-    ]
+    """Run `pyright` for a package against the given Python version, returning its exit code."""
     return _common.uv_run(
-        cmd,
-        pkg_dir=pkg_dir,
+        [
+            *('--with', 'pytest-interface-tester'),
+            *('pyright', f'--pythonversion={python}', *pyright_args),
+        ],
+        pkg_dir=_common.REPO_ROOT / package,
         python=python,
         groups=['lint', 'unit', 'functional', 'integration'],
         check=False,
