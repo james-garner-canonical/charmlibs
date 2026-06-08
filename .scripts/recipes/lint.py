@@ -37,7 +37,6 @@ def _main() -> None:
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     args, pyright_args = parser.parse_known_args()
     python = _common.resolve_python(args.package, args.python)
-    # Run both checks even if the first fails, and exit non-zero if either did (as the old recipe).
     failures = fast_lint.fast_lint(args.package)
     if static.static(args.package, python, pyright_args) != 0:
         failures += 1
