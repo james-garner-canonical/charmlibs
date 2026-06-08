@@ -122,7 +122,7 @@ def test_run_coverage_builds_run_then_report(monkeypatch: pytest.MonkeyPatch) ->
         return 0
 
     monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
-    assert _coverage.run_coverage('pathops', 'unit', '3.11', ['-x']) == 0
+    _coverage.run_coverage('pathops', 'unit', '3.11', ['-x'])
     assert len(calls) == 2
     (run_args, run_groups), (report_args, _) = calls
     assert run_args[:2] == ['coverage', 'run']
@@ -140,10 +140,14 @@ def test_run_coverage_skips_report_when_tests_fail(monkeypatch: pytest.MonkeyPat
 
     def fake_uv_run(args, *, package_dir, python, groups=(), env=None, check=False, stdout=None):
         calls.append(list(args))
+        if check:
+            sys.exit(5)  # check=True aborts the process on the failing test run
         return 5
 
     monkeypatch.setattr(_common, 'uv_run', fake_uv_run)
-    assert _coverage.run_coverage('pathops', 'unit', '3.10', ['-rA']) == 5
+    with pytest.raises(SystemExit) as exc_info:
+        _coverage.run_coverage('pathops', 'unit', '3.10', ['-rA'])
+    assert exc_info.value.code == 5
     assert len(calls) == 1  # report step skipped, matching the old `set -e` behaviour
 
 
