@@ -56,6 +56,7 @@ def test_uv_run_builds_prefix_without_lock(
         captured['cwd'] = cwd
         return 0
 
+    (tmp_path / 'pyproject.toml').write_text('[project]\nname = "pkg"\n')
     monkeypatch.setattr(_common, 'run', fake_run)
     _common.uv_run(['pyright'], pkg_dir=tmp_path, python='3.11')
     cmd = captured['cmd']
@@ -102,9 +103,10 @@ def test_uv_run_skips_undeclared_groups(tmp_path: Path, monkeypatch: pytest.Monk
     assert 'lint' not in cmd
 
 
-def test_uv_run_skips_all_groups_without_pyproject(
+def test_uv_run_skips_groups_when_none_declared(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    (tmp_path / 'pyproject.toml').write_text('[project]\nname = "pkg"\n')
     captured = {}
 
     def fake_run(cmd, *, cwd=None, env=None, check=False, stdout=None):
@@ -119,13 +121,57 @@ def test_uv_run_skips_all_groups_without_pyproject(
 # --- _common.resolve_python --------------------------------------------------------------------
 
 
-def test_resolve_python_falls_back_to_default() -> None:
-    assert _common.resolve_python('pathops', None) == _common.DEFAULT_PYTHON
-    assert _common.resolve_python('pathops', '') == _common.DEFAULT_PYTHON
+def test_resolve_python_floors_at_3_10() -> None:
+    # pathops supports `>=3.10`, so the 3.10 floor applies.
+    assert _common.resolve_python('pathops', None) == '3.10'
+    assert _common.resolve_python('pathops', '') == '3.10'
 
 
 def test_resolve_python_uses_explicit_value() -> None:
     assert _common.resolve_python('pathops', '3.13') == '3.13'
+
+
+def test_resolve_python_uses_default_when_package_minimum_is_lower(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pkg = tmp_path / 'pkg'
+    pkg.mkdir()
+    (pkg / 'pyproject.toml').write_text('[project]\nrequires-python = ">=3.8"\n')
+    monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
+    assert _common.resolve_python('pkg', None) == '3.10'
+
+
+def test_resolve_python_uses_package_minimum_when_higher(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pkg = tmp_path / 'pkg'
+    pkg.mkdir()
+    (pkg / 'pyproject.toml').write_text('[project]\nrequires-python = ">=3.12,<4"\n')
+    monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
+    assert _common.resolve_python('pkg', None) == '3.12'
+
+
+@pytest.mark.parametrize(
+    ('requires_python', 'expected'),
+    [
+        ('>=3.12', '3.12'),  # simple lower bound
+        ('>= 3.12', '3.12'),  # whitespace after the operator
+        ('>=3.12.4', '3.12'),  # patch component dropped
+        ('>=3.12,<4', '3.12'),  # upper bound ignored
+        ('~=3.12', '3.12'),  # compatible-release operator
+    ],
+)
+def test_resolve_python_parses_lower_bound(
+    requires_python: str,
+    expected: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pkg = tmp_path / 'pkg'
+    pkg.mkdir()
+    (pkg / 'pyproject.toml').write_text(f'[project]\nrequires-python = "{requires_python}"\n')
+    monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
+    assert _common.resolve_python('pkg', None) == expected
 
 
 # --- _common.run -------------------------------------------------------------------------------

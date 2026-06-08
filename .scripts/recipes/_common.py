@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tomllib
@@ -38,7 +39,24 @@ if TYPE_CHECKING:
 # `.scripts/recipes/_common.py` -> repo root is three parents up.
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
-DEFAULT_PYTHON = '3.10'
+
+# Lower bound of a `requires-python` specifier (see `_requires_python_minimum`).
+_REQUIRES_PYTHON_LOWER_BOUND = re.compile(
+    r'(?:>=|~=)'  # a `>=` or `~=` operator: the ones that set a lower bound
+    r'\s*'  # optional whitespace between the operator and the version
+    r'(\d+\.\d+)'  # capture just `major.minor`, stopping before any patch component
+)
+
+
+def resolve_python(package: str, python: str | None) -> str:
+    """Return the Python version to test `package` with.
+
+    If `python` is `None`, return the higher of 3.10 and the package's minimum Python version.
+    """
+    if python:
+        return python
+    minimum = _requires_python_minimum(REPO_ROOT / package)
+    return max('3.10', minimum, key=lambda s: tuple(int(p) for p in s.split('.')))
 
 
 def run(
@@ -49,22 +67,9 @@ def run(
     check: bool = True,
     stdout: IO[str] | None = None,
 ) -> int:
-    """Echo and run a command, returning its exit code.
-
-    Runs from the repo root unless `cwd` says otherwise. The command is echoed (to stderr) as the
-    list of its arguments, so argument boundaries are unambiguous. Pass `stdout` (an open text
-    file) to redirect the command's standard output, for example to capture generated output in a
-    file. When `check` is true (the default), exit this process with the command's exit code on
-    failure (mirroring the old recipes' `set -e`); pass `check=False` to get the exit code back
-    and handle it yourself.
-
-    `VIRTUAL_ENV` is dropped from the child environment. These recipes are themselves run via
-    `uv run --script`, which exports `VIRTUAL_ENV` pointing at the script's ephemeral environment.
-    Inheriting it would make the inner `uv` commands warn that it doesn't match the project's
-    `.venv`.
-    """
+    """Echo and run a command, returning its exit code."""
     env = dict(os.environ if env is None else env)
-    env.pop('VIRTUAL_ENV', None)
+    env.pop('VIRTUAL_ENV', None)  # Don't propagate script's ephemeral venv.
     print([str(part) for part in cmd], file=sys.stderr, flush=True)
     returncode = subprocess.call(cmd, cwd=cwd, env=env, stdout=stdout)
     if check and returncode != 0:
@@ -82,17 +87,8 @@ def uv_run(
     check: bool = True,
     stdout: IO[str] | None = None,
 ) -> int:
-    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code.
-
-    The `uv run` prefix is the one shared by the package recipes: the repo-level
-    `test-requirements.txt` constraints and the requested `python`, plus `--locked` when the
-    package has a `uv.lock` and a `--group` for each of `groups` that the package declares in its
-    `pyproject.toml`. Requested groups the package doesn't declare are skipped, so a recipe can
-    ask for an optional group (e.g. `unit`) without every package needing to define it. `args` are
-    appended to that prefix, then the whole command is handed to `run` (see it for `env`, `check`,
-    and `stdout`).
-    """
-    uv = ['uv', 'run', '--with-requirements', str(TEST_REQUIREMENTS), '--python', python]
+    """Run `uv run ... <args>` in `pkg_dir`, returning the exit code."""
+    uv = ['uv', 'run', '--with-requirements', TEST_REQUIREMENTS, '--python', python]
     if (pkg_dir / 'uv.lock').exists():
         uv.append('--locked')
     available = _dependency_groups(pkg_dir)
@@ -103,23 +99,15 @@ def uv_run(
 
 
 def _dependency_groups(pkg_dir: pathlib.Path) -> set[str]:
-    """Return the PEP 735 dependency group names declared in `pkg_dir`'s `pyproject.toml`.
-
-    Reads the `[dependency-groups]` table. Returns an empty set if the file or table is absent.
-    """
-    pyproject = pkg_dir / 'pyproject.toml'
-    if not pyproject.exists():
-        return set()
-    with pyproject.open('rb') as f:
-        data = tomllib.load(f)
-    return set(data.get('dependency-groups', {}))
+    """Return the PEP 735 dependency group names declared in `pyproject.toml`."""
+    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
+    return set(pyproject_toml.get('dependency-groups', ()))
 
 
-def resolve_python(package: str, python: str | None) -> str:
-    """Return the Python version to test `package` with.
-
-    For now this is the explicitly requested `python`, falling back to `DEFAULT_PYTHON`. The
-    `package` is accepted (and will be used) for a planned change: defaulting to the package's own
-    minimum supported version, read from its `pyproject.toml` `requires-python`.
-    """
-    return python or DEFAULT_PYTHON
+def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
+    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
+    pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
+    requires_python = pyproject_toml.get('project', {})['requires-python']
+    match = _REQUIRES_PYTHON_LOWER_BOUND.search(requires_python)
+    assert match is not None
+    return match.group(1)
