@@ -116,21 +116,22 @@ linkcheck_retries = 3
 ########################
 
 # NOTE: The canonical_sphinx extension is required for the starter pack.
-#       It automatically enables the following extensions:
-#       - custom-rst-roles
-#       - myst_parser
-#       - notfound.extension
-#       - related-links
-#       - sphinx_copybutton
-#       - sphinx_design
-#       - sphinx_reredirects
-#       - sphinx_tabs.tabs
-#       - sphinxcontrib.jquery
-#       - sphinxext.opengraph
-#       - terminal-output
-#       - youtube-links
+#       Since Sphinx Stack 2.0 (canonical-sphinx ~=0.6), it no longer bundles the
+#       extensions that were previously auto-enabled by canonical-sphinx[full];
+#       only myst_parser is still activated automatically. Every other extension
+#       must now be declared explicitly below (and installed via
+#       .sphinx/requirements.txt).
 extensions = [
     "canonical_sphinx",
+    # Previously auto-enabled by canonical-sphinx[full]
+    "notfound.extension",
+    "sphinx_design",
+    "sphinx_reredirects",
+    "sphinxcontrib.jquery",
+    "sphinxext.opengraph",
+    # Previously bundled as canonical-sphinx-extensions
+    "sphinx_related_links",
+    # charmlibs-specific extensions
     "sphinxcontrib.cairosvgconverter",
     "sphinxcontrib.mermaid",
     "sphinx_last_updated_by_git",

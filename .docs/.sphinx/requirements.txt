@@ -1,7 +1,21 @@
-canonical-sphinx[full]
+# Canonical theme (still needed for the Furo theme and custom templates)
+canonical-sphinx~=0.6
+
+# Extensions previously auto-enabled by canonical-sphinx[full]
+myst-parser~=4.0
 sphinx-autobuild
+sphinx-design~=0.6
+sphinx-notfound-page~=1.1
+sphinx-reredirects==0.1.6
+sphinxcontrib-jquery~=4.1
+sphinxext-opengraph~=0.13
+
+# Extensions previously bundled as canonical-sphinx-extensions
+sphinx-related-links~=0.1
+
+# charmlibs-specific extensions
 sphinxcontrib-mermaid
 sphinxcontrib-svg2pdfconverter[CairoSVG]
 sphinx-last-updated-by-git
 sphinx-datatables>=0.3
-sphinx-sitemap~=2.8
+sphinx-sitemap~=2.9
