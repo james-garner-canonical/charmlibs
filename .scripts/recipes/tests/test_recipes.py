@@ -25,6 +25,7 @@ import sys
 import _common
 import _coverage
 import add
+import check
 import combine_coverage
 import fast_lint
 import functional
@@ -431,3 +432,54 @@ def test_init_prints_guidance_and_runs_cookiecutter(monkeypatch, tmp_path, capsy
     printed = capsys.readouterr().out
     assert 'IMPORTANT' in printed
     assert 'charmlibs.' in printed
+
+
+# --- check._main -------------------------------------------------------------------------------
+
+
+def test_check_runs_lint_unit_docs_in_order(monkeypatch):
+    calls = []
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        calls.append(list(cmd))
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['check.py', 'pathops'])
+    with pytest.raises(SystemExit) as exc_info:
+        check._main()
+    assert exc_info.value.code == 0
+    assert len(calls) == 3
+    assert calls[0][0].endswith('lint.py') and calls[0][1] == 'pathops'
+    assert calls[1][0].endswith('unit.py') and calls[1][1] == 'pathops'
+    assert calls[2] == ['just', 'docs', 'html', 'pathops']  # docs not yet migrated
+
+
+def test_check_fails_fast_on_first_failure(monkeypatch):
+    calls = []
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        calls.append(list(cmd))
+        return 1  # the first step (lint) fails
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['check.py', 'pathops'])
+    with pytest.raises(SystemExit) as exc_info:
+        check._main()
+    assert exc_info.value.code == 1
+    assert len(calls) == 1  # stopped after lint failed, never ran unit or docs
+
+
+def test_check_forwards_python_flag(monkeypatch):
+    calls = []
+
+    def fake_run(cmd, *, cwd, env=None, check=False):
+        calls.append(list(cmd))
+        return 0
+
+    monkeypatch.setattr(_common, 'run', fake_run)
+    monkeypatch.setattr(sys, 'argv', ['check.py', 'pathops', '--python', '3.11'])
+    with pytest.raises(SystemExit):
+        check._main()
+    assert calls[0][-2:] == ['--python', '3.11']  # forwarded to lint
+    assert calls[1][-2:] == ['--python', '3.11']  # forwarded to unit

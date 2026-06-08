@@ -8,8 +8,8 @@ logic lives in maintainable, testable Python instead of inline bash. (The `docs.
 ## Layout
 
 - **Entry scripts** — one per public recipe (e.g. `lint.py`, `static.py`, `unit.py`, `functional.py`,
-  `pack.py`, `integration.py`, `init.py`, `interfaces_json.py`, `scripts_unit.py`). Each is an
-  executable [PEP 723](https://peps.python.org/pep-0723/) script with an
+  `pack.py`, `integration.py`, `check.py`, `init.py`, `interfaces_json.py`, `scripts_unit.py`). Each
+  is an executable [PEP 723](https://peps.python.org/pep-0723/) script with an
   `#!/usr/bin/env -S uv run --script --no-project` shebang, so the `justfile` can run it directly.
   Entry scripts are deliberately thin: parse args, then call into a shared module or a function
   defined alongside `_main`. Some scripts back more than one recipe by taking a flag — for example

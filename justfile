@@ -39,7 +39,8 @@ fast-lint *args:
     @.scripts/recipes/fast_lint.py "$@"
 
 [doc('`lint`, `unit` test, and build the `docs` for a package.')]
-check package: (lint package) (unit package) (docs::html package)
+check *args:
+    @.scripts/recipes/check.py "$@"
 
 [doc('Run `ruff check --fix` and `ruff --format`, modifying files in place.')]
 format *args:
@@ -86,8 +87,8 @@ integration-machine *args:
     @.scripts/recipes/integration.py --substrate=machine "$@"
 
 [doc("Make .interfaces.json file.")]
-interfaces-json:
-    @.scripts/recipes/interfaces_json.py
+interfaces-json *args:
+    @.scripts/recipes/interfaces_json.py "$@"
 
 [doc('Run unit tests for the repository tooling scripts in `.scripts/`.')]
 scripts-unit *args:

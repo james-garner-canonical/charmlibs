@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 
 import _common
@@ -42,6 +43,7 @@ _OUTPUTS = [
 
 
 def _main() -> None:
+    argparse.ArgumentParser(description=__doc__).parse_args()  # takes no args, but supports `-h`
     output_file = _common.REPO_ROOT / 'interfaces' / 'index.json'
     command = ['.scripts/ls.py', 'interfaces']
     for column in _OUTPUTS:
