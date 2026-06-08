@@ -452,7 +452,11 @@ def _parser(fn: FunctionType) -> argparse.ArgumentParser:
 def _package_parser(fn: FunctionType) -> argparse.ArgumentParser:
     """Return an `ArgumentParser` with the common `--python` and `package` arguments."""
     parser = _parser(fn)
-    parser.add_argument('--python', default=None)
+    parser.add_argument(
+        '--python',
+        default=None,
+        help="Python version to use, e.g. `3.12` (defaults to the package's minimum).",
+    )
     parser.add_argument('package', help='Path from the repo root to the package, e.g. `pathops`.')
     return parser
 
