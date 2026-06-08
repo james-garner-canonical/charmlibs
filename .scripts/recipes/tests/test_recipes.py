@@ -534,9 +534,7 @@ def test_init_prints_guidance_and_runs_cookiecutter(
     monkeypatch.setattr(_common, 'REPO_ROOT', tmp_path)
     monkeypatch.setattr(_common, 'run', fake_run)
     monkeypatch.setattr(sys, 'argv', ['init.py', '--no-input'])
-    with pytest.raises(SystemExit) as exc_info:
-        init._main()
-    assert exc_info.value.code == 0
+    init._main()
     cmd = captured['cmd']
     assert cmd[:3] == ['uvx', 'cookiecutter', '.template']
     assert cmd[-1] == '--no-input'  # forwarded to cookiecutter
