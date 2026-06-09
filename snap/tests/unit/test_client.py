@@ -35,8 +35,9 @@ from charmlibs.snap._errors import (
     OptionNotFoundError,
     TimeoutError,  # noqa: A004 (shadowing a Python builtin)
     _AlreadyInstalledError,
+    _NoUpdatesAvailableError,
 )
-from conftest import FIXTURES_DIR
+from conftest import FIXTURES_DIR, load_fixture
 
 
 def _fake_response(
@@ -304,7 +305,7 @@ class TestAsyncChange:
         with pytest.raises(ChangeError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert exc_info.value.kind == 'charmlibs-snap-change-unknown'
-        assert 'Halted' in exc_info.value.message
+        assert 'Fake' in exc_info.value.message
 
 
 class TestLogsEndpoint:
@@ -322,3 +323,78 @@ class TestLogsEndpoint:
         with pytest.raises(Error) as exc_info:
             _client.get('/v2/logs', query={'n': 10, 'names': 'hello-world'})
         assert exc_info.value.kind == 'app-not-found'
+
+
+# ---------------------------------------------------------------------------
+# Tests against real snapd responses captured as fixtures.
+#
+# These are deliberately kept separate from the synthetic tests above. The
+# synthetic tests pin down exactly what the client does with hand-written
+# inputs; these check only that the client decodes real-world response bodies
+# the same way, without implying the synthetic tests exercise real data.
+# ---------------------------------------------------------------------------
+
+
+class TestRealErrorFixtures:
+    @pytest.mark.parametrize(
+        ('fixture', 'expected_type'),
+        [
+            ('snap_already_installed_error.json', _AlreadyInstalledError),
+            ('snap_needs_classic_error.json', NeedsClassicError),
+            ('snap_channel_not_available_error.json', ChannelNotAvailableError),
+            ('app_not_found_error.json', AppNotFoundError),
+            ('conf_option_not_found_error.json', OptionNotFoundError),
+            ('snap_no_update_available_error.json', _NoUpdatesAvailableError),
+            ('interfaces_not_installed_error.json', APIError),  # no 'kind' -> base type
+        ],
+    )
+    def test_sync_error_fixture_decodes_to_exception(
+        self, mock_raw: MagicMock, fixture: str, expected_type: type[APIError]
+    ):
+        envelope = load_fixture(fixture)
+        result = envelope['result']
+        mock_raw.return_value = _fake_response(envelope)
+        with pytest.raises(expected_type) as exc_info:
+            _client._request('GET', '/fake/path')
+        exc = exc_info.value
+        assert type(exc) is expected_type  # exact type, not a subclass
+        assert exc.message == result['message']
+        assert exc.kind == result.get('kind', '')
+        assert exc.value == result.get('value', '')
+        assert exc._status_code == envelope['status-code']
+
+
+class TestRealChangeFixtures:
+    def test_async_change_completes(self, mock_raw: MagicMock):
+        # async POST -> Doing poll -> Done poll, all from real captured responses.
+        done = load_fixture('change_done.json')
+        mock_raw.side_effect = [
+            _fake_response(load_fixture('async_hold.json')),
+            _fake_response(load_fixture('change_doing.json')),
+            _fake_response(done),
+        ]
+        result = _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
+        assert mock_raw.call_count == 3
+        assert result == done['result']['data']
+
+    @pytest.mark.parametrize('fixture', ['change_error.json', 'change_error_alias_conflict.json'])
+    def test_async_change_error(self, mock_raw: MagicMock, fixture: str):
+        async_envelope = load_fixture('async_error.json')
+        change = load_fixture(fixture)['result']
+        mock_raw.side_effect = [
+            _fake_response(async_envelope),
+            _fake_response(load_fixture(fixture)),
+        ]
+        with pytest.raises(ChangeError) as exc_info:
+            _client.post('/v2/aliases', body={'action': 'alias'})
+        assert exc_info.value.kind == 'charmlibs-snap-change-error'
+        assert exc_info.value.message == change['err']  # message comes from the 'err' field
+        assert exc_info.value.value == async_envelope['change']  # the polled change id
+
+
+class TestRealSyncFixtures:
+    def test_sync_success_fixture_returns_result(self, mock_raw: MagicMock):
+        envelope = load_fixture('aliases_empty.json')
+        mock_raw.return_value = _fake_response(envelope)
+        result = _client._request('GET', '/fake/path')
+        assert result == envelope['result']
