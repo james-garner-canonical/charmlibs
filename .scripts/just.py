@@ -487,7 +487,7 @@ def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
     )
     match = re.search(regex, requires_python)
     if match is None:
-        raise ValueError('Couldn't find minimum version in requires-python: {requires_python!r}')
+        raise ValueError(f"Couldn't find minimum version in requires-python: {requires_python!r}")
     return match.group(1)
 
 
