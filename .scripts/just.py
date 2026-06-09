@@ -7,7 +7,7 @@
 
 # ruff: noqa: I001  # tomllib is first-party in 3.11+
 
-# Copyright 2025 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ QUICK_START = f"""
 - For specific packages only: {CYAN}just docs html <packages>{NORMAL}
 """.strip()
 # Mapping of recipe names to their functions, populated by the `_register` decorator.
+# `just help` prints the recipes in registration order.
 RECIPES: dict[str, Callable[[list[str]], int]] = {}
 
 
@@ -309,11 +310,11 @@ def combine_coverage(argv: list[str]) -> int:
     pkg_dir = REPO_ROOT / args.package
     python = _resolve_python(args.package, args.python)
     env = _coverage_env()
-    data_files = [
-        f
-        for test_id in ('unit', 'functional')
-        if (pkg_dir / (f := f'.report/coverage-{test_id}-{python}.db')).exists()
-    ]
+    data_files: list[str] = []
+    for test_id in 'unit', 'functional':
+        file = f'.report/coverage-{test_id}-{python}.db'
+        if (pkg_dir / file).exists():
+            data_files.append(file)
 
     def uv(cmd: list[str]) -> None:
         _uv_run(cmd, pkg_dir=pkg_dir, python=python, env=env)
@@ -485,7 +486,8 @@ def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
         r'(\d+\.\d+)'  # capture just `major.minor`, stopping before any patch component
     )
     match = re.search(regex, requires_python)
-    assert match is not None
+    if match is None:
+        raise ValueError('Couldn't find minimum version in requires-python: {requires_python!r}')
     return match.group(1)
 
 
