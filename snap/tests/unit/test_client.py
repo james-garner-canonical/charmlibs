@@ -369,7 +369,7 @@ class TestRealChangeFixtures:
         # async POST -> Doing poll -> Done poll, all from real captured responses.
         done = load_fixture('change_done.json')
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json')),
+            _fake_response(load_fixture('async_accepted.json')),
             _fake_response(load_fixture('change_doing.json')),
             _fake_response(done),
         ]
@@ -379,7 +379,7 @@ class TestRealChangeFixtures:
 
     @pytest.mark.parametrize('fixture', ['change_error.json', 'change_error_alias_conflict.json'])
     def test_async_change_error(self, mock_raw: MagicMock, fixture: str):
-        async_envelope = load_fixture('async_error.json')
+        async_envelope = load_fixture('async_accepted.json')
         change = load_fixture(fixture)['result']
         mock_raw.side_effect = [
             _fake_response(async_envelope),
