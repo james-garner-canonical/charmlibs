@@ -36,7 +36,7 @@ from charmlibs.snap._errors import (
     TimeoutError,  # noqa: A004 (shadowing a Python builtin)
     _AlreadyInstalledError,
 )
-from conftest import FIXTURES_DIR, load_fixture
+from conftest import FIXTURES_DIR
 
 
 def _fake_response(
@@ -62,7 +62,14 @@ class TestRequest:
         assert mock_raw.call_args.args[1] == '/v2/snaps/lxd/conf'
         assert mock_raw.call_args.kwargs['query'] == {'keys': 'integer'}
         assert mock_raw.call_args.kwargs.get('data') is None
+        assert mock_raw.call_args.kwargs['headers']['Accept'] == 'application/json'
         assert result == {'foo': 'bar'}
+
+    def test_get_list_result(self, mock_raw: MagicMock):
+        # A list result (e.g. /v2/apps) is passed through unchanged.
+        mock_raw.return_value = _fake_response({'type': 'sync', 'result': [1, 2, 3]})
+        result = _client.get('/v2/apps')
+        assert result == [1, 2, 3]
 
     def test_post(self, mock_raw: MagicMock):
         mock_raw.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
@@ -87,121 +94,84 @@ class TestRequest:
         assert result == {'foo': 'bar'}
 
 
-class TestSyncResponse:
-    def test_sync_returns_result_field(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
-        result = _client.get('/v2/snaps/hello-world')
-        assert result == load_fixture('snap_info_hello_world.json')['result']
-
-    def test_sync_list_result(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('services_lxd.json'))
-        result = _client.get('/v2/apps')
-        assert isinstance(result, list)
-        assert len(result) == 3
-
-    def test_sync_dict_result(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('conf_lxd_all.json'))
-        result = _client.get('/v2/snaps/lxd/conf')
-        assert isinstance(result, dict)
-
-    def test_accept_header_set(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(load_fixture('snap_info_hello_world.json'))
-        _client.get('/v2/snaps/hello-world')
-        headers = mock_raw.call_args.kwargs['headers']
-        assert headers['Accept'] == 'application/json'
-
-
 class TestErrorResponses:
-    def test_snap_already_installed(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(_AlreadyInstalledError) as exc_info:
-            _client.post('/v2/snaps/hello-world', body={'action': 'install'})
-        assert 'already installed' in str(exc_info.value)
+    @pytest.mark.parametrize(
+        ('kind', 'expected_type'),
+        [
+            ('snap-already-installed', _AlreadyInstalledError),
+            ('app-not-found', AppNotFoundError),
+            ('option-not-found', OptionNotFoundError),
+            ('snap-channel-not-available', ChannelNotAvailableError),
+            ('snap-needs-classic', NeedsClassicError),
+            ('snap-not-found', NotFoundError),
+            ('some-unrecognised-kind', APIError),  # unknown kinds fall back to the base type
+        ],
+    )
+    def test_error_kind_maps_to_type(
+        self, mock_raw: MagicMock, kind: str, expected_type: type[APIError]
+    ):
+        mock_raw.return_value = _fake_response({
+            'type': 'error',
+            'status-code': 400,
+            'status': 'Bad Request',
+            'result': {'message': 'boom', 'kind': kind, 'value': 'the-value'},
+        })
+        with pytest.raises(expected_type) as exc_info:
+            _client.get('/v2/snaps/hello-world')
+        assert type(exc_info.value) is expected_type  # exact type, not a subclass
+        # Fields from the response body are preserved on the exception.
+        assert exc_info.value.message == 'boom'
+        assert exc_info.value.kind == kind
+        assert exc_info.value.value == 'the-value'
+        assert exc_info.value._status_code == 400
 
-    def test_snap_needs_classic(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('snap_needs_classic_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(NeedsClassicError):
-            _client.post('/v2/snaps/just', body={'action': 'install'})
+    def test_error_missing_kind_and_value_use_defaults(self, mock_raw: MagicMock):
+        # Real responses may omit 'kind' and 'value' entirely.
+        mock_raw.return_value = _fake_response({
+            'type': 'error',
+            'status-code': 400,
+            'status': 'Bad Request',
+            'result': {'message': 'boom'},
+        })
+        with pytest.raises(APIError) as exc_info:
+            _client.get('/v2/snaps/hello-world')
+        assert type(exc_info.value) is APIError  # missing kind falls back to the base type
+        assert exc_info.value.kind == ''
+        assert exc_info.value.value == ''
 
-    def test_snap_not_found(self, mock_raw: MagicMock):
-        fixture = {
+    def test_error_preserves_dict_value(self, mock_raw: MagicMock):
+        # snap-channel-not-available returns a rich dict as 'value'.
+        value = {'channel': 'garbage', 'snap-name': 'hello-world'}
+        mock_raw.return_value = _fake_response({
             'type': 'error',
             'status-code': 404,
             'status': 'Not Found',
             'result': {
-                'message': 'snap "nope" not found',
-                'kind': 'snap-not-found',
-                'value': 'nope',
+                'message': 'no channel',
+                'kind': 'snap-channel-not-available',
+                'value': value,
             },
-        }
-        mock_raw.return_value = _fake_response(fixture, status=404, reason='Not Found')
-        with pytest.raises(NotFoundError):
-            _client.get('/v2/snaps/nope')
-
-    def test_option_not_found(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('conf_option_not_found_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(OptionNotFoundError):
-            _client.get('/v2/snaps/lxd/conf', query={'keys': 'keydoesnotexist01'})
-
-    def test_unknown_error_kind_raises_snap_error(self, mock_raw: MagicMock):
-        fixture = {
-            'type': 'error',
-            'status-code': 500,
-            'status': 'Internal Server Error',
-            'result': {'message': 'something unexpected', 'kind': 'unknown-kind', 'value': ''},
-        }
-        mock_raw.return_value = _fake_response(fixture, status=500, reason='Internal Server Error')
-        with pytest.raises(APIError) as exc_info:
+        })
+        with pytest.raises(ChannelNotAvailableError) as exc_info:
             _client.get('/v2/snaps/hello-world')
-        assert type(exc_info.value) is APIError
+        assert exc_info.value.value == value
 
-    def test_error_preserves_status_code(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(_AlreadyInstalledError) as exc_info:
-            _client.post('/v2/snaps/hello-world', body={'action': 'install'})
-        assert exc_info.value._status_code == 400
-
-    def test_error_preserves_kind(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('snap_needs_classic_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(NeedsClassicError) as exc_info:
-            _client.post('/v2/snaps/just', body={'action': 'install'})
-        assert exc_info.value.kind == 'snap-needs-classic'
-
-    def test_error_preserves_value(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(
-            load_fixture('snap_already_installed_error.json'), status=400, reason='Bad Request'
-        )
-        with pytest.raises(_AlreadyInstalledError) as exc_info:
-            _client.post('/v2/snaps/hello-world', body={'action': 'install'})
-        assert exc_info.value.value == 'hello-world'
-
-    def test_invalid_json_raises_snap_api_error(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(b'not json at all', status=200, reason='OK')
+    @pytest.mark.parametrize(
+        ('response', 'message_fragment'),
+        [
+            (b'not json at all', 'Invalid JSON'),
+            (b'[1, 2, 3]', 'Unexpected response type'),
+            ({'status-code': 200, 'result': {}}, 'Missing expected key'),  # no 'type' key
+            ({'type': 'sync', 'status-code': 200}, 'Missing expected key'),  # no 'result' key
+        ],
+    )
+    def test_malformed_response_raises_bad_response_error(
+        self, mock_raw: MagicMock, response: bytes | dict[str, Any], message_fragment: str
+    ):
+        mock_raw.return_value = _fake_response(response)
         with pytest.raises(BadResponseError) as exc_info:
             _client.get('/v2/snaps/hello-world')
-        assert 'Invalid JSON' in exc_info.value.message
-
-    def test_missing_type_key_raises_snap_api_error(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response({'status-code': 200, 'result': {}})
-        with pytest.raises(BadResponseError) as exc_info:
-            _client.get('/v2/snaps/hello-world')
-        assert 'Missing expected key' in exc_info.value.message
-
-    def test_non_dict_response_raises_snap_api_error(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response(b'[1, 2, 3]', status=200, reason='OK')
-        with pytest.raises(BadResponseError) as exc_info:
-            _client.get('/v2/snaps/hello-world')
-        assert 'Unexpected response type' in exc_info.value.message
+        assert message_fragment in exc_info.value.message
 
     def test_request_timeout_raises_snap_timeout_error(self, mocker: MockerFixture):
         # Patch opener.open inside _request_raw to raise TimeoutError, exercising the conversion.
@@ -233,207 +203,60 @@ class TestErrorResponses:
         assert exc_info.value.kind == 'charmlibs-snap-connection-error'
         assert isinstance(exc_info.value, ConnectionError)
 
-    def test_missing_result_key_raises_snap_bad_response_error(self, mock_raw: MagicMock):
-        # A sync response with no 'result' key raises BadResponseError.
-        mock_raw.return_value = _fake_response({
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-        })
-        with pytest.raises(BadResponseError) as exc_info:
-            _client.get('/v2/snaps/hello-world')
-        assert 'Missing expected key' in exc_info.value.message
-
-    def test_error_without_value_key(self, mock_raw: MagicMock):
-        # Real app-not-found responses omit 'value' entirely.
-        mock_raw.return_value = _fake_response(
-            load_fixture('app_not_found_error.json'), status=404, reason='Not Found'
-        )
-        with pytest.raises(AppNotFoundError) as exc_info:
-            _client.post('/v2/apps', body={'action': 'start', 'names': ['hello-world.svc']})
-        assert exc_info.value.value == ''  # defaults to empty string
-        assert exc_info.value.kind == 'app-not-found'
-
-    def test_error_without_kind_key(self, mock_raw: MagicMock):
-        # Real interface errors omit 'kind' entirely.
-        mock_raw.return_value = _fake_response(
-            load_fixture('interfaces_not_installed_error.json'),
-            status=400,
-            reason='Bad Request',
-        )
-        with pytest.raises(APIError) as exc_info:
-            _client.post('/v2/interfaces', body={'action': 'connect'})
-        assert type(exc_info.value) is APIError  # not a subclass
-        assert exc_info.value.kind == ''
-
-    def test_error_with_dict_value(self, mock_raw: MagicMock):
-        # snap-channel-not-available returns a rich dict as 'value'.
-        mock_raw.return_value = _fake_response(
-            load_fixture('snap_channel_not_available_error.json'),
-            status=404,
-            reason='Not Found',
-        )
-        with pytest.raises(ChannelNotAvailableError) as exc_info:
-            _client.post('/v2/snaps/hello-world', body={'action': 'install'})
-        assert isinstance(exc_info.value.value, dict)
-        assert exc_info.value.value['channel'] == 'garbage'  # pyright: ignore[reportUnknownMemberType]
-
 
 class TestAsyncChange:
-    def test_async_triggers_poll(self, mock_raw: MagicMock):
-        done_envelope = {
+    def test_async_doing_then_done(self, mock_raw: MagicMock):
+        # Async POST polls /v2/changes/{id}: Doing keeps polling, Done returns the data field.
+        doing = {'type': 'sync', 'result': {'id': '42', 'status': 'Doing', 'ready': False}}
+        done = {
             'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_done.json')['result'],
+            'result': {'id': '42', 'status': 'Done', 'ready': True, 'data': {'foo': 'bar'}},
         }
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(done_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response(doing),
+            _fake_response(done),
         ]
-        _client.post(
-            '/v2/snaps/hello-world',
-            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
-        )
-        # First call was the POST, second was the GET /v2/changes/{id}
-        assert mock_raw.call_count == 2
+        result = _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
+        assert mock_raw.call_count == 3
         poll_call = mock_raw.call_args_list[1]
         assert poll_call.args[0] == 'GET'
-        assert '/v2/changes/' in poll_call.args[1]
+        assert poll_call.args[1] == '/v2/changes/42'
+        assert result == {'foo': 'bar'}
 
-    def test_async_doing_then_done(self, mock_raw: MagicMock):
-        # Real Doing fixture followed by the Done one — exercises the poll loop
-        doing_envelope = {
+    def test_async_error_raises_change_error(self, mock_raw: MagicMock):
+        error = {
             'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_doing.json')['result'],
-        }
-        done_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_done.json')['result'],
+            'result': {'id': '42', 'status': 'Error', 'ready': True, 'err': 'install failed'},
         }
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(doing_envelope),
-            _fake_response(done_envelope),
-        ]
-        result = _client.post(
-            '/v2/snaps/hello-world',
-            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
-        )
-        assert mock_raw.call_count == 3
-        # Returns the data field from the Done response
-        assert result == load_fixture('change_done.json')['result'].get('data', {})
-
-    def test_async_done_returns_data(self, mock_raw: MagicMock):
-        done_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_done.json')['result'],
-        }
-        mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(done_envelope),
-        ]
-        result = _client.post(
-            '/v2/snaps/hello-world',
-            body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
-        )
-        expected_data = load_fixture('change_done.json')['result']['data']
-        assert result == expected_data
-
-    def test_async_error_raises_snap_change_error(self, mock_raw: MagicMock):
-        error_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_error.json')['result'],
-        }
-        mock_raw.side_effect = [
-            _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
-            _fake_response(error_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response(error),
         ]
         with pytest.raises(ChangeError) as exc_info:
-            _client.post(
-                '/v2/aliases',
-                body={
-                    'action': 'alias',
-                    'snap': 'hello-world',
-                    'app': 'nonexistent',
-                    'alias': 'test-alias-error-fixture',
-                },
-            )
-        assert 'nonexistent' in exc_info.value.message
+            _client.post('/v2/aliases', body={'action': 'alias'})
         assert exc_info.value.kind == 'charmlibs-snap-change-error'
-
-    def test_async_error_message_from_err_field(self, mock_raw: MagicMock):
-        error_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_error.json')['result'],
-        }
-        mock_raw.side_effect = [
-            _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
-            _fake_response(error_envelope),
-        ]
-        with pytest.raises(ChangeError) as exc_info:
-            _client.post(
-                '/v2/aliases',
-                body={
-                    'action': 'alias',
-                    'snap': 'hello-world',
-                    'app': 'nonexistent',
-                    'alias': 'test-alias-error-fixture',
-                },
-            )
-        change_result = load_fixture('change_error.json')['result']
-        assert exc_info.value.message == change_result['err']
-        assert exc_info.value.value == change_result['id']
-        assert exc_info.value.kind == 'charmlibs-snap-change-error'
+        assert exc_info.value.message == 'install failed'  # taken from the 'err' field
+        assert exc_info.value.value == '42'  # the change id
 
     def test_async_wait_status_logs_warning(self, mock_raw: MagicMock, caplog: LogCaptureFixture):
-        wait_result: dict[str, Any] = {
-            'id': '42',
-            'kind': 'install-snap',
-            'summary': 'Install snap',
-            'status': 'Wait',
-            'ready': False,
-            'data': {},
-        }
-        wait_envelope: dict[str, Any] = {
+        wait: dict[str, Any] = {
             'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': wait_result,
+            'result': {'id': '42', 'status': 'Wait', 'ready': False, 'data': {}},
         }
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(wait_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response(wait),
         ]
         with caplog.at_level(logging.WARNING, logger='charmlibs.snap._client'):
-            _client.post(
-                '/v2/snaps/hello-world',
-                body={'action': 'hold', 'hold-level': 'general', 'time': 'forever'},
-            )
+            _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert any('Wait' in r.message for r in caplog.records)
 
-    def test_async_change_poll_non_dict_raises_snap_api_error(self, mock_raw: MagicMock):
-        # /v2/changes/{id} result is a list.
-        # This passes _request's dict check but fails in _wait_for_change.
-        poll_envelope: dict[str, Any] = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': [],
-        }
+    def test_async_poll_non_dict_raises_bad_response(self, mock_raw: MagicMock):
+        # The /v2/changes/{id} result is a list, which is invalid for a change.
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(poll_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response({'type': 'sync', 'result': []}),
         ]
         with pytest.raises(BadResponseError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
@@ -442,29 +265,15 @@ class TestAsyncChange:
     @pytest.mark.parametrize('status', ['Undo', 'Undoing'])
     def test_async_undo_statuses_continue_polling(self, mock_raw: MagicMock, status: str):
         """Undo and Undoing are non-terminal rollback states; polling should continue."""
-        undo_result: dict[str, Any] = {
-            'id': '94',
-            'kind': 'install-snap',
-            'summary': 'Install snap "hello-world"',
-            'status': status,
-            'ready': False,
-        }
-        undo_envelope: dict[str, Any] = {
+        undo = {'type': 'sync', 'result': {'id': '42', 'status': status, 'ready': False}}
+        error = {
             'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': undo_result,
-        }
-        error_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_error.json')['result'],
+            'result': {'id': '42', 'status': 'Error', 'ready': True, 'err': 'boom'},
         }
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(undo_envelope),
-            _fake_response(error_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response(undo),
+            _fake_response(error),
         ]
         with pytest.raises(ChangeError):
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
@@ -474,22 +283,10 @@ class TestAsyncChange:
     def test_async_timeout_raises(self, mock_raw: MagicMock, mocker: MockerFixture):
         mocker.patch('charmlibs.snap._client._CHANGE_TIMEOUT', 0)
         mocker.patch('charmlibs.snap._client.time.sleep')
-        doing_result = {
-            'id': '42',
-            'kind': 'install-snap',
-            'summary': 'Install',
-            'status': 'Doing',
-            'ready': False,
-        }
-        doing_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': doing_result,
-        }
+        doing = {'type': 'sync', 'result': {'id': '42', 'status': 'Doing', 'ready': False}}
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(doing_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response(doing),
         ]
         with pytest.raises(TimeoutError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
@@ -497,46 +294,17 @@ class TestAsyncChange:
         assert 'snap change' in exc_info.value.message
         assert isinstance(exc_info.value, TimeoutError)
 
-    def test_async_unknown_status_raises_snap_change_error(self, mock_raw: MagicMock):
+    def test_async_unknown_status_raises_change_error(self, mock_raw: MagicMock):
         # An unrecognised change status raises ChangeError with the 'unknown' kind.
-        unknown_result = {
-            'id': '42',
-            'kind': 'install-snap',
-            'summary': 'Install snap',
-            'status': 'Halted',
-            'ready': False,
-        }
-        unknown_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': unknown_result,
-        }
+        unknown = {'type': 'sync', 'result': {'id': '42', 'status': 'Fake', 'ready': False}}
         mock_raw.side_effect = [
-            _fake_response(load_fixture('async_hold.json'), status=202, reason='Accepted'),
-            _fake_response(unknown_envelope),
+            _fake_response({'type': 'async', 'change': '42'}),
+            _fake_response(unknown),
         ]
         with pytest.raises(ChangeError) as exc_info:
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
         assert exc_info.value.kind == 'charmlibs-snap-change-unknown'
         assert 'Halted' in exc_info.value.message
-
-    def test_async_alias_conflict_raises_snap_change_error(self, mock_raw: MagicMock):
-        # Real alias conflict: alias already enabled for a different snap.
-        error_envelope = {
-            'type': 'sync',
-            'status-code': 200,
-            'status': 'OK',
-            'result': load_fixture('change_error_alias_conflict.json')['result'],
-        }
-        mock_raw.side_effect = [
-            _fake_response(load_fixture('async_error.json'), status=202, reason='Accepted'),
-            _fake_response(error_envelope),
-        ]
-        with pytest.raises(ChangeError) as exc_info:
-            _client.post('/v2/aliases', body={'action': 'alias'})
-        assert 'already enabled for' in exc_info.value.message
-        assert exc_info.value.value == '96'
 
 
 class TestLogsEndpoint:
