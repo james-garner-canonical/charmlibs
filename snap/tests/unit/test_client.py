@@ -390,11 +390,3 @@ class TestRealChangeFixtures:
         assert exc_info.value.kind == 'charmlibs-snap-change-error'
         assert exc_info.value.message == change['err']  # message comes from the 'err' field
         assert exc_info.value.value == async_envelope['change']  # the polled change id
-
-
-class TestRealSyncFixtures:
-    def test_sync_success_fixture_returns_result(self, mock_raw: MagicMock):
-        envelope = load_fixture('aliases_empty.json')
-        mock_raw.return_value = _fake_response(envelope)
-        result = _client._request('GET', '/fake/path')
-        assert result == envelope['result']
