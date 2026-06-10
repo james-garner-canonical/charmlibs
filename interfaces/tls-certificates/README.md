@@ -10,4 +10,4 @@ from charmlibs.interfaces import tls_certificates
 
 See the [reference documentation](https://documentation.ubuntu.com/charmlibs/reference/charmlibs/interfaces/tls-certificates).
 
-Also see the [usage documentation](https://charmhub.io/tls-certificates-interface) on Charmhub. This documentation was written when the library was hosted on Charmhub, so some parts might not be directly applicable.
+For a tutorial, how-to guides, and design discussion, see the [`docs`](docs/) directory.

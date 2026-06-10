@@ -16,8 +16,16 @@
 
 This is a port of ``tls_certificates_interface.tls_certificates`` v4.22.
 
-Learn more about how to use the TLS Certificates interface library by reading the
-`usage documentation on Charmhub <https://charmhub.io/tls-certificates-interface>`__.
+The library implements the requirer side of the interface via
+:class:`TLSCertificatesRequiresV4` and the provider side via
+:class:`TLSCertificatesProvidesV4`. The requirer's private key is generated
+locally by the library and stored in a Juju secret; only certificate signing
+requests and the resulting certificates cross the relation.
+
+For the wire-level specification of the interface itself, see the
+``tls-certificates`` v1 interface reference. For a tutorial, how-to guides,
+and design discussion of this library, see the docs alongside the source in
+the ``charmlibs`` repository.
 """
 
 from ._tls_certificates import (
