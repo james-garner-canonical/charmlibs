@@ -52,10 +52,10 @@ Model  Controller          Cloud/Region        Version  SLA          Timestamp
 demo   microk8s-localhost  microk8s/localhost  3.5.3    unsupported  15:12:25-04:00
 
 App         Version  Status  Scale  Charm                            Channel  Rev  Address         Exposed  Message
-nginx-http           active      1  tls-certificates-interface-demo             0  10.152.183.199  no       
+nginx-http           active      1  tls-certificates-interface-demo             0  10.152.183.199  no
 
 Unit           Workload  Agent  Address      Ports  Message
-nginx-http/0*  active    idle   10.1.19.158 
+nginx-http/0*  active    idle   10.1.19.158
 ```
 
 Using your browser, navigate to the application address on port 8080 using the HTTP scheme. Here this would be `http://10.152.183.199:8080`.
@@ -180,7 +180,7 @@ class TlsCertificatesInterfaceDemoCharm(ops.CharmBase):
 
     def _relation_created(self, relation_name: str) -> bool:
         return bool(self.model.relations.get(relation_name))
-  
+
     def _certificate_is_available(self) -> bool:
         cert, key = self.certificates.get_assigned_certificate(
             certificate_request=self._get_certificate_request_attributes()
@@ -252,8 +252,10 @@ class TlsCertificatesInterfaceDemoCharm(ops.CharmBase):
         logger.info("Pushed private key to workload")
 
 ```
+
 ## 3. Handle attribute changes
-The `CertificateRequestAttributes` can change, for the library to pick up the changes and generate new CSRs you can register `refresh_events` when instantiating `TLSCertificatesRequiresV4`
+
+The `CertificateRequestAttributes` can change. For the library to pick up the changes and generate new CSRs, you can register `refresh_events` when instantiating `TLSCertificatesRequiresV4`:
 
 ```python
 
@@ -276,8 +278,9 @@ class TlsCertificatesInterfaceDemoCharm(ops.CharmBase):
         )
         ...
 ```
-Or you can use the public `sync` function of the library to trigger the same refresh process
-```
+Or you can use the public `sync` function of the library to trigger the same refresh process:
+
+```python
 self.certificates.sync()
 ```
 
@@ -298,11 +301,11 @@ Model  Controller          Cloud/Region        Version  SLA          Timestamp
 demo   microk8s-localhost  microk8s/localhost  3.5.3    unsupported  15:15:22-04:00
 
 App          Version  Status   Scale  Charm                            Channel  Rev  Address         Exposed  Message
-nginx-http            active       1  tls-certificates-interface-demo             0  10.152.183.199  no       
+nginx-http            active       1  tls-certificates-interface-demo             0  10.152.183.199  no
 nginx-https           blocked      1  tls-certificates-interface-demo             1  10.152.183.188  no       certificates integration not created
 
 Unit            Workload  Agent  Address      Ports  Message
-nginx-http/0*   active    idle   10.1.19.158         
+nginx-http/0*   active    idle   10.1.19.158
 nginx-https/0*  blocked   idle   10.1.19.145         certificates integration not created
 ```
 
@@ -321,14 +324,14 @@ Model  Controller          Cloud/Region        Version  SLA          Timestamp
 demo   microk8s-localhost  microk8s/localhost  3.5.3    unsupported  15:17:13-04:00
 
 App                       Version  Status   Scale  Charm                            Channel        Rev  Address         Exposed  Message
-nginx-http                         active       1  tls-certificates-interface-demo                   0  10.152.183.199  no       
+nginx-http                         active       1  tls-certificates-interface-demo                   0  10.152.183.199  no
 nginx-https                        waiting      1  tls-certificates-interface-demo                   1  10.152.183.188  no       installing agent
-self-signed-certificates           active       1  self-signed-certificates         latest/stable  155  10.152.183.242  no       
+self-signed-certificates           active       1  self-signed-certificates         latest/stable  155  10.152.183.242  no
 
 Unit                         Workload  Agent  Address      Ports  Message
-nginx-http/0*                active    idle   10.1.19.158         
-nginx-https/0*               active    idle   10.1.19.145         
-self-signed-certificates/0*  active    idle   10.1.19.146 
+nginx-http/0*                active    idle   10.1.19.158
+nginx-https/0*               active    idle   10.1.19.145
+self-signed-certificates/0*  active    idle   10.1.19.146
 ```
 
 Using your browser, navigate to the application address on port 8080 using the HTTPS scheme. Here this would be `https://10.152.183.188:8080`.
