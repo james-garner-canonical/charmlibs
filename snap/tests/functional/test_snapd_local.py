@@ -91,7 +91,7 @@ def install_local(path: Path, *, dangerous: bool = False, classic: bool = False)
     response_dict = json.loads(response.read())
     if response_dict.get('type') == 'error':
         raise _client._make_error(response_dict)
-    _client._wait_for_change(response_dict['change'])
+    _client._Change(response_dict['change']).wait(timeout=_client._CHANGE_TIMEOUT)
 
 
 # ---------------------------------------------------------------------------
