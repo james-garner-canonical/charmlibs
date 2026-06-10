@@ -197,11 +197,13 @@ exclude_patterns = [
 
 # Adds custom CSS files, located under 'html_static_path'
 html_css_files = [
+    "https://assets.ubuntu.com/v1/d86746ef-cookie_banner.css",
     "project_specific.css",
 ]
 
 # Adds custom JavaScript files, located under 'html_static_path'
 html_js_files = [
+    "https://assets.ubuntu.com/v1/287a5e8f-bundle.js",
     "tag_click_search.js",
 ]
 
