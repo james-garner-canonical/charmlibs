@@ -71,8 +71,8 @@ html_context = {
     },
 }
 # Template and asset locations
-html_static_path = ["_dev/_static"]
-templates_path = ["_dev/_templates"]
+html_static_path = ["_static"]
+templates_path = ["_templates"]
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
 html_baseurl = 'https://documentation.ubuntu.com/charmlibs/'
