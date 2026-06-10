@@ -1,17 +1,23 @@
-# Recommended Configuration Options
+# Expose certificate attributes as charm config
 
-For charms that expose **public HTTPS endpoints**, certificate attributes should be decided at deployment time by users. Therefore, we recommend to have the following Juju configuration options:
+For charms that serve **public HTTPS endpoints**, the certificate attributes
+should be decided at deployment time by the charm's user, not hard-coded in the
+charm. Expose them as Juju configuration options and read them when building
+the `CertificateRequestAttributes`.
 
-- common_name
-- sans_dns
-- organization
-- organizational_unit
-- email_address
-- country_name
-- state_or_province_name
-- locality_name
+The recommended set of configuration options is:
 
-The charm should use those values when instantiating the and create the appropriate CertificateRequest object from those.
+- `common-name`
+- `sans-dns`
+- `organization`
+- `organizational-unit`
+- `email-address`
+- `country-name`
+- `state-or-province-name`
+- `locality-name`
+
+Read each option from the charm config and pass it to
+`CertificateRequestAttributes`:
 
 ```python
 
@@ -26,8 +32,8 @@ class TLSRequirerExample(ops.CharmBase):
             mode=Mode.UNIT,
         )
 
-    def _get_certificate_request(self) -> CertificateRequest:
-        return CertificateRequest(
+    def _get_certificate_request(self) -> CertificateRequestAttributes:
+        return CertificateRequestAttributes(
             common_name=self._get_config_common_name(),
             sans_dns=self._get_sans_dns(),
             organization=self._get_config_organization(),

@@ -1,23 +1,34 @@
 # Security
 
-The TLS Certificates Interface and library are developed with Security as one of their core values. This document outlines the key security features of the interface and library.
+This page describes the security-relevant aspects of the requirer side of the
+`tls-certificates` library. For the wire-level guarantees of the interface
+itself, see the [interface reference](../../interface/v1/README.md). To report
+a security issue in this library, follow the
+[charmlibs security policy](https://github.com/canonical/charmlibs/blob/main/SECURITY.md).
 
-If you discover a security issue, see the [TLS Certificates Interface security policy](https://github.com/canonical/tls-certificates-interface/blob/main/SECURITY.md) for information on how to report the issue.
+## Private key management
 
-## Private Key management
+The library never transmits the requirer's private key over the relation. Only
+certificate signing requests (CSRs) and the resulting certificates cross the
+relation; the private key stays inside the requiring charm's data.
 
-In X.509 certificate workflows, the private key is highly sensitive and must remain confidential. As outlined in [TLS Certificates Interface Explanation](https://discourse.charmhub.io/t/explanation-the-tls-certificates-interface/15539), the private key never leaves the charm that requires the TLS certificate.
+### Storage at rest
 
-### Encryption at Rest
+The library stores the private key in a Juju secret owned by the requiring
+charm. Only the charm itself and a Juju administrator can read the secret.
+For details of the secret backend Juju uses, see the
+[Juju documentation on secret backends](https://documentation.ubuntu.com/juju/3.6/howto/manage-secret-backends/#manage-secret-backends).
 
-The TLS Certificates library stores the private key in a Juju secret that can only be read by the charm requiring the TLS certificates or a Juju administrator.
+### Key generation
 
-For information on how you can manage Juju secret backends, see  [How to manage secret backends](https://documentation.ubuntu.com/juju/3.6/howto/manage-secret-backends/#manage-secret-backends). 
+Private keys are generated using the
+[RSA algorithm](https://en.wikipedia.org/wiki/RSA_(cryptosystem)).
 
-### Key Generation Algorithm
+### Key labelling and multiple integrations
 
-The TLS Certificates library generates private keys using the [RSA algorithm](https://en.wikipedia.org/wiki/RSA_(cryptosystem)).
-
-### Key rotation
+When a requirer charm participates in more than one `tls-certificates`
+integration, the library stores one private key per relation. The Juju secret
+labels include both the unit number and the relation name, so each integration
+gets its own key and certificate without collisions.
 
 Charm authors can rotate the private key by calling the `regenerate_private_key` method which will generate a new private key, remove old certificate requests, and send new ones to the TLS provider.
