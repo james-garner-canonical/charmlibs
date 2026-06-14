@@ -205,7 +205,7 @@ class TestRun:
 
     def test_removes_virtual_env(self):
         with patch('subprocess.call', return_value=0) as mock_call:
-            just._run([], env={'VIRTUAL_ENV': '/tmp/venv'})
+            just._run([], env={'VIRTUAL_ENV': 'fake-env'})
             call_kwargs = mock_call.call_args.kwargs
             assert 'VIRTUAL_ENV' not in call_kwargs['env']
 
