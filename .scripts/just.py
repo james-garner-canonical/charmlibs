@@ -471,7 +471,8 @@ def _package_parser(fn: FunctionType) -> argparse.ArgumentParser:
 def _resolve_python(package: str, python: str | None) -> str:
     """Return the Python version to test `package` with.
 
-    If `python` is `None`, return the higher of DEFAULT_PYTHON and the package's minimum Python version.
+    If `python` is `None`, return the higher of `DEFAULT_PYTHON`
+    and the package's minimum Python version.
     """
     if python:
         return python
