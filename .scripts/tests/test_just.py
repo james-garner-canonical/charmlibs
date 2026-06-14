@@ -27,7 +27,7 @@ class TestUVCmd:
     test_reqs = pathlib.Path(__file__).parent.parent.parent / 'test-requirements.txt'
 
     @pytest.mark.parametrize(
-        ("groups", "args"),
+        ('groups', 'args'),
         [
             (['one'], ['--group', 'one']),
             (['one', 'two'], ['--group', 'one', '--group', 'two']),
@@ -37,9 +37,15 @@ class TestUVCmd:
         ],
     )
     def test_ok(self, tmp_path: pathlib.Path, groups: list[str], args: list[str]):
-        (tmp_path / 'pyproject.toml').write_text("[dependency-groups]\none = []\ntwo = []")
+        (tmp_path / 'pyproject.toml').write_text('[dependency-groups]\none = []\ntwo = []')
         assert just._uv_cmd([], pkg_dir=tmp_path, python='fakepy', groups=groups) == [
-            'uv', 'run', '--with-requirements', self.test_reqs, '--python', 'fakepy', *args
+            'uv',
+            'run',
+            '--with-requirements',
+            self.test_reqs,
+            '--python',
+            'fakepy',
+            *args,
         ]
 
     def test_with_uv_lock(self, tmp_path: pathlib.Path):
@@ -48,7 +54,14 @@ class TestUVCmd:
         result = just._uv_cmd(['pytest'], pkg_dir=tmp_path, python='3.12', groups=[])
         assert '--locked' in result
         assert result == [
-            'uv', 'run', '--with-requirements', self.test_reqs, '--python', '3.12', '--locked', 'pytest'
+            'uv',
+            'run',
+            '--with-requirements',
+            self.test_reqs,
+            '--python',
+            '3.12',
+            '--locked',
+            'pytest',
         ]
 
     def test_with_python(self, tmp_path: pathlib.Path):
@@ -56,7 +69,13 @@ class TestUVCmd:
         result = just._uv_cmd(['pytest'], pkg_dir=tmp_path, python='foo', groups=[])
         assert '--python' in result
         assert result == [
-            'uv', 'run', '--with-requirements', self.test_reqs, '--python', 'foo', 'pytest'
+            'uv',
+            'run',
+            '--with-requirements',
+            self.test_reqs,
+            '--python',
+            'foo',
+            'pytest',
         ]
 
 
@@ -75,18 +94,18 @@ baz = []
         assert just._dependency_groups(tmp_path) == set()
 
     def test_empty_groups_table(self, tmp_path: pathlib.Path):
-        (tmp_path / 'pyproject.toml').write_text("[dependency-groups]\n")
+        (tmp_path / 'pyproject.toml').write_text('[dependency-groups]\n')
         assert just._dependency_groups(tmp_path) == set()
 
 
 class TestRequiresPythonMinimum:
     @pytest.mark.parametrize(
-        ("requires", "expected"),
+        ('requires', 'expected'),
         [
-            (">=3.11", "3.11"),
-            ("~=3.10.2", "3.10"),
-            (">=3.10,<4.0", "3.10"),
-            (">=3.9,!=3.9.*,<4.0", "3.9"),  # No resolution, just regex.
+            ('>=3.11', '3.11'),
+            ('~=3.10.2', '3.10'),
+            ('>=3.10,<4.0', '3.10'),
+            ('>=3.9,!=3.9.*,<4.0', '3.9'),  # No resolution, just regex.
         ],
     )
     def test_ok(self, tmp_path: pathlib.Path, requires: str, expected: str):
@@ -95,7 +114,7 @@ class TestRequiresPythonMinimum:
 
     def test_no_minimum(self, tmp_path: pathlib.Path):
         (tmp_path / 'pyproject.toml').write_text('[project]\nrequires-python = "<3.12"')
-        with pytest.raises(ValueError, match="minimum"):
+        with pytest.raises(ValueError, match='minimum'):
             just._requires_python_minimum(tmp_path)
 
 
@@ -104,7 +123,7 @@ class TestResolvePython:
         assert just._resolve_python('', 'foo') == 'foo'
 
     @pytest.mark.parametrize(
-        ("minimum", "default", "expected"),
+        ('minimum', 'default', 'expected'),
         [
             ('1.0', '0.0', '1.0'),
             ('0.42', '2.0', '2.0'),
@@ -123,7 +142,9 @@ class TestCoverageCmds:
     def test_ok(self, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setattr(just, '_uv_cmd', lambda cmd, *_, **__: cmd)  # type: ignore
         (tmp_path / 'pyproject.toml').touch()
-        run_cmd, report_cmd = just._coverage_cmds(tmp_path, 'fakesuite', 'fakepy', ['--fake-opt', 'fake-val'])
+        run_cmd, report_cmd = just._coverage_cmds(
+            tmp_path, 'fakesuite', 'fakepy', ['--fake-opt', 'fake-val']
+        )
         assert run_cmd[:2] == ['coverage', 'run']
         assert '--data-file=.report/coverage-fakesuite-fakepy.db' in run_cmd
         assert 'tests/fakesuite' in run_cmd
