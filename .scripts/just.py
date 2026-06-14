@@ -47,6 +47,9 @@ if typing.TYPE_CHECKING:
 # `.scripts/just.py` -> repo root is two parents up.
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
+
+DEFAULT_PYTHON = '3.10'
+
 # ANSI escape codes for formatting the messages.
 BOLD = '\033[1m'
 NORMAL = '\033[0m'
@@ -73,6 +76,7 @@ QUICK_START = f"""
 {BOLD}Build the docs: {CYAN}just docs{NORMAL}
 - For specific packages only: {CYAN}just docs html <packages>{NORMAL}
 """.strip()
+
 # Mapping of recipe names to their functions, populated by the `_register` decorator.
 # `just help` prints the recipes in registration order.
 RECIPES: dict[str, Callable[[list[str]], int]] = {}
@@ -164,7 +168,7 @@ def check(argv: list[str]) -> int:
     python = _resolve_python(args.package, args.python)
     if failures := lint([args.package, '--python', python]):
         sys.exit(failures)
-    for cmd in _coverage_cmds(args.package, 'unit', python, ['-rA']):
+    for cmd in _coverage_cmds(REPO_ROOT / args.package, 'unit', python, ['-rA']):
         _run(cmd, cwd=REPO_ROOT / args.package, env=_coverage_env())
     _run(['just', 'docs', 'html', args.package])
     return 0
@@ -256,7 +260,7 @@ def unit(argv: list[str]) -> int:
     """Run unit tests with `coverage` for a package."""
     args, pytest_args = _package_parser(unit).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
-    cmds = _coverage_cmds(args.package, 'unit', python, pytest_args or ['-rA'])
+    cmds = _coverage_cmds(REPO_ROOT / args.package, 'unit', python, pytest_args or ['-rA'])
     for cmd in cmds:
         _run(cmd, cwd=REPO_ROOT / args.package, env=_coverage_env())
     return 0
@@ -267,7 +271,7 @@ def functional(argv: list[str]) -> int:
     """Run functional tests with `coverage` for a package."""
     args, pytest_args = _package_parser(functional).parse_known_args(argv)
     python = _resolve_python(args.package, args.python)
-    cmds = _coverage_cmds(args.package, 'functional', python, pytest_args or ['-rA'])
+    cmds = _coverage_cmds(REPO_ROOT / args.package, 'functional', python, pytest_args or ['-rA'])
     joined = ' && '.join(shlex.join(str(part) for part in cmd) for cmd in cmds)
     script = textwrap.dedent(
         f"""
@@ -289,9 +293,8 @@ def functional(argv: list[str]) -> int:
     return 0
 
 
-def _coverage_cmds(package: str, suite: str, python: str, pytest_args: list[str]):
+def _coverage_cmds(pkg_dir: pathlib.Path, suite: str, python: str, pytest_args: list[str]):
     """Return cmds for `coverage run -m pytest` and `coverage report` for package and suite."""
-    pkg_dir = REPO_ROOT / package
     data_file_arg = f'--data-file=.report/coverage-{suite}-{python}.db'
     run = [
         *('coverage', 'run', data_file_arg, '--source=src', '-m'),
@@ -468,16 +471,16 @@ def _package_parser(fn: FunctionType) -> argparse.ArgumentParser:
 def _resolve_python(package: str, python: str | None) -> str:
     """Return the Python version to test `package` with.
 
-    If `python` is `None`, return the higher of 3.10 and the package's minimum Python version.
+    If `python` is `None`, return the higher of DEFAULT_PYTHON and the package's minimum Python version.
     """
     if python:
         return python
     minimum = _requires_python_minimum(REPO_ROOT / package)
-    return max('3.10', minimum, key=lambda s: tuple(int(p) for p in s.split('.')))
+    return max(DEFAULT_PYTHON, minimum, key=lambda s: tuple(int(p) for p in s.split('.')))
 
 
 def _requires_python_minimum(pkg_dir: pathlib.Path) -> str:
-    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.10'`."""
+    """Return the `major.minor` lower bound of `pkg_dir`'s `requires-python`, e.g. `'3.14159'`."""
     pyproject_toml = tomllib.loads((pkg_dir / 'pyproject.toml').read_text())
     requires_python = pyproject_toml['project']['requires-python']
     regex = (
