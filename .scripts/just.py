@@ -83,7 +83,7 @@ RECIPES: dict[str, Callable[[list[str]], int]] = {}
 
 
 def _register(fn: _F) -> _F:
-    RECIPES[fn.__name__.replace('_', '-')] = fn
+    RECIPES[fn.__name__.removeprefix('_').replace('_', '-')] = fn
     return fn
 
 
@@ -109,6 +109,8 @@ def help(argv: list[str]) -> int:  # noqa: A001
     print('Available recipes:')
     width = max(len(name) for name in RECIPES)
     for name, func in RECIPES.items():
+        if func.__name__.startswith('_'):
+            continue  # Skip private recipes.
         summary = (func.__doc__ or '').splitlines()[0] if func.__doc__ else ''
         print(f'    {name:<{width}}  {summary}')
     return 0
@@ -435,12 +437,30 @@ def interfaces_json(argv: list[str]) -> int:
 
 
 @_register
-def scripts_unit(argv: list[str]) -> int:
+def _scripts_unit(argv: list[str]) -> int:
     """Run the unit tests for the repository tooling in `.scripts/`."""
+    _parser(_scripts_unit).parse_args(argv)
     _run([
         *('uv', 'run', '--with-requirements', TEST_REQUIREMENTS, '--python', '3.12'),
         *('pytest', '--tb=native', '-vv', '.scripts/tests', *(argv or ['-rA'])),
     ])
+    return 0
+
+
+@_register
+def _scripts_static(argv: list[str]) -> int:
+    """Run `pyright` static analysis for the repository tooling in `.scripts/`."""
+    _parser(_scripts_static).parse_args(argv)
+    cmd = [
+        'uv',
+        'run',
+        '--no-project',
+        f'--with-requirements={TEST_REQUIREMENTS}',
+        '--with=pyyaml',
+        '--python=3.12',
+        'pyright',
+    ]
+    _run(cmd, cwd=REPO_ROOT / '.scripts')
     return 0
 
 

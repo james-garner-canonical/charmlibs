@@ -55,5 +55,8 @@ integration-machine *args:
 interfaces-json *args:
     @.scripts/just.py interfaces-json "$@"
 
-scripts-unit *args:
+_scripts-unit *args:
     @.scripts/just.py scripts-unit "$@"
+
+_scripts-static *args:
+    @.scripts/just.py scripts-static "$@"

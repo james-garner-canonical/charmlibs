@@ -133,7 +133,9 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v7
       - name: Run unit tests for the repository tooling scripts
-        run: uvx --from rust-just just scripts-unit
+        run: uvx --from rust-just just _scripts-unit
+      - name: Run static analysis for the repository tooling scripts
+        run: uvx --from rust-just just _scripts-static
 
   template-and-example-in-sync:
     runs-on: ubuntu-latest
