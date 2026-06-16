@@ -47,7 +47,7 @@ juju deploy ./tls-certificates-interface-demo_amd64.charm nginx-http --resource 
 Wait for the charm to go to the Active/Idle status:
 
 ```shell
-guillaume@thinkpad:~/code/tls-certificates-interface-demo$ juju status
+> juju status
 Model  Controller          Cloud/Region        Version  SLA          Timestamp
 demo   microk8s-localhost  microk8s/localhost  3.5.3    unsupported  15:12:25-04:00
 
@@ -296,7 +296,7 @@ juju deploy ./tls-certificates-interface-demo_amd64.charm nginx-https --resource
 Wait for the charm to go to the Blocked/idle status:
 
 ```shell
-guillaume@thinkpad:~/code/tls-certificates-interface-demo$ juju status
+> juju status
 Model  Controller          Cloud/Region        Version  SLA          Timestamp
 demo   microk8s-localhost  microk8s/localhost  3.5.3    unsupported  15:15:22-04:00
 
@@ -319,7 +319,7 @@ juju integrate self-signed-certificates:certificates nginx-https:certificates
 Wait for the `nginx-https` charm to go to the Active/Idle status:
 
 ```shell
-guillaume@thinkpad:~/code/tls-certificates-interface-demo$ juju status
+> juju status
 Model  Controller          Cloud/Region        Version  SLA          Timestamp
 demo   microk8s-localhost  microk8s/localhost  3.5.3    unsupported  15:17:13-04:00
 
