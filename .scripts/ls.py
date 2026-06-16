@@ -367,9 +367,6 @@ def _get_docs_url(category: str, root: pathlib.Path, path: pathlib.Path) -> str:
     """Return URL to the library docs for this package, or interface docs for this interface."""
     if category == 'packages':
         url = _pyproject_toml(path, root=root)['project']['urls'].get('Documentation', '')
-        import sys
-
-        print(url, file=sys.stderr)
         return url.strip()
     assert category == 'interfaces'
     return f'https://documentation.ubuntu.com/charmlibs/reference/interfaces/{path.name}/'
@@ -381,9 +378,6 @@ def _get_lib_docs_url(category: str, root: pathlib.Path, path: pathlib.Path) -> 
         return _get_docs_url(category, root, path)
     assert category == 'interfaces'
     lib = _get_lib_name('interfaces', root, path)
-    import sys
-
-    print(path, lib, file=sys.stderr)
     if not lib:
         return ''
     if lib.startswith('charmlibs.'):
