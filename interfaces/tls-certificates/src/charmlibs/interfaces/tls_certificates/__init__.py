@@ -14,18 +14,17 @@
 
 """Manage TLS certificates using the ``tls-certificates`` interface (V1).
 
-This is a port of ``tls_certificates_interface.tls_certificates`` v4.22.
+This library implements the Requirer and Provider roles for the ``k8s_backup_target`` relation,
+in the :class:`TLSCertificatesRequiresV4` and :class:`TLSCertificatesProvidesV4` classes.
 
-The library implements the requirer side of the interface via
-:class:`TLSCertificatesRequiresV4` and the provider side via
-:class:`TLSCertificatesProvidesV4`. The requirer's private key is generated
-locally by the library and stored in a Juju secret; only certificate signing
-requests and the resulting certificates cross the relation.
+Read more:
 
-For the wire-level specification of the interface itself, see the
-``tls-certificates`` v1 interface reference. For a tutorial, how-to guides,
-and design discussion of this library, see the docs alongside the source in
-the ``charmlibs`` repository.
+- `Tutorial <https://documentation.ubuntu.com/charmlibs/tutorials/charmlibs/interfaces/tls-certificates/tutorial/>`_
+- `Library reference <https://documentation.ubuntu.com/charmlibs/reference/charmlibs/interfaces/tls-certificates/>`_
+- `How to configure certificate requests <https://documentation.ubuntu.com/charmlibs/how-to/charmlibs/interfaces/tls-certificates/configure-certificate-requests/>`_
+- `Explanation of the library design <https://documentation.ubuntu.com/charmlibs/explanation/charmlibs/interfaces/tls-certificates/design/>`_
+
+This library began life as a port of ``tls_certificates_interface.tls_certificates`` v4.22.
 """
 
 from ._tls_certificates import (
