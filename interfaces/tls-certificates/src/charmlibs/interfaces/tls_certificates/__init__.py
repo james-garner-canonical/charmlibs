@@ -23,8 +23,6 @@ Read more:
 - `Library reference <https://documentation.ubuntu.com/charmlibs/reference/charmlibs/interfaces/tls-certificates/>`_
 - `How to configure certificate requests <https://documentation.ubuntu.com/charmlibs/how-to/charmlibs/interfaces/tls-certificates/configure-certificate-requests/>`_
 - `Explanation of the library design <https://documentation.ubuntu.com/charmlibs/explanation/charmlibs/interfaces/tls-certificates/design/>`_
-
-This library began life as a port of ``tls_certificates_interface.tls_certificates`` v4.22.
 """
 
 from ._tls_certificates import (

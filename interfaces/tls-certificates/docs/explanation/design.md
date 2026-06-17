@@ -2,6 +2,8 @@
 
 The TLS Certificates interface allows charms to request TLS certificates without sharing their private key.
 
+This library began life as a port of ``tls_certificates_interface.tls_certificates`` v4.22.
+
 ## What the library does for you
 
 When a charm uses `TLSCertificatesRequiresV4`, the library:
