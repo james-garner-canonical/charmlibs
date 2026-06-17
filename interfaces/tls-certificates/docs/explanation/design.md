@@ -1,8 +1,6 @@
 # Library design
 
-The `tls-certificates` interface specification (see the [interface reference](../../interface/v1/README.md)) describes only the wire protocol: a requirer publishes certificate signing requests (CSRs) on its relation data, and a provider publishes signed certificates back. Everything else — generating keys, building CSRs, triggering renewals, storing material safely — is left to the charm at each end of the relation.
-
-This library handles those responsibilities for the requirer side, so that charm authors can focus on *what* should be in their certificates rather than *how* to obtain and manage them.
+The TLS Certificates interface allows charms to request TLS certificates without sharing their private key.
 
 ## What the library does for you
 
