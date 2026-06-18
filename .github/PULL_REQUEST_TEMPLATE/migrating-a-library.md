@@ -1,8 +1,9 @@
 <!--
 Template: Migrating an existing Charmhub-hosted library into the charmlibs monorepo.
 
-Before opening this PR, please read the migration guide:
+Before opening this PR, read first:
 https://documentation.ubuntu.com/charmlibs/how-to/migrate/
+https://documentation.ubuntu.com/charmlibs/how-to/python-package/#what-can-i-publish-under-the-charmlibs-namespace
 -->
 
 ## Library being migrated
