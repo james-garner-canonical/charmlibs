@@ -1,6 +1,8 @@
 <!--
 Template: Migrating an existing Charmhub-hosted library into the charmlibs monorepo.
 
+If you selected the wrong template, go back one page in your browser.
+
 Read first:
 https://documentation.ubuntu.com/charmlibs/how-to/python-package/#what-can-i-publish-under-the-charmlibs-namespace
 
