@@ -106,7 +106,7 @@ You may provide up to four such classes, for the matrix of provider/requirer and
 These must have exactly the names `ProviderAppData`, `ProviderUnitData`, `RequirerAppData` and `RequirerUnitData`.
 Not defining a model is equivalent to defining an empty model, so be careful of typos.
 
-Follow the design rules from {ref}`how-to-design-relation-interfaces` when designing the schema:
+Follow the design rules from {ref}`design-relation-interfaces` when designing the schema:
 no mandatory top-level fields, no field reuse, stable collection ordering, and so on.
 The schema is the machine-checkable counterpart to the prose in the README.
 
@@ -118,7 +118,7 @@ New interface versions should use a `schema.py` file with Pydantic models.
 ## Keep the specification in sync
 
 The specification is a long-lived contract.
-When you change the relation data format, update the README, the schema, and the interface tester tests together in the same PR, being sure to follow {ref}`how-to-design-relation-interfaces`:
+When you change the relation data format, update the README, the schema, and the interface tester tests together in the same PR, being sure to follow {ref}`design-relation-interfaces`:
 
 - **Adding a field** is a minor change; bump at least the library's minor version.
 - **Removing a field** or changing a field's type is a breaking change and requires a major library version bump. Note that charms on the other end of a given relation may use an older library version, so the library must be tolerant of this: older versions should handle unknown fields appropriately, while newer versions must be able to gracefully handle new fields being ignored.
