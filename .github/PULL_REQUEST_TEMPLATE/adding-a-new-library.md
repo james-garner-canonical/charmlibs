@@ -36,7 +36,8 @@ https://documentation.ubuntu.com/charmlibs/tutorial/
 
 <!-- Remove for general libraries. -->
 
-- [ ] Interface metadata added under `interfaces/<name>/interface/v<N>/` (`README.md`, `interface.yaml`, `schema.py`).
+- [ ] Directory name exactly matches the interface name as written in `charmcraft.yaml`.
+- [ ] Interface metadata added under `interfaces/<name>/interface/` (readme, metadata, databag schema).
 - [ ] Testing package added under `interfaces/<name>/testing/` exporting `relation_for_provider` and `relation_for_requirer` (see [how-to guide](https://documentation.ubuntu.com/charmlibs/how-to/provide-relation-data-for-charm-tests/)).
 
 ## Commit strategy
