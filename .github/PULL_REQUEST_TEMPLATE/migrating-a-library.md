@@ -19,7 +19,7 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 
 ## Migration status
 
-This is a bug-for-bug migration of the Charmhub-hosted library:
+This is a bug compatible migration of the Charmhub-hosted library:
 
 - [ ] Package initialised with `just init` or `just init --interface`.
 - [ ] Code migrated to `src/charmlibs/<name>/_<name>.py`.
