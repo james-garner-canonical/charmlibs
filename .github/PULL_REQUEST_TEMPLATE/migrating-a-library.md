@@ -34,8 +34,8 @@ Package:
 - [ ] Code migrated to `src/charmlibs/<name>/_<name>.py`.
 - [ ] Public API exported from `__init__.py` with `__all__`.
 - [ ] Charmhub lib docstring moved to `__init__.py` (this is rendered in the docs).
-- [ ] Charmhub-hosted `LIB_API` and `LIB_PATCH` version documented in the migrated module's docstring.
-- [ ] `LIB_ID`, `LIB_API`, `LIB_PATCH` removed (or retained with a note on why).
+- [ ] Charmhub-hosted `LIBAPI` and `LIBPATCH` version documented in the migrated module's docstring.
+- [ ] `LIBID`, `LIBAPI`, `LIBPATCH` removed (or retained with a note on why).
 - [ ] `PYDEPS` moved to `pyproject.toml` `dependencies` with appropriate constraints.
 - [ ] Library version set for release (typically `1.0.0`).
 
