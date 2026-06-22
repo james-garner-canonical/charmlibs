@@ -42,6 +42,6 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 
 ## Commit strategy
 
-<!-- Update to match your work. -->
+<!-- Describe how the work is split across commits in this PR. -->
 
-To make review easier, this first commit in this PR is purely the output of `just init`, and can safely be excluded from review.
+The first commit in this PR is purely the output of `just init`. This commit can be excluded from the changes view (once verified), making it easy to se what changes were made on top of the template.
