@@ -11,7 +11,9 @@ https://documentation.ubuntu.com/charmlibs/how-to/migrate/
 ## Library being migrated
 
 - **Charmhub-hosted library:** <!-- for example `charms.operator_libs_linux.v2.snap` -->
-- **Charmhub-hosted library version:** <!-- for example `v2.1` -->
+  - **LIBAPI:**
+  - **LIBPATCH:**
+  - **LIBID:**
 - **New `charmlibs` package:** <!-- for example `charmlibs.snap` / `charmlibs.interfaces.tls_certificates` -->
 <!-- remove one -->
 This is a general library (`charmlibs.<name>`, `just init`).
