@@ -34,9 +34,8 @@ This is a bug compatible migration of the Charmhub-hosted library:
 - [ ] Docs (if any) migrated to `<library path>/docs/`.
 - [ ] `.docs/reference/libs.yaml` updated (new entry added, old Charmhub entry marked deprecated).
 
-### Interface libraries only
-
-<!-- Remove for general libraries. -->
+<!-- remove section if this isn't an interface library -->
+### Interface library specific items
 
 - [ ] Directory name exactly matches the interface name as written in `charmcraft.yaml`.
 - [ ] Interface metadata added (or updated if necessary), or an issue created and tracked to do this as a follow-up task.

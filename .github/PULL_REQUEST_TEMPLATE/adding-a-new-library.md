@@ -33,9 +33,8 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 - [ ] `uv.lock` committed.
 - [ ] `just check <package>` passes (lint + unit + docs).
 
-### Interface libraries only
-
-<!-- Remove for general libraries. -->
+<!-- remove section if this isn't an interface library -->
+### Interface library specific items
 
 - [ ] Directory name exactly matches the interface name as written in `charmcraft.yaml`.
 - [ ] Interface metadata added under `interfaces/<name>/interface/` (readme, metadata, databag schema).
