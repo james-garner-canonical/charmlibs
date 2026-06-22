@@ -10,7 +10,7 @@ https://documentation.ubuntu.com/charmlibs/tutorial/
 
 ## Library being added
 
-- **New `charmlibs` package:** <!-- e.g. `charmlibs.uptime` / `charmlibs.interfaces.uptime` -->
+- **New `charmlibs` package:** <!-- for example `charmlibs.uptime` / `charmlibs.interfaces.uptime` -->
 - **Library type:** <!-- check one -->
   - [ ] General library (`charmlibs.<name>`, `just init`)
   - [ ] Interface library (`charmlibs.interfaces.<name>`, `just init --interface`)
