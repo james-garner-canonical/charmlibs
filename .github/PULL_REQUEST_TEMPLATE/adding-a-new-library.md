@@ -33,8 +33,6 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 - [ ] Docs (tutorial / how-to / explanation) added under `<package>/docs/` if needed.
 - [ ] `.docs/reference/libs.yaml` updated with a new entry (status, URLs, description, tags from `tags.yaml`).
 - [ ] `CODEOWNERS` updated with a `/<package>/` entry for the owning team.
-- [ ] `uv.lock` committed.
-- [ ] `just check <package>` passes (lint + unit + docs).
 
 <!-- remove section if this isn't an interface library -->
 ### Interface library specific items
