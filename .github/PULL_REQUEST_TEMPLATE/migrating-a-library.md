@@ -15,6 +15,7 @@ https://documentation.ubuntu.com/charmlibs/how-to/migrate/
   - **LIBPATCH:**
   - **LIBID:**
 - **New `charmlibs` package:** <!-- for example `charmlibs.snap` / `charmlibs.interfaces.tls_certificates` -->
+
 <!-- remove one -->
 This is a general library (`charmlibs.<name>`, `just init`).
 This is an interface library (`charmlibs.interfaces.<name>`, `just init --interface`).
