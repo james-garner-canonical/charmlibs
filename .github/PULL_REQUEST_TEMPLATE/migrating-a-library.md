@@ -10,6 +10,8 @@ To learn how to migrate a library:
 https://documentation.ubuntu.com/charmlibs/how-to/migrate/
 -->
 
+This PR migrates an existing library to the charmlibs monorepo. <!-- update with relevant context -->
+
 ## Library being migrated
 
 - **Charmhub-hosted library:** <!-- for example `charms.operator_libs_linux.v2.snap` -->
@@ -24,7 +26,8 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 
 ## Migration status
 
-This is a bug compatible migration of the Charmhub-hosted library:
+<!-- Update to match migration strategy -->
+This is a bug compatible migration of the Charmhub-hosted library, releasing as version 1.0.0.
 
 Package:
 - [ ] Package initialised with `just init` or `just init --interface`.
@@ -41,8 +44,8 @@ Repository metadata:
 - [ ] `CODEOWNERS` updated with a `/<package>/` entry for the owning team.
 
 Tests and docs:
-- [ ] Unit tests migrated and passing, plus functional and integration tests as appropriate.
-- [ ] Unnecessary files and directories created by `just init` have been removed, including `test_version.py` and directories for unused test types.
+- [ ] Unit tests migrated, plus functional and integration tests as appropriate.
+- [ ] Unnecessary files created by `just init` have been removed (including `test_version.py` and `tests/functional` and `tests/integration` if unused).
 - [ ] Diataxis docs (if any) migrated to `<package>/docs/`.
 
 <!-- remove section if this isn't an interface library -->

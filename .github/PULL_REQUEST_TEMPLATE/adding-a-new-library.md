@@ -10,6 +10,8 @@ To learn how to add a new library:
 https://documentation.ubuntu.com/charmlibs/tutorial/
 -->
 
+This PR adds a new charm library. <!-- update with relevant context -->
+
 ## Library being added
 
 - **New `charmlibs` package:** <!-- for example `charmlibs.foo` / `charmlibs.interfaces.bar` -->
@@ -34,8 +36,8 @@ Repository metadata:
 - [ ] `CODEOWNERS` updated with a `/<package>/` entry for the owning team.
 
 Tests and docs:
-- [ ] Unit tests added and passing, plus functional and integration tests as appropriate.
-- [ ] Unnecessary files and directories created by `just init` have been removed, including `test_version.py` and directories for unused test types.
+- [ ] Unit tests added, plus functional and integration tests as appropriate.
+- [ ] Unnecessary files created by `just init` have been removed (including `test_version.py` and `tests/functional` and `tests/integration` if unused).
 - [ ] Diataxis docs added under `<package>/docs/` (only if needed, prefer module docstring for lightweight docs).
 
 <!-- remove section if this isn't an interface library -->
