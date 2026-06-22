@@ -26,25 +26,31 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 
 This is a bug compatible migration of the Charmhub-hosted library:
 
+Package:
 - [ ] Package initialised with `just init` or `just init --interface`.
 - [ ] Code migrated to `src/charmlibs/<name>/_<name>.py`.
 - [ ] Public API exported from `__init__.py` with `__all__`.
+- [ ] Charmhub lib docstring moved to `__init__.py` (this is rendered in the docs).
+- [ ] Charmhub-hosted `LIB_API` and `LIB_PATCH` version documented in the migrated module's docstring.
 - [ ] `LIB_ID`, `LIB_API`, `LIB_PATCH` removed (or retained with a note on why).
-- [ ] Library version set for release (typically `1.0.0`).
 - [ ] `PYDEPS` moved to `pyproject.toml` `dependencies` with appropriate constraints.
-- [ ] Module docstring moved to `__init__.py` (this is rendered in the docs).
-- [ ] Charmhub-hosted lib API/patch version documented in the private module's docstring.
+- [ ] Library version set for release (typically `1.0.0`).
+
+Repository metadata:
+- [ ] `.docs/reference/libs.yaml` updated with entries for new and old libs.
+- [ ] `CODEOWNERS` updated with a `/<package>/` entry for the owning team.
+
+Tests and docs:
 - [ ] Unit tests migrated and passing, plus functional and integration tests as appropriate.
-- [ ] Unnecessary files and directories created by `just init` have been removed, including `test_version.py`.
-- [ ] Docs (if any) migrated to `<library path>/docs/`.
-- [ ] `.docs/reference/libs.yaml` updated (new entry added, old Charmhub entry marked deprecated).
+- [ ] Unnecessary files and directories created by `just init` have been removed, including `test_version.py` and directories for unused test types.
+- [ ] Diataxis docs (if any) migrated to `<package>/docs/`.
 
 <!-- remove section if this isn't an interface library -->
 ### Interface library specific items
 
 - [ ] Directory name exactly matches the interface name as written in `charmcraft.yaml`.
 - [ ] Interface metadata added (or updated if necessary), or an issue created and tracked to do this as a follow-up task.
-- [ ] Testing package added under `interfaces/<name>/testing/` exporting `relation_for_provider` and `relation_for_requirer` (see [how-to guide](https://documentation.ubuntu.com/charmlibs/how-to/provide-relation-data-for-charm-tests/)), or an issue created and tracked to do this as a follow-up task.
+- [ ] Testing package added under `interfaces/<name>/testing/` exporting `relation_for_provider` and `relation_for_requirer` if needed (see [how-to guide](https://documentation.ubuntu.com/charmlibs/how-to/provide-relation-data-for-charm-tests/)), or an issue created and tracked to do this as a follow-up task.
 
 
 ## Commit strategy

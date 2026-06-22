@@ -12,7 +12,7 @@ https://documentation.ubuntu.com/charmlibs/tutorial/
 
 ## Library being added
 
-- **New `charmlibs` package:** <!-- for example `charmlibs.uptime` / `charmlibs.interfaces.uptime` -->
+- **New `charmlibs` package:** <!-- for example `charmlibs.foo` / `charmlibs.interfaces.bar` -->
 - **Specification:** <!-- link to the spec / design doc -->
 
 <!-- remove one -->
@@ -22,24 +22,28 @@ This is an interface library (`charmlibs.interfaces.<name>`, `just init --interf
 
 ## Checklist
 
+Package:
 - [ ] Package initialised with `just init` or `just init --interface`.
 - [ ] Public API exported from `__init__.py` with `__all__`.
 - [ ] Everything else is private, unless explicitly documented as public.
 - [ ] Module docstring in `__init__.py` describes the package (rendered in the reference docs).
-- [ ] Unit tests added and passing (`just unit <package>`).
-- [ ] Functional tests added, or the `tests/functional` directory removed.
-- [ ] Integration tests added, or the `tests/integration` directory removed.
-- [ ] Unnecessary files and directories created by `just init` have been removed (for example `test_version.py` once real tests exist).
-- [ ] Docs (tutorial / how-to / explanation) added under `<package>/docs/` if needed.
-- [ ] `.docs/reference/libs.yaml` updated with a new entry (status, URLs, description, tags from `tags.yaml`).
+- [ ] Library version set for release (typically `1.0.0`).
+
+Repository metadata:
+- [ ] `.docs/reference/libs.yaml` updated with a new entry.
 - [ ] `CODEOWNERS` updated with a `/<package>/` entry for the owning team.
+
+Tests and docs:
+- [ ] Unit tests added and passing, plus functional and integration tests as appropriate.
+- [ ] Unnecessary files and directories created by `just init` have been removed, including `test_version.py` and directories for unused test types.
+- [ ] Diataxis docs added under `<package>/docs/` (only if needed, prefer module docstring for lightweight docs).
 
 <!-- remove section if this isn't an interface library -->
 ### Interface library specific items
 
 - [ ] Directory name exactly matches the interface name as written in `charmcraft.yaml`.
 - [ ] Interface metadata added under `interfaces/<name>/interface/` (readme, metadata, databag schema).
-- [ ] Testing package added under `interfaces/<name>/testing/` exporting `relation_for_provider` and `relation_for_requirer` (see [how-to guide](https://documentation.ubuntu.com/charmlibs/how-to/provide-relation-data-for-charm-tests/)).
+- [ ] Testing package added under `interfaces/<name>/testing/` exporting `relation_for_provider` and `relation_for_requirer` if needed (see [how-to guide](https://documentation.ubuntu.com/charmlibs/how-to/provide-relation-data-for-charm-tests/)).
 
 ## Commit strategy
 
