@@ -8,7 +8,6 @@ from __future__ import annotations
 import builtins
 import json
 import logging
-import typing
 import urllib.error
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -42,12 +41,15 @@ from conftest import FIXTURES_DIR, load_fixture
 
 
 def _fake_response(
-    data: bytes | dict[str, Any] | list[Any], status: int = 200, reason: str = 'OK'
+    data: bytes | dict[str, Any] | list[Any],
+    status: int = 200,
+    reason: str = 'OK',
+    url: str = 'http://localhost/v2/snaps/hello-world',
 ):
     """Build a fake HTTPResponse-like object for mocking _request_raw."""
     if isinstance(data, (dict, list)):
         data = json.dumps(data).encode()
-    return SimpleNamespace(read=lambda: data, status=status, reason=reason)
+    return SimpleNamespace(read=lambda: data, status=status, reason=reason, url=url)
 
 
 @pytest.fixture
@@ -313,9 +315,8 @@ class TestLogsEndpoint:
     def test_logs_returns_list_of_entries(self, mock_raw: MagicMock):
         raw = (FIXTURES_DIR / 'logs_lxd_raw.bin').read_bytes()
         mock_raw.return_value = _fake_response(raw)
-        result = _client.get('/v2/logs', query={'n': 10, 'names': 'lxd'})
+        result = _client.get_logs(query={'n': 10, 'names': 'lxd'})
         assert isinstance(result, list)
-        result = typing.cast('list[dict[str, Any]]', result)
         assert len(result) > 0
         assert 'timestamp' in result[0]
 
@@ -323,7 +324,7 @@ class TestLogsEndpoint:
         raw = (FIXTURES_DIR / 'app_not_found_raw.bin').read_bytes()
         mock_raw.return_value = _fake_response(raw)
         with pytest.raises(Error) as exc_info:
-            _client.get('/v2/logs', query={'n': 10, 'names': 'hello-world'})
+            _client.get_logs(query={'n': 10, 'names': 'hello-world'})
         assert exc_info.value.kind == 'app-not-found'
 
 

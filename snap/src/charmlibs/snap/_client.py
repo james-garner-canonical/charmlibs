@@ -64,26 +64,25 @@ class _Change:
                     value=change_id,
                 )
             response = _request('GET', f'/v2/changes/{change_id}', log=False)
-            result = _decode(response)
-            if not isinstance(result, dict):
+            if not isinstance(response, dict):
                 raise _errors.BadResponseError(
-                    message=f'Unexpected response type {type(result).__name__} while waiting for change {change_id}',  # noqa: E501
+                    message=f'Unexpected response type {type(response).__name__} while waiting for change {change_id}',  # noqa: E501
                     kind='charmlibs-snap',
-                    value=str(result),
+                    value=str(response),
                 )
-            result = typing.cast('dict[str, Any]', result)
-            match status := result.get('status'):
+            response = typing.cast('dict[str, Any]', response)
+            match status := response.get('status'):
                 case 'Do' | 'Doing' | 'Undo' | 'Undoing':
                     time.sleep(_POLL_INTERVAL)
                     continue
                 case 'Done':
-                    return result.get('data', {})
+                    return response.get('data', {})
                 case 'Wait':
                     logger.warning("snap change %s succeeded with status 'Wait'", change_id)
-                    return result.get('data', {})
+                    return response.get('data', {})
                 case 'Error':
                     raise _errors.ChangeError(
-                        message=result.get('err', ''),
+                        message=response.get('err', ''),
                         kind='charmlibs-snap-change-error',
                         value=change_id,
                         status=status,
@@ -99,29 +98,22 @@ class _Change:
 
 def get(path: str, query: dict[str, Any] | None = None):
     """GET request to snapd REST API."""
-    response = _request('GET', path, query=query)
-    result = _decode(response)
-    return _resolve(result)
+    return _resolve(_request('GET', path, query=query))
 
 
 def get_logs(query: dict[str, Any] | None = None):
     """GET request to /v2/logs endpoint, which returns a stream of log entries."""
-    response = _request('GET', '/v2/logs', query=query)
-    return _decode_logs(response)
+    return _decode_logs(_request_raw_simple('GET', '/v2/logs', query=query))
 
 
 def post(path: str, body: dict[str, Any] | None = None):
     """POST request to snapd REST API."""
-    response = _request('POST', path, body=body)
-    result = _decode(response)
-    return _resolve(result)
+    return _resolve(_request('POST', path, body=body))
 
 
 def put(path: str, body: dict[str, Any] | None = None):
     """PUT request to snapd REST API."""
-    response = _request('PUT', path, body=body)
-    result = _decode(response)
-    return _resolve(result)
+    return _resolve(_request('PUT', path, body=body))
 
 
 def _resolve(result: object | _Change):
@@ -138,13 +130,28 @@ def _request(
     query: dict[str, Any] | None = None,
     body: dict[str, Any] | None = None,
     log: bool = True,
-) -> http.client.HTTPResponse:
-    """Make a request to the snapd server; return the raw HTTPResponse object.
+) -> object | _Change:
+    """Make a request to the snapd server and decode the JSON response.
 
     If query dict is provided, it is encoded and appended as a query string
-    to the URL. If body dict is provided, it is serialied as JSON and used
-    as the HTTP body (with Content-Type: "application/json").
+    to the URL. If body dict is provided, it is serialised as JSON and used
+    as the HTTP body (with Content-Type: "application/json"). The response
+    body is decoded from JSON: an async response is returned as a
+    :class:`_Change` (which the caller can :meth:`_Change.wait` on), a sync
+    response returns its ``result`` field, and an error response raises.
     """
+    return _decode(_request_raw_simple(method, path, query=query, body=body, log=log))
+
+
+def _request_raw_simple(
+    method: str,
+    path: str,
+    *,
+    query: dict[str, Any] | None = None,
+    body: dict[str, Any] | None = None,
+    log: bool = True,
+) -> http.client.HTTPResponse:
+    """Build headers/body and make a raw request to snapd; return the HTTPResponse."""
     if log:
         logger.debug('_request(%r, %r, query=%r, body=%r)', method, path, query, body)
     headers = {'Accept': 'application/json'}
@@ -270,7 +277,7 @@ def _request_raw(
 
 
 def _get_path(response: http.client.HTTPResponse) -> str:
-    return urllib.parse.urlparse(response.geturl()).path
+    return urllib.parse.urlparse(response.url).path
 
 
 def _make_error(response: dict[str, Any]) -> _errors.APIError:

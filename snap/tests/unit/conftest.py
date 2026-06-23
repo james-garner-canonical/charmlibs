@@ -20,15 +20,17 @@ FIXTURES_DIR = pathlib.Path(__file__).parent / 'fixtures'
 @dataclass
 class MockClient:
     get: MagicMock
+    get_logs: MagicMock
     post: MagicMock
     put: MagicMock
 
 
 @pytest.fixture
 def mock_client(mocker: MockerFixture) -> MockClient:
-    """Patch _client.get, .post, and .put for use in _snapd_*.py tests."""
+    """Patch _client.get, .get_logs, .post, and .put for use in _snapd_*.py tests."""
     return MockClient(
         get=mocker.patch('charmlibs.snap._client.get'),
+        get_logs=mocker.patch('charmlibs.snap._client.get_logs'),
         post=mocker.patch('charmlibs.snap._client.post'),
         put=mocker.patch('charmlibs.snap._client.put'),
     )

@@ -24,54 +24,54 @@ if TYPE_CHECKING:
 
 class TestLogs:
     def test_logs_query_no_snaps(self, mock_client: MockClient):
-        mock_client.get.return_value = []
+        mock_client.get_logs.return_value = []
         _snapd_logs.logs()
-        mock_client.get.assert_called_once_with('/v2/logs', query={'n': 10})
+        mock_client.get_logs.assert_called_once_with(query={'n': 10})
 
     def test_logs_query_single_snap(self, mock_client: MockClient):
-        mock_client.get.return_value = []
+        mock_client.get_logs.return_value = []
         _snapd_logs.logs('lxd')
-        mock_client.get.assert_called_once_with('/v2/logs', query={'n': 10, 'names': 'lxd'})
+        mock_client.get_logs.assert_called_once_with(query={'n': 10, 'names': 'lxd'})
 
     def test_logs_multiple_snaps(self, mock_client: MockClient):
-        mock_client.get.return_value = []
+        mock_client.get_logs.return_value = []
         _snapd_logs.logs('lxd', 'vlc')
-        query = mock_client.get.call_args.kwargs['query']
+        query = mock_client.get_logs.call_args.kwargs['query']
         assert query['names'] == 'lxd,vlc'
 
     def test_logs_custom_limit(self, mock_client: MockClient):
-        mock_client.get.return_value = []
+        mock_client.get_logs.return_value = []
         _snapd_logs.logs('lxd', limit=50)
-        query = mock_client.get.call_args.kwargs['query']
+        query = mock_client.get_logs.call_args.kwargs['query']
         assert query['n'] == 50
 
     def test_logs_limit_none_passes_minus_one(self, mock_client: MockClient):
-        mock_client.get.return_value = []
+        mock_client.get_logs.return_value = []
         _snapd_logs.logs('lxd', limit=None)
-        query = mock_client.get.call_args.kwargs['query']
+        query = mock_client.get_logs.call_args.kwargs['query']
         assert query['n'] == -1
 
     @pytest.mark.parametrize('limit', [0, -1, -10])
     def test_logs_non_positive_limit_raises(self, limit: int, mock_client: MockClient):
         with pytest.raises(ValueError, match='positive integer or None'):
             _snapd_logs.logs('lxd', limit=limit)
-        mock_client.get.assert_not_called()
+        mock_client.get_logs.assert_not_called()
 
     def test_logs_parses_entries(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('logs_lxd.json')
+        mock_client.get_logs.return_value = result_of('logs_lxd.json')
         entries = _snapd_logs.logs('lxd')
         assert len(entries) == 10
         assert entries[0].sid == 'systemd'
         assert isinstance(entries[0].timestamp, datetime.datetime)
 
     def test_logs_pid_is_int(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('logs_lxd.json')
+        mock_client.get_logs.return_value = result_of('logs_lxd.json')
         entries = _snapd_logs.logs('lxd')
         assert entries[0].pid == 1
         assert isinstance(entries[0].pid, int)
 
     def test_logs_skips_malformed(self, mock_client: MockClient, caplog: LogCaptureFixture):
-        mock_client.get.return_value = [
+        mock_client.get_logs.return_value = [
             {'timestamp': '2026-04-24T03:01:19.488008Z', 'sid': 'lxd', 'pid': '1'},
             # 'message' key missing
             {
@@ -88,16 +88,16 @@ class TestLogs:
         assert any('Skipping' in r.message for r in caplog.records)
 
     def test_logs_empty(self, mock_client: MockClient):
-        mock_client.get.return_value = []
+        mock_client.get_logs.return_value = []
         assert _snapd_logs.logs('lxd') == []
 
     def test_logs_returns_log_entry_objects(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('logs_lxd.json')
+        mock_client.get_logs.return_value = result_of('logs_lxd.json')
         entries = _snapd_logs.logs('lxd')
         assert all(isinstance(e, LogEntry) for e in entries)
 
     def test_log_entry_str(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('logs_lxd.json')
+        mock_client.get_logs.return_value = result_of('logs_lxd.json')
         entry = _snapd_logs.logs('lxd')[0]
         s = str(entry)
         assert str(entry.timestamp) in s
@@ -106,7 +106,7 @@ class TestLogs:
         assert str(entry.message) in s
 
     def test_log_entry_repr(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('logs_lxd.json')
+        mock_client.get_logs.return_value = result_of('logs_lxd.json')
         entry = _snapd_logs.logs('lxd')[0]
         r = repr(entry)
         assert entry.__class__.__name__ in r
