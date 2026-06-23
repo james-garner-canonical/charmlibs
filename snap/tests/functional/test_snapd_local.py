@@ -50,38 +50,39 @@ def install_local(path: Path, *, dangerous: bool = False, classic: bool = False)
     crlf = b'\r\n'
 
     def form_field(name: str, value: str) -> bytes:
-        return (
-            b'--'
-            + boundary.encode()
-            + crlf
-            + b'Content-Disposition: form-data; name="'
-            + name.encode()
-            + b'"'
-            + crlf
-            + crlf
-            + value.encode()
-            + crlf
-        )
+        return b''.join([
+            b'--',
+            boundary.encode(),
+            crlf,
+            b'Content-Disposition: form-data; name="',
+            name.encode(),
+            b'"',
+            crlf,
+            crlf,
+            value.encode(),
+            crlf,
+        ])
 
-    body = (
-        b'--'
-        + boundary.encode()
-        + crlf
-        + b'Content-Disposition: form-data; name="snap"; filename="'
-        + path.name.encode()
-        + b'"'
-        + crlf
-        + b'Content-Type: application/octet-stream'
-        + crlf
-        + crlf
-        + snap_data
-        + crlf
-    )
+    body_parts = [
+        b'--',
+        boundary.encode(),
+        crlf,
+        b'Content-Disposition: form-data; name="snap"; filename="',
+        path.name.encode(),
+        b'"',
+        crlf,
+        b'Content-Type: application/octet-stream',
+        crlf,
+        crlf,
+        snap_data,
+        crlf,
+    ]
     if dangerous:
-        body += form_field('dangerous', 'true')
+        body_parts.append(form_field('dangerous', 'true'))
     if classic:
-        body += form_field('classic', 'true')
-    body += b'--' + boundary.encode() + b'--' + crlf
+        body_parts.append(form_field('classic', 'true'))
+    body_parts.extend([b'--', boundary.encode(), b'--', crlf])
+    body = b''.join(body_parts)
 
     headers = {
         'Accept': 'application/json',
