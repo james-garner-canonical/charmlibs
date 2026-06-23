@@ -218,9 +218,8 @@ def _request_raw(
     opener = urllib.request.OpenerDirector()
     opener.add_handler(_client_sockets.UnixSocketHandler(_SOCKET_PATH))
     opener.add_handler(urllib.request.HTTPRedirectHandler())
-    # We need to handle HTTP errors ourselves, since the response body contains meaningful info.
-    # opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
-    # opener.add_handler(urllib.request.HTTPErrorProcessor())
+    # We need to handle HTTP errors ourselves, since the response body contains meaningful info,
+    # so we don't add HTTPErrorProcessor or HTTPDefaultErrorHandler, which would raise too early.
     try:
         return opener.open(request, timeout=_REQUEST_TIMEOUT)
     except TimeoutError:
