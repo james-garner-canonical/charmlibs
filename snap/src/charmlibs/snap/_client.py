@@ -54,7 +54,7 @@ def get(path: str, query: dict[str, Any] | None = None):
 
 def get_logs(query: dict[str, Any] | None = None):
     """GET request to /v2/logs endpoint, which returns a stream of log entries."""
-    response = _request_raw('GET', '/v2/logs', query=query)
+    response = _request_json('GET', '/v2/logs', query=query)
     return _decode_logs(response)
 
 
@@ -79,11 +79,11 @@ def _request(
     log: bool = True,
 ) -> object | _Change:
     """Make a request to the snapd server and decode the JSON response."""
-    response_bytes = _request_raw(method, path, query=query, body=body, log=log)
-    return _decode(response_bytes)
+    response = _request_json(method, path, query=query, body=body, log=log)
+    return _decode(response)
 
 
-def _request_raw(
+def _request_json(
     method: str,
     path: str,
     *,
@@ -91,7 +91,7 @@ def _request_raw(
     body: dict[str, Any] | None = None,
     log: bool = True,
 ) -> http.client.HTTPResponse:
-    """Build headers/body and make a raw request to snapd, returning the HTTPResponse.
+    """Make a JSON request to snapd, returning the raw HTTPResponse.
 
     If query dict is provided, it is encoded and appended as a query string
     to the URL. If body dict is provided, it is serialised as JSON and used
@@ -105,6 +105,18 @@ def _request_raw(
         headers['Content-Type'] = 'application/json'
     else:
         data = None
+    return _request_raw(method, path, query=query, headers=headers, data=data)
+
+
+def _request_raw(
+    method: str,
+    path: str,
+    *,
+    query: dict[str, Any] | None = None,
+    headers: dict[str, Any] | None = None,
+    data: bytes | None = None,
+) -> http.client.HTTPResponse:
+    """Make a raw request to the snapd server; return the HTTPResponse object."""
     query_str = f'?{urllib.parse.urlencode(query, doseq=True)}' if query else ''
     request = urllib.request.Request(
         f'http://localhost/{path.lstrip("/")}{query_str}',

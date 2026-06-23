@@ -58,14 +58,20 @@ def mock_raw(mocker: MockerFixture) -> MagicMock:
     return mocker.patch('charmlibs.snap._client._request_raw')
 
 
+@pytest.fixture
+def mock_json(mocker: MockerFixture) -> MagicMock:
+    """Patch _request_json so tests control the JSON request layer."""
+    return mocker.patch('charmlibs.snap._client._request_json')
+
+
 class TestRequest:
-    def test_get(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
+    def test_get(self, mock_json: MagicMock):
+        mock_json.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
         result = _client.get('/v2/snaps/lxd/conf', query={'keys': 'integer'})
-        assert mock_raw.call_args.args[0] == 'GET'
-        assert mock_raw.call_args.args[1] == '/v2/snaps/lxd/conf'
-        assert mock_raw.call_args.kwargs['query'] == {'keys': 'integer'}
-        assert mock_raw.call_args.kwargs.get('body') is None
+        assert mock_json.call_args.args[0] == 'GET'
+        assert mock_json.call_args.args[1] == '/v2/snaps/lxd/conf'
+        assert mock_json.call_args.kwargs['query'] == {'keys': 'integer'}
+        assert mock_json.call_args.kwargs.get('body') is None
         assert result == {'foo': 'bar'}
 
     def test_get_list_result(self, mock_raw: MagicMock):
@@ -74,25 +80,25 @@ class TestRequest:
         result = _client.get('/v2/apps')
         assert result == [1, 2, 3]
 
-    def test_post(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
+    def test_post(self, mock_json: MagicMock):
+        mock_json.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
         result = _client.post('/v2/snaps/hello-world', body={'action': 'install'})
-        assert mock_raw.call_args.args[0] == 'POST'
-        assert mock_raw.call_args.args[1] == '/v2/snaps/hello-world'
-        assert mock_raw.call_args.kwargs['body'] == {'action': 'install'}
+        assert mock_json.call_args.args[0] == 'POST'
+        assert mock_json.call_args.args[1] == '/v2/snaps/hello-world'
+        assert mock_json.call_args.kwargs['body'] == {'action': 'install'}
         assert result == {'foo': 'bar'}
 
-    def test_post_no_body_sends_no_data(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response({'type': 'sync', 'result': {}})
+    def test_post_no_body_sends_no_data(self, mock_json: MagicMock):
+        mock_json.return_value = _fake_response({'type': 'sync', 'result': {}})
         _client.post('/v2/snaps/hello-world')
-        assert mock_raw.call_args.kwargs.get('body') is None
+        assert mock_json.call_args.kwargs.get('body') is None
 
-    def test_put(self, mock_raw: MagicMock):
-        mock_raw.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
+    def test_put(self, mock_json: MagicMock):
+        mock_json.return_value = _fake_response({'type': 'sync', 'result': {'foo': 'bar'}})
         result = _client.put('/v2/snaps/lxd/conf', body={'mykey': 'myval'})
-        assert mock_raw.call_args.args[0] == 'PUT'
-        assert mock_raw.call_args.args[1] == '/v2/snaps/lxd/conf'
-        assert mock_raw.call_args.kwargs['body'] == {'mykey': 'myval'}
+        assert mock_json.call_args.args[0] == 'PUT'
+        assert mock_json.call_args.args[1] == '/v2/snaps/lxd/conf'
+        assert mock_json.call_args.kwargs['body'] == {'mykey': 'myval'}
         assert result == {'foo': 'bar'}
 
 
