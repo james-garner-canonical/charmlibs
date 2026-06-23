@@ -48,7 +48,7 @@ _POLL_INTERVAL = 0.1  # 100 milliseconds, the same as in snap clients.
 
 def get(path: str, query: dict[str, Any] | None = None):
     """GET request to snapd REST API."""
-    result = _request('GET', path, query=query)
+    result = _request_json_and_decode('GET', path, query=query)
     return _resolve(result)
 
 
@@ -60,17 +60,17 @@ def get_logs(query: dict[str, Any] | None = None):
 
 def post(path: str, body: dict[str, Any] | None = None):
     """POST request to snapd REST API."""
-    result = _request('POST', path, body=body)
+    result = _request_json_and_decode('POST', path, body=body)
     return _resolve(result)
 
 
 def put(path: str, body: dict[str, Any] | None = None):
     """PUT request to snapd REST API."""
-    result = _request('PUT', path, body=body)
+    result = _request_json_and_decode('PUT', path, body=body)
     return _resolve(result)
 
 
-def _request(
+def _request_json_and_decode(
     method: str,
     path: str,
     *,
@@ -292,7 +292,7 @@ class _Change:
                     )
 
     def _poll(self):
-        result = _request('GET', f'/v2/changes/{self._id}', log=False)
+        result = _request_json_and_decode('GET', f'/v2/changes/{self._id}', log=False)
         if not isinstance(result, dict):
             raise _errors.BadResponseError(
                 message=f'Unexpected response type {type(result).__name__} while waiting for change {self._id}',  # noqa: E501
