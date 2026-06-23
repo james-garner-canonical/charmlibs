@@ -96,7 +96,7 @@ def logs(*snaps: str, limit: int | None = 10) -> list[LogEntry]:
     query: dict[str, Any] = {'n': n}
     if snaps:
         query['names'] = ','.join(snaps)
-    result = _client.get('/v2/logs', query=query)
+    result = _client.get_logs(query=query)
     assert isinstance(result, list)
     # A log entry looks like:
     # {'timestamp': '2026-02-27T03:01:19.488008Z',
