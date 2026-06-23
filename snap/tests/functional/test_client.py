@@ -12,6 +12,9 @@ Tests are ordered to minimise snap install/remove churn.
 
 from __future__ import annotations
 
+import typing
+from typing import Any
+
 import pytest
 
 from charmlibs.snap import _client, _errors
@@ -135,6 +138,7 @@ def test_get_returns_list():
     ensure_installed('kube-proxy', classic=True)
     result = _client.get('/v2/apps', query={'select': 'service', 'names': 'kube-proxy'})
     assert isinstance(result, list)
+    result = typing.cast('list[dict[str, Any]]', result)
     assert len(result) > 0
 
 
@@ -176,6 +180,7 @@ def test_put_waits_for_async_change():
     _client.put('/v2/snaps/lxd/conf', body={'test-key-functional': 'test-value'})
     result = _client.get('/v2/snaps/lxd/conf', query={'keys': 'test-key-functional'})
     assert isinstance(result, dict)
+    result = typing.cast('dict[str, Any]', result)
     assert result.get('test-key-functional') == 'test-value'
     # Clean up.
     _client.put('/v2/snaps/lxd/conf', body={'test-key-functional': None})
@@ -214,7 +219,7 @@ def test_change_timeout_raises_snap_timeout_error():
 def test_get_logs_returns_list():
     # /v2/logs returns a list of dicts.
     ensure_installed('kube-proxy', classic=True)
-    result = _client.get('/v2/logs', query={'names': 'kube-proxy', 'n': 5})
+    result = _client.get_logs(query={'names': 'kube-proxy', 'n': 5})
     assert isinstance(result, list)
 
 
@@ -222,5 +227,5 @@ def test_get_logs_error_app_not_found():
     # A snap with no services returns an app-not-found error via the log stream.
     ensure_installed('htop')
     with pytest.raises(_errors.AppNotFoundError) as ctx:
-        _client.get('/v2/logs', query={'names': 'htop', 'n': 10})
+        _client.get_logs(query={'names': 'htop', 'n': 10})
     assert ctx.value.kind == 'app-not-found'

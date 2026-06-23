@@ -51,7 +51,7 @@ class _Change:
     def __init__(self, change_id: str):
         self._id = change_id
 
-    def wait(self) -> dict[str, Any]:
+    def wait(self) -> object:
         """Poll until the change completes, then return its data."""
         change_id = self._id
         logger.debug('Waiting up to %s seconds for change [%s]', _CHANGE_TIMEOUT, change_id)
@@ -71,6 +71,7 @@ class _Change:
                     kind='charmlibs-snap',
                     value=str(result),
                 )
+            result = typing.cast('dict[str, Any]', result)
             match status := result.get('status'):
                 case 'Do' | 'Doing' | 'Undo' | 'Undoing':
                     time.sleep(_POLL_INTERVAL)
@@ -123,9 +124,7 @@ def put(path: str, body: dict[str, Any] | None = None):
     return _resolve(result)
 
 
-def _resolve(
-    result: dict[str, Any] | list[dict[str, Any]] | _Change,
-) -> dict[str, Any] | list[dict[str, Any]]:
+def _resolve(result: object | _Change):
     """Wait for an async change to complete, or return a synchronous result unchanged."""
     if isinstance(result, _Change):
         return result.wait()
@@ -157,7 +156,7 @@ def _request(
     return _request_raw(method, path, query=query, headers=headers, data=data)
 
 
-def _decode(response: http.client.HTTPResponse) -> dict[str, Any] | _Change:
+def _decode(response: http.client.HTTPResponse) -> object | _Change:
     response_bytes = response.read()
     try:
         response_dict: dict[str, Any] = json.loads(response_bytes)
@@ -195,7 +194,7 @@ def _decode(response: http.client.HTTPResponse) -> dict[str, Any] | _Change:
         ) from None
 
 
-def _decode_logs(response: http.client.HTTPResponse) -> list[dict[str, Any]]:
+def _decode_logs(response: http.client.HTTPResponse) -> list[dict[str, str]]:
     response_bytes = response.read()
     # /v2/logs returns a stream of JSON objects separated by \n\x1e
     try:

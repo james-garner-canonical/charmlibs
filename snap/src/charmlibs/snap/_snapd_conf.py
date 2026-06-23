@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import logging
+import typing
 from typing import Any
 
 from . import _client
@@ -46,7 +47,7 @@ def get(snap: str, /, *keys: str) -> dict[str, Any]:
     params = {'keys': ','.join(keys)} if keys else None
     config = _client.get(f'/v2/snaps/{snap}/conf', query=params)
     assert isinstance(config, dict)
-    return config
+    return typing.cast('dict[str, Any]', config)
 
 
 def _get_one(snap: str, key: str, /) -> Any:  # pyright: ignore[reportUnusedFunction]

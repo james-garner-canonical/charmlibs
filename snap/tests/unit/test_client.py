@@ -8,6 +8,7 @@ from __future__ import annotations
 import builtins
 import json
 import logging
+import typing
 import urllib.error
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -314,6 +315,7 @@ class TestLogsEndpoint:
         mock_raw.return_value = _fake_response(raw)
         result = _client.get('/v2/logs', query={'n': 10, 'names': 'lxd'})
         assert isinstance(result, list)
+        result = typing.cast('list[dict[str, Any]]', result)
         assert len(result) > 0
         assert 'timestamp' in result[0]
 

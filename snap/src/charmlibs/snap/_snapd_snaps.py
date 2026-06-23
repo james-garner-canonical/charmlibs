@@ -115,6 +115,7 @@ def info(snap: str, *, missing_ok: bool = False) -> Info | None:
             return None
         raise
     assert isinstance(info_dict, dict)
+    info_dict = typing.cast('dict[str, str]', info_dict)
     return Info._from_dict(info_dict)
 
 
@@ -300,6 +301,7 @@ def _list_snaps() -> list[Info]:  # pyright: ignore[reportUnusedFunction]
     """List all installed snaps."""
     info_dicts = _client.get('/v2/snaps')
     assert isinstance(info_dicts, list)
+    info_dicts = typing.cast('list[dict[str, str]]', info_dicts)
     return [Info._from_dict(info_dict) for info_dict in info_dicts]
 
 
@@ -310,6 +312,7 @@ def _list_channels(snap: str) -> dict[str, Info]:  # pyright: ignore[reportUnuse
     """List information about all channels of a snap available in the store."""
     results = _client.get('/v2/find', query={'name': snap})
     assert isinstance(results, list)
+    results = typing.cast('list[dict[str, Any]]', results)
     # API returns a list of results, or an error if there are no matches.
     # We'll have one result for an exact name match.
     result, *_ = results

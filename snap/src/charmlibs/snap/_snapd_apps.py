@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import typing
 from typing import Any
 
 from . import _client
@@ -87,4 +88,4 @@ def _list_services(snap: str | None = None) -> list[dict[str, Any]]:  # pyright:
         query['names'] = snap
     services = _client.get('/v2/apps', query=query)
     assert isinstance(services, list)
-    return services
+    return typing.cast('list[dict[str, Any]]', services)

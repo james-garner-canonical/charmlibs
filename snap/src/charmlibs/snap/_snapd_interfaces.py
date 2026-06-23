@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import dataclasses
+import typing
 from typing import Any
 
 from . import _client, _errors
@@ -116,6 +117,7 @@ def _list_interfaces(
     query = {'select': 'connected' if connected_only else 'all', 'slots': 'true', 'plugs': 'true'}
     interfaces = _client.get('/v2/interfaces', query=query)
     assert isinstance(interfaces, list)
+    interfaces = typing.cast('list[dict[str, Any]]', interfaces)
     if snap is None:
         return interfaces
     return [

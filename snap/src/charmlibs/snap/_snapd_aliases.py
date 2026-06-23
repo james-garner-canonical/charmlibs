@@ -68,4 +68,4 @@ def _list_aliases() -> Mapping[str, Iterable[str]]:  # pyright: ignore[reportUnu
     """List all aliases."""
     aliases = _client.get('/v2/aliases')
     assert isinstance(aliases, dict)
-    return aliases
+    return typing.cast('dict[str, list[str]]', aliases)

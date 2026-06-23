@@ -8,6 +8,9 @@ If this test fails, the other functional tests will likely also fail due to
 snapd being unreachable or the snap store being unavailable.
 """
 
+import typing
+from typing import Any
+
 from charmlibs.snap import _client
 
 
@@ -16,4 +19,5 @@ def test_snap_store_reachable():
     # and the store are reachable.
     result = _client.get('/v2/find', query={'q': 'hello-world'})
     assert isinstance(result, list)
+    result = typing.cast('list[dict[str, Any]]', result)
     assert len(result) > 0

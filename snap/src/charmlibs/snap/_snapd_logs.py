@@ -97,7 +97,6 @@ def logs(*snaps: str, limit: int | None = 10) -> list[LogEntry]:
     if snaps:
         query['names'] = ','.join(snaps)
     result = _client.get_logs(query=query)
-    assert isinstance(result, list)
     # A log entry looks like:
     # {'timestamp': '2026-02-27T03:01:19.488008Z',
     #  'message': 'QMP: {"timestamp": {"seconds": 1772161279, "microseconds": 487649}, "event": "RTC_CHANGE", "data": {"offset": 0, "qom-path": "/machine/unattached/device[7]/rtc"}}',  # noqa: E501
