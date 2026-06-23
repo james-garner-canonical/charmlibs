@@ -31,7 +31,10 @@ logger = logging.getLogger(__name__)
 # /v2/logs
 
 
+# Not a dataclass so we can cleanly provide a smaller API surface (e.g. no astuple).
 class LogEntry:
+    """A single snap log entry."""
+
     def __init__(self, timestamp: datetime.datetime, sid: str, pid: int, message: str):
         self._timestamp = timestamp
         self._sid = sid
@@ -40,18 +43,25 @@ class LogEntry:
 
     @property
     def timestamp(self) -> datetime.datetime:
+        """The timestamp of the log entry as a datetime object."""
         return self._timestamp
 
     @property
     def message(self) -> str:
+        """The log message itself."""
         return self._message
 
     @property
     def sid(self) -> str:
+        """The syslog identifier.
+
+        The name the process registered with syslog, typically the snap service name.
+        """
         return self._sid
 
     @property
     def pid(self) -> int:
+        """The process ID."""
         return self._pid
 
     def __repr__(self) -> str:
