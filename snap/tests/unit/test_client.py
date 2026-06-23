@@ -331,6 +331,14 @@ class TestLogsEndpoint:
             _client.get_logs(query={'n': 10, 'names': 'hello-world'})
         assert exc_info.value.kind == 'app-not-found'
 
+    def test_logs_malformed_response_raises_bad_response_error(self, mock_raw: MagicMock):
+        mock_raw.return_value = _fake_response(b'some-bytes', url='http://foo/some-path')
+        with pytest.raises(BadResponseError) as exc_info:
+            _client.get_logs(query={'n': 10, 'names': 'lxd'})
+        assert 'Invalid JSON' in exc_info.value.message
+        assert 'some-path' in exc_info.value.message
+        assert exc_info.value.value == 'some-bytes'
+
 
 # ---------------------------------------------------------------------------
 # Tests against real snapd responses captured as fixtures.
