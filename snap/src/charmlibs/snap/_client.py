@@ -207,9 +207,9 @@ def _request_raw(
     data: bytes | Generator[bytes, Any, Any] | None = None,
 ) -> http.client.HTTPResponse:
     """Make a request to the snapd server; return the raw HTTPResponse object."""
-    assert path.startswith('/')
     request = urllib.request.Request(
-        f'http://localhost{path}'
+        'http://localhost/'
+        + path.lstrip('/')
         + (f'?{urllib.parse.urlencode(query, doseq=True)}' if query else ''),
         method=method,
         headers=headers or {},
