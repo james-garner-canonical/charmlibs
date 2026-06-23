@@ -44,9 +44,7 @@ def ack(assertions_data: bytes) -> None:
 
 def install_local(path: Path, *, dangerous: bool = False, classic: bool = False) -> None:
     """Install a local snap file via the snapd sideload API (POST /v2/snaps)."""
-    snap_data = path.read_bytes()
     boundary = uuid.uuid4().hex
-
     crlf = b'\r\n'
 
     def form_field(name: str, value: str) -> bytes:
@@ -63,7 +61,7 @@ def install_local(path: Path, *, dangerous: bool = False, classic: bool = False)
             crlf,
         ])
 
-    body_parts = [
+    body = [
         b'--',
         boundary.encode(),
         crlf,
@@ -74,21 +72,20 @@ def install_local(path: Path, *, dangerous: bool = False, classic: bool = False)
         b'Content-Type: application/octet-stream',
         crlf,
         crlf,
-        snap_data,
+        path.read_bytes(),
         crlf,
     ]
     if dangerous:
-        body_parts.append(form_field('dangerous', 'true'))
+        body.append(form_field('dangerous', 'true'))
     if classic:
-        body_parts.append(form_field('classic', 'true'))
-    body_parts.extend([b'--', boundary.encode(), b'--', crlf])
-    body = b''.join(body_parts)
+        body.append(form_field('classic', 'true'))
+    body.extend([b'--', boundary.encode(), b'--', crlf])
 
     headers = {
         'Accept': 'application/json',
         'Content-Type': f'multipart/form-data; boundary={boundary}',
     }
-    response = _client._request_raw('POST', '/v2/snaps', headers=headers, data=body)
+    response = _client._request_raw('POST', '/v2/snaps', headers=headers, data=b''.join(body))
     response_dict = json.loads(response.read())
     if response_dict.get('type') == 'error':
         raise _client._make_error(response_dict)
