@@ -14,9 +14,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
 ]
 dynamic = ["version"]
-dependencies = [
-    "opentelemetry-api",
-]
+dependencies = []
 
 [dependency-groups]
 lint = [  # installed for `just lint snap` (unit, functional, and integration are also installed)
