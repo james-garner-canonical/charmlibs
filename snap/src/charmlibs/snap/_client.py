@@ -52,24 +52,16 @@ class _Change:
 
     def wait(self) -> object:
         """Poll until the change completes, then return its data."""
-        change_id = self._id
-        logger.debug('Waiting up to %s seconds for change [%s]', _CHANGE_TIMEOUT, change_id)
+        logger.debug('Waiting up to %s seconds for change [%s]', _CHANGE_TIMEOUT, self._id)
         deadline = time.monotonic() + _CHANGE_TIMEOUT
         while True:
             if time.monotonic() > deadline:
                 raise _errors.TimeoutError(
-                    f'Timed out after {_CHANGE_TIMEOUT}s waiting for snap change {change_id}',
+                    f'Timed out after {_CHANGE_TIMEOUT}s waiting for snap change {self._id}',
                     kind='charmlibs-snap-change-timeout',
-                    value=change_id,
+                    value=self._id,
                 )
-            result = _request('GET', f'/v2/changes/{change_id}', log=False)
-            if not isinstance(result, dict):
-                raise _errors.BadResponseError(
-                    message=f'Unexpected response type {type(result).__name__} while waiting for change {change_id}',  # noqa: E501
-                    kind='charmlibs-snap',
-                    value=str(result),
-                )
-            result = typing.cast('dict[str, Any]', result)
+            result = self._poll()
             match status := result.get('status'):
                 case 'Do' | 'Doing' | 'Undo' | 'Undoing':
                     time.sleep(_POLL_INTERVAL)
@@ -77,22 +69,32 @@ class _Change:
                 case 'Done':
                     return result.get('data', {})
                 case 'Wait':
-                    logger.warning("snap change %s succeeded with status 'Wait'", change_id)
+                    logger.warning("snap change %s succeeded with status 'Wait'", self._id)
                     return result.get('data', {})
                 case 'Error':
                     raise _errors.ChangeError(
                         message=result.get('err', ''),
                         kind='charmlibs-snap-change-error',
-                        value=change_id,
+                        value=self._id,
                         status=status,
                     )
                 case _:
                     raise _errors.ChangeError(
-                        message=f'Unexpected status {status!r} for snap change {change_id}',
+                        message=f'Unexpected status {status!r} for snap change {self._id}',
                         kind='charmlibs-snap-change-unknown',
-                        value=change_id,
+                        value=self._id,
                         status=status,
                     )
+
+    def _poll(self):
+        result = _request('GET', f'/v2/changes/{self._id}', log=False)
+        if not isinstance(result, dict):
+            raise _errors.BadResponseError(
+                message=f'Unexpected response type {type(result).__name__} while waiting for change {self._id}',  # noqa: E501
+                kind='charmlibs-snap',
+                value=str(result),
+            )
+        return typing.cast('dict[str, Any]', result)
 
 
 def get(path: str, query: dict[str, Any] | None = None):
