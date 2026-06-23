@@ -207,7 +207,7 @@ def test_change_timeout_raises_snap_timeout_error():
     assert ctx.value.kind == 'charmlibs-snap-change-timeout'
     assert isinstance(ctx.value, TimeoutError)
     # snapd is still processing the change; wait for it before cleaning up.
-    _client._Change(str(ctx.value.value)).wait(timeout=_client._CHANGE_TIMEOUT)
+    _client._Change(str(ctx.value.value)).wait()
     _client.put('/v2/snaps/lxd/conf', body={'test-change-timeout-key': None})
 
 
