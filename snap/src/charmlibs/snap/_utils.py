@@ -31,9 +31,9 @@ def _normalize_channel(channel: str) -> str:  # pyright: ignore[reportUnusedFunc
         return ''
     if '/' not in channel:
         if channel not in ('edge', 'beta', 'candidate', 'stable'):
-            # track only, append default risk
+            # Track only, append default risk.
             return f'{channel}/stable'
-        # risk only, prepend default track
+        # Risk only, prepend default track.
         return f'latest/{channel}'
     return channel
 

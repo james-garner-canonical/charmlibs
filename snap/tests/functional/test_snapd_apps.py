@@ -66,15 +66,15 @@ def test_start():
     ensure_installed(_SNAP, classic=True)
     _stop_and_disable()
     assert not _service_is_active()
-    _snapd_apps.start(_SNAP, _SERVICE)  # should not raise
+    _snapd_apps.start(_SNAP, _SERVICE)  # Should not raise.
 
 
 def test_start_already_running_no_error():
     # Starting a service should not raise even if already started.
     ensure_installed(_SNAP, classic=True)
     _stop_and_disable()
-    _snapd_apps.start(_SNAP, _SERVICE)  # first start
-    _snapd_apps.start(_SNAP, _SERVICE)  # second start should not raise
+    _snapd_apps.start(_SNAP, _SERVICE)  # First start.
+    _snapd_apps.start(_SNAP, _SERVICE)  # Second start should not raise.
 
 
 def test_start_with_enable():
@@ -83,7 +83,7 @@ def test_start_with_enable():
     _stop_and_disable()
     assert not _service_is_enabled()
     _snapd_apps.start(_SNAP, _SERVICE, enable=True)
-    # enabled persists even after kube-proxy exits quickly
+    # enabled persists even after kube-proxy exits quickly.
     assert _service_is_enabled()
 
 
@@ -106,7 +106,7 @@ def test_start_nonexistent_snap_raises():
 
 
 def test_stop():
-    # GIVEN a service that was started from a clean disabled state
+    # GIVEN a service that was started from a clean disabled state.
     ensure_installed(_SNAP, classic=True)
     _stop_and_disable()
     _snapd_apps.start(_SNAP, _SERVICE)

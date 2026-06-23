@@ -29,7 +29,7 @@ class _UnixSocketConnection(http.client.HTTPConnection):
         # do_open(http_class, req, **http_conn_args) passes:
         # - req.host positionally
         # - timeout=req.timeout
-        # - all user supplied http_conn_args
+        # - all user-supplied http_conn_args
         # We pass socket_path as a keyword argument.
         super().__init__(host, timeout=timeout)
         self._socket_path = socket_path
@@ -51,7 +51,7 @@ class UnixSocketHandler(urllib.request.AbstractHTTPHandler):
     def http_open(self, req: urllib.request.Request):
         """Override http_open to use a Unix socket connection (instead of TCP)."""
         return self.do_open(
-            _UnixSocketConnection,  # type:ignore -- we don't implement all the optional init args
+            _UnixSocketConnection,  # type: ignore -- we don't implement all the optional init args
             req,
             socket_path=self._socket_path,
         )

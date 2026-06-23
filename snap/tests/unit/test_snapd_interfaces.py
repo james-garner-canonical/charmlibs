@@ -82,7 +82,7 @@ class TestDisconnect:
             status_code=400,
             status='Bad Request',
         )
-        _snapd_interfaces.disconnect('vlc', 'mount-observe')  # should not raise
+        _snapd_interfaces.disconnect('vlc', 'mount-observe')  # Should not raise.
 
     def test_disconnect_interfaces_unchanged_suppressed_with_forget(self, mock_client: MockClient):
         # _InterfacesUnchangedError is suppressed even when forget=True.
@@ -93,7 +93,7 @@ class TestDisconnect:
             status_code=400,
             status='Bad Request',
         )
-        _snapd_interfaces.disconnect('vlc', 'mount-observe', forget=True)  # should not raise
+        _snapd_interfaces.disconnect('vlc', 'mount-observe', forget=True)  # Should not raise.
 
 
 class TestListInterfaces:
@@ -108,14 +108,14 @@ class TestListInterfaces:
 
     def test_filter_plug_snap(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('interfaces_all.json')
-        # vlc only has a plug in mount-observe
+        # vlc only has a plug in mount-observe.
         interfaces = _snapd_interfaces._list_interfaces(snap='vlc')
         assert len(interfaces) == 1
         assert interfaces[0]['name'] == 'mount-observe'
 
     def test_filter_slot_snap(self, mock_client: MockClient):
         mock_client.get.return_value = result_of('interfaces_all.json')
-        # snapd has slots in both interfaces
+        # snapd has slots in both interfaces.
         interfaces = _snapd_interfaces._list_interfaces(snap='snapd')
         assert len(interfaces) == 2
 

@@ -144,7 +144,7 @@ class TestInstall:
     def test_install_revision(self, mock_client: MockClient):
         _snapd.install('hello-world', revision=5)
         body = mock_client.post.call_args.kwargs['body']
-        assert body['revision'] == '5'  # sent as string per snapd API convention
+        assert body['revision'] == '5'  # Sent as string per snapd API convention.
 
     def test_install_both_raises(self, mock_client: MockClient):
         with pytest.raises(ValueError):
@@ -226,7 +226,7 @@ class TestHold:
         self, mock_client: MockClient, duration: datetime.timedelta | int | float
     ):
         before = datetime.datetime.now(datetime.timezone.utc)
-        _snapd.hold('hello-world', duration=duration)  # each value expresses 2 days
+        _snapd.hold('hello-world', duration=duration)  # Each value expresses 2 days.
         body = mock_client.post.call_args.kwargs['body']
         assert body['time'] != 'forever'
         hold_time = datetime.datetime.fromisoformat(body['time'])

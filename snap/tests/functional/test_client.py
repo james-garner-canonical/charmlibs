@@ -198,7 +198,7 @@ def test_put_no_body_raises():
 def test_put_empty_body_succeeds():
     # PUT with an empty body dict ({}) is accepted by snapd and is a no-op.
     ensure_installed('lxd')
-    _client.put('/v2/snaps/lxd/conf', body={})  # should not raise
+    _client.put('/v2/snaps/lxd/conf', body={})  # Should not raise.
 
 
 def test_change_timeout_raises_snap_timeout_error():

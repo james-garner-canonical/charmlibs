@@ -236,7 +236,7 @@ def test_set_multiple_keys_at_once():
 def test_set_empty_dict_no_error():
     # set({}) is a no-op — the API accepts an empty body without error.
     ensure_installed(_SNAP)
-    _snapd_conf.set(_SNAP, {})  # should not raise
+    _snapd_conf.set(_SNAP, {})  # Should not raise.
 
 
 def test_get_mixed_keys_raises_option_not_found():
@@ -254,7 +254,7 @@ def test_unset_dotted_path_no_error():
     # unset() accepts dotted-path keys and the API handles them without error.
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: {'nested': 'value'}})
-    _snapd_conf.unset(_SNAP, f'{_KEY}.nested')  # should not raise
+    _snapd_conf.unset(_SNAP, f'{_KEY}.nested')  # Should not raise.
     _cleanup()
 
 

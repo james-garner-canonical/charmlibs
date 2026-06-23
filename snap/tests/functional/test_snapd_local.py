@@ -163,7 +163,7 @@ def test_install_local_already_installed(snap_v1: Path):
     # Sideloading does not raise _AlreadyInstalledError when the snap is present.
     ensure_removed('test-snap')
     install_local(snap_v1, dangerous=True)
-    install_local(snap_v1, dangerous=True)  # second call must succeed
+    install_local(snap_v1, dangerous=True)  # Second call must succeed.
     assert _snapd.info('test-snap').version == '1.0'
 
 
@@ -178,7 +178,7 @@ def test_install_local_upgrades(snap_v1: Path, snap_v2: Path):
 def test_install_local_without_dangerous_raises(snap_v1: Path):
     ensure_removed('test-snap')
     with pytest.raises(_errors.APIError) as ctx:
-        install_local(snap_v1)  # dangerous=False by default
+        install_local(snap_v1)  # dangerous=False by default.
     assert 'cannot find signatures with metadata' in ctx.value.message
     assert ctx.value.kind == ''
 
@@ -211,11 +211,11 @@ def test_ack_and_install(hello_world_download: tuple[Path, Path]):
     snap_file, assert_file = hello_world_download
     ensure_removed('hello-world')
     ack(assert_file.read_bytes())
-    install_local(snap_file)  # dangerous=False — assertions are in the DB
+    install_local(snap_file)  # dangerous=False — assertions are in the DB.
     assert _snapd.info('hello-world').name == 'hello-world'
 
 
 def test_ack_is_idempotent(hello_world_download: tuple[Path, Path]):
     _, assert_file = hello_world_download
     ack(assert_file.read_bytes())
-    ack(assert_file.read_bytes())  # second call must not raise
+    ack(assert_file.read_bytes())  # Second call must not raise.

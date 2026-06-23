@@ -93,11 +93,11 @@ def disconnect(
     data: dict[str, Any] = {'action': 'disconnect'}
     if slot_snap is None:
         assert slot is None
-        # Called with 2 arguments, treat as as snap disconnect <snap>:<slot>
+        # Called with 2 arguments, treat as `snap disconnect <snap>:<slot>`.
         data['plugs'] = [{'snap': '', 'plug': ''}]
         data['slots'] = [{'snap': plug_or_slot_snap, 'slot': plug_or_slot}]
     else:
-        # Called with 3 or 4 arguments, treat as snap disconnect <snap>:<plug> <snap>:<slot>
+        # Called with 3 or 4 arguments, treat as `snap disconnect <snap>:<plug> <snap>:<slot>`.
         data['plugs'] = [{'snap': plug_or_slot_snap, 'plug': plug_or_slot}]
         data['slots'] = [{'snap': slot_snap, 'slot': slot or ''}]
     if forget:

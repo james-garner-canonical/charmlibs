@@ -62,7 +62,7 @@ def test_alias_is_idempotent():
     ensure_installed(_SNAP)
     _cleanup_alias()
     _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
-    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)  # second call — no error
+    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)  # Second call — no error.
     assert _alias_exists()
     _cleanup_alias()
 
@@ -73,7 +73,7 @@ def test_alias_reassigns_within_same_snap():
     ensure_installed(_SNAP)
     _cleanup_alias()
     _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
-    _snapd_aliases.alias(_SNAP, 'lxd', _ALIAS)  # different app, same snap — no error
+    _snapd_aliases.alias(_SNAP, 'lxd', _ALIAS)  # Different app, same snap — no error.
     _cleanup_alias()
 
 
@@ -82,7 +82,7 @@ def test_alias_name_conflicts_with_snap_command_namespace():
     ensure_installed(_SNAP)
     _cleanup_alias()
     with pytest.raises(_errors.ChangeError) as ctx:
-        _snapd_aliases.alias(_SNAP, _APP, _SNAP)  # alias name = 'lxd'
+        _snapd_aliases.alias(_SNAP, _APP, _SNAP)  # Alias name = 'lxd'.
     assert 'conflicts with the command namespace' in ctx.value.message
 
 

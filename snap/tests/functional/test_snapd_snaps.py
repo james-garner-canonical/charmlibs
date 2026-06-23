@@ -97,7 +97,7 @@ def test_hold_already_held_no_error():
     # Holding an already-held snap is idempotent — no error is raised.
     ensure_installed('hello-world')
     _snapd.hold('hello-world')
-    _snapd.hold('hello-world')  # second hold should not raise
+    _snapd.hold('hello-world')  # Second hold should not raise.
 
 
 def test_unhold():
@@ -169,7 +169,7 @@ def test_hold_not_installed_raises_snap_not_found_error():
 def test_unhold_not_installed_no_error():
     # unhold on a non-installed snap succeeds silently (async Done).
     ensure_removed('hello-world')
-    _snapd.unhold('hello-world')  # should not raise
+    _snapd.unhold('hello-world')  # Should not raise.
 
 
 def test_install_invalid_channel_raises():

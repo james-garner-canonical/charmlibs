@@ -37,12 +37,12 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# we need the powerful snapd socket
-# defined in the snap application itself under dirs/dirs.go as SnapdSocket
+# We need the powerful snapd socket.
+# Defined in the snap application itself under dirs/dirs.go as SnapdSocket.
 _SOCKET_PATH = '/run/snapd.socket'
-# TODO: a user facing way to set timeout? e.g. charmlibs.snap.set_timeouts(request=60, change=1800)
+# TODO: a user-facing way to set timeout? e.g. charmlibs.snap.set_timeouts(request=60, change=1800)
 _REQUEST_TIMEOUT = 30
-_CHANGE_TIMEOUT = 600  # 10 minutes in seconds
+_CHANGE_TIMEOUT = 600  # 10 minutes in seconds.
 _POLL_INTERVAL = 0.1  # 100 milliseconds, the same as in snap clients.
 
 

@@ -73,7 +73,7 @@ class TestLogs:
     def test_logs_skips_malformed(self, mock_client: MockClient, caplog: LogCaptureFixture):
         mock_client.get_logs.return_value = [
             {'timestamp': '2026-04-24T03:01:19.488008Z', 'sid': 'lxd', 'pid': '1'},
-            # 'message' key missing
+            # 'message' key missing.
             {
                 'timestamp': '2026-04-24T03:01:20.000000Z',
                 'message': 'ok',
@@ -134,17 +134,17 @@ class TestParseTimestamp:
         assert ts.utcoffset() == datetime.timedelta(0)
 
     def test_z_suffix_high_precision(self):
-        # 7-digit fraction should be truncated to 6 without error
+        # 7-digit fraction should be truncated to 6 without error.
         ts = _parse_timestamp('2026-02-27T03:01:19.4880089Z')
         assert ts.microsecond == 488008
 
     def test_z_suffix_short_fraction(self):
-        # 5-digit fraction should be left-padded to 6 digits (0.13454 s = 134540 μs)
+        # 5-digit fraction should be left-padded to 6 digits (0.13454 s = 134540 μs).
         ts = _parse_timestamp('2026-02-27T03:01:19.13454Z')
         assert ts.microsecond == 134540
 
     def test_z_suffix_four_digit_fraction(self):
-        # 4-digit fraction: 0.0033 s = 3300 μs
+        # 4-digit fraction: 0.0033 s = 3300 μs.
         ts = _parse_timestamp('2026-02-27T03:01:19.0033Z')
         assert ts.microsecond == 3300
 

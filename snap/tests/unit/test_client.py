@@ -112,7 +112,7 @@ class TestErrorResponses:
             ('snap-channel-not-available', ChannelNotAvailableError),
             ('snap-needs-classic', NeedsClassicError),
             ('snap-not-found', NotFoundError),
-            ('some-unrecognised-kind', APIError),  # unknown kinds fall back to the base type
+            ('some-unrecognised-kind', APIError),  # Unknown kinds fall back to the base type.
         ],
     )
     def test_error_kind_maps_to_type(
@@ -126,7 +126,7 @@ class TestErrorResponses:
         })
         with pytest.raises(expected_type) as exc_info:
             _client.get('/v2/snaps/hello-world')
-        assert type(exc_info.value) is expected_type  # exact type, not a subclass
+        assert type(exc_info.value) is expected_type  # Exact type, not a subclass.
         # Fields from the response body are preserved on the exception.
         assert exc_info.value.message == 'boom'
         assert exc_info.value.kind == kind
@@ -143,7 +143,7 @@ class TestErrorResponses:
         })
         with pytest.raises(APIError) as exc_info:
             _client.get('/v2/snaps/hello-world')
-        assert type(exc_info.value) is APIError  # missing kind falls back to the base type
+        assert type(exc_info.value) is APIError  # Missing kind falls back to the base type.
         assert exc_info.value.kind == ''
         assert exc_info.value.value == ''
 
@@ -169,8 +169,8 @@ class TestErrorResponses:
         [
             (b'not json at all', 'Invalid JSON'),
             (b'[1, 2, 3]', 'Unexpected response type'),
-            ({'status-code': 200, 'result': {}}, 'Missing expected key'),  # no 'type' key
-            ({'type': 'sync', 'status-code': 200}, 'Missing expected key'),  # no 'result' key
+            ({'status-code': 200, 'result': {}}, 'Missing expected key'),  # No 'type' key.
+            ({'type': 'sync', 'status-code': 200}, 'Missing expected key'),  # No 'result' key.
         ],
     )
     def test_malformed_response_raises_bad_response_error(
@@ -244,8 +244,8 @@ class TestAsyncChange:
         with pytest.raises(ChangeError) as exc_info:
             _client.post('/v2/aliases', body={'action': 'alias'})
         assert exc_info.value.kind == 'charmlibs-snap-change-error'
-        assert exc_info.value.message == 'install failed'  # taken from the 'err' field
-        assert exc_info.value.value == '42'  # the change id
+        assert exc_info.value.message == 'install failed'  # Taken from the 'err' field.
+        assert exc_info.value.value == '42'  # The change id.
 
     def test_async_wait_status_logs_warning(self, mock_raw: MagicMock, caplog: LogCaptureFixture):
         wait: dict[str, Any] = {
@@ -285,7 +285,7 @@ class TestAsyncChange:
         ]
         with pytest.raises(ChangeError):
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
-        # POST + poll returning undo status + poll returning error = 3 calls
+        # POST + poll returning undo status + poll returning error = 3 calls.
         assert mock_raw.call_count == 3
 
     def test_async_timeout_raises(self, mock_raw: MagicMock, mocker: MockerFixture):
@@ -360,7 +360,7 @@ class TestRealErrorFixtures:
             ('app_not_found_error.json', AppNotFoundError),
             ('conf_option_not_found_error.json', OptionNotFoundError),
             ('snap_no_update_available_error.json', _NoUpdatesAvailableError),
-            ('interfaces_not_installed_error.json', APIError),  # no 'kind' -> base type
+            ('interfaces_not_installed_error.json', APIError),  # No 'kind' -> base type.
         ],
     )
     def test_sync_error_fixture_decodes_to_exception(
@@ -372,7 +372,7 @@ class TestRealErrorFixtures:
         with pytest.raises(expected_type) as exc_info:
             _client._request_json_and_decode('GET', '/fake/path')
         exc = exc_info.value
-        assert type(exc) is expected_type  # exact type, not a subclass
+        assert type(exc) is expected_type  # Exact type, not a subclass.
         assert exc.message == result['message']
         assert exc.kind == result.get('kind', '')
         assert exc.value == result.get('value', '')
@@ -381,7 +381,7 @@ class TestRealErrorFixtures:
 
 class TestRealChangeFixtures:
     def test_async_change_completes(self, mock_raw: MagicMock):
-        # async POST -> Doing poll -> Done poll, all from real captured responses.
+        # Async POST -> Doing poll -> Done poll, all from real captured responses.
         done = load_fixture('change_done.json')
         mock_raw.side_effect = [
             _fake_response(load_fixture('async_accepted.json')),
@@ -403,5 +403,5 @@ class TestRealChangeFixtures:
         with pytest.raises(ChangeError) as exc_info:
             _client.post('/v2/aliases', body={'action': 'alias'})
         assert exc_info.value.kind == 'charmlibs-snap-change-error'
-        assert exc_info.value.message == change['err']  # message comes from the 'err' field
-        assert exc_info.value.value == async_envelope['change']  # the polled change id
+        assert exc_info.value.message == change['err']  # Message comes from the 'err' field.
+        assert exc_info.value.value == async_envelope['change']  # The polled change id.

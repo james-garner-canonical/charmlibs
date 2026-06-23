@@ -58,7 +58,7 @@ def test_connect_already_connected_no_error():
     ensure_installed(_SNAP)
     _ensure_connected()
     assert _is_connected()
-    _snapd_interfaces.connect(_SNAP, _PLUG)  # should not raise
+    _snapd_interfaces.connect(_SNAP, _PLUG)  # Should not raise.
     assert _is_connected()
 
 
@@ -97,7 +97,7 @@ def test_disconnect_not_connected_no_error():
     # This makes disconnect symmetric with connect: both succeed silently when no change needed.
     ensure_installed(_SNAP)
     _ensure_disconnected()
-    _snapd_interfaces.disconnect(_SNAP, _PLUG)  # should not raise
+    _snapd_interfaces.disconnect(_SNAP, _PLUG)  # Should not raise.
     assert not _is_connected()
 
 
@@ -105,7 +105,7 @@ def test_disconnect_forget_connected_no_error():
     # disconnect forget=True on a connected interface works without error.
     ensure_installed(_SNAP)
     _ensure_connected()
-    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
+    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # Should not raise.
 
 
 def test_disconnect_forget_not_connected_no_error():
@@ -113,7 +113,7 @@ def test_disconnect_forget_not_connected_no_error():
     # (interfaces-unchanged suppressed, same as without forget=True).
     ensure_installed(_SNAP)
     _ensure_disconnected()
-    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # should not raise
+    _snapd_interfaces.disconnect(_SNAP, _PLUG, forget=True)  # Should not raise.
 
 
 def test_disconnect_nonexistent_plug_or_slot_raises():
