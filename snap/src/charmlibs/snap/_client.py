@@ -40,32 +40,53 @@ logger = logging.getLogger(__name__)
 # We need the powerful snapd socket.
 # Defined in the snap application itself under dirs/dirs.go as SnapdSocket.
 _SOCKET_PATH = '/run/snapd.socket'
-# Per-request timeout, matching the snap CLI's `doTimeout` (client/client.go). snapd may spend
-# up to ~38s on store lookups within a single request, so this must not be set below ~120s for
-# change-creating or change-polling calls. This is the only per-call bound; like the CLI, we
-# place no overall wall-clock deadline on a change reaching a terminal state.
+# Timeout for a single request attempt, matching the snap CLI's `doTimeout` (client/client.go).
+# snapd may spend up to ~38s on store lookups within a single request, so this should not be
+# much lower. We place no overall deadline on a change, only this per-attempt bound.
 # TODO: a user-facing way to set this? e.g. charmlibs.snap.set_request_timeout(120)
 _REQUEST_TIMEOUT = 120
-# Spacing between successful `/v2/changes/<id>` polls, matching the snap CLI's `pollTime`.
+# snapd may be briefly unreachable while it restarts itself (e.g. mid-refresh), so we retry a
+# GET that fails to connect for a short while before giving up, matching the spirit of the snap
+# CLI's `maxGoneTime`/`doRetry` (cmd/snap/wait.go, client/client.go). Only connection failures
+# are retried, and only when snapd is present: a missing socket and a request timeout are not.
+_CONNECTION_RETRY_BUDGET = 5
+_CONNECTION_RETRY_INTERVAL = 0.25
+# Spacing between successful change polls, matching the snap CLI's `pollTime`.
 _POLL_INTERVAL = 0.1
-# Spacing between retries of a *failed* poll, matching the snap CLI's `doRetry`.
-_POLL_RETRY_INTERVAL = 0.25
-# Grace window for snapd being unreachable mid-change (e.g. a daemon restart during a refresh),
-# matching the snap CLI's `maxGoneTime`. This bounds only transient connection failures while
-# polling; it is not a deadline on the change itself.
-_MAX_GONE_TIME = 5
 
 
 def get(path: str, query: dict[str, Any] | None = None):
     """GET request to snapd REST API."""
-    result = _request_json_and_decode('GET', path, query=query)
+    response = _retry_json_get(path, query=query)
+    result = _decode(response)
     return _resolve(result)
 
 
 def get_logs(query: dict[str, Any] | None = None):
     """GET request to /v2/logs endpoint, which returns a stream of log entries."""
-    response = _request_json('GET', '/v2/logs', query=query)
+    response = _retry_json_get('/v2/logs', query=query)
     return _decode_logs(response)
+
+
+def _retry_json_get(
+    path: str,
+    *,
+    query: dict[str, Any] | None = None,
+    log: bool = True,
+) -> http.client.HTTPResponse:
+    """Make a GET request to snapd, retrying transient connection failures.
+
+    See :data:`_CONNECTION_RETRY_BUDGET`. The decoding of the response is left to the caller so
+    that only the request itself is retried.
+    """
+    deadline = time.monotonic() + _CONNECTION_RETRY_BUDGET
+    while True:
+        try:
+            return _request_json('GET', path, query=query, log=log)
+        except _errors.ConnectionError as e:  # noqa: PERF203
+            if e.kind == 'charmlibs-snap-socket-not-found' or time.monotonic() > deadline:
+                raise
+            time.sleep(_CONNECTION_RETRY_INTERVAL)
 
 
 def post(path: str, body: dict[str, Any] | None = None):
@@ -268,10 +289,8 @@ class _Change:
     def wait(self) -> object:
         """Poll until the change reaches a terminal state, then return its data.
 
-        Like the snap CLI, this places no overall wall-clock deadline on the change: it polls
-        until the change is ``Done``, ``Wait``, or ``Error``. The only bounded waits are the
-        per-request timeout (:data:`_REQUEST_TIMEOUT`) and the server-gone grace window
-        (:data:`_MAX_GONE_TIME`) applied while snapd is unreachable mid-change.
+        Like the snap CLI, this places no overall deadline on the change: it polls until the
+        change is ``Done``, ``Wait``, or ``Error``.
         """
         logger.debug('Waiting for change [%s]', self._id)
         while True:
@@ -301,24 +320,8 @@ class _Change:
                     )
 
     def _poll(self):
-        """Fetch the change once, retrying past transient snapd-unreachable failures.
-
-        snapd may become briefly unreachable mid-change, for example when it restarts itself
-        during a refresh. Following the snap CLI's ``maxGoneTime`` behaviour, we retry such
-        connection failures for up to :data:`_MAX_GONE_TIME` seconds (spaced by
-        :data:`_POLL_RETRY_INTERVAL`) before giving up. This bounds only the unreachable
-        window, not the change itself.
-        """
-        deadline = time.monotonic() + _MAX_GONE_TIME
-        while True:
-            try:
-                result = _request_json_and_decode('GET', f'/v2/changes/{self._id}', log=False)
-            except (_errors.ConnectionError, _errors.TimeoutError):
-                if time.monotonic() > deadline:
-                    raise
-                time.sleep(_POLL_RETRY_INTERVAL)
-                continue
-            break
+        response = _retry_json_get(f'/v2/changes/{self._id}', log=False)
+        result = _decode(response)
         if not isinstance(result, dict):
             raise _errors.BadResponseError(
                 message=f'Unexpected response type {type(result).__name__} while waiting for change {self._id}',  # noqa: E501

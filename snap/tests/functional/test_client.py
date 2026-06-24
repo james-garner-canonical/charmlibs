@@ -201,21 +201,19 @@ def test_put_empty_body_succeeds():
     _client.put('/v2/snaps/lxd/conf', body={})  # Should not raise.
 
 
-def test_poll_reraises_when_snapd_unreachable_past_gone_grace():
-    # Submit a real async change, then make snapd unreachable while waiting on it. With
-    # _MAX_GONE_TIME=0 the server-gone grace window expires before the first failed poll can
-    # be retried, so the connection error propagates. This exercises the real poll/retry path
-    # without an overall change deadline (which the library no longer has).
+def test_poll_fails_fast_when_socket_missing():
+    # Submit a real async change, then point the client at a missing socket while waiting on it.
+    # A missing socket means snapd is absent, so the poll fails fast without retrying.
     ensure_installed('lxd')
     change = _client._request_json_and_decode(
         'PUT', '/v2/snaps/lxd/conf', body={'test-gone-key': 'value'}
     )
     assert isinstance(change, _client._Change)
     with pytest.MonkeyPatch.context() as mp:
-        mp.setattr(_client, '_MAX_GONE_TIME', 0)
         mp.setattr(_client, '_SOCKET_PATH', '/run/this-snapd-socket-does-not-exist.socket')
-        with pytest.raises(_errors.ConnectionError):
+        with pytest.raises(_errors.ConnectionError) as ctx:
             change.wait()
+    assert ctx.value.kind == 'charmlibs-snap-socket-not-found'
     # snapd is still processing the original change; wait for it before cleaning up.
     change.wait()
     _client.put('/v2/snaps/lxd/conf', body={'test-gone-key': None})

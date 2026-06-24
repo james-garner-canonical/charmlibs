@@ -192,16 +192,21 @@ class TestErrorResponses:
         assert isinstance(exc_info.value, TimeoutError)
 
     def test_socket_not_found_raises_snap_connection_error(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, mocker: MockerFixture
     ):
         # Point _SOCKET_PATH at a real non-existent path so the real URLError fires.
         monkeypatch.setattr(_client, '_SOCKET_PATH', str(tmp_path / 'does-not-exist'))
+        # A missing socket means snapd is absent, so the request fails fast without retrying.
+        sleep = mocker.patch('charmlibs.snap._client.time.sleep')
         with pytest.raises(ConnectionError) as exc_info:
             _client.get('/v2/snaps/hello-world')
         assert exc_info.value.kind == 'charmlibs-snap-socket-not-found'
         assert isinstance(exc_info.value, ConnectionError)
+        sleep.assert_not_called()
 
-    def test_other_url_error_raises_snap_connection_error(self, mocker: MockerFixture):
+    def test_connection_error_retries_then_raises(self, mocker: MockerFixture):
+        mocker.patch('charmlibs.snap._client._CONNECTION_RETRY_BUDGET', 0)
+        sleep = mocker.patch('charmlibs.snap._client.time.sleep')
         mocker.patch(
             'urllib.request.OpenerDirector.open',
             side_effect=urllib.error.URLError('connection refused'),
@@ -210,6 +215,22 @@ class TestErrorResponses:
             _client.get('/v2/snaps/hello-world')
         assert exc_info.value.kind == 'charmlibs-snap-connection-error'
         assert isinstance(exc_info.value, ConnectionError)
+        # Budget is 0, so the first failure is past the deadline: no retry sleep.
+        sleep.assert_not_called()
+
+    def test_connection_error_retried_until_success(
+        self, mock_raw: MagicMock, mocker: MockerFixture
+    ):
+        # A transient connection failure on a GET is retried, then the retry succeeds.
+        mocker.patch('charmlibs.snap._client.time.sleep')
+        mock_raw.side_effect = [
+            ConnectionError(
+                'connection refused', kind='charmlibs-snap-connection-error', value=''
+            ),
+            _fake_response({'type': 'sync', 'result': {'foo': 'bar'}}),
+        ]
+        assert _client.get('/v2/snaps/hello-world') == {'foo': 'bar'}
+        assert mock_raw.call_count == 2
 
 
 class TestAsyncChange:
@@ -298,23 +319,27 @@ class TestAsyncChange:
             _fake_response({'type': 'async', 'change': '42'}),
             # _request_raw translates urllib errors into ConnectionError; mock that here since
             # the patch replaces _request_raw (below that translation).
-            ConnectionError('connection refused', kind='charmlibs-snap', value=''),
+            ConnectionError(
+                'connection refused', kind='charmlibs-snap-connection-error', value=''
+            ),
             _fake_response(done),
         ]
         _client.post('/v2/snaps/hello-world', body={'action': 'hold'})  # Should not raise.
         # POST + failed poll + retried poll returning Done = 3 calls.
         assert mock_raw.call_count == 3
 
-    def test_async_poll_reraises_after_gone_grace(
+    def test_async_poll_reraises_after_retry_budget(
         self, mock_raw: MagicMock, mocker: MockerFixture
     ):
-        """If snapd stays unreachable past the grace window, the connection error propagates."""
-        mocker.patch('charmlibs.snap._client._MAX_GONE_TIME', 0)
+        """If snapd stays unreachable past the retry budget, the connection error propagates."""
+        mocker.patch('charmlibs.snap._client._CONNECTION_RETRY_BUDGET', 0)
         mocker.patch('charmlibs.snap._client.time.sleep')
         mock_raw.side_effect = [
             _fake_response({'type': 'async', 'change': '42'}),
-            # poll fails past the grace window (see note above re: ConnectionError).
-            ConnectionError('connection refused', kind='charmlibs-snap', value=''),
+            # poll fails past the retry budget (see note above re: ConnectionError).
+            ConnectionError(
+                'connection refused', kind='charmlibs-snap-connection-error', value=''
+            ),
         ]
         with pytest.raises(ConnectionError):
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
