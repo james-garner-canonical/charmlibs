@@ -50,12 +50,6 @@ def get(snap: str, /, *keys: str) -> dict[str, Any]:
     return typing.cast('dict[str, Any]', config)
 
 
-def _get_one(snap: str, key: str, /) -> Any:  # pyright: ignore[reportUnusedFunction]
-    """Get a single snap configuration key."""
-    config = get(snap, key)
-    return config[key]
-
-
 def unset(snap: str, key: str, /, *keys: str) -> None:
     """Unset snap configuration keys.
 

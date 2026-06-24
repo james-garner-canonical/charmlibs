@@ -17,13 +17,8 @@
 from __future__ import annotations
 
 import logging
-import typing
 
 from . import _client
-
-if typing.TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
-
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +57,3 @@ def unalias(alias_name: str) -> None:
     """
     data = {'action': 'unalias', 'alias': alias_name}
     _client.post('/v2/aliases', body=data)
-
-
-def _list_aliases() -> Mapping[str, Iterable[str]]:  # pyright: ignore[reportUnusedFunction]
-    """List all aliases."""
-    aliases = _client.get('/v2/aliases')
-    assert isinstance(aliases, dict)
-    return typing.cast('dict[str, list[str]]', aliases)

@@ -246,25 +246,3 @@ class TestUnhold:
         mock_client.post.assert_called_once_with(
             '/v2/snaps/hello-world', body={'action': 'unhold'}
         )
-
-
-class TestListSnaps:
-    def test_list_snaps(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('snaps_list.json')
-        snaps = _snapd._list_snaps()
-        mock_client.get.assert_called_once_with('/v2/snaps')
-        assert all(isinstance(s, _snapd.Info) for s in snaps)
-        assert {s.name for s in snaps} == {'hello-world', 'kube-proxy'}
-
-
-class TestListChannels:
-    def test_list_channels(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('find_hello_world.json')
-        channels = _snapd._list_channels('hello-world')
-        mock_client.get.assert_called_once_with('/v2/find', query={'name': 'hello-world'})
-        assert set(channels) == {'latest/stable', 'latest/candidate', 'latest/beta', 'latest/edge'}
-        assert all(isinstance(v, _snapd.Info) for v in channels.values())
-        info = channels['latest/stable']
-        assert info.name == 'hello-world'
-        assert info.revision == '29'
-        assert info.classic is False

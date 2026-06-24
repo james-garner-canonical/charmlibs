@@ -24,6 +24,13 @@ _KEY2 = 'test-functional-key2'
 _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
 
 
+# Test helper and possible future candidate for library public API.
+def _get_one(snap: str, key: str, /) -> Any:
+    """Get a single snap configuration key."""
+    config = _snapd_conf.get(snap, key)
+    return config[key]
+
+
 def _cleanup(*keys: str) -> None:
     """Unset test keys to avoid contaminating other tests."""
     _snapd_conf.unset(_SNAP, _KEY, *keys)
@@ -37,49 +44,51 @@ def _cleanup(*keys: str) -> None:
 def test_set_and_get_bool_true():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: True})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] is True
+    assert _get_one(_SNAP, _KEY) is True
     _cleanup()
 
 
 def test_set_and_get_bool_false():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: False})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] is False
+    assert _get_one(_SNAP, _KEY) is False
     _cleanup()
 
 
 def test_set_and_get_integer():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: 42})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] == 42
+    assert _get_one(_SNAP, _KEY) == 42
     _cleanup()
 
 
 def test_set_and_get_float():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: 3.14})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] == 3.14
+    assert _get_one(_SNAP, _KEY) == 3.14
     _cleanup()
 
 
 def test_set_and_get_string():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: 'hello'})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] == 'hello'
+    assert _get_one(_SNAP, _KEY) == 'hello'
     _cleanup()
 
 
 def test_set_and_get_list():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: [1, 2, 3]})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] == [1, 2, 3]
+    assert _get_one(_SNAP, _KEY) == [1, 2, 3]
     _cleanup()
 
 
 def test_set_and_get_dict():
     ensure_installed(_SNAP)
     _snapd_conf.set(_SNAP, {_KEY: {'a': 1, 'b': 'two'}})
-    assert _snapd_conf.get(_SNAP, _KEY)[_KEY] == {'a': 1, 'b': 'two'}
+    assert _get_one(_SNAP, _KEY) == {'a': 1, 'b': 'two'}
+    # Dotted notation reads back a single nested value.
+    assert _get_one(_SNAP, f'{_KEY}.a') == 1
     _cleanup()
 
 
@@ -150,25 +159,6 @@ def test_get_not_installed_snap_raises_option_not_found():
     with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_ABSENT_SNAP, 'any-key')
     assert ctx.value.kind == 'option-not-found'
-
-
-# ---------------------------------------------------------------------------
-# _get_one (private helper)
-# ---------------------------------------------------------------------------
-
-
-def test_get_one():
-    ensure_installed(_SNAP)
-    _snapd_conf.set(_SNAP, {_KEY: {'nested': 'value'}})
-    result = _snapd_conf._get_one(_SNAP, f'{_KEY}.nested')
-    assert result == 'value'
-    _cleanup()
-
-
-def test_get_one_option_not_found_raises():
-    ensure_installed(_SNAP)
-    with pytest.raises(_errors.OptionNotFoundError):
-        _snapd_conf._get_one(_SNAP, 'nonexistent-key')
 
 
 # ---------------------------------------------------------------------------

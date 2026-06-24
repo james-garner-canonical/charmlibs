@@ -4,9 +4,15 @@
 
 """Functional tests for _snapd_interfaces: connect, disconnect."""
 
+from __future__ import annotations
+
+import dataclasses
+import typing
+from typing import Any
+
 import pytest
 
-from charmlibs.snap import _errors, _snapd_interfaces
+from charmlibs.snap import _client, _errors, _snapd_interfaces
 from conftest import ensure_installed
 
 _SNAP = 'htop'
@@ -20,12 +26,66 @@ _SLOT = 'mount-observe'
 _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
 
 
-def _is_connected() -> bool:
-    interfaces = _snapd_interfaces._list_interfaces(_SNAP, connected_only=True)
-    return any(
-        i['name'] == _PLUG and any(p['snap'] == _SNAP for p in i.get('plugs', []))
+# ---------------------------------------------------------------------------
+# Test helpers and possible future candidates for library public API.
+# ---------------------------------------------------------------------------
+
+
+@dataclasses.dataclass
+class _Plug:
+    interface: str
+    plug: str
+
+
+@dataclasses.dataclass
+class _Slot:
+    interface: str
+    slot: str
+
+
+def _list_plugs(snap: str, connected_only: bool = False) -> list[_Plug]:
+    interfaces = _list_interfaces(snap, connected_only=connected_only)
+    return [
+        _Plug(interface=i['name'], plug=p['plug'])
         for i in interfaces
-    )
+        for p in i.get('plugs', [])
+        if p['snap'] == snap
+    ]
+
+
+def _list_slots(snap: str, connected_only: bool = False) -> list[_Slot]:
+    interfaces = _list_interfaces(snap, connected_only=connected_only)
+    return [
+        _Slot(interface=i['name'], slot=s['slot'])
+        for i in interfaces
+        for s in i.get('slots', [])
+        if s['snap'] == snap
+    ]
+
+
+def _list_interfaces(
+    snap: str | None = None, connected_only: bool = False
+) -> list[dict[str, Any]]:
+    """List snap interfaces."""
+    query = {'select': 'connected' if connected_only else 'all', 'slots': 'true', 'plugs': 'true'}
+    interfaces = _client.get('/v2/interfaces', query=query)
+    assert isinstance(interfaces, list)
+    interfaces = typing.cast('list[dict[str, Any]]', interfaces)
+    if snap is None:
+        return interfaces
+    return [
+        i
+        for i in interfaces
+        if any(p['snap'] == snap for p in i.get('plugs', []))
+        or any(s['snap'] == snap for s in i.get('slots', []))
+    ]
+
+
+# ---------------------------------------------------------------------------
+
+
+def _is_connected() -> bool:
+    return any(p.plug == _PLUG for p in _list_plugs(_SNAP, connected_only=True))
 
 
 def _ensure_disconnected() -> None:
@@ -33,11 +93,18 @@ def _ensure_disconnected() -> None:
         _snapd_interfaces.disconnect(_SNAP, _PLUG)
     except Exception:  # noqa: S110
         pass
+    # Post-condition: the plug really is no longer connected.
+    assert not any(p.plug == _PLUG for p in _list_plugs(_SNAP, connected_only=True))
 
 
 def _ensure_connected() -> None:
+    # Pre-condition: the slot side (snapd) actually provides the mount-observe slot,
+    # otherwise the connection could never succeed.
+    assert any(s.slot == _SLOT for s in _list_slots(_SLOT_SNAP))
     if not _is_connected():
         _snapd_interfaces.connect(_SNAP, _PLUG)
+    # Post-condition: the plug is now connected.
+    assert _is_connected()
 
 
 # ---------------------------------------------------------------------------
@@ -123,58 +190,6 @@ def test_disconnect_nonexistent_plug_or_slot_raises():
         _snapd_interfaces.disconnect(_SNAP, 'nonexistent-slot')
     assert not ctx.value.kind
     assert 'no plug or slot named' in ctx.value.message
-
-
-# ---------------------------------------------------------------------------
-# _list_interfaces / _list_plugs / _list_slots
-# ---------------------------------------------------------------------------
-
-
-def test_list_interfaces_returns_list():
-    ensure_installed(_SNAP)
-    interfaces = _snapd_interfaces._list_interfaces()
-    assert isinstance(interfaces, list)
-    assert len(interfaces) > 0
-
-
-def test_list_interfaces_filter_by_snap():
-    ensure_installed(_SNAP)
-    interfaces = _snapd_interfaces._list_interfaces(_SNAP)
-    assert isinstance(interfaces, list)
-    # Every returned interface should involve the snap.
-    for iface in interfaces:
-        snaps_in_iface = {p['snap'] for p in iface.get('plugs', [])} | {
-            s['snap'] for s in iface.get('slots', [])
-        }
-        assert _SNAP in snaps_in_iface
-
-
-def test_list_interfaces_connected_only():
-    ensure_installed(_SNAP)
-    _ensure_connected()
-    connected = _snapd_interfaces._list_interfaces(_SNAP, connected_only=True)
-    assert any(
-        i['name'] == _PLUG and any(p['snap'] == _SNAP for p in i.get('plugs', []))
-        for i in connected
-    )
-
-
-def test_list_plugs_returns_plugs():
-    ensure_installed(_SNAP)
-    plugs = _snapd_interfaces._list_plugs(_SNAP)
-    assert isinstance(plugs, list)
-    plug_names = [p.plug for p in plugs]
-    assert _PLUG in plug_names
-
-
-def test_list_plugs_connected_only():
-    ensure_installed(_SNAP)
-    _ensure_connected()
-    connected_plugs = _snapd_interfaces._list_plugs(_SNAP, connected_only=True)
-    assert any(p.plug == _PLUG for p in connected_plugs)
-    _ensure_disconnected()
-    disconnected_plugs = _snapd_interfaces._list_plugs(_SNAP, connected_only=True)
-    assert not any(p.plug == _PLUG for p in disconnected_plugs)
 
 
 # ---------------------------------------------------------------------------

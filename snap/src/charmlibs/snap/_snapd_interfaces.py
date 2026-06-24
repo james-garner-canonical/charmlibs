@@ -16,8 +16,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-import typing
 from typing import Any
 
 from . import _client, _errors
@@ -108,53 +106,3 @@ def disconnect(
         _client.post('/v2/interfaces', body=data)
     except _errors._InterfacesUnchangedError:
         pass  # Follow the snap CLI's lead and suppress this error.
-
-
-def _list_interfaces(
-    snap: str | None = None, connected_only: bool = False
-) -> list[dict[str, Any]]:
-    """List snap interfaces."""
-    query = {'select': 'connected' if connected_only else 'all', 'slots': 'true', 'plugs': 'true'}
-    interfaces = _client.get('/v2/interfaces', query=query)
-    assert isinstance(interfaces, list)
-    interfaces = typing.cast('list[dict[str, Any]]', interfaces)
-    if snap is None:
-        return interfaces
-    return [
-        i
-        for i in interfaces
-        if any(p['snap'] == snap for p in i.get('plugs', []))
-        or any(s['snap'] == snap for s in i.get('slots', []))
-    ]
-
-
-@dataclasses.dataclass
-class _Plug:
-    interface: str
-    plug: str
-
-
-def _list_plugs(snap: str, connected_only: bool = False) -> list[_Plug]:  # pyright: ignore[reportUnusedFunction]
-    interfaces = _list_interfaces(snap, connected_only=connected_only)
-    return [
-        _Plug(interface=i['name'], plug=p['plug'])
-        for i in interfaces
-        for p in i.get('plugs', [])
-        if p['snap'] == snap
-    ]
-
-
-@dataclasses.dataclass
-class _Slot:
-    interface: str
-    slot: str
-
-
-def _list_slots(snap: str, connected_only: bool = False) -> list[_Slot]:  # pyright: ignore[reportUnusedFunction]
-    interfaces = _list_interfaces(snap, connected_only=connected_only)
-    return [
-        _Slot(interface=i['name'], slot=s['slot'])
-        for i in interfaces
-        for s in i.get('slots', [])
-        if s['snap'] == snap
-    ]

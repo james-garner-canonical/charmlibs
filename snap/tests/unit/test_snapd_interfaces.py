@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 
 from charmlibs.snap import _snapd_interfaces
 from charmlibs.snap._errors import _InterfacesUnchangedError
-from charmlibs.snap._snapd_interfaces import _Plug, _Slot
-from conftest import result_of
 
 if TYPE_CHECKING:
     from conftest import MockClient
@@ -94,82 +92,3 @@ class TestDisconnect:
             status='Bad Request',
         )
         _snapd_interfaces.disconnect('vlc', 'mount-observe', forget=True)  # Should not raise.
-
-
-class TestListInterfaces:
-    def test_list_all(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        interfaces = _snapd_interfaces._list_interfaces()
-        assert len(interfaces) == 2
-        mock_client.get.assert_called_once_with(
-            '/v2/interfaces',
-            query={'select': 'all', 'slots': 'true', 'plugs': 'true'},
-        )
-
-    def test_filter_plug_snap(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        # vlc only has a plug in mount-observe.
-        interfaces = _snapd_interfaces._list_interfaces(snap='vlc')
-        assert len(interfaces) == 1
-        assert interfaces[0]['name'] == 'mount-observe'
-
-    def test_filter_slot_snap(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        # snapd has slots in both interfaces.
-        interfaces = _snapd_interfaces._list_interfaces(snap='snapd')
-        assert len(interfaces) == 2
-
-    def test_snap_not_present(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        interfaces = _snapd_interfaces._list_interfaces(snap='unknown')
-        assert interfaces == []
-
-    def test_connected_only(self, mock_client: MockClient):
-        mock_client.get.return_value = []
-        _snapd_interfaces._list_interfaces(connected_only=True)
-        query = mock_client.get.call_args.kwargs['query']
-        assert query['select'] == 'connected'
-
-    def test_all_not_connected_only(self, mock_client: MockClient):
-        mock_client.get.return_value = []
-        _snapd_interfaces._list_interfaces(connected_only=False)
-        query = mock_client.get.call_args.kwargs['query']
-        assert query['select'] == 'all'
-
-
-class TestListPlugs:
-    def test_list_plugs_vlc(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        plugs = _snapd_interfaces._list_plugs('vlc')
-        assert len(plugs) == 1
-        assert plugs[0] == _Plug(interface='mount-observe', plug='mount-observe')
-
-    def test_list_plugs_lxd(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        plugs = _snapd_interfaces._list_plugs('lxd')
-        assert len(plugs) == 1
-        assert plugs[0] == _Plug(interface='lxd-support', plug='lxd-support')
-
-    def test_list_plugs_empty(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        plugs = _snapd_interfaces._list_plugs('unknown')
-        assert plugs == []
-
-
-class TestListSlots:
-    def test_list_slots_core(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        slots = _snapd_interfaces._list_slots('snapd')
-        assert len(slots) == 2
-        slot_names = {s.slot for s in slots}
-        assert slot_names == {'mount-observe', 'lxd-support'}
-
-    def test_list_slots_empty(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        slots = _snapd_interfaces._list_slots('unknown')
-        assert slots == []
-
-    def test_list_slots_returns_slot_dataclass(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('interfaces_all.json')
-        slots = _snapd_interfaces._list_slots('snapd')
-        assert all(isinstance(s, _Slot) for s in slots)

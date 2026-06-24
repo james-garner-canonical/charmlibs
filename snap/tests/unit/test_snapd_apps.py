@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from charmlibs.snap import _snapd_apps
-from conftest import result_of
 
 if TYPE_CHECKING:
     from conftest import MockClient
@@ -64,26 +63,3 @@ class TestRestart:
         _snapd_apps.restart('lxd', 'daemon')
         body = mock_client.post.call_args.kwargs['body']
         assert body['names'] == ['lxd.daemon']
-
-
-class TestListServices:
-    def test_list_services_for_snap(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('services_lxd.json')
-        services = _snapd_apps._list_services('lxd')
-        assert isinstance(services, list)
-        assert len(services) == 3
-        assert services[0]['name'] == 'activate'
-        mock_client.get.assert_called_once_with(
-            '/v2/apps', query={'select': 'service', 'names': 'lxd'}
-        )
-
-    def test_list_services_no_snap(self, mock_client: MockClient):
-        mock_client.get.return_value = []
-        _snapd_apps._list_services()
-        query = mock_client.get.call_args.kwargs['query']
-        assert 'names' not in query
-
-    def test_list_services_returns_list(self, mock_client: MockClient):
-        mock_client.get.return_value = result_of('services_lxd.json')
-        result = _snapd_apps._list_services('lxd')
-        assert isinstance(result, list)

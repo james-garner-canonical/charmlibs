@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from charmlibs.snap import _snapd_conf
-from charmlibs.snap._errors import ChangeError, OptionNotFoundError
+from charmlibs.snap._errors import ChangeError
 from conftest import result_of
 
 if TYPE_CHECKING:
@@ -39,24 +39,6 @@ class TestGet:
         result = _snapd_conf.get('lxd')
         assert isinstance(result, dict)
         assert 'criu' in result
-
-
-class TestGetOne:
-    def test_get_one(self, mock_client: MockClient):
-        mock_client.get.return_value = {'core.https_address': '[::]:8443'}
-        result = _snapd_conf._get_one('lxd', 'core.https_address')
-        assert result == '[::]:8443'
-
-    def test_get_one_missing(self, mock_client: MockClient):
-        mock_client.get.side_effect = OptionNotFoundError(
-            'snap "lxd" has no "keydoesnotexist01" configuration option',
-            kind='option-not-found',
-            value='',
-            status_code=400,
-            status='Bad Request',
-        )
-        with pytest.raises(OptionNotFoundError):
-            _snapd_conf._get_one('lxd', 'keydoesnotexist01')
 
 
 class TestSet:

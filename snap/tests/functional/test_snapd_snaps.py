@@ -9,17 +9,46 @@ hello-world *installed* run first, then all tests that need it *removed*, then
 tests that inherently install/remove as part of the test logic.
 """
 
+from __future__ import annotations
+
 import datetime
+import typing
+from typing import Any
 
 import pytest
 
-from charmlibs.snap import _errors
+from charmlibs.snap import _client, _errors
 from charmlibs.snap import _snapd_snaps as _snapd
 from conftest import ensure_installed, ensure_removed
 
 # A snap name that is never installed — used for error paths where any absent
 # snap produces the same error response, avoiding unnecessary remove operations.
 _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
+
+
+# Test helpers and possible future candidates for library public API.
+# _list_channels sources store channel/revision info for the install/refresh tests;
+# _list_snaps is an independent oracle (hits /v2/snaps) for the info()/missing-ok tests.
+def _list_snaps() -> list[_snapd.Info]:
+    """List all installed snaps."""
+    info_dicts = _client.get('/v2/snaps')
+    assert isinstance(info_dicts, list)
+    info_dicts = typing.cast('list[dict[str, str]]', info_dicts)
+    return [_snapd.Info._from_dict(info_dict) for info_dict in info_dicts]
+
+
+def _list_channels(snap: str) -> dict[str, _snapd.Info]:
+    """List information about all channels of a snap available in the store."""
+    results = _client.get('/v2/find', query={'name': snap})
+    assert isinstance(results, list)
+    results = typing.cast('list[dict[str, Any]]', results)
+    # API returns a list of results, or an error if there are no matches.
+    # We'll have one result for an exact name match.
+    result, *_ = results
+    channels = result['channels']
+    return {
+        k: _snapd.Info._from_dict({'name': snap, 'channel': k, **v}) for k, v in channels.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -34,6 +63,8 @@ def test_info_installed():
     assert info.channel
     assert info.revision
     assert info.version
+    # Independent oracle: /v2/snaps (list) should agree with /v2/snaps/{snap} (info).
+    assert 'hello-world' in {s.name for s in _list_snaps()}
 
 
 def test_info_fields():
@@ -58,6 +89,8 @@ def test_refresh_no_updates_returns_false():
 
 def test_refresh_channel():
     ensure_installed('hello-world', channel='latest/stable')
+    # Pre-flight: confirm the target channel exists before refreshing to it.
+    assert 'latest/candidate' in _list_channels('hello-world')
     _snapd.refresh('hello-world', channel='latest/candidate')
     info = _snapd.info('hello-world')
     assert info.channel == 'latest/candidate'
@@ -123,6 +156,8 @@ def test_remove():
 
 def test_info_missing_ok_false_raises_by_default():
     ensure_removed('hello-world')
+    # Independent oracle: the snap really is absent from /v2/snaps.
+    assert 'hello-world' not in {s.name for s in _list_snaps()}
     with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd.info('hello-world')
     assert ctx.value.kind == 'snap-not-found'
@@ -130,6 +165,8 @@ def test_info_missing_ok_false_raises_by_default():
 
 def test_info_missing_ok_true_returns_none():
     ensure_removed('hello-world')
+    # Independent oracle: the snap really is absent from /v2/snaps.
+    assert 'hello-world' not in {s.name for s in _list_snaps()}
     result = _snapd.info('hello-world', missing_ok=True)
     assert result is None
 
@@ -198,10 +235,14 @@ def test_install():
     info = _snapd.info('hello-world')
     assert info.name == 'hello-world'
     assert info.channel == 'latest/stable'
+    # The installed revision should match the store's current latest/stable revision.
+    assert info.revision == _list_channels('hello-world')['latest/stable'].revision
 
 
 def test_install_channel():
     ensure_removed('hello-world')
+    # Pre-flight: confirm the target channel actually exists in the store.
+    assert 'latest/candidate' in _list_channels('hello-world')
     _snapd.install('hello-world', channel='latest/candidate')
     info = _snapd.info('hello-world')
     assert info.channel == 'latest/candidate'
@@ -209,10 +250,13 @@ def test_install_channel():
 
 def test_install_revision():
     ensure_removed('hello-world')
-    # hello-world revision 28 is one behind the current 29.
-    _snapd.install('hello-world', revision=28)
+    # hello-world revision 28 is one behind the current latest/stable revision (sourced
+    # from the store rather than hard-coded, to document the relationship and catch drift).
+    current = int(_list_channels('hello-world')['latest/stable'].revision)
+    previous = current - 1
+    _snapd.install('hello-world', revision=previous)
     info = _snapd.info('hello-world')
-    assert info.revision == '28'
+    assert info.revision == str(previous)
 
 
 # ---------------------------------------------------------------------------
@@ -254,9 +298,3 @@ def test_install_channel_and_revision_raises():
 def test_refresh_channel_and_revision_raises():
     with pytest.raises(ValueError):
         _snapd.refresh('hello-world', channel='latest/stable', revision=28)  # type: ignore[call-overload]
-
-
-def test_list_channels_nonexistent_snap_raises():
-    with pytest.raises(_errors.NotFoundError) as ctx:
-        _snapd._list_channels(_ABSENT_SNAP)
-    assert ctx.value.kind == 'snap-not-found'

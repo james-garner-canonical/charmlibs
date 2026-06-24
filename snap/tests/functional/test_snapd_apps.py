@@ -7,11 +7,12 @@
 from __future__ import annotations
 
 import subprocess
+import typing
 from typing import Any
 
 import pytest
 
-from charmlibs.snap import _errors, _snapd_apps
+from charmlibs.snap import _client, _errors, _snapd_apps
 from conftest import ensure_installed
 
 _SNAP = 'kube-proxy'
@@ -23,8 +24,19 @@ _QUALIFIED_SERVICE = f'{_SNAP}.{_SERVICE}'
 _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
 
 
+# Test helper and possible future candidate for library public API.
+def _list_services(snap: str | None = None) -> list[dict[str, Any]]:
+    """List snap services."""
+    query = {'select': 'service'}
+    if snap:
+        query['names'] = snap
+    services = _client.get('/v2/apps', query=query)
+    assert isinstance(services, list)
+    return typing.cast('list[dict[str, Any]]', services)
+
+
 def _service_dict() -> dict[str, Any]:
-    services = _snapd_apps._list_services(_SNAP)
+    services = _list_services(_SNAP)
     return next(s for s in services if s['name'] == _SERVICE)
 
 
@@ -191,20 +203,6 @@ def test_restart_nonexistent_snap_raises():
 
 
 # ---------------------------------------------------------------------------
-# _list_services
-# ---------------------------------------------------------------------------
-
-
-def test_list_services_returns_list():
-    ensure_installed(_SNAP, classic=True)
-    services = _snapd_apps._list_services(_SNAP)
-    assert isinstance(services, list)
-    assert len(services) > 0
-    names = [s['name'] for s in services]
-    assert _SERVICE in names
-
-
-# ---------------------------------------------------------------------------
 # not-installed snap (uses a never-installed name to avoid churn)
 # ---------------------------------------------------------------------------
 
@@ -225,28 +223,6 @@ def test_restart_not_installed_snap_raises_app_not_found():
     with pytest.raises(_errors.AppNotFoundError) as ctx:
         _snapd_apps.restart(_ABSENT_SNAP, 'svc')
     assert ctx.value.kind == 'app-not-found'
-
-
-def test_list_services_no_snap_returns_all():
-    ensure_installed(_SNAP, classic=True)
-    all_services = _snapd_apps._list_services()
-    assert isinstance(all_services, list)
-    assert any(s.get('snap') == _SNAP for s in all_services)
-
-
-def test_list_services_snap_with_no_services_raises():
-    # The API raises app-not-found for a snap with no services.
-    ensure_installed('hello-world')
-    with pytest.raises(_errors.AppNotFoundError) as ctx:
-        _snapd_apps._list_services('hello-world')
-    assert ctx.value.kind == 'app-not-found'
-
-
-def test_list_services_uninstalled_snap_raises():
-    # The API raises snap-not-found for an uninstalled snap.
-    with pytest.raises(_errors.NotFoundError) as ctx:
-        _snapd_apps._list_services('nonexistent-snap-xyz')
-    assert ctx.value.kind == 'snap-not-found'
 
 
 # ---------------------------------------------------------------------------

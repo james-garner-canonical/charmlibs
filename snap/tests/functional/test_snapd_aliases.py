@@ -4,12 +4,17 @@
 
 """Functional tests for _snapd_aliases: alias, unalias."""
 
-import subprocess
+from __future__ import annotations
+
+import typing
 
 import pytest
 
-from charmlibs.snap import _errors, _snapd_aliases
+from charmlibs.snap import _client, _errors, _snapd_aliases
 from conftest import ensure_installed, ensure_removed
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Mapping
 
 _SNAP = 'lxd'
 _APP = 'lxc'
@@ -18,6 +23,14 @@ _ALIAS = 'test-functional-lxc-alias'
 # A snap name that is never installed — used for error paths where any absent
 # snap produces the same error response, avoiding unnecessary remove operations.
 _ABSENT_SNAP = 'this-snap-does-not-exist-xyz-abc-123'
+
+
+# Test helper and possible future candidate for library public API.
+def _list_aliases() -> Mapping[str, Mapping[str, Mapping[str, str]]]:
+    """List all aliases, keyed by snap then alias name: {snap: {alias: {command, status, ...}}}."""
+    aliases = _client.get('/v2/aliases')
+    assert isinstance(aliases, dict)
+    return typing.cast('dict[str, dict[str, dict[str, str]]]', aliases)
 
 
 def _cleanup_alias() -> None:
@@ -29,10 +42,8 @@ def _cleanup_alias() -> None:
 
 
 def _alias_exists() -> bool:
-    result = subprocess.check_output(['snap', 'aliases'], text=True)
-    return any(
-        line.split()[:3] == [f'{_SNAP}.{_APP}', _ALIAS, 'manual'] for line in result.splitlines()
-    )
+    info = _list_aliases().get(_SNAP, {}).get(_ALIAS)
+    return info is not None and info.get('command') == f'{_SNAP}.{_APP}'
 
 
 # ---------------------------------------------------------------------------
@@ -107,26 +118,6 @@ def test_unalias_nonexistent_alias_raises():
         _snapd_aliases.unalias(_ALIAS)
     assert not ctx.value.kind
     assert 'cannot find' in ctx.value.message or _ALIAS in ctx.value.message
-
-
-# ---------------------------------------------------------------------------
-# _list_aliases (lxd installed)
-# ---------------------------------------------------------------------------
-
-
-def test_list_aliases_returns_dict():
-    ensure_installed(_SNAP)
-    aliases = _snapd_aliases._list_aliases()
-    assert isinstance(aliases, dict)
-
-
-def test_list_aliases_includes_created_alias():
-    ensure_installed(_SNAP)
-    _cleanup_alias()
-    _snapd_aliases.alias(_SNAP, _APP, _ALIAS)
-    aliases = _snapd_aliases._list_aliases()
-    assert _SNAP in aliases
-    _cleanup_alias()
 
 
 # ---------------------------------------------------------------------------

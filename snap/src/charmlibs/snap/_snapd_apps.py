@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import typing
 from typing import Any
 
 from . import _client
@@ -79,13 +78,3 @@ def restart(snap: str, *services: str) -> None:
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'restart', 'names': names}
     _client.post('/v2/apps', body=data)
-
-
-def _list_services(snap: str | None = None) -> list[dict[str, Any]]:  # pyright: ignore[reportUnusedFunction]
-    """List snap services."""
-    query = {'select': 'service'}
-    if snap:
-        query['names'] = snap
-    services = _client.get('/v2/apps', query=query)
-    assert isinstance(services, list)
-    return typing.cast('list[dict[str, Any]]', services)
