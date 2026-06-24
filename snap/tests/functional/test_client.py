@@ -201,19 +201,24 @@ def test_put_empty_body_succeeds():
     _client.put('/v2/snaps/lxd/conf', body={})  # Should not raise.
 
 
-def test_change_timeout_raises_snap_timeout_error():
-    # With _CHANGE_TIMEOUT=0 the deadline fires before the first poll, exercising the
-    # change-timeout path with a real async operation (local conf PUT, no store needed).
+def test_poll_reraises_when_snapd_unreachable_past_gone_grace():
+    # Submit a real async change, then make snapd unreachable while waiting on it. With
+    # _MAX_GONE_TIME=0 the server-gone grace window expires before the first failed poll can
+    # be retried, so the connection error propagates. This exercises the real poll/retry path
+    # without an overall change deadline (which the library no longer has).
     ensure_installed('lxd')
+    change = _client._request_json_and_decode(
+        'PUT', '/v2/snaps/lxd/conf', body={'test-gone-key': 'value'}
+    )
+    assert isinstance(change, _client._Change)
     with pytest.MonkeyPatch.context() as mp:
-        mp.setattr(_client, '_CHANGE_TIMEOUT', 0)
-        with pytest.raises(_errors.TimeoutError) as ctx:
-            _client.put('/v2/snaps/lxd/conf', body={'test-change-timeout-key': 'value'})
-    assert ctx.value.kind == 'charmlibs-snap-change-timeout'
-    assert isinstance(ctx.value, TimeoutError)
-    # snapd is still processing the change; wait for it before cleaning up.
-    _client._Change(str(ctx.value.value)).wait()
-    _client.put('/v2/snaps/lxd/conf', body={'test-change-timeout-key': None})
+        mp.setattr(_client, '_MAX_GONE_TIME', 0)
+        mp.setattr(_client, '_SOCKET_PATH', '/run/this-snapd-socket-does-not-exist.socket')
+        with pytest.raises(_errors.ConnectionError):
+            change.wait()
+    # snapd is still processing the original change; wait for it before cleaning up.
+    change.wait()
+    _client.put('/v2/snaps/lxd/conf', body={'test-gone-key': None})
 
 
 def test_get_logs_returns_list():

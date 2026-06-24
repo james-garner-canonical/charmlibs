@@ -79,7 +79,7 @@ class ConnectionError(Error, builtins.ConnectionError):  # noqa: A001 (shadowing
 
 
 class TimeoutError(Error, builtins.TimeoutError):  # noqa: A001 (shadowing a Python builtin)
-    """Raised when a snapd request or change times out.
+    """Raised when snapd does not respond to a request in time.
 
     This typically indicates that snapd is waiting on the snap store, which may indicate
     a transient issue with the store or a problem with the system's network connection.

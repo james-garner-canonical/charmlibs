@@ -288,19 +288,36 @@ class TestAsyncChange:
         # POST + poll returning undo status + poll returning error = 3 calls.
         assert mock_raw.call_count == 3
 
-    def test_async_timeout_raises(self, mock_raw: MagicMock, mocker: MockerFixture):
-        mocker.patch('charmlibs.snap._client._CHANGE_TIMEOUT', 0)
+    def test_async_poll_retries_past_transient_unreachable(
+        self, mock_raw: MagicMock, mocker: MockerFixture
+    ):
+        """A snapd-unreachable poll (e.g. daemon restart mid-refresh) is retried, not failed."""
         mocker.patch('charmlibs.snap._client.time.sleep')
-        doing = {'type': 'sync', 'result': {'id': '42', 'status': 'Doing', 'ready': False}}
+        done = {'type': 'sync', 'result': {'id': '42', 'status': 'Done', 'ready': True}}
         mock_raw.side_effect = [
             _fake_response({'type': 'async', 'change': '42'}),
-            _fake_response(doing),
+            # _request_raw translates urllib errors into ConnectionError; mock that here since
+            # the patch replaces _request_raw (below that translation).
+            ConnectionError('connection refused', kind='charmlibs-snap', value=''),
+            _fake_response(done),
         ]
-        with pytest.raises(TimeoutError) as exc_info:
+        _client.post('/v2/snaps/hello-world', body={'action': 'hold'})  # Should not raise.
+        # POST + failed poll + retried poll returning Done = 3 calls.
+        assert mock_raw.call_count == 3
+
+    def test_async_poll_reraises_after_gone_grace(
+        self, mock_raw: MagicMock, mocker: MockerFixture
+    ):
+        """If snapd stays unreachable past the grace window, the connection error propagates."""
+        mocker.patch('charmlibs.snap._client._MAX_GONE_TIME', 0)
+        mocker.patch('charmlibs.snap._client.time.sleep')
+        mock_raw.side_effect = [
+            _fake_response({'type': 'async', 'change': '42'}),
+            # poll fails past the grace window (see note above re: ConnectionError).
+            ConnectionError('connection refused', kind='charmlibs-snap', value=''),
+        ]
+        with pytest.raises(ConnectionError):
             _client.post('/v2/snaps/hello-world', body={'action': 'hold'})
-        assert exc_info.value.kind == 'charmlibs-snap-change-timeout'
-        assert 'snap change' in exc_info.value.message
-        assert isinstance(exc_info.value, TimeoutError)
 
     def test_async_unknown_status_raises_change_error(self, mock_raw: MagicMock):
         # An unrecognised change status raises ChangeError with the 'unknown' kind.
