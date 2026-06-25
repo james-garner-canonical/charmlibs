@@ -145,7 +145,8 @@ def test_remove():
     # Last test in the "installed" block — leaves hello-world removed for the next block.
     ensure_installed('hello-world')
     _snapd.remove('hello-world')
-    assert _snapd.info('hello-world', missing_ok=True) is None
+    with pytest.raises(_errors.NotFoundError):
+        _snapd.info('hello-world')
 
 
 # ---------------------------------------------------------------------------
@@ -154,21 +155,13 @@ def test_remove():
 # ---------------------------------------------------------------------------
 
 
-def test_info_missing_ok_false_raises_by_default():
+def test_info_missing_raises():
     ensure_removed('hello-world')
     # Independent oracle: the snap really is absent from /v2/snaps.
     assert 'hello-world' not in {s.name for s in _list_snaps()}
     with pytest.raises(_errors.NotFoundError) as ctx:
         _snapd.info('hello-world')
     assert ctx.value.kind == 'snap-not-found'
-
-
-def test_info_missing_ok_true_returns_none():
-    ensure_removed('hello-world')
-    # Independent oracle: the snap really is absent from /v2/snaps.
-    assert 'hello-world' not in {s.name for s in _list_snaps()}
-    result = _snapd.info('hello-world', missing_ok=True)
-    assert result is None
 
 
 def test_remove_not_installed_returns_false():

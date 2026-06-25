@@ -10,6 +10,7 @@ import pytest
 
 from charmlibs.snap import _functions
 from charmlibs.snap import _snapd_snaps as _snapd
+from charmlibs.snap._errors import NotFoundError
 from charmlibs.snap._utils import normalize_channel
 
 if TYPE_CHECKING:
@@ -48,6 +49,26 @@ def mock_snapd(mocker: MockerFixture) -> MockSnapd:
         install=mocker.patch('charmlibs.snap._snapd_snaps.install'),
         refresh=mocker.patch('charmlibs.snap._snapd_snaps.refresh'),
     )
+
+
+class TestGetInfo:
+    def test_installed(self, mock_snapd: MockSnapd):
+        expected = make_info()
+        mock_snapd.info.return_value = expected
+        result = _functions._get_info('hello-world')
+        mock_snapd.info.assert_called_once_with('hello-world')
+        assert result is expected
+
+    def test_not_installed_returns_none(self, mock_snapd: MockSnapd):
+        mock_snapd.info.side_effect = NotFoundError(
+            'snap "hello-world" is not installed',
+            kind='snap-not-found',
+            value='',
+            status_code=404,
+            status='Not Found',
+        )
+        result = _functions._get_info('hello-world')
+        assert result is None
 
 
 class TestEnsureRevision:

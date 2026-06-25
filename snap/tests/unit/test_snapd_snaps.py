@@ -105,15 +105,10 @@ class TestInfo:
         info = _snapd.info('hello-world')
         assert info.hold is not None
 
-    def test_info_missing_ok_false(self, mock_client: MockClient):
+    def test_info_missing_raises(self, mock_client: MockClient):
         mock_client.get.side_effect = _make_snap_not_found()
         with pytest.raises(NotFoundError):
             _snapd.info('hello-world')
-
-    def test_info_missing_ok_true(self, mock_client: MockClient):
-        mock_client.get.side_effect = _make_snap_not_found()
-        result = _snapd.info('hello-world', missing_ok=True)
-        assert result is None
 
     def test_info_other_error_propagates(self, mock_client: MockClient):
         mock_client.get.side_effect = Error(
@@ -124,7 +119,7 @@ class TestInfo:
             status='Internal Server Error',
         )
         with pytest.raises(Error):
-            _snapd.info('hello-world', missing_ok=True)
+            _snapd.info('hello-world')
 
 
 class TestInstall:
