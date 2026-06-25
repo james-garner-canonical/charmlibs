@@ -46,7 +46,7 @@ def _fake_response(
     reason: str = 'OK',
     url: str = 'http://localhost/v2/snaps/hello-world',
 ):
-    """Build a fake HTTPResponse-like object for mocking _request_raw."""
+    """Build a fake HTTPResponse-like object for mocking _request."""
     if isinstance(data, (dict, list)):
         data = json.dumps(data).encode()
     return SimpleNamespace(read=lambda: data, status=status, reason=reason, url=url)
@@ -54,14 +54,14 @@ def _fake_response(
 
 @pytest.fixture
 def mock_raw(mocker: MockerFixture) -> MagicMock:
-    """Patch _request_raw so tests control the raw HTTP response."""
-    return mocker.patch('charmlibs.snap._client._request_raw')
+    """Patch _request so tests control the raw HTTP response."""
+    return mocker.patch('charmlibs.snap._client._request')
 
 
 @pytest.fixture
 def mock_json(mocker: MockerFixture) -> MagicMock:
-    """Patch _request_json so tests control the JSON request layer."""
-    return mocker.patch('charmlibs.snap._client._request_json')
+    """Patch _json_request so tests control the JSON request layer."""
+    return mocker.patch('charmlibs.snap._client._json_request')
 
 
 class TestRequest:
@@ -182,7 +182,7 @@ class TestErrorResponses:
         assert message_fragment in exc_info.value.message
 
     def test_request_timeout_raises_snap_timeout_error(self, mocker: MockerFixture):
-        # Patch opener.open inside _request_raw to raise TimeoutError, exercising the conversion.
+        # Patch opener.open inside _request to raise TimeoutError, exercising the conversion.
         mocker.patch(
             'urllib.request.OpenerDirector.open', side_effect=builtins.TimeoutError('timed out')
         )
@@ -317,8 +317,8 @@ class TestAsyncChange:
         done = {'type': 'sync', 'result': {'id': '42', 'status': 'Done', 'ready': True}}
         mock_raw.side_effect = [
             _fake_response({'type': 'async', 'change': '42'}),
-            # _request_raw translates urllib errors into ConnectionError; mock that here since
-            # the patch replaces _request_raw (below that translation).
+            # _request translates urllib errors into ConnectionError; mock that here since
+            # the patch replaces _request (below that translation).
             ConnectionError(
                 'connection refused', kind='charmlibs-snap-connection-error', value=''
             ),
@@ -411,7 +411,7 @@ class TestRealErrorFixtures:
         envelope = load_fixture(fixture)
         result = envelope['result']
         mock_raw.return_value = _fake_response(envelope)
-        response = _client._request_json('GET', '/fake/path')
+        response = _client._json_request('GET', '/fake/path')
         with pytest.raises(expected_type) as exc_info:
             _client._decode(response)
         exc = exc_info.value

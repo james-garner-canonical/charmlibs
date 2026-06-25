@@ -82,7 +82,7 @@ def _retry_json_get(
     deadline = time.monotonic() + _CONNECTION_RETRY_BUDGET
     while True:
         try:
-            return _request_json('GET', path, query=query, log=log)
+            return _json_request('GET', path, query=query, log=log)
         except _errors.ConnectionError as e:  # noqa: PERF203
             if e.kind == 'charmlibs-snap-socket-not-found' or time.monotonic() > deadline:
                 raise
@@ -91,19 +91,19 @@ def _retry_json_get(
 
 def post(path: str, body: dict[str, Any] | None = None):
     """POST request to snapd REST API."""
-    response = _request_json('POST', path, body=body)
+    response = _json_request('POST', path, body=body)
     result = _decode(response)
     return _resolve(result)
 
 
 def put(path: str, body: dict[str, Any] | None = None):
     """PUT request to snapd REST API."""
-    response = _request_json('PUT', path, body=body)
+    response = _json_request('PUT', path, body=body)
     result = _decode(response)
     return _resolve(result)
 
 
-def _request_json(
+def _json_request(
     method: str,
     path: str,
     *,
@@ -125,10 +125,10 @@ def _request_json(
         headers['Content-Type'] = 'application/json'
     else:
         data = None
-    return _request_raw(method, path, query=query, headers=headers, data=data)
+    return _request(method, path, query=query, headers=headers, data=data)
 
 
-def _request_raw(
+def _request(
     method: str,
     path: str,
     *,

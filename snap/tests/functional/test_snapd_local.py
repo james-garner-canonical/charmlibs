@@ -31,7 +31,7 @@ SNAPS_DIR = Path(__file__).parent / 'snaps'
 
 def ack(assertions_data: bytes) -> None:
     """Upload assertion(s) to snapd's local database (POST /v2/assertions)."""
-    response = _client._request_raw('POST', '/v2/assertions', data=assertions_data)
+    response = _client._request('POST', '/v2/assertions', data=assertions_data)
     response_dict = json.loads(response.read())
     if response_dict.get('type') == 'error':
         raise _client._make_error(response_dict)
@@ -85,7 +85,7 @@ def install_local(path: Path, *, dangerous: bool = False, classic: bool = False)
         'Accept': 'application/json',
         'Content-Type': f'multipart/form-data; boundary={boundary}',
     }
-    response = _client._request_raw('POST', '/v2/snaps', headers=headers, data=b''.join(body))
+    response = _client._request('POST', '/v2/snaps', headers=headers, data=b''.join(body))
     response_dict = json.loads(response.read())
     if response_dict.get('type') == 'error':
         raise _client._make_error(response_dict)

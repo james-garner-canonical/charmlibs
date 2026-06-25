@@ -205,7 +205,7 @@ def test_poll_fails_fast_when_socket_missing():
     # Submit a real async change, then point the client at a missing socket while waiting on it.
     # A missing socket means snapd is absent, so the poll fails fast without retrying.
     ensure_installed('lxd')
-    response = _client._request_json('PUT', '/v2/snaps/lxd/conf', body={'test-gone-key': 'value'})
+    response = _client._json_request('PUT', '/v2/snaps/lxd/conf', body={'test-gone-key': 'value'})
     change = _client._decode(response)
     assert isinstance(change, _client._Change)
     with pytest.MonkeyPatch.context() as mp:
