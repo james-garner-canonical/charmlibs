@@ -100,4 +100,3 @@ def _get_info(snap: str) -> _snapd_snaps.Info | None:
         return _snapd_snaps.info(snap)
     except _errors.NotFoundError:
         return None
-
