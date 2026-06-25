@@ -44,9 +44,11 @@ _SOCKET_PATH = '/run/snapd.socket'
 # snapd may spend up to 38s retrying store lookups within a single request.
 # The client timeout must not be shorter than that, or we'll give up before snapd does.
 _REQUEST_TIMEOUT = 120
-# snapd may be briefly unreachable for a number of reasons, including restarts.
-# The snap CLI retries some GET requests for a short while before giving up:
-# `maxGoneTime`/`doRetry` (cmd/snap/wait.go, client/client.go).
+# snapd may be briefly unreachable during a daemon restart.
+# The snap CLI retries GET connection failures for up to doTimeout (120s)
+# at doRetry intervals (250ms).
+# We use a shorter budget (matching the change-poller's maxGoneTime in cmd/snap/wait.go)
+# to avoid waiting too long when snapd is unreachable (we still allow 120s for timeouts).
 _CONNECTION_RETRY_BUDGET = 5
 _CONNECTION_RETRY_INTERVAL = 0.25
 # Spacing between successful change polls, matching the snap CLI's pollTime (cmd/snap/wait.go).
