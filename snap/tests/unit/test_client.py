@@ -32,9 +32,12 @@ from charmlibs.snap._errors import (
     Error,
     NeedsClassicError,
     NotFoundError,
+    NotInstalledError,
     OptionNotFoundError,
+    RevisionNotAvailableError,
     TimeoutError,  # noqa: A004 (shadowing a Python builtin)
     _AlreadyInstalledError,
+    _InterfacesUnchangedError,
     _NoUpdatesAvailableError,
 )
 from conftest import FIXTURES_DIR, load_fixture
@@ -62,6 +65,28 @@ def mock_raw(mocker: MockerFixture) -> MagicMock:
 def mock_json(mocker: MockerFixture) -> MagicMock:
     """Patch _json_request so tests control the JSON request layer."""
     return mocker.patch('charmlibs.snap._client._json_request')
+
+
+class TestErrorTypeFromResultKind:
+    @pytest.mark.parametrize(
+        ('kind', 'expected'),
+        [
+            ('snap-already-installed', _AlreadyInstalledError),
+            ('app-not-found', AppNotFoundError),
+            ('option-not-found', OptionNotFoundError),
+            ('snap-channel-not-available', ChannelNotAvailableError),
+            ('snap-needs-classic', NeedsClassicError),
+            ('snap-not-found', NotFoundError),
+            ('snap-not-installed', NotInstalledError),
+            ('snap-no-update-available', _NoUpdatesAvailableError),
+            ('snap-revision-not-available', RevisionNotAvailableError),
+            ('interfaces-unchanged', _InterfacesUnchangedError),
+            ('bogus-kind', APIError),
+            ('', APIError),
+        ],
+    )
+    def test_error_type_from_result_kind(self, kind: str, expected: type[APIError]):
+        assert _client._error_type_from_result_kind(kind) is expected
 
 
 class TestRequest:

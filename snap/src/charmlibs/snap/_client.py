@@ -250,7 +250,7 @@ def _get_path(response: http.client.HTTPResponse) -> str:
 def _make_error(response: dict[str, Any]) -> _errors.APIError:
     result = response.get('result', {})
     kind = result.get('kind', '')
-    error_type = _errors._error_type_from_result_kind(kind)
+    error_type = _error_type_from_result_kind(kind)
     return error_type(
         result.get('message', ''),
         kind=kind,
@@ -258,6 +258,32 @@ def _make_error(response: dict[str, Any]) -> _errors.APIError:
         status_code=response.get('status-code'),
         status=response.get('status'),
     )
+
+
+def _error_type_from_result_kind(kind: str) -> type[_errors.APIError]:
+    match kind:
+        case 'snap-already-installed':
+            return _errors._AlreadyInstalledError
+        case 'app-not-found':
+            return _errors.AppNotFoundError
+        case 'option-not-found':
+            return _errors.OptionNotFoundError
+        case 'snap-channel-not-available':
+            return _errors.ChannelNotAvailableError
+        case 'snap-needs-classic':
+            return _errors.NeedsClassicError
+        case 'snap-not-found':
+            return _errors.NotFoundError
+        case 'snap-not-installed':
+            return _errors.NotInstalledError
+        case 'snap-no-update-available':
+            return _errors._NoUpdatesAvailableError
+        case 'snap-revision-not-available':
+            return _errors.RevisionNotAvailableError
+        case 'interfaces-unchanged':
+            return _errors._InterfacesUnchangedError
+        case _:
+            return _errors.APIError
 
 
 ###########

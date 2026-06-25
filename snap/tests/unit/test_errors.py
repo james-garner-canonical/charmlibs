@@ -49,28 +49,6 @@ class TestErrorHierarchy:
         assert issubclass(_errors.ConnectionError, builtins.ConnectionError)
 
 
-class TestErrorTypeFromResultKind:
-    @pytest.mark.parametrize(
-        ('kind', 'expected'),
-        [
-            ('snap-already-installed', _errors._AlreadyInstalledError),
-            ('app-not-found', _errors.AppNotFoundError),
-            ('option-not-found', _errors.OptionNotFoundError),
-            ('snap-channel-not-available', _errors.ChannelNotAvailableError),
-            ('snap-needs-classic', _errors.NeedsClassicError),
-            ('snap-not-found', _errors.NotFoundError),
-            ('snap-not-installed', _errors.NotInstalledError),
-            ('snap-no-update-available', _errors._NoUpdatesAvailableError),
-            ('snap-revision-not-available', _errors.RevisionNotAvailableError),
-            ('interfaces-unchanged', _errors._InterfacesUnchangedError),
-            ('bogus-kind', _errors.APIError),
-            ('', _errors.APIError),
-        ],
-    )
-    def test_error_type_from_result_kind(self, kind: str, expected: type[_errors.APIError]):
-        assert _errors._error_type_from_result_kind(kind) is expected
-
-
 class TestSnapError:
     def test_attributes(self):
         err = _errors.Error(

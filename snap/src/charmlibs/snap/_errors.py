@@ -91,7 +91,7 @@ class APIError(Error):
     """Raised when the snapd API returns an error response."""
 
 
-class _AlreadyInstalledError(APIError):
+class _AlreadyInstalledError(APIError):  # pyright: ignore[reportUnusedClass]
     """Raised via the API when an install is attempted for a snap that is already installed."""
 
 
@@ -122,11 +122,11 @@ class RevisionNotAvailableError(APIError):
     """Raised via the API when the specified snap revision is not available."""
 
 
-class _NoUpdatesAvailableError(APIError):
+class _NoUpdatesAvailableError(APIError):  # pyright: ignore[reportUnusedClass]
     """Raised via the API when a refresh is attempted but no updates are available."""
 
 
-class _InterfacesUnchangedError(APIError):
+class _InterfacesUnchangedError(APIError):  # pyright: ignore[reportUnusedClass]
     """Raised via the API when a connect/disconnect would result in no change.
 
     This class is private because the public disconnect function suppresses this error,
@@ -146,29 +146,3 @@ class OptionNotFoundError(APIError):
 
 class ChangeError(APIError):
     """Raised when a snap change results in an error or has an unexpected status."""
-
-
-def _error_type_from_result_kind(kind: str) -> type[APIError]:  # pyright: ignore[reportUnusedFunction]
-    match kind:
-        case 'snap-already-installed':
-            return _AlreadyInstalledError
-        case 'app-not-found':
-            return AppNotFoundError
-        case 'option-not-found':
-            return OptionNotFoundError
-        case 'snap-channel-not-available':
-            return ChannelNotAvailableError
-        case 'snap-needs-classic':
-            return NeedsClassicError
-        case 'snap-not-found':
-            return NotFoundError
-        case 'snap-not-installed':
-            return NotInstalledError
-        case 'snap-no-update-available':
-            return _NoUpdatesAvailableError
-        case 'snap-revision-not-available':
-            return RevisionNotAvailableError
-        case 'interfaces-unchanged':
-            return _InterfacesUnchangedError
-        case _:
-            return APIError
