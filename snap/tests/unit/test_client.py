@@ -411,8 +411,9 @@ class TestRealErrorFixtures:
         envelope = load_fixture(fixture)
         result = envelope['result']
         mock_raw.return_value = _fake_response(envelope)
+        response = _client._request_json('GET', '/fake/path')
         with pytest.raises(expected_type) as exc_info:
-            _client._request_json_and_decode('GET', '/fake/path')
+            _client._decode(response)
         exc = exc_info.value
         assert type(exc) is expected_type  # Exact type, not a subclass.
         assert exc.message == result['message']

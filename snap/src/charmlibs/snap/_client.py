@@ -91,27 +91,16 @@ def _retry_json_get(
 
 def post(path: str, body: dict[str, Any] | None = None):
     """POST request to snapd REST API."""
-    result = _request_json_and_decode('POST', path, body=body)
+    response = _request_json('POST', path, body=body)
+    result = _decode(response)
     return _resolve(result)
 
 
 def put(path: str, body: dict[str, Any] | None = None):
     """PUT request to snapd REST API."""
-    result = _request_json_and_decode('PUT', path, body=body)
+    response = _request_json('PUT', path, body=body)
+    result = _decode(response)
     return _resolve(result)
-
-
-def _request_json_and_decode(
-    method: str,
-    path: str,
-    *,
-    query: dict[str, Any] | None = None,
-    body: dict[str, Any] | None = None,
-    log: bool = True,
-) -> object | _Change:
-    """Make a request to the snapd server and decode the JSON response."""
-    response = _request_json(method, path, query=query, body=body, log=log)
-    return _decode(response)
 
 
 def _request_json(
