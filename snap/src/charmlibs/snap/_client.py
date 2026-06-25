@@ -96,7 +96,7 @@ def _retry_json_get(
             return _json_request('GET', path, query=query, log=log)
         except _errors.ConnectionError as e:  # noqa: PERF203
             # We don't catch TimeoutError -- the timeout is longer than our retry budget.
-            # We don't retry on a missing socket, since that means snapd is not present and will never respond.
+            # We don't retry on a missing socket, since that means snapd is not running at all.
             if e.kind == 'charmlibs-snap-socket-not-found':
                 raise
             if time.monotonic() > deadline:
