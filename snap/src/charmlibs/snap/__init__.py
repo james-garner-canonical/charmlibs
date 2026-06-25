@@ -63,11 +63,6 @@ from ._functions import (
     ensure,
     ensure_revision,
 )
-from ._snapd_apps import (
-    restart,
-    start,
-    stop,
-)
 from ._snapd_conf import (
     get,
     set,  # noqa: A004 (shadowing a Python builtin)
@@ -119,10 +114,7 @@ __all__ = [
     'logs',
     'refresh',
     'remove',
-    'restart',
     'set',
-    'start',
-    'stop',
     'unhold',
     'unset',
 ]
