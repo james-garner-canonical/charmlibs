@@ -19,7 +19,7 @@ from __future__ import annotations
 import datetime
 import logging
 import typing
-from typing import Any, Literal
+from typing import Any
 
 from . import _client, _errors, _utils
 
@@ -85,11 +85,7 @@ class Info:
         return self._hold
 
 
-@typing.overload
-def info(snap: str, *, missing_ok: Literal[False] = False) -> Info: ...
-@typing.overload
-def info(snap: str, *, missing_ok: Literal[True]) -> Info | None: ...
-def info(snap: str, *, missing_ok: bool = False) -> Info | None:
+def info(snap: str) -> Info:
     """Get information about an installed snap.
 
     This function implements the semantics of the `snap list` command,
@@ -97,23 +93,15 @@ def info(snap: str, *, missing_ok: bool = False) -> Info | None:
 
     Args:
         snap: the name of the snap.
-        missing_ok: if ``True``, return ``None`` if the snap is not installed.
-            if ``False`` (default), raise ``NotFoundError`` instead.
 
     Returns:
-        An Info object with information about the snap,
-            or None if the snap is not installed and missing_ok is ``True``.
+        An Info object with information about the snap.
 
     Raises:
-        NotFoundError: if the snap is not installed and ``missing_ok`` is ``False``.
+        NotFoundError: if the snap is not installed.
         Error: (or a subtype) if the information could not be retrieved for another reason.
     """
-    try:
-        info_dict = _client.get(f'/v2/snaps/{snap}')
-    except _errors.NotFoundError:
-        if missing_ok:
-            return None
-        raise
+    info_dict = _client.get(f'/v2/snaps/{snap}')
     assert isinstance(info_dict, dict)
     info_dict = typing.cast('dict[str, str]', info_dict)
     return Info._from_dict(info_dict)

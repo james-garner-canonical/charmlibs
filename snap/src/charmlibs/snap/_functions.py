@@ -14,7 +14,7 @@
 
 """High level helper functions that build on top of the basic snap operations."""
 
-from . import _snapd_snaps, _utils
+from . import _errors, _snapd_snaps, _utils
 
 
 def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) -> bool:
@@ -36,7 +36,7 @@ def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) ->
         ChangeError: If the install or refresh fails after starting (for example, a hook errors).
         Error: (or a subtype) if the snap could not be installed or refreshed for another reason.
     """
-    info = _snapd_snaps.info(snap, missing_ok=True)
+    info = _get_info(snap)
     if info is None:  # Not installed.
         _snapd_snaps.install(snap, revision=revision, classic=classic)
         return True
@@ -80,7 +80,7 @@ def ensure(
         ChangeError: If the install or refresh fails after starting (for example, a hook errors).
         Error: (or a subtype) if the snap could not be installed or refreshed for another reason.
     """
-    info = _snapd_snaps.info(snap, missing_ok=True)
+    info = _get_info(snap)
     if info is None:  # Not installed.
         _snapd_snaps.install(snap, channel=channel, classic=classic)
         return True
@@ -92,3 +92,11 @@ def ensure(
     if not update:  # User explicitly requested no update in this case.
         return False
     return _snapd_snaps.refresh(snap, channel=channel)
+
+
+def _get_info(snap: str) -> _snapd_snaps.Info | None:
+    """Get snap info, raising an error if the snap is not installed."""
+    try:
+        return _snapd_snaps.info(snap)
+    except _errors.NotFoundError:
+        return None
