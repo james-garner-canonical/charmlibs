@@ -68,6 +68,20 @@ def get_logs(query: dict[str, Any] | None = None):
     return _decode_logs(response)
 
 
+def post(path: str, body: dict[str, Any] | None = None):
+    """POST request to snapd REST API."""
+    response = _json_request('POST', path, body=body)
+    result = _decode(response)
+    return _resolve(result)
+
+
+def put(path: str, body: dict[str, Any] | None = None):
+    """PUT request to snapd REST API."""
+    response = _json_request('PUT', path, body=body)
+    result = _decode(response)
+    return _resolve(result)
+
+
 def _retry_json_get(
     path: str,
     *,
@@ -87,20 +101,6 @@ def _retry_json_get(
             if e.kind == 'charmlibs-snap-socket-not-found' or time.monotonic() > deadline:
                 raise
             time.sleep(_CONNECTION_RETRY_INTERVAL)
-
-
-def post(path: str, body: dict[str, Any] | None = None):
-    """POST request to snapd REST API."""
-    response = _json_request('POST', path, body=body)
-    result = _decode(response)
-    return _resolve(result)
-
-
-def put(path: str, body: dict[str, Any] | None = None):
-    """PUT request to snapd REST API."""
-    response = _json_request('PUT', path, body=body)
-    result = _decode(response)
-    return _resolve(result)
 
 
 def _json_request(
