@@ -112,25 +112,34 @@ def test_refresh_revision_not_available_raises():
 
 def test_hold_with_duration():
     ensure_installed('hello-world')
-    _snapd.hold('hello-world', duration=datetime.timedelta(days=2))
-    info = _snapd.info('hello-world')
-    assert info.hold is not None
-    assert info.hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
+    try:
+        _snapd.hold('hello-world', duration=datetime.timedelta(days=2))
+        info = _snapd.info('hello-world')
+        assert info.hold is not None
+        assert info.hold - datetime.datetime.now().astimezone() > datetime.timedelta(days=1)
+    finally:
+        _snapd.unhold('hello-world')
 
 
 def test_hold_forever():
     ensure_installed('hello-world')
-    _snapd.hold('hello-world')
-    info = _snapd.info('hello-world')
-    # When held forever, snapd returns a far-future timestamp.
-    assert info.hold is not None
+    try:
+        _snapd.hold('hello-world')
+        info = _snapd.info('hello-world')
+        # When held forever, snapd returns a far-future timestamp.
+        assert info.hold is not None
+    finally:
+        _snapd.unhold('hello-world')
 
 
 def test_hold_already_held_no_error():
     # Holding an already-held snap is idempotent — no error is raised.
     ensure_installed('hello-world')
-    _snapd.hold('hello-world')
-    _snapd.hold('hello-world')  # Second hold should not raise.
+    try:
+        _snapd.hold('hello-world')
+        _snapd.hold('hello-world')  # Second hold should not raise.
+    finally:
+        _snapd.unhold('hello-world')
 
 
 def test_unhold():

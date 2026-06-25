@@ -145,18 +145,20 @@ def test_get_returns_list():
 def test_get_with_query_params():
     # Query parameters are passed through and affect the result.
     ensure_installed('lxd')
-    # Set two keys so we can retrieve a subset of them.
-    _client.put('/v2/snaps/lxd/conf', body={'test-key-a': 'alpha', 'test-key-b': 'beta'})
-    full = _client.get('/v2/snaps/lxd/conf')
-    assert isinstance(full, dict)
-    assert 'test-key-a' in full and 'test-key-b' in full
-    # Request only one key via query params.
-    subset = _client.get('/v2/snaps/lxd/conf', query={'keys': 'test-key-a'})
-    assert isinstance(subset, dict)
-    assert 'test-key-a' in subset
-    assert 'test-key-b' not in subset
-    # Clean up.
-    _client.put('/v2/snaps/lxd/conf', body={'test-key-a': None, 'test-key-b': None})
+    try:
+        # Set two keys so we can retrieve a subset of them.
+        _client.put('/v2/snaps/lxd/conf', body={'test-key-a': 'alpha', 'test-key-b': 'beta'})
+        full = _client.get('/v2/snaps/lxd/conf')
+        assert isinstance(full, dict)
+        assert 'test-key-a' in full and 'test-key-b' in full
+        # Request only one key via query params.
+        subset = _client.get('/v2/snaps/lxd/conf', query={'keys': 'test-key-a'})
+        assert isinstance(subset, dict)
+        assert 'test-key-a' in subset
+        assert 'test-key-b' not in subset
+    finally:
+        # Clean up.
+        _client.put('/v2/snaps/lxd/conf', body={'test-key-a': None, 'test-key-b': None})
 
 
 def test_post_async_change_error_raises_snap_change_error():
@@ -177,13 +179,15 @@ def test_post_async_change_error_raises_snap_change_error():
 def test_put_waits_for_async_change():
     # PUT /v2/snaps/{snap}/conf is async and should complete without error.
     ensure_installed('lxd')
-    _client.put('/v2/snaps/lxd/conf', body={'test-key-functional': 'test-value'})
-    result = _client.get('/v2/snaps/lxd/conf', query={'keys': 'test-key-functional'})
-    assert isinstance(result, dict)
-    result = typing.cast('dict[str, Any]', result)
-    assert result.get('test-key-functional') == 'test-value'
-    # Clean up.
-    _client.put('/v2/snaps/lxd/conf', body={'test-key-functional': None})
+    try:
+        _client.put('/v2/snaps/lxd/conf', body={'test-key-functional': 'test-value'})
+        result = _client.get('/v2/snaps/lxd/conf', query={'keys': 'test-key-functional'})
+        assert isinstance(result, dict)
+        result = typing.cast('dict[str, Any]', result)
+        assert result.get('test-key-functional') == 'test-value'
+    finally:
+        # Clean up.
+        _client.put('/v2/snaps/lxd/conf', body={'test-key-functional': None})
 
 
 def test_put_no_body_raises():
@@ -208,14 +212,16 @@ def test_poll_fails_fast_when_socket_missing():
     response = _client._json_request('PUT', '/v2/snaps/lxd/conf', body={'test-gone-key': 'value'})
     change = _client._decode(response)
     assert isinstance(change, _client._Change)
-    with pytest.MonkeyPatch.context() as mp:
-        mp.setattr(_client, '_SOCKET_PATH', '/run/this-snapd-socket-does-not-exist.socket')
-        with pytest.raises(_errors.ConnectionError) as ctx:
-            change.wait()
-    assert ctx.value.kind == 'charmlibs-snap-socket-not-found'
-    # snapd is still processing the original change; wait for it before cleaning up.
-    change.wait()
-    _client.put('/v2/snaps/lxd/conf', body={'test-gone-key': None})
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(_client, '_SOCKET_PATH', '/run/this-snapd-socket-does-not-exist.socket')
+            with pytest.raises(_errors.ConnectionError) as ctx:
+                change.wait()
+        assert ctx.value.kind == 'charmlibs-snap-socket-not-found'
+    finally:
+        # snapd is still processing the original change; wait for it before cleaning up.
+        change.wait()
+        _client.put('/v2/snaps/lxd/conf', body={'test-gone-key': None})
 
 
 def test_get_logs_returns_list():
