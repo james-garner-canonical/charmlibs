@@ -37,21 +37,19 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# We need the powerful snapd socket.
 # Defined in the snap application itself under dirs/dirs.go as SnapdSocket.
 _SOCKET_PATH = '/run/snapd.socket'
-# Timeout for a single request attempt, matching the snap CLI's `doTimeout` (client/client.go).
-# snapd may spend up to ~38s on store lookups within a single request, so this should not be
-# much lower. We place no overall deadline on a change, only this per-attempt bound.
-# TODO: a user-facing way to set this? e.g. charmlibs.snap.set_request_timeout(120)
+# Timeout for a single request.
+# Defined as the default for the snap CLI in client/client.go as doTimeout.
+# snapd may spend up to 38s retrying store lookups within a single request.
+# The client timeout must not be shorter than that, or we'll give up before snapd does.
 _REQUEST_TIMEOUT = 120
-# snapd may be briefly unreachable while it restarts itself (e.g. mid-refresh), so we retry a
-# GET that fails to connect for a short while before giving up, matching the spirit of the snap
-# CLI's `maxGoneTime`/`doRetry` (cmd/snap/wait.go, client/client.go). Only connection failures
-# are retried, and only when snapd is present: a missing socket and a request timeout are not.
+# snapd may be briefly unreachable for a number of reasons, including restarts.
+# The snap CLI retries some GET requests for a short while before giving up:
+# `maxGoneTime`/`doRetry` (cmd/snap/wait.go, client/client.go).
 _CONNECTION_RETRY_BUDGET = 5
 _CONNECTION_RETRY_INTERVAL = 0.25
-# Spacing between successful change polls, matching the snap CLI's `pollTime`.
+# Spacing between successful change polls, matching the snap CLI's pollTime (cmd/snap/wait.go).
 _POLL_INTERVAL = 0.1
 
 
@@ -83,10 +81,7 @@ def put(path: str, body: dict[str, Any] | None = None):
 
 
 def _retry_json_get(
-    path: str,
-    *,
-    query: dict[str, Any] | None = None,
-    log: bool = True,
+    path: str, *, query: dict[str, Any] | None = None, log: bool = True
 ) -> http.client.HTTPResponse:
     """Make a GET request to snapd, retrying transient connection failures.
 
@@ -98,7 +93,11 @@ def _retry_json_get(
         try:
             return _json_request('GET', path, query=query, log=log)
         except _errors.ConnectionError as e:  # noqa: PERF203
-            if e.kind == 'charmlibs-snap-socket-not-found' or time.monotonic() > deadline:
+            # We don't catch TimeoutError -- the timeout is longer than our retry budget.
+            # We don't retry on a missing socket, since that means snapd is not present and will never respond.
+            if e.kind == 'charmlibs-snap-socket-not-found':
+                raise
+            if time.monotonic() > deadline:
                 raise
             time.sleep(_CONNECTION_RETRY_INTERVAL)
 
@@ -291,7 +290,11 @@ class _Change:
                 case 'Done':
                     return result.get('data', {})
                 case 'Wait':
-                    logger.warning("snap change %s succeeded with status 'Wait'", self._id)
+                    # Follow the snap CLI's behavior of treating Wait as a success.
+                    # Log the change ID in case user investigation is required.
+                    # Callers should know in advance if action is expected after a change,
+                    # for example if the system requires a restart.
+                    logger.warning("snap change [%s] succeeded with status 'Wait'", self._id)
                     return result.get('data', {})
                 case 'Error':
                     raise _errors.ChangeError(
