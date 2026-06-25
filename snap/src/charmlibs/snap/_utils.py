@@ -20,7 +20,7 @@ import datetime
 import sys
 
 
-def _normalize_channel(channel: str) -> str:  # pyright: ignore[reportUnusedFunction]
+def normalize_channel(channel: str) -> str:
     """Normalize a snap channel string to the form "track/risk".
 
     Channels may be specified as track or risk only, or as "track/risk" or "track/risk/branch".
@@ -38,7 +38,7 @@ def _normalize_channel(channel: str) -> str:  # pyright: ignore[reportUnusedFunc
     return channel
 
 
-def _parse_timestamp(timestamp: str) -> datetime.datetime:  # pyright: ignore[reportUnusedFunction]
+def parse_timestamp(timestamp: str) -> datetime.datetime:
     """Parse a snapd timestamp string to a datetime object.
 
     This can be dropped in favour of datetime.fromisoformat when we require Python 3.11+.

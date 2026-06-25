@@ -10,7 +10,7 @@ import pytest
 
 from charmlibs.snap import _functions
 from charmlibs.snap import _snapd_snaps as _snapd
-from charmlibs.snap._utils import _normalize_channel
+from charmlibs.snap._utils import normalize_channel
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -165,4 +165,4 @@ class TestEnsure:
     ],
 )
 def test_normalize_channel(channel: str, expected: str):
-    assert _normalize_channel(channel) == expected
+    assert normalize_channel(channel) == expected

@@ -119,7 +119,7 @@ def logs(*snaps: str, limit: int | None = 10) -> list[LogEntry]:
     for obj in result:
         try:
             log_entry = LogEntry(
-                timestamp=_utils._parse_timestamp(obj['timestamp']),
+                timestamp=_utils.parse_timestamp(obj['timestamp']),
                 sid=obj['sid'],
                 pid=int(obj['pid']),
                 message=obj['message'],

@@ -44,10 +44,10 @@ class Info:
     ):
         self._name = name
         self._classic = classic
-        self._channel = _utils._normalize_channel(channel)
+        self._channel = _utils.normalize_channel(channel)
         self._revision = str(revision)
         self._version = version
-        self._hold = _utils._parse_timestamp(hold) if isinstance(hold, str) else hold
+        self._hold = _utils.parse_timestamp(hold) if isinstance(hold, str) else hold
 
     @classmethod
     def _from_dict(cls, info_dict: dict[str, str]) -> Self:
