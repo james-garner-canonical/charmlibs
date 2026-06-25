@@ -63,10 +63,6 @@ from ._functions import (
     ensure,
     ensure_revision,
 )
-from ._snapd_interfaces import (
-    connect,
-    disconnect,
-)
 from ._snapd_logs import (
     LogEntry,
     logs,
@@ -98,8 +94,6 @@ __all__ = [
     'OptionNotFoundError',
     'RevisionNotAvailableError',
     'TimeoutError',
-    'connect',
-    'disconnect',
     'ensure',
     'ensure_revision',
     'hold',
