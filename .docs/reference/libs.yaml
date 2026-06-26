@@ -1596,6 +1596,18 @@ interfaces:
   description: Manage S3 (and Azure Blob Storage / GCS) credentials and metadata.
   tags:
   - data
+- name: charms.data_platform_libs.s3
+  status: legacy
+  url: https://charmhub.io/data-platform-libs/libraries/s3
+  docs: ''
+  src: https://github.com/canonical/data-platform-libs
+  kind: Charmhub
+  rel_name: s3
+  rel_url_charmhub: https://charmhub.io/integrations/s3
+  rel_url_schema: https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/s3/v0
+  description: Deprecated in favour of ``object-storage-charmlib``.
+  tags:
+  - data
 - name: charms.saml_integrator.saml
   status: ''
   url: https://charmhub.io/saml-integrator/libraries/saml
