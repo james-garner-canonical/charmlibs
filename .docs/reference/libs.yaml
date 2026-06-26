@@ -1857,7 +1857,7 @@ interfaces:
 - name: dpcharmlibs.interfaces
   status: ''
   url: https://pypi.org/project/dpcharmlibs-interfaces
-  docs: https://github.com/canonical/object-storage-integrator/blob/main/lib/README.md
+  docs: ''
   src: https://github.com/canonical/data-platform-charmlibs
   kind: PyPI
   rel_name: valkey_client
@@ -1895,9 +1895,9 @@ interfaces:
   - ingress
   - networking
 - name: object-storage-charmlib
-  status: ''
+  status: recommended
   url: https://pypi.org/project/object-storage-charmlib
-  docs: ''
+  docs: https://github.com/canonical/object-storage-integrator/blob/main/lib/README.md
   src: https://github.com/canonical/object-storage-integrator/tree/main/lib
   kind: PyPI
   rel_name: s3

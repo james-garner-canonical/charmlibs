@@ -729,7 +729,7 @@
     "version": "1",
     "lib": "object-storage-charmlib",
     "lib_url": "https://pypi.org/project/object-storage-charmlib",
-    "lib_docs_url": "",
+    "lib_docs_url": "https://github.com/canonical/object-storage-integrator/blob/main/lib/README.md",
     "docs_url": "https://canonical.com/juju/docs/charmlibs/reference/interfaces/s3/",
     "summary": "",
     "description": "",
