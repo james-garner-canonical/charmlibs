@@ -1437,7 +1437,7 @@ interfaces:
   tags:
   - identity-auth
 - name: charms.s3proxy_k8s.object_storage
-  status: legacy
+  status: ''
   url: https://charmhub.io/s3proxy-k8s/libraries/object_storage
   docs: ''
   src: https://github.com/canonical/s3proxy-k8s-operator
@@ -1445,7 +1445,7 @@ interfaces:
   rel_name: s3
   rel_url_charmhub: https://charmhub.io/integrations/s3
   rel_url_schema: https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/s3/v0
-  description: Deprecated in favour of ``object-storage-charmlib``.
+  description: ''
   tags:
   - data
 - name: charms.openfga_k8s.openfga
