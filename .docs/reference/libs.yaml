@@ -1857,7 +1857,7 @@ interfaces:
 - name: dpcharmlibs.interfaces
   status: ''
   url: https://pypi.org/project/dpcharmlibs-interfaces
-  docs: ''
+  docs: https://github.com/canonical/object-storage-integrator/blob/main/lib/README.md
   src: https://github.com/canonical/data-platform-charmlibs
   kind: PyPI
   rel_name: valkey_client
