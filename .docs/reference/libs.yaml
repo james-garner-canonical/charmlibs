@@ -1584,18 +1584,6 @@ interfaces:
   description: ''
   tags:
   - data
-- name: object-storage-charmlib
-  status: ''
-  url: https://pypi.org/project/object-storage-charmlib
-  docs: ''
-  src: https://github.com/canonical/object-storage-integrator/tree/main/lib
-  kind: PyPI
-  rel_name: s3
-  rel_url_charmhub: https://charmhub.io/integrations/s3
-  rel_url_schema: https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/s3/v0
-  description: Manage S3 (and Azure Blob Storage / GCS) credentials and metadata.
-  tags:
-  - data
 - name: charms.data_platform_libs.s3
   status: legacy
   url: https://charmhub.io/data-platform-libs/libraries/s3
@@ -1906,3 +1894,15 @@ interfaces:
   tags:
   - ingress
   - networking
+- name: object-storage-charmlib
+  status: ''
+  url: https://pypi.org/project/object-storage-charmlib
+  docs: ''
+  src: https://github.com/canonical/object-storage-integrator/tree/main/lib
+  kind: PyPI
+  rel_name: s3
+  rel_url_charmhub: https://charmhub.io/integrations/s3
+  rel_url_schema: https://github.com/canonical/charm-relation-interfaces/tree/main/interfaces/s3/v0
+  description: Manage S3 (and Azure Blob Storage / GCS) credentials and metadata.
+  tags:
+  - data
