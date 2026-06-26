@@ -727,8 +727,8 @@
   {
     "name": "s3",
     "version": "1",
-    "lib": "charms.data_platform_libs.s3",
-    "lib_url": "https://charmhub.io/data-platform-libs/libraries/s3",
+    "lib": "object-storage-charmlib",
+    "lib_url": "https://pypi.org/project/object-storage-charmlib",
     "lib_docs_url": "",
     "docs_url": "https://canonical.com/juju/docs/charmlibs/reference/interfaces/s3/",
     "summary": "",
