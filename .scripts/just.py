@@ -77,8 +77,31 @@ class Colors:
         return sys.stdout.isatty()
 
 
+# Mapping of recipe names to their functions, populated by the `_register` decorator.
+# `just help` prints the recipes in registration order.
+RECIPES: dict[str, Callable[[list[str]], int]] = {}
+
+
+def _register(fn: _F) -> _F:
+    RECIPES[fn.__name__.removeprefix('_').replace('_', '-')] = fn
+    return fn
+
+
+def main(argv: list[str]) -> int:
+    """Dispatch `argv` to the named recipe, returning its exit code."""
+    if not argv or argv[0] in ('-h', '--help'):
+        print(_quick_start())
+        return 0
+    name, *args = argv
+    func = RECIPES.get(name)
+    if func is None:
+        print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
+        print(_quick_start())
+        return 2
+    return func(args)
+
+
 def _quick_start() -> str:
-    """Return the quick start message printed when called with no arguments."""
     c = Colors()
     bold, normal, cyan = c.bold, c.normal, c.cyan
     return f"""
@@ -102,30 +125,6 @@ def _quick_start() -> str:
 {bold}Build the docs: {cyan}just docs{normal}
 - For specific packages only: {cyan}just docs html <packages>{normal}
 """.strip()
-
-
-# Mapping of recipe names to their functions, populated by the `_register` decorator.
-# `just help` prints the recipes in registration order.
-RECIPES: dict[str, Callable[[list[str]], int]] = {}
-
-
-def _register(fn: _F) -> _F:
-    RECIPES[fn.__name__.removeprefix('_').replace('_', '-')] = fn
-    return fn
-
-
-def main(argv: list[str]) -> int:
-    """Dispatch `argv` to the named recipe, returning its exit code."""
-    if not argv or argv[0] in ('-h', '--help'):
-        print(_quick_start())
-        return 0
-    name, *args = argv
-    func = RECIPES.get(name)
-    if func is None:
-        print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
-        print(_quick_start())
-        return 2
-    return func(args)
 
 
 @_register
