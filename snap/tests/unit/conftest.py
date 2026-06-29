@@ -5,16 +5,44 @@ from __future__ import annotations
 import json
 import pathlib
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
+from unittest import mock
 
 import pytest
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from unittest.mock import MagicMock
 
-    from pytest_mock import MockerFixture
-
 FIXTURES_DIR = pathlib.Path(__file__).parent / 'fixtures'
+
+
+class Mocker:
+    """Minimal stand-in for :class:`pytest_mock.MockerFixture`.
+
+    Only :meth:`patch` is supported. Started patches are stopped automatically
+    when the ``mocker`` fixture tears down.
+    """
+
+    def __init__(self) -> None:
+        self._patchers: list[Any] = []
+
+    def patch(self, target: str, /, *args: Any, **kwargs: Any) -> MagicMock:
+        patcher = cast('Any', mock.patch(target, *args, **kwargs))
+        mocked: MagicMock = patcher.start()
+        self._patchers.append(patcher)
+        return mocked
+
+    def stopall(self) -> None:
+        for patcher in reversed(self._patchers):
+            patcher.stop()
+
+
+@pytest.fixture
+def mocker() -> Iterator[Mocker]:
+    m = Mocker()
+    yield m
+    m.stopall()
 
 
 @dataclass
@@ -26,7 +54,7 @@ class MockClient:
 
 
 @pytest.fixture
-def mock_client(mocker: MockerFixture) -> MockClient:
+def mock_client(mocker: Mocker) -> MockClient:
     """Patch _client.get, .get_logs, .post, and .put for use in _snapd_*.py tests."""
     return MockClient(
         get=mocker.patch('charmlibs.snap._client.get'),

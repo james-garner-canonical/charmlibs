@@ -21,9 +21,7 @@ from charmlibs.snap._errors import (
 from conftest import result_of
 
 if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
-
-    from conftest import MockClient
+    from conftest import MockClient, Mocker
 
 
 def _make_snap_not_found():
@@ -206,7 +204,7 @@ class TestRefresh:
 
 class TestHold:
     @pytest.fixture(autouse=True)
-    def mock_info(self, mocker: MockerFixture):
+    def mock_info(self, mocker: Mocker):
         mocker.patch('charmlibs.snap._snapd_snaps.info')
 
     def test_hold_forever_by_default(self, mock_client: MockClient):
@@ -227,7 +225,7 @@ class TestHold:
         hold_time = datetime.datetime.fromisoformat(body['time'])
         assert hold_time > before + datetime.timedelta(days=1)
 
-    def test_hold_not_installed(self, mock_client: MockClient, mocker: MockerFixture):
+    def test_hold_not_installed(self, mock_client: MockClient, mocker: Mocker):
         snap_not_found = NotFoundError('', kind='snap-not-found', value='')
         mocker.patch('charmlibs.snap._snapd_snaps.info', side_effect=snap_not_found)
         with pytest.raises(NotFoundError):

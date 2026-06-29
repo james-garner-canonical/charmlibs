@@ -22,7 +22,6 @@ lint = [  # installed for `just lint snap` (unit, functional, and integration ar
 ]
 unit = [
     "pytest",
-    "pytest-mock",
 ]
 functional = [
     "pytest",

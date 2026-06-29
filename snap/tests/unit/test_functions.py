@@ -16,7 +16,7 @@ from charmlibs.snap._utils import normalize_channel
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
-    from pytest_mock import MockerFixture
+    from conftest import Mocker
 
 
 def make_info(
@@ -43,7 +43,7 @@ class MockSnapd:
 
 
 @pytest.fixture
-def mock_snapd(mocker: MockerFixture) -> MockSnapd:
+def mock_snapd(mocker: Mocker) -> MockSnapd:
     return MockSnapd(
         info=mocker.patch('charmlibs.snap._snapd_snaps.info'),
         install=mocker.patch('charmlibs.snap._snapd_snaps.install'),

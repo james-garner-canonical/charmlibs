@@ -19,7 +19,8 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest import LogCaptureFixture
-    from pytest_mock import MockerFixture
+
+    from conftest import Mocker
 
 import charmlibs.snap._errors
 from charmlibs.snap import _client
@@ -54,13 +55,13 @@ def _fake_response(
 
 
 @pytest.fixture
-def mock_raw(mocker: MockerFixture) -> MagicMock:
+def mock_raw(mocker: Mocker) -> MagicMock:
     """Patch _request so tests control the raw HTTP response."""
     return mocker.patch('charmlibs.snap._client._request')
 
 
 @pytest.fixture
-def mock_json(mocker: MockerFixture) -> MagicMock:
+def mock_json(mocker: Mocker) -> MagicMock:
     """Patch _json_request so tests control the JSON request layer."""
     return mocker.patch('charmlibs.snap._client._json_request')
 
@@ -182,7 +183,7 @@ class TestErrorResponses:
             _client.get('/v2/snaps/hello-world')
         assert message_fragment in exc_info.value.message
 
-    def test_request_timeout_raises_snap_timeout_error(self, mocker: MockerFixture):
+    def test_request_timeout_raises_snap_timeout_error(self, mocker: Mocker):
         # Patch opener.open inside _request to raise TimeoutError, exercising the conversion.
         mocker.patch(
             'urllib.request.OpenerDirector.open', side_effect=builtins.TimeoutError('timed out')
@@ -193,7 +194,7 @@ class TestErrorResponses:
         assert isinstance(exc_info.value, TimeoutError)
 
     def test_socket_not_found_raises_snap_connection_error(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, mocker: MockerFixture
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, mocker: Mocker
     ):
         # Point _SOCKET_PATH at a real non-existent path so the real URLError fires.
         monkeypatch.setattr(_client, '_SOCKET_PATH', str(tmp_path / 'does-not-exist'))
@@ -205,7 +206,7 @@ class TestErrorResponses:
         assert isinstance(exc_info.value, ConnectionError)
         sleep.assert_not_called()
 
-    def test_connection_error_retries_then_raises(self, mocker: MockerFixture):
+    def test_connection_error_retries_then_raises(self, mocker: Mocker):
         mocker.patch('charmlibs.snap._client._CONNECTION_RETRY_BUDGET', 0)
         sleep = mocker.patch('charmlibs.snap._client.time.sleep')
         mocker.patch(
@@ -219,9 +220,7 @@ class TestErrorResponses:
         # Budget is 0, so the first failure is past the deadline: no retry sleep.
         sleep.assert_not_called()
 
-    def test_connection_error_retried_until_success(
-        self, mock_raw: MagicMock, mocker: MockerFixture
-    ):
+    def test_connection_error_retried_until_success(self, mock_raw: MagicMock, mocker: Mocker):
         # A transient connection failure on a GET is retried, then the retry succeeds.
         mocker.patch('charmlibs.snap._client.time.sleep')
         mock_raw.side_effect = [
@@ -311,7 +310,7 @@ class TestAsyncChange:
         assert mock_raw.call_count == 3
 
     def test_async_poll_retries_past_transient_unreachable(
-        self, mock_raw: MagicMock, mocker: MockerFixture
+        self, mock_raw: MagicMock, mocker: Mocker
     ):
         """A snapd-unreachable poll (e.g. daemon restart mid-refresh) is retried, not failed."""
         mocker.patch('charmlibs.snap._client.time.sleep')
@@ -329,9 +328,7 @@ class TestAsyncChange:
         # POST + failed poll + retried poll returning Done = 3 calls.
         assert mock_raw.call_count == 3
 
-    def test_async_poll_reraises_after_retry_budget(
-        self, mock_raw: MagicMock, mocker: MockerFixture
-    ):
+    def test_async_poll_reraises_after_retry_budget(self, mock_raw: MagicMock, mocker: Mocker):
         """If snapd stays unreachable past the retry budget, the connection error propagates."""
         mocker.patch('charmlibs.snap._client._CONNECTION_RETRY_BUDGET', 0)
         mocker.patch('charmlibs.snap._client.time.sleep')
