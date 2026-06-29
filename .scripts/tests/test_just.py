@@ -157,24 +157,37 @@ class TestCoverageCmds:
 class TestColorsEnabled:
     def test_no_color_disables(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv('NO_COLOR', '1')
-        monkeypatch.setenv('CLICOLOR_FORCE', '1')  # NO_COLOR takes precedence.
+        monkeypatch.setenv('FORCE_COLOR', '1')  # NO_COLOR takes precedence.
         assert just.Colors._enabled() is False
 
-    def test_clicolor_force_enables(self, monkeypatch: pytest.MonkeyPatch):
+    def test_empty_no_color_does_not_disable(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv('NO_COLOR', '')  # Empty NO_COLOR is ignored per no-color.org.
+        monkeypatch.delenv('FORCE_COLOR', raising=False)
+        with patch('sys.stdout.isatty', return_value=True):
+            assert just.Colors._enabled() is True
+
+    def test_force_color_enables(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv('NO_COLOR', raising=False)
-        monkeypatch.setenv('CLICOLOR_FORCE', '1')
+        monkeypatch.setenv('FORCE_COLOR', '1')
+        with patch('sys.stdout.isatty', return_value=False):
+            assert just.Colors._enabled() is True
+
+    def test_empty_force_color_enables(self, monkeypatch: pytest.MonkeyPatch):
+        # Empty FORCE_COLOR still forces color on, per force-color.org.
+        monkeypatch.delenv('NO_COLOR', raising=False)
+        monkeypatch.setenv('FORCE_COLOR', '')
         with patch('sys.stdout.isatty', return_value=False):
             assert just.Colors._enabled() is True
 
     def test_tty_enables(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv('NO_COLOR', raising=False)
-        monkeypatch.delenv('CLICOLOR_FORCE', raising=False)
+        monkeypatch.delenv('FORCE_COLOR', raising=False)
         with patch('sys.stdout.isatty', return_value=True):
             assert just.Colors._enabled() is True
 
     def test_non_tty_disables(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv('NO_COLOR', raising=False)
-        monkeypatch.delenv('CLICOLOR_FORCE', raising=False)
+        monkeypatch.delenv('FORCE_COLOR', raising=False)
         with patch('sys.stdout.isatty', return_value=False):
             assert just.Colors._enabled() is False
 

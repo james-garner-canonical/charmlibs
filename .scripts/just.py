@@ -65,9 +65,9 @@ class Colors:
     @staticmethod
     def _enabled() -> bool:
         """Return whether to emit ANSI color codes."""
-        if os.environ.get('NO_COLOR'):  # https://bixense.com/clicolors/
+        if os.environ.get('NO_COLOR'):  # https://no-color.org/ (present and non-empty)
             return False
-        if os.environ.get('FORCE_COLOR'):  # https://force-color.org/
+        if 'FORCE_COLOR' in os.environ:  # https://force-color.org/ (present, empty string ok)
             return True
         return sys.stdout.isatty()
 
