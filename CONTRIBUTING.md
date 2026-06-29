@@ -59,6 +59,25 @@ just add pathops 'pydantic>=2'
 
 Read more: [the different types of tests](https://canonical.com/juju/docs/charmlibs/explanation/charmlibs-tests/).
 
+# Pull requests
+
+PRs are squash-merged, so your PR title becomes the single commit message that lands on `main`. Commit messages on your branch don't need to follow any particular format.
+
+PR titles must follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/). When a PR affects a single library, use the distribution package name without the leading `charmlibs-` or `charmlibs-interfaces` as the scope:
+
+```
+feat(pathops): add copytree and rmtree
+chore(tls-certificates): update to Pydantic v2
+```
+
+## Versioning and releases
+
+Libraries are automatically published to PyPI when a merged PR bumps the version to a non-dev version. Dev versions (like `1.0.0.dev0`) are excluded from the release CI, so you can safely merge in-progress work with a dev version.
+
+Any PR that would trigger a release must also update the library's `CHANGELOG.md` — CI will block the merge otherwise.
+
+Read more: [publishing packages from the monorepo](https://canonical.com/juju/docs/charmlibs/explanation/charmlibs-publishing/).
+
 # Documentation
 
 The documentation site published at [canonical.com/juju/docs/charmlibs](https://canonical.com/juju/docs/charmlibs) is built with [Sphinx](https://www.sphinx-doc.org/) from the source in the `.docs/` directory. It combines three kinds of content:
@@ -127,22 +146,3 @@ just docs ext-static   # run pyright over the local extensions
 Reference docs are generated from docstrings, so anything you write in your public API's docstrings appears verbatim in the published reference. Keep them informative for library users rather than implementation notes. When adding cross-reference sections like "Read more", use bare text (for example, ``Read more: {ref}`how-to-customize-integration-tests` ``) rather than block quotes.
 
 For adding tutorials, how-to guides, and explanations specific to your library, see the [how-to guide for adding docs to a library](https://canonical.com/juju/docs/charmlibs/how-to/add-library-docs/).
-
-# Pull requests
-
-PRs are squash-merged, so your PR title becomes the single commit message that lands on `main`. Commit messages on your branch don't need to follow any particular format.
-
-PR titles must follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/). When a PR affects a single library, use the distribution package name without the leading `charmlibs-` or `charmlibs-interfaces` as the scope:
-
-```
-feat(pathops): add copytree and rmtree
-chore(tls-certificates): update to Pydantic v2
-```
-
-## Versioning and releases
-
-Libraries are automatically published to PyPI when a merged PR bumps the version to a non-dev version. Dev versions (like `1.0.0.dev0`) are excluded from the release CI, so you can safely merge in-progress work with a dev version.
-
-Any PR that would trigger a release must also update the library's `CHANGELOG.md` — CI will block the merge otherwise.
-
-Read more: [publishing packages from the monorepo](https://canonical.com/juju/docs/charmlibs/explanation/charmlibs-publishing/).
