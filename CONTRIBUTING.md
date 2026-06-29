@@ -59,6 +59,69 @@ just add pathops 'pydantic>=2'
 
 Read more: [the different types of tests](https://canonical.com/juju/docs/charmlibs/explanation/charmlibs-tests/).
 
+# Documentation
+
+The documentation site published at [canonical.com/juju/docs/charmlibs](https://canonical.com/juju/docs/charmlibs) is built with [Sphinx](https://www.sphinx-doc.org/) from the source in the `.docs/` directory. It combines two kinds of content:
+
+- **Hand-written diataxis pages** (tutorials, how-to guides, and explanations) authored in `.docs/`, plus per-library pages that live in each library's own `docs/` directory.
+- **Reference docs** generated automatically from your library's docstrings via Sphinx [autodoc](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html). The module docstring in your package's `__init__.py` becomes the top-level description for that library's reference page.
+
+## Building the docs
+
+All docs commands are exposed under the `docs` module of `just`. Run `just docs help` to list them.
+
+```bash
+just docs html <package>   # build docs, generating reference docs for <package> only (fast)
+just docs html             # build everything, including reference docs for all packages
+just docs                  # alias for `just docs html`
+just docs html -           # build the site with no package reference docs (fastest; for editing prose only)
+```
+
+`just docs html <package>` is also run as part of `just check <package>`, so building the reference docs for your library happens automatically when you run the standard pre-commit check.
+
+The built site is written to `.docs/_build/html` by default (or to `$READTHEDOCS_OUTPUT` in CI).
+
+## How the build works
+
+The build is intentionally multi-pass, because different libraries can have conflicting dependencies and we can't install them all into a single Sphinx environment:
+
+1. **Diataxis preprocessing.** The `.docs/scripts/diataxis_preprocessor.py` script runs first. It walks every library, copies any `docs/` pages into the Sphinx source tree, and generates the `_lib-*.md` toctree include files that the category index pages pull in.
+2. **Per-package reference passes.** `sphinx-build` is invoked once per package, each time with that package installed into an isolated `uvx` environment and the `package=<name>` config option set. Each pass runs autodoc against a single library and saves its resolved doctree and index information to disk. Reference warnings are suppressed during these passes because cross-references to other libraries aren't available yet.
+3. **Final combined pass.** A final `sphinx-build` runs with no `package` set. It restores the per-package reference docs saved in step 2, combines them with the hand-written pages, and produces the complete HTML site (and `llms.txt`).
+
+The logic for steps 2 and 3 lives in the local Sphinx extensions under `.docs/extensions/` (notably `package_docs.py` and `interface_docs.py`), which are registered in `.docs/conf.py`. Docs dependencies are pinned in `.docs/_dev/requirements.txt`.
+
+## Working on the docs
+
+To preview prose changes with live reload, use:
+
+```bash
+just docs run    # watch, build, and serve; does not rebuild package reference docs automatically
+```
+
+Other useful checks:
+
+```bash
+just docs linkcheck   # check for broken links
+just docs spelling    # flag US-English misspellings not in the custom wordlist
+just docs vale        # check Canonical style guide compliance (errors only)
+just docs woke        # check for non-inclusive language
+just docs clean       # remove files created by building the docs
+```
+
+The local Sphinx extensions have their own tests and type checks:
+
+```bash
+just docs ext-unit     # run unit tests for the local extensions
+just docs ext-static   # run pyright over the local extensions
+```
+
+## Writing reference docstrings
+
+Reference docs are generated from docstrings, so anything you write in your public API's docstrings appears verbatim in the published reference. Keep them informative for library users rather than implementation notes. When adding cross-reference sections like "Read more", use bare text (for example, ``Read more: {ref}`how-to-customize-integration-tests` ``) rather than block quotes.
+
+For adding tutorials, how-to guides, and explanations specific to your library, see the [how-to guide for adding docs to a library](https://canonical.com/juju/docs/charmlibs/how-to/add-library-docs/).
+
 # Pull requests
 
 PRs are squash-merged, so your PR title becomes the single commit message that lands on `main`. Commit messages on your branch don't need to follow any particular format.
