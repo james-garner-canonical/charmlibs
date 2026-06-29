@@ -47,17 +47,12 @@ if typing.TYPE_CHECKING:
 # `.scripts/just.py` -> repo root is two parents up.
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
-
+# The default Python version to use, and the minimum we'll run with.
 DEFAULT_PYTHON = '3.10'
 
 
 class Colors:
-    """ANSI escape codes for formatting messages, empty strings when color is disabled.
-
-    Whether color is enabled follows https://bixense.com/clicolors/: `NO_COLOR` disables color,
-    `CLICOLOR_FORCE` forces it on, otherwise color is only used when stdout is an interactive
-    terminal (so piped or redirected output stays plain text).
-    """
+    """ANSI escape codes for formatting messages, empty strings when color is disabled."""
 
     def __init__(self) -> None:
         if self._enabled():
@@ -70,21 +65,11 @@ class Colors:
     @staticmethod
     def _enabled() -> bool:
         """Return whether to emit ANSI color codes."""
-        if os.environ.get('NO_COLOR'):
+        if os.environ.get('NO_COLOR'):  # https://bixense.com/clicolors/
             return False
-        if os.environ.get('CLICOLOR_FORCE'):
+        if os.environ.get('FORCE_COLOR'):  # https://force-color.org/
             return True
         return sys.stdout.isatty()
-
-
-# Mapping of recipe names to their functions, populated by the `_register` decorator.
-# `just help` prints the recipes in registration order.
-RECIPES: dict[str, Callable[[list[str]], int]] = {}
-
-
-def _register(fn: _F) -> _F:
-    RECIPES[fn.__name__.removeprefix('_').replace('_', '-')] = fn
-    return fn
 
 
 def main(argv: list[str]) -> int:
@@ -99,6 +84,9 @@ def main(argv: list[str]) -> int:
         print(_quick_start())
         return 2
     return func(args)
+
+
+# --- Main --------------------------------------------------------------------------------------
 
 
 def _quick_start() -> str:
@@ -125,6 +113,18 @@ def _quick_start() -> str:
 {c.bold}Build the docs: {c.cyan}just docs{c.normal}
 - For specific packages only: {c.cyan}just docs html <packages>{c.normal}
 """.strip()
+
+
+# --- Recipes -----------------------------------------------------------------------------------
+
+# Mapping of recipe names to their functions, populated by the `_register` decorator.
+# `just help` prints the recipes in registration order.
+RECIPES: dict[str, Callable[[list[str]], int]] = {}
+
+
+def _register(fn: _F) -> _F:
+    RECIPES[fn.__name__.removeprefix('_').replace('_', '-')] = fn
+    return fn
 
 
 @_register
