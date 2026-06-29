@@ -84,7 +84,7 @@ The documentation site published at [canonical.com/juju/docs/charmlibs](https://
 
 - **Hand-written diataxis pages** (tutorials, how-to guides, and explanations) authored in `.docs/`, plus per-library pages that live in each library's own `docs/` directory.
 - **Reference docs** generated automatically from your library's docstrings via Sphinx [autodoc](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html). The module docstring in your package's `__init__.py` becomes the top-level description for that library's reference page.
-- **Interface specification docs** generated from the versioned `README.md` files in each interface's `interface/vN/` directory. These describe the relation interface contract itself (separately from the `charmlibs.interfaces` Python package reference, which is generated from docstrings like any other library).
+- **Interface specification docs** generated from the versioned `README.md` files in each interface's `interface/` directory. These describe the relation interface contract itself (separately from the `charmlibs.interfaces` Python package reference, which is generated from docstrings like any other library).
 
 ## Building the docs
 
@@ -99,8 +99,6 @@ just docs html -           # build the site with no package reference docs (fast
 
 `just docs html <package>` is also run as part of `just check <package>`, so building the reference docs for your library happens automatically when you run the standard pre-commit check.
 
-The built site is written to `.docs/_build/html` by default (or to `$READTHEDOCS_OUTPUT` in CI).
-
 ## How the build works
 
 The build is intentionally multi-pass, because different libraries can have conflicting dependencies and we can't install them all into a single Sphinx environment:
@@ -112,37 +110,20 @@ The build is intentionally multi-pass, because different libraries can have conf
 The logic for steps 2 and 3 lives in the local Sphinx extensions under `.docs/extensions/`, which are registered in `.docs/conf.py`. In particular:
 
 - `package_docs.py` drives the per-package autodoc passes and saves/restores each library's reference doctree.
-- `interface_docs.py` generates the interface specification pages. During the final pass it reads each interface's `interface/vN/README.md`, rewrites relative links to point at the repo on GitHub, and writes one page per interface version under `reference/interfaces/`. During the per-package passes it only writes a placeholder so the toctree glob doesn't fail.
+- `interface_docs.py` generates the interface specification pages. During the final pass it reads the interface `README.md` files, rewrites relative links to point at the repo on GitHub, and writes the pages under `reference/interfaces/`. (During the per-package passes it only writes a placeholder so the toctree glob doesn't fail.)
 
-Docs dependencies are pinned in `.docs/_dev/requirements.txt`.
+## Writing library docs
 
-## Working on the docs
-
-To preview prose changes with live reload, use:
-
-```bash
-just docs run    # watch, build, and serve; does not rebuild package reference docs automatically
-```
-
-Other useful checks:
-
-```bash
-just docs linkcheck   # check for broken links
-just docs spelling    # flag US-English misspellings not in the custom wordlist
-just docs vale        # check Canonical style guide compliance (errors only)
-just docs woke        # check for non-inclusive language
-just docs clean       # remove files created by building the docs
-```
-
-The local Sphinx extensions have their own tests and type checks:
-
-```bash
-just docs ext-unit     # run unit tests for the local extensions
-just docs ext-static   # run pyright over the local extensions
-```
-
-## Writing reference docstrings
-
-Reference docs are generated from docstrings, so anything you write in your public API's docstrings appears verbatim in the published reference. Keep them informative for library users rather than implementation notes. When adding cross-reference sections like "Read more", use bare text (for example, ``Read more: {ref}`how-to-customize-integration-tests` ``) rather than block quotes.
+Reference docs are generated from docstrings, so anything you write in your public API's docstrings appears verbatim in the published reference. Keep them informative for library users rather than implementation notes.
 
 For adding tutorials, how-to guides, and explanations specific to your library, see the [how-to guide for adding docs to a library](https://canonical.com/juju/docs/charmlibs/how-to/add-library-docs/).
+
+## Working on the docs extensions
+
+The local Sphinx extensions are covered by linting, and have their own tests and static analysis:
+
+```bash
+just fast-lint .docs   # run ruff for content under .docs/
+just docs ext-unit     # run unit tests under .docs/tests
+just docs ext-static   # run pyright over the local Sphinx extensions and tests
+```
