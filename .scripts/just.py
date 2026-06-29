@@ -103,27 +103,27 @@ def main(argv: list[str]) -> int:
 
 def _quick_start() -> str:
     c = Colors()
-    bold, normal, cyan = c.bold, c.normal, c.cyan
     return f"""
-{bold}Charmlibs is Canonical's charm library monorepo{normal}
+{c.bold}Charmlibs is Canonical's charm library monorepo{c.normal}
 
-{bold}List all commands with {cyan}just help{normal}{bold}, or:{normal}
-- Create a new package: {cyan}just init{normal} or {cyan}just init --interface{normal}
-- Add a dependency to a package: {cyan}just add <package> <dependency>{normal}
-- Lint, unit test, and build docs for a package: {cyan}just check <package>{normal}
-- Run {cyan}ruff{normal} for all packages: {cyan}just fast-lint{normal}
+{c.bold}List all commands with {c.cyan}just help{c.normal}{c.bold}, or:{c.normal}
+- Create a new package: {c.cyan}just init{c.normal} or {c.cyan}just init --interface{c.normal}
+- Add a dependency to a package: {c.cyan}just add <package> <dependency>{c.normal}
+- Lint, unit test, and build docs for a package: {c.cyan}just check <package>{c.normal}
+- Run {c.cyan}ruff{c.normal} for all packages: {c.cyan}just fast-lint{c.normal}
 
-{bold}Run individual checks for a package:{normal}
-- {cyan}just lint <package>{normal} (fix errors with {cyan}just format <package>{normal})
-- {cyan}just unit <package>{normal}
-- {cyan}just functional <package>{normal} (may require extra software like {cyan}pebble{normal})
+{c.bold}Run individual checks for a package:{c.normal}
+- {c.cyan}just lint <package>{c.normal} (fix errors with {c.cyan}just format <package>{c.normal})
+- {c.cyan}just unit <package>{c.normal}
+- {c.cyan}just functional <package>{c.normal} (may need sudo and additional software installed)
 
-{bold}Run integration tests{normal} (requires a Juju controller and a cloud):
-- Pack: {cyan}just pack-k8s <package>{normal} or {cyan}just pack-machine <package>{normal}
-- Run: {cyan}just integration-k8s <package>{normal} or {cyan}just integration-machine{normal}
+{c.bold}Run integration tests{c.normal} (requires a Juju controller and a cloud):
+- Pack: {c.cyan}just pack-k8s <package>{c.normal} or {c.cyan}just pack-machine <package>{c.normal}
+- Run (excluding machine_only tests): {c.cyan}just integration-k8s <package>{c.normal}
+- Run (excluding k8s_only tests): {c.cyan}just integration-machine <package>{c.normal}
 
-{bold}Build the docs: {cyan}just docs{normal}
-- For specific packages only: {cyan}just docs html <packages>{normal}
+{c.bold}Build the docs: {c.cyan}just docs{c.normal}
+- For specific packages only: {c.cyan}just docs html <packages>{c.normal}
 """.strip()
 
 
