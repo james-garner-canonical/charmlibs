@@ -61,10 +61,11 @@ Read more: [the different types of tests](https://canonical.com/juju/docs/charml
 
 # Documentation
 
-The documentation site published at [canonical.com/juju/docs/charmlibs](https://canonical.com/juju/docs/charmlibs) is built with [Sphinx](https://www.sphinx-doc.org/) from the source in the `.docs/` directory. It combines two kinds of content:
+The documentation site published at [canonical.com/juju/docs/charmlibs](https://canonical.com/juju/docs/charmlibs) is built with [Sphinx](https://www.sphinx-doc.org/) from the source in the `.docs/` directory. It combines three kinds of content:
 
 - **Hand-written diataxis pages** (tutorials, how-to guides, and explanations) authored in `.docs/`, plus per-library pages that live in each library's own `docs/` directory.
 - **Reference docs** generated automatically from your library's docstrings via Sphinx [autodoc](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html). The module docstring in your package's `__init__.py` becomes the top-level description for that library's reference page.
+- **Interface specification docs** generated from the versioned `README.md` files in each interface's `interface/vN/` directory. These describe the relation interface contract itself (separately from the `charmlibs.interfaces` Python package reference, which is generated from docstrings like any other library).
 
 ## Building the docs
 
@@ -87,9 +88,14 @@ The build is intentionally multi-pass, because different libraries can have conf
 
 1. **Diataxis preprocessing.** The `.docs/scripts/diataxis_preprocessor.py` script runs first. It walks every library, copies any `docs/` pages into the Sphinx source tree, and generates the `_lib-*.md` toctree include files that the category index pages pull in.
 2. **Per-package reference passes.** `sphinx-build` is invoked once per package, each time with that package installed into an isolated `uvx` environment and the `package=<name>` config option set. Each pass runs autodoc against a single library and saves its resolved doctree and index information to disk. Reference warnings are suppressed during these passes because cross-references to other libraries aren't available yet.
-3. **Final combined pass.** A final `sphinx-build` runs with no `package` set. It restores the per-package reference docs saved in step 2, combines them with the hand-written pages, and produces the complete HTML site (and `llms.txt`).
+3. **Final combined pass.** A final `sphinx-build` runs with no `package` set. It restores the per-package reference docs saved in step 2, generates the interface specification pages, combines everything with the hand-written pages, and produces the complete HTML site (and `llms.txt`).
 
-The logic for steps 2 and 3 lives in the local Sphinx extensions under `.docs/extensions/` (notably `package_docs.py` and `interface_docs.py`), which are registered in `.docs/conf.py`. Docs dependencies are pinned in `.docs/_dev/requirements.txt`.
+The logic for steps 2 and 3 lives in the local Sphinx extensions under `.docs/extensions/`, which are registered in `.docs/conf.py`. In particular:
+
+- `package_docs.py` drives the per-package autodoc passes and saves/restores each library's reference doctree.
+- `interface_docs.py` generates the interface specification pages. During the final pass it reads each interface's `interface/vN/README.md`, rewrites relative links to point at the repo on GitHub, and writes one page per interface version under `reference/interfaces/`. During the per-package passes it only writes a placeholder so the toctree glob doesn't fail.
+
+Docs dependencies are pinned in `.docs/_dev/requirements.txt`.
 
 ## Working on the docs
 
