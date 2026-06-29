@@ -154,6 +154,57 @@ class TestCoverageCmds:
         assert '--data-file=.report/coverage-fakesuite-fakepy.db' in report_cmd
 
 
+class TestColorsEnabled:
+    def test_no_color_disables(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv('NO_COLOR', '1')
+        monkeypatch.setenv('CLICOLOR_FORCE', '1')  # NO_COLOR takes precedence.
+        assert just.Colors._enabled() is False
+
+    def test_clicolor_force_enables(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv('NO_COLOR', raising=False)
+        monkeypatch.setenv('CLICOLOR_FORCE', '1')
+        with patch('sys.stdout.isatty', return_value=False):
+            assert just.Colors._enabled() is True
+
+    def test_tty_enables(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv('NO_COLOR', raising=False)
+        monkeypatch.delenv('CLICOLOR_FORCE', raising=False)
+        with patch('sys.stdout.isatty', return_value=True):
+            assert just.Colors._enabled() is True
+
+    def test_non_tty_disables(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.delenv('NO_COLOR', raising=False)
+        monkeypatch.delenv('CLICOLOR_FORCE', raising=False)
+        with patch('sys.stdout.isatty', return_value=False):
+            assert just.Colors._enabled() is False
+
+
+class TestColors:
+    def test_enabled(self):
+        with patch('just.Colors._enabled', return_value=True):
+            colors = just.Colors()
+        assert (colors.bold, colors.normal, colors.cyan) == ('\033[1m', '\033[0m', '\033[36m')
+
+    def test_disabled(self):
+        with patch('just.Colors._enabled', return_value=False):
+            colors = just.Colors()
+        assert (colors.bold, colors.normal, colors.cyan) == ('', '', '')
+
+
+class TestQuickStart:
+    def test_with_colors(self):
+        with patch('just.Colors._enabled', return_value=True):
+            message = just._quick_start()
+        assert '\033[' in message
+        assert 'just help' in message
+
+    def test_without_colors(self):
+        with patch('just.Colors._enabled', return_value=False):
+            message = just._quick_start()
+        assert '\033[' not in message
+        assert 'just help' in message
+
+
 class TestMain:
     def test_ok(self):
         result = just.main(['help'])

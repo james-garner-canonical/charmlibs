@@ -50,32 +50,59 @@ TEST_REQUIREMENTS = REPO_ROOT / 'test-requirements.txt'
 
 DEFAULT_PYTHON = '3.10'
 
-# ANSI escape codes for formatting the messages.
-BOLD = '\033[1m'
-NORMAL = '\033[0m'
-CYAN = '\033[36m'
-# Quick start message printed when called with no arguments.
-QUICK_START = f"""
-{BOLD}Charmlibs is Canonical's charm library monorepo{NORMAL}
 
-{BOLD}List all commands with {CYAN}just help{NORMAL}{BOLD}, or:{NORMAL}
-- Create a new package: {CYAN}just init{NORMAL} or {CYAN}just init --interface{NORMAL}
-- Add a dependency to a package: {CYAN}just add <package> <dependency>{NORMAL}
-- Lint, unit test, and build docs for a package: {CYAN}just check <package>{NORMAL}
-- Run {CYAN}ruff{NORMAL} for all packages: {CYAN}just fast-lint{NORMAL}
+class Colors:
+    """ANSI escape codes for formatting messages, empty strings when color is disabled.
 
-{BOLD}Run individual checks for a package:{NORMAL}
-- {CYAN}just lint <package>{NORMAL} (fix errors with {CYAN}just format <package>{NORMAL})
-- {CYAN}just unit <package>{NORMAL}
-- {CYAN}just functional <package>{NORMAL} (may require extra software like {CYAN}pebble{NORMAL})
+    Whether color is enabled follows https://bixense.com/clicolors/: `NO_COLOR` disables color,
+    `CLICOLOR_FORCE` forces it on, otherwise color is only used when stdout is an interactive
+    terminal (so piped or redirected output stays plain text).
+    """
 
-{BOLD}Run integration tests{NORMAL} (requires a Juju controller and a cloud):
-- Pack: {CYAN}just pack-k8s <package>{NORMAL} or {CYAN}just pack-machine <package>{NORMAL}
-- Run: {CYAN}just integration-k8s <package>{NORMAL} or {CYAN}just integration-machine{NORMAL}
+    def __init__(self) -> None:
+        if self._enabled():
+            self.bold = '\033[1m'
+            self.normal = '\033[0m'
+            self.cyan = '\033[36m'
+        else:
+            self.bold = self.normal = self.cyan = ''
 
-{BOLD}Build the docs: {CYAN}just docs{NORMAL}
-- For specific packages only: {CYAN}just docs html <packages>{NORMAL}
+    @staticmethod
+    def _enabled() -> bool:
+        """Return whether to emit ANSI color codes."""
+        if os.environ.get('NO_COLOR'):
+            return False
+        if os.environ.get('CLICOLOR_FORCE'):
+            return True
+        return sys.stdout.isatty()
+
+
+def _quick_start() -> str:
+    """Return the quick start message printed when called with no arguments."""
+    c = Colors()
+    bold, normal, cyan = c.bold, c.normal, c.cyan
+    return f"""
+{bold}Charmlibs is Canonical's charm library monorepo{normal}
+
+{bold}List all commands with {cyan}just help{normal}{bold}, or:{normal}
+- Create a new package: {cyan}just init{normal} or {cyan}just init --interface{normal}
+- Add a dependency to a package: {cyan}just add <package> <dependency>{normal}
+- Lint, unit test, and build docs for a package: {cyan}just check <package>{normal}
+- Run {cyan}ruff{normal} for all packages: {cyan}just fast-lint{normal}
+
+{bold}Run individual checks for a package:{normal}
+- {cyan}just lint <package>{normal} (fix errors with {cyan}just format <package>{normal})
+- {cyan}just unit <package>{normal}
+- {cyan}just functional <package>{normal} (may require extra software like {cyan}pebble{normal})
+
+{bold}Run integration tests{normal} (requires a Juju controller and a cloud):
+- Pack: {cyan}just pack-k8s <package>{normal} or {cyan}just pack-machine <package>{normal}
+- Run: {cyan}just integration-k8s <package>{normal} or {cyan}just integration-machine{normal}
+
+{bold}Build the docs: {cyan}just docs{normal}
+- For specific packages only: {cyan}just docs html <packages>{normal}
 """.strip()
+
 
 # Mapping of recipe names to their functions, populated by the `_register` decorator.
 # `just help` prints the recipes in registration order.
@@ -90,13 +117,13 @@ def _register(fn: _F) -> _F:
 def main(argv: list[str]) -> int:
     """Dispatch `argv` to the named recipe, returning its exit code."""
     if not argv or argv[0] in ('-h', '--help'):
-        print(QUICK_START)
+        print(_quick_start())
         return 0
     name, *args = argv
     func = RECIPES.get(name)
     if func is None:
         print(f'Unknown recipe: {name!r}\n', file=sys.stderr)
-        print(QUICK_START)
+        print(_quick_start())
         return 2
     return func(args)
 
@@ -126,15 +153,16 @@ def init(argv: list[str]) -> int:
         help='Scaffold a charmlibs.interfaces package instead of a general charmlibs package.',
     )
     args, cookiecutter_args = parser.parse_known_args(argv)
+    c = Colors()
     if args.interface:
         print(
-            f'✨{BOLD}IMPORTANT{NORMAL}✨ The project name should be the canonical interface'
-            f' name, as used in {CYAN}charmcraft.yaml{NORMAL} files.'
+            f'✨{c.bold}IMPORTANT{c.normal}✨ The project name should be the canonical interface'
+            f' name, as used in {c.cyan}charmcraft.yaml{c.normal} files.'
         )
     else:
         print(
-            f'✨{BOLD}IMPORTANT{NORMAL}✨ The project name should be the import package name,'
-            f' without the {CYAN}charmlibs.{NORMAL} namespace.'
+            f'✨{c.bold}IMPORTANT{c.normal}✨ The project name should be the import package name,'
+            f' without the {c.cyan}charmlibs.{c.normal} namespace.'
         )
     print('You can press enter to accept the default, shown in brackets.')
     template = REPO_ROOT / '.template'
