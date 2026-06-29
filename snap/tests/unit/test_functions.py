@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,11 +12,6 @@ from charmlibs.snap import _functions
 from charmlibs.snap import _snapd_snaps as _snapd
 from charmlibs.snap._errors import NotFoundError
 from charmlibs.snap._utils import normalize_channel
-
-if TYPE_CHECKING:
-    from unittest.mock import MagicMock
-
-    from conftest import Mocker
 
 
 def make_info(
@@ -43,12 +38,12 @@ class MockSnapd:
 
 
 @pytest.fixture
-def mock_snapd(mocker: Mocker) -> MockSnapd:
-    return MockSnapd(
-        info=mocker.patch('charmlibs.snap._snapd_snaps.info'),
-        install=mocker.patch('charmlibs.snap._snapd_snaps.install'),
-        refresh=mocker.patch('charmlibs.snap._snapd_snaps.refresh'),
-    )
+def mock_snapd(monkeypatch: pytest.MonkeyPatch) -> MockSnapd:
+    mocks = MockSnapd(info=MagicMock(), install=MagicMock(), refresh=MagicMock())
+    monkeypatch.setattr(_snapd, 'info', mocks.info)
+    monkeypatch.setattr(_snapd, 'install', mocks.install)
+    monkeypatch.setattr(_snapd, 'refresh', mocks.refresh)
+    return mocks
 
 
 class TestGetInfo:

@@ -5,44 +5,14 @@ from __future__ import annotations
 import json
 import pathlib
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, cast
-from unittest import mock
+from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-    from unittest.mock import MagicMock
+from charmlibs.snap import _client
 
 FIXTURES_DIR = pathlib.Path(__file__).parent / 'fixtures'
-
-
-class Mocker:
-    """Minimal stand-in for :class:`pytest_mock.MockerFixture`.
-
-    Only :meth:`patch` is supported. Started patches are stopped automatically
-    when the ``mocker`` fixture tears down.
-    """
-
-    def __init__(self) -> None:
-        self._patchers: list[Any] = []
-
-    def patch(self, target: str, /, *args: Any, **kwargs: Any) -> MagicMock:
-        patcher = cast('Any', mock.patch(target, *args, **kwargs))
-        mocked: MagicMock = patcher.start()
-        self._patchers.append(patcher)
-        return mocked
-
-    def stopall(self) -> None:
-        for patcher in reversed(self._patchers):
-            patcher.stop()
-
-
-@pytest.fixture
-def mocker() -> Iterator[Mocker]:
-    m = Mocker()
-    yield m
-    m.stopall()
 
 
 @dataclass
@@ -54,14 +24,14 @@ class MockClient:
 
 
 @pytest.fixture
-def mock_client(mocker: Mocker) -> MockClient:
+def mock_client(monkeypatch: pytest.MonkeyPatch) -> MockClient:
     """Patch _client.get, .get_logs, .post, and .put for use in _snapd_*.py tests."""
-    return MockClient(
-        get=mocker.patch('charmlibs.snap._client.get'),
-        get_logs=mocker.patch('charmlibs.snap._client.get_logs'),
-        post=mocker.patch('charmlibs.snap._client.post'),
-        put=mocker.patch('charmlibs.snap._client.put'),
-    )
+    client = MockClient(get=MagicMock(), get_logs=MagicMock(), post=MagicMock(), put=MagicMock())
+    monkeypatch.setattr(_client, 'get', client.get)
+    monkeypatch.setattr(_client, 'get_logs', client.get_logs)
+    monkeypatch.setattr(_client, 'post', client.post)
+    monkeypatch.setattr(_client, 'put', client.put)
+    return client
 
 
 def load_fixture(name: str) -> Any:

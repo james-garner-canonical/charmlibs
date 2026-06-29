@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import datetime
 from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -21,7 +22,7 @@ from charmlibs.snap._errors import (
 from conftest import result_of
 
 if TYPE_CHECKING:
-    from conftest import MockClient, Mocker
+    from conftest import MockClient
 
 
 def _make_snap_not_found():
@@ -204,8 +205,8 @@ class TestRefresh:
 
 class TestHold:
     @pytest.fixture(autouse=True)
-    def mock_info(self, mocker: Mocker):
-        mocker.patch('charmlibs.snap._snapd_snaps.info')
+    def mock_info(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(_snapd, 'info', MagicMock())
 
     def test_hold_forever_by_default(self, mock_client: MockClient):
         _snapd.hold('hello-world')
@@ -225,9 +226,9 @@ class TestHold:
         hold_time = datetime.datetime.fromisoformat(body['time'])
         assert hold_time > before + datetime.timedelta(days=1)
 
-    def test_hold_not_installed(self, mock_client: MockClient, mocker: Mocker):
+    def test_hold_not_installed(self, mock_client: MockClient, monkeypatch: pytest.MonkeyPatch):
         snap_not_found = NotFoundError('', kind='snap-not-found', value='')
-        mocker.patch('charmlibs.snap._snapd_snaps.info', side_effect=snap_not_found)
+        monkeypatch.setattr(_snapd, 'info', MagicMock(side_effect=snap_not_found))
         with pytest.raises(NotFoundError):
             _snapd.hold('hello-world')
         mock_client.post.assert_not_called()
