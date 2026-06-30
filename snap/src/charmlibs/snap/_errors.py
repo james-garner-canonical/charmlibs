@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-import builtins
+import builtins as _builtins
 
 
 class Error(Exception):
@@ -95,14 +95,14 @@ class BadResponseError(Error):
     """
 
 
-class ConnectionError(Error, builtins.ConnectionError):  # noqa: A001 (shadowing a Python builtin)
+class ConnectionError(Error, _builtins.ConnectionError):  # noqa: A001 (shadowing a Python builtin)
     """Raised when a connection to the snapd socket fails.
 
     This typically indicates that snapd is not installed or running.
     """
 
 
-class TimeoutError(Error, builtins.TimeoutError):  # noqa: A001 (shadowing a Python builtin)
+class TimeoutError(Error, _builtins.TimeoutError):  # noqa: A001 (shadowing a Python builtin)
     """Raised when snapd does not respond to a request in time.
 
     This typically indicates that snapd is waiting on the snap store, which may indicate
