@@ -32,6 +32,12 @@ def error_types() -> frozenset[type[BaseException]]:
 
 
 class TestErrorHierarchy:
+    """Test that errors respect the semantic error hierarchy of the library.
+
+    New error types will probably be specific snapd API errors, and should subclass APIError.
+    This is what these tests expect by default. If a new error type is added elsewhere in the
+    error heirarchy, it should be added to _NON_API_ERROR_TYPES, and other tests added as needed.
+    """
     def test_all_error_types_subclass_error(self, error_types: frozenset[type[BaseException]]):
         for cls in error_types:
             assert issubclass(cls, _errors.Error)

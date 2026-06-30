@@ -82,6 +82,11 @@ class Error(Exception):
         )
 
 
+#####################################################
+# Errors raised when communicating with snapd fails #
+#####################################################
+
+
 class BadResponseError(Error):
     """Raised manually when the snapd API returns a response we don't understand.
 
@@ -104,6 +109,11 @@ class TimeoutError(Error, builtins.TimeoutError):  # noqa: A001 (shadowing a Pyt
     a transient issue with the store or a problem with the system's network connection.
     Callers may want to catch this for retry logic or to surface a user-friendly message.
     """
+
+
+##############################################
+# Errors raised from snapd's error responses #
+##############################################
 
 
 class APIError(Error):
