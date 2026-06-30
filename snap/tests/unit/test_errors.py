@@ -57,11 +57,18 @@ def test_snap_error():
         status_code=400,
         status='Bad Request',
     )
-    # The message, kind and value are public attributes.
+    # The message, kind and value are public.
     assert err.message == 'the message'
     assert err.kind == 'the-kind'
     assert err.value == 'the-value'
-    # Status code and status message aren't public attributes.
+    # They're read-only properties, not attributes.
+    with pytest.raises(AttributeError):
+        err.message = ''  # pyright: ignore[reportAttributeAccessIssue]
+    with pytest.raises(AttributeError):
+        err.kind = ''  # pyright: ignore[reportAttributeAccessIssue]
+    with pytest.raises(AttributeError):
+        err.value = None  # pyright: ignore[reportAttributeAccessIssue]
+    # Status code and status message aren't public.
     assert not hasattr(err, 'status_code')
     assert not hasattr(err, 'status')
     # The repr() contains *all* the arguments.

@@ -44,12 +44,31 @@ class Error(Exception):
         status: str | None = None,
     ):
         super().__init__(message)
-        self.message = message
-        self.kind = kind
-        self.value = value
+        # Exposed publicly as read-only properties.
+        self._message = message
+        self._kind = kind
+        self._value = value
         # Too low-level to be part of the public API, but useful for debugging and logging.
         self._status_code = status_code
         self._status = status
+
+    @property
+    def message(self) -> str:
+        """The error message, typically from the snapd API response."""
+        return self._message
+
+    @property
+    def kind(self) -> str:
+        """The error kind, typically from the snapd API response."""
+        return self._kind
+
+    @property
+    def value(self) -> object:
+        """The error value, typically from the snapd API response.
+
+        Typically a string, but can be any JSON value.
+        """
+        return self._value
 
     def __repr__(self) -> str:
         return (
