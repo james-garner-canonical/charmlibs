@@ -49,34 +49,27 @@ class TestErrorHierarchy:
         assert issubclass(_errors.ConnectionError, builtins.ConnectionError)
 
 
-class TestSnapError:
-    def test_attributes(self):
-        err = _errors.Error(
-            'the message',
-            kind='the-kind',
-            value='the-value',
-            status_code=400,
-            status='Bad Request',
-        )
-        assert err.message == 'the message'
-        assert str(err) == 'the message'
-        assert err.kind == 'the-kind'
-        assert err.value == 'the-value'
-        assert err._status_code == 400
-        assert err._status == 'Bad Request'
-
-    def test_repr(self):
-        err = _errors.Error(
-            'my very unique error message',
-            kind='unique-kind',
-            value='unique-value',
-            status_code=400,
-            status='unique status string',
-        )
-        r = repr(err)
-        assert str(type(err).__name__) in r
-        assert 'my very unique error message' in r
-        assert "'unique-kind'" in r
-        assert "'unique-value'" in r
-        assert '400' in r
-        assert 'unique status string' in r
+def test_snap_error():
+    err = _errors.Error(
+        'the message',
+        kind='the-kind',
+        value='the-value',
+        status_code=400,
+        status='Bad Request',
+    )
+    # The message, kind and value are public attributes.
+    assert err.message == 'the message'
+    assert err.kind == 'the-kind'
+    assert err.value == 'the-value'
+    # Status code and status message aren't public attributes.
+    assert not hasattr(err, 'status_code')
+    assert not hasattr(err, 'status')
+    # The repr() contains *all* the arguments.
+    r = repr(err)
+    assert 'the message' in r
+    assert 'the-kind' in r
+    assert 'the-value' in r
+    assert '400' in r
+    assert 'Bad Request' in r
+    # str() is just the message
+    assert str(err) == 'the message'
