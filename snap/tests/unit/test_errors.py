@@ -38,6 +38,7 @@ class TestErrorHierarchy:
     This is what these tests expect by default. If a new error type is added elsewhere in the
     error heirarchy, it should be added to _NON_API_ERROR_TYPES, and other tests added as needed.
     """
+
     def test_all_error_types_subclass_error(self, error_types: frozenset[type[BaseException]]):
         for cls in error_types:
             assert issubclass(cls, _errors.Error)
