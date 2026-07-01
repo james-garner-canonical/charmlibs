@@ -64,9 +64,9 @@ class Error(Exception):
     def value(self) -> object:
         """The error value, typically from the snapd API response.
 
-        Typically a string, but can be any JSON value.
+        Currently a string, but future library versions may return any ``object`` subtype.
         """
-        return self._value
+        return str(self._value)
 
     def __repr__(self) -> str:
         return (
@@ -164,10 +164,7 @@ class _InterfacesUnchangedError(APIError):  # pyright: ignore[reportUnusedClass]
 class OptionNotFoundError(APIError):
     """Raised via the API when the specified snap config option is not found.
 
-    Note that ``OptionNotFoundError.value`` is typically a ``dict``,
-    rather than the usual ``str``::
-
-        {'SnapName': snap_name, 'Key': key}.
+    ``OptionNotFoundError.value`` looks like ``"{'SnapName': 'hello-world', 'Key': 'foo'}"``.
     """
 
 

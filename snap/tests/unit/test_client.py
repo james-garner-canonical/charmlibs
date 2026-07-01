@@ -152,7 +152,7 @@ class TestErrorResponses:
         assert exc_info.value.kind == ''
         assert exc_info.value.value == ''
 
-    def test_error_preserves_dict_value(self, mock_raw: MagicMock):
+    def test_error_converts_value_to_str(self, mock_raw: MagicMock):
         # snap-channel-not-available returns a rich dict as 'value'.
         value = {'channel': 'garbage', 'snap-name': 'hello-world'}
         mock_raw.return_value = _fake_response({
@@ -167,7 +167,7 @@ class TestErrorResponses:
         })
         with pytest.raises(ChannelNotAvailableError) as exc_info:
             _client.get('/v2/snaps/hello-world')
-        assert exc_info.value.value == value
+        assert exc_info.value.value == str(value)
 
     @pytest.mark.parametrize(
         ('response', 'message_fragment'),
@@ -449,7 +449,7 @@ class TestRealErrorFixtures:
         assert type(exc) is expected_type  # Exact type, not a subclass.
         assert exc.message == result['message']
         assert exc.kind == result.get('kind', '')
-        assert exc.value == result.get('value', '')
+        assert exc.value == str(result.get('value', ''))
         assert exc._status_code == envelope['status-code']
 
 
@@ -478,4 +478,4 @@ class TestRealChangeFixtures:
             _client.post('/v2/aliases', body={'action': 'alias'})
         assert exc_info.value.kind == 'charmlibs-snap-change-error'
         assert exc_info.value.message == change['err']  # Message comes from the 'err' field.
-        assert exc_info.value.value == async_envelope['change']  # The polled change id.
+        assert exc_info.value.value == str(async_envelope['change'])  # The polled change id.
