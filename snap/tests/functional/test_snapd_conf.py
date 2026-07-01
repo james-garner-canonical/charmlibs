@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-import typing
+import json
 from typing import Any
 
 import pytest
@@ -149,7 +149,7 @@ def test_get_option_not_found_value_contains_snap_and_key():
     with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_SNAP, 'key-that-should-not-exist')
     exc = ctx.value
-    di = typing.cast('dict[str, str]', exc.value)
+    di: dict[str, str] = json.loads(exc.value)
     assert di['SnapName'] == _SNAP
     assert di['Key'] == 'key-that-should-not-exist'
 
