@@ -1,7 +1,3 @@
-If this file is in context and work is on the snap library, treat it with the same importance as AGENTS.md at the repo root.
-
-## Running checks
-
 Always run these checks before reporting completion:
 ```
 just format snap
