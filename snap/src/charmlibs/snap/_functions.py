@@ -27,7 +27,8 @@ def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) ->
             that use classic confinement.
 
     Returns:
-        True if the snap was installed or updated, False otherwise.
+        A truthy value if the snap was installed or updated, or a falsy value otherwise.
+        Not guaranteed to be an actual :class:`bool`.
 
     Raises:
         NotFoundError: If the snap does not exist in the store.
@@ -71,7 +72,8 @@ def ensure(
             requested channel. If ``False``, leave an already-correct snap untouched.
 
     Returns:
-        True if the snap was installed or updated, False otherwise.
+        A truthy value if the snap was installed or updated, or a falsy value otherwise.
+        Not guaranteed to be an actual :class:`bool`.
 
     Raises:
         NotFoundError: If the snap does not exist in the store.
