@@ -8,37 +8,25 @@ just format snap
 just lint snap
 just unit snap
 ```
-If the change is substantial run tests against the real snapd API in a workshop container:
+For substantial changes, run the real snapd API tests in a workshop container (`workshop launch resolute` first if needed; full suite ~5 min, select tests with `-k '<expression>'`):
 ```
 workshop exec resolute -- sudo just functional snap
 ```
-If workshop isn't launched yet, run `workshop launch resolute` first. The full test suite takes around 5 minutes. Select specific tests with `-k '<expression>'`.
 
 ## Checking the snapd API directly
 
-This library is closely coupled to the snapd API. Query the API in the workshop container to check its behaviour. The repository root is mounted in the container, so you can write scripts in the repository and execute them in the container. Likewise, files written to the repository directory in the container are available locally for inspection. For example:
+The repo root is mounted in the workshop container, so scripts written on the host run there and vice versa. Quick options:
 
-```python
-# script.py
-import json
-from charmlibs.snap import _client
-
-result = _client.put('/v2/snaps/<snap>/conf', body={})
-with open('out.json', 'w') as f:
-    json.dump(result, f, indent=2, default=str)
-```
-
-Run it with `workshop exec`:
 ```bash
-workshop exec resolute -- sudo uvx --with-editable ./snap python script.py
-```
-
-You can also use curl directly for quick checks:
-```
+# curl directly against snapd
 workshop exec resolute -- sudo curl -s --unix-socket /run/snapd.socket http://localhost/v2/logs?names=<snap>&n=1
-```
 
-For interactive exploration, use `workshop shell resolute`.
+# or run a Python script using _client
+workshop exec resolute -- sudo uvx --with-editable ./snap python script.py
+
+# interactive shell
+workshop shell resolute
+```
 
 ## Strategy for adding tests (capture-then-assert)
 
