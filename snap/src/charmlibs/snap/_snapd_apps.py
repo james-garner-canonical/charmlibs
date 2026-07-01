@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ def start(snap: str, *services: str, enable: bool = False) -> None:
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
-        ChangeError: if the change fails after starting (for example, the service fails to start).
+        ChangeError: if the change fails (for example, the service fails to start).
     """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'start', 'names': names}
@@ -54,7 +54,7 @@ def stop(snap: str, *services: str, disable: bool = False) -> None:
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
-        ChangeError: if the change fails after starting (for example, the service fails to stop).
+        ChangeError: if the change fails (for example, the service fails to stop).
     """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'stop', 'names': names}
@@ -73,7 +73,7 @@ def restart(snap: str, *services: str) -> None:
 
     Raises:
         AppNotFoundError: if the snap is not installed or the service is not found.
-        ChangeError: if the change fails after starting (for example, the service fails to start).
+        ChangeError: if the change fails (for example, the service fails to restart).
     """
     names = [f'{snap}.{s}' for s in services] if services else [snap]
     data: dict[str, Any] = {'action': 'restart', 'names': names}
