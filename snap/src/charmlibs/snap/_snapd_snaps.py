@@ -108,7 +108,9 @@ def info(snap: str) -> Info:
 
 
 @typing.overload
-def install(snap: str, *, channel: str, revision: None = None, classic: bool = False) -> object: ...
+def install(
+    snap: str, *, channel: str, revision: None = None, classic: bool = False
+) -> object: ...
 @typing.overload
 def install(
     snap: str, *, channel: None = None, revision: int | str, classic: bool = False
