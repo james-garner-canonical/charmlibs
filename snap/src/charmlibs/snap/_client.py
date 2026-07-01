@@ -312,9 +312,13 @@ class _Change:
                     return result.get('data', {})
                 case 'Wait':
                     # Follow the snap CLI's behavior of treating Wait as a success.
-                    # Log the change ID in case user investigation is required.
-                    # Callers should know in advance if action is expected after a change,
-                    # for example if the system requires a restart.
+                    # - Log the change ID in case user investigation is required.
+                    # - Callers should know in advance if action is expected after a change,
+                    #   for example if the system requires a restart.
+                    # - The key functions that rely on changes (install, refresh, remove) return
+                    #   truthy/falsy values to indicate whether a change was performed. If we need
+                    #   to expose the Wait status to callers in future, we can do so with a return
+                    #   value rather than an exception.
                     logger.warning("snap change [%s] succeeded with status 'Wait'", self._id)
                     return result.get('data', {})
                 case 'Error':

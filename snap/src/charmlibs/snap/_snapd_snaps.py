@@ -136,7 +136,8 @@ def install(
             that use classic confinement.
 
     Returns:
-        True if the snap was installed, False if it was already installed.
+        A truthy value if the snap was installed, or a falsy value if it was already installed.
+        Not guaranteed to be an actual :class:`bool`.
 
     Raises:
         ValueError: if both channel and revision are specified.
@@ -174,7 +175,8 @@ def remove(snap: str, *, purge: bool = False) -> bool:
         purge: If True, remove the snap without saving a snapshot of its data.
 
     Returns:
-        True if the snap was removed, False if it was not installed.
+        A truthy value if the snap was removed, or a falsy value if it was not installed.
+        Not guaranteed to be an actual :class:`bool`.
 
     Raises:
         ChangeError: if the removal fails after starting (for example, a remove hook errors).
@@ -213,7 +215,8 @@ def refresh(
             ``channel``.
 
     Returns:
-        True if the snap was refreshed, False if no updates were available.
+        A truthy value if the snap was refreshed, or a falsy value if no updates were available.
+        Not guaranteed to be an actual :class:`bool`.
 
     Raises:
         ValueError: if both channel and revision are specified.
