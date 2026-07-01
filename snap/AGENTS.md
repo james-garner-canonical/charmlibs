@@ -1,60 +1,44 @@
 If this file is in context and work is on the snap library, treat it with the same importance as AGENTS.md at the repo root.
 
-Familiarise yourself with the codebase by reading everything under snap/src.
-
-## Shell and quoting
-
-> **Avoid terminal indiosyncracies**: Do NOT run terminal commands to read capture JSON — use `read_file` directly on `snap/.report/capture/*.json` instead (no approval required).
->
-> **`-k` quoting**: To pass a multi-token `-k` expression (with `or`/`and`) through `just`, wrap it in single-then-double quotes: `-k '"TestFoo or TestBar"'`. The shell passes the double-quoted string literally to just; just strips the outer double quotes; pytest receives the full expression. Single-token patterns need no extra quoting: `-k _capture`.
-
 ## Running checks
 
-Always run these checks:
+Always run these checks before reporting completion:
 ```
 just format snap
 just lint snap
 just unit snap
 ```
-Also run tests against the real snapd API like this if the change is substantial, and before reporting completion. These are a bit slow so run them less frequently than the unit tests. Select specific tests with `-k '<expression>'`.
+If the change is substantial run tests against the real snapd API in a workshop container:
 ```
-workshop run resolute -- functional snap
+workshop exec resolute -- sudo just functional snap
 ```
-If workshop isn't launched yet, run `workshop launch resolute` first. If workshop isn't available, you must either stop and ask the user, or proceed without functional tests (only if appropriate).
-
-**When running functional tests via `run_in_terminal`:** use `mode=sync` with `timeout=360000` (6 minutes). This avoids polling — the result is returned directly once the suite finishes.
-
-Read the `justfile` if you ever need to see what these commands actually do. You can search for lines starting with the recipe name.
-
-Before you make any changes, run all these checks to make sure there aren't any preexisting issues. If there are, identify them and suggest fixes before proceeding further.
+If workshop isn't launched yet, run `workshop launch resolute` first. The full test suite takes around 5 minutes. Select specific tests with `-k '<expression>'`.
 
 ## Checking the snapd API directly
 
-If you need to check how the snapd API responds, write a short Python script at the repo root (e.g. `sketch.py`) and run it inside the workshop container. The repo root is mounted at `/project` in the container, so files written by the script are immediately available on the host via `read_file`.
+This library is closely coupled to the snapd API. Query the API in the workshop container to check its behaviour. The repository root is mounted in the container, so you can write scripts in the repository and execute them in the container. Likewise, files written to the repository directory in the container are available locally for inspection. For example:
 
 ```python
-# sketch.py
+# script.py
 import json
 from charmlibs.snap import _client
 
 result = _client.put('/v2/snaps/<snap>/conf', body={})
-# Write output to a file — readable from the host at ./sketch-out.json
-with open('sketch-out.json', 'w') as f:
+with open('out.json', 'w') as f:
     json.dump(result, f, indent=2, default=str)
 ```
 
-Run it with `workshop exec` (snapd requires root, so use `--uid 0`):
+Run it with `workshop exec`:
 ```bash
-workshop exec --uid 0 resolute -- uvx --with-editable ./snap python sketch.py
-# Then read sketch-out.json from the host with read_file
+workshop exec resolute -- sudo uvx --with-editable ./snap python script.py
 ```
 
 You can also use curl directly for quick checks:
 ```
-workshop exec --uid 0 resolute -- curl -s --unix-socket /run/snapd.socket http://localhost/v2/logs?names=<snap>&n=1
+workshop exec resolute -- sudo curl -s --unix-socket /run/snapd.socket http://localhost/v2/logs?names=<snap>&n=1
 ```
 
-For interactive exploration (e.g. investigating mount permissions, testing multiple commands in sequence), use `workshop shell resolute` to get a persistent shell session inside the container.
+For interactive exploration, use `workshop shell resolute`.
 
 ---
 
