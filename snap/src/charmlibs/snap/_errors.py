@@ -14,8 +14,6 @@
 
 """Logical error types for responses from the snapd API."""
 
-from __future__ import annotations as _
-
 import builtins as _builtins
 
 
