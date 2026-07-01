@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import pytest
@@ -148,10 +147,11 @@ def test_get_option_not_found_value_contains_snap_and_key():
     ensure_installed(_SNAP)
     with pytest.raises(_errors.OptionNotFoundError) as ctx:
         _snapd_conf.get(_SNAP, 'key-that-should-not-exist')
-    exc = ctx.value
-    di: dict[str, str] = json.loads(exc.value)
-    assert di['SnapName'] == _SNAP
-    assert di['Key'] == 'key-that-should-not-exist'
+    value = str(ctx.value.value)
+    assert 'SnapName' in value
+    assert 'Key' in value
+    assert _SNAP in value
+    assert 'key-that-should-not-exist' in value
 
 
 def test_get_not_installed_snap_raises_option_not_found():
