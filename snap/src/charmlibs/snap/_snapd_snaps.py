@@ -108,22 +108,22 @@ def info(snap: str) -> Info:
 
 
 @typing.overload
-def install(snap: str, *, channel: str, revision: None = None, classic: bool = False) -> bool: ...
+def install(snap: str, *, channel: str, revision: None = None, classic: bool = False) -> object: ...
 @typing.overload
 def install(
     snap: str, *, channel: None = None, revision: int | str, classic: bool = False
-) -> bool: ...
+) -> object: ...
 @typing.overload
 def install(
     snap: str, *, channel: None = None, revision: None = None, classic: bool = False
-) -> bool: ...
+) -> object: ...
 def install(
     snap: str,
     *,
     channel: str | None = None,
     revision: int | str | None = None,
     classic: bool = False,
-) -> bool:
+) -> object:
     """Install a snap.
 
     Args:
@@ -167,7 +167,7 @@ def install(
     return True
 
 
-def remove(snap: str, *, purge: bool = False) -> bool:
+def remove(snap: str, *, purge: bool = False) -> object:
     """Remove a snap.
 
     Args:
@@ -194,17 +194,17 @@ def remove(snap: str, *, purge: bool = False) -> bool:
 
 
 @typing.overload
-def refresh(snap: str, channel: str, *, revision: None = None) -> bool: ...
+def refresh(snap: str, channel: str, *, revision: None = None) -> object: ...
 @typing.overload
-def refresh(snap: str, channel: None = None, *, revision: int | str) -> bool: ...
+def refresh(snap: str, channel: None = None, *, revision: int | str) -> object: ...
 @typing.overload
-def refresh(snap: str, channel: None = None, *, revision: None = None) -> bool: ...
+def refresh(snap: str, channel: None = None, *, revision: None = None) -> object: ...
 def refresh(
     snap: str,
     channel: str | None = None,
     *,
     revision: int | str | None = None,
-) -> bool:
+) -> object:
     """Refresh a snap.
 
     Args:

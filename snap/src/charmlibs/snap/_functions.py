@@ -17,7 +17,7 @@
 from . import _errors, _snapd_snaps, _utils
 
 
-def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) -> bool:
+def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) -> object:
     """Ensure the snap is installed at the specified revision.
 
     Args:
@@ -49,7 +49,7 @@ def ensure_revision(snap: str, revision: int | str, *, classic: bool = False) ->
 
 def ensure(
     snap: str, channel: str | None = None, *, classic: bool = False, update: bool = True
-) -> bool:
+) -> object:
     """Ensure the snap is installed and up-to-date on the specified channel.
 
     The action taken depends on the current state of the snap:
