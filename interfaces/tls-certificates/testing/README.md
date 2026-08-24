@@ -39,7 +39,7 @@ The defaults describe a typical, fully answered relation: one certificate reques
 
 - `certificate_requests` — the requests the requirer has made.
 - `mode` — whether the requirer's data is unit-scoped (`Mode.UNIT`, the default) or app-scoped (`Mode.APP`).
-- `provider=False` — populate only the requirer's side, for a request the provider hasn't answered yet.
+- `response=False` — populate only the requirer's side, for a request the provider hasn't answered yet.
 - `private_key` (`relation_for_provider` only) — the key used to generate the remote requirer's requests and to sign them. Defaults to `DEFAULT_PRIVATE_KEY`.
 
 `relation_for_requirer` always uses `DEFAULT_PRIVATE_KEY`, since the requirer is the charm under test and needs to be able to match the returned certificates to its own requests.

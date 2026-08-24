@@ -36,7 +36,7 @@ def relation_for_requirer(
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
     certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
     # interface 'conversation' args
-    provider: bool = True,
+    response: bool = True,
 ) -> testing.Relation:
     kwargs: _RelationKwargs = {}
     csrs = _make_csrs(certificate_requests, key=DEFAULT_PRIVATE_KEY)
@@ -46,7 +46,7 @@ def relation_for_requirer(
     else:
         kwargs["local_unit_data"] = _dump_requirer(csrs)
     # remote provider
-    if provider:
+    if response:
         kwargs["remote_app_data"] = _dump_provider(csrs, key=DEFAULT_PRIVATE_KEY)
     return _relation(endpoint, kwargs=kwargs)
 
@@ -60,7 +60,7 @@ def relation_for_provider(
     certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
     private_key: tls_certificates.PrivateKey = DEFAULT_PRIVATE_KEY,
     # interface 'conversation' args
-    provider: bool = True,
+    response: bool = True,
 ) -> testing.Relation:
     kwargs: _RelationKwargs = {}
     csrs = _make_csrs(certificate_requests, key=private_key)
@@ -70,7 +70,7 @@ def relation_for_provider(
     else:
         kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
-    if provider:
+    if response:
         kwargs["local_app_data"] = _dump_provider(csrs, key=private_key)
     return _relation(endpoint, kwargs=kwargs)
 
