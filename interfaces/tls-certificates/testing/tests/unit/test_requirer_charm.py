@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the TLS Certificates testing library from a requirer charm perspective."""
+"""Tests for the testing library from a library-managed requirer charm's perspective.
+
+See test_requirer_charm_manual.py for a charm that manages its own private key.
+"""
 
 import ops
 import ops.testing
-import pytest
 
 import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
 import requirer_charm
@@ -95,23 +97,3 @@ def test_requirer_without_key_secret_gets_no_certs():
         state_out = manager.run()
     assert isinstance(state_out.unit_status, ops.BlockedStatus)
     assert manager.charm.certs is None
-
-
-def test_requirer_with_charm_managed_key(monkeypatch: pytest.MonkeyPatch):
-    """A charm that passes its own private key doesn't need (or want) the seeded secret.
-
-    The library deletes its managed secret when the charm supplies a key, so these charms
-    wire their key into the charm themselves and leave the relation's default key alone.
-    """
-    monkeypatch.setattr(
-        requirer_charm, "PRIVATE_KEY", tls_certificates_testing.DEFAULT_PRIVATE_KEY
-    )
-    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-    relation = tls_certificates_testing.relation_for_requirer(
-        endpoint="certificates", certificate_requests=requirer_charm.REQUESTS
-    )
-    state_in = ops.testing.State(relations=[relation])  # no key secret
-    with ctx(ctx.on.update_status(), state_in) as manager:
-        state_out = manager.run()
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
-    assert manager.charm.certs is not None

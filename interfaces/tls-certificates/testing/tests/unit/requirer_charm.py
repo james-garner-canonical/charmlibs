@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Example requirer charm for unit tests."""
+"""Example requirer charm for unit tests.
+
+Lets the library generate and manage its private key -- the recommended configuration.
+See requirer_charm_manual.py for a charm that manages its own key instead.
+"""
 
 import ops
 
@@ -26,7 +30,6 @@ REQUESTS = [
     tls_certificates.CertificateRequestAttributes(common_name="example.com"),
     tls_certificates.CertificateRequestAttributes(common_name="eggsample.com"),
 ]
-PRIVATE_KEY: tls_certificates.PrivateKey | None = None
 
 
 class RequirerCharm(ops.CharmBase):
@@ -41,7 +44,6 @@ class RequirerCharm(ops.CharmBase):
             charm=self,
             relationship_name="certificates",
             certificate_requests=REQUESTS,
-            private_key=PRIVATE_KEY,
         )
         framework.observe(self.on.update_status, self._reconcile)
 
