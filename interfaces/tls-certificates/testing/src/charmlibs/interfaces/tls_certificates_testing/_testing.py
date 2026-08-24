@@ -19,6 +19,7 @@ DEFAULT_PRIVATE_KEY = tls_certificates.PrivateKey(raw=_raw.KEY)
 _INTERFACE_NAME = "tls-certificates"
 _REQUEST = tls_certificates.CertificateRequestAttributes(common_name="example.com")
 _CA_CERT = tls_certificates.Certificate(raw=_raw.CERT)
+_CA_KEY = tls_certificates.PrivateKey(raw=_raw.CA_KEY)
 
 
 class _RelationKwargs(typing.TypedDict, total=False):
@@ -47,7 +48,7 @@ def relation_for_requirer(
         kwargs["local_unit_data"] = _dump_requirer(csrs)
     # remote provider
     if response:
-        kwargs["remote_app_data"] = _dump_provider(csrs, key=DEFAULT_PRIVATE_KEY)
+        kwargs["remote_app_data"] = _dump_provider(csrs)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -71,7 +72,7 @@ def relation_for_provider(
         kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
     if response:
-        kwargs["local_app_data"] = _dump_provider(csrs, key=private_key)
+        kwargs["local_app_data"] = _dump_provider(csrs)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -101,12 +102,12 @@ def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
 
 
 def _dump_provider(
-    csrs: Iterable[tls_certificates.CertificateSigningRequest], key: tls_certificates.PrivateKey
+    csrs: Iterable[tls_certificates.CertificateSigningRequest],
 ) -> dict[str, str]:
     provider = tls_certificates._tls_certificates._ProviderApplicationData(
         certificates=[
             tls_certificates._tls_certificates._Certificate(
-                certificate=str(_sign(csr, key=key)),
+                certificate=str(_sign(csr)),
                 certificate_signing_request=str(csr),
                 ca=str(_CA_CERT),
                 chain=[],
@@ -119,10 +120,8 @@ def _dump_provider(
     return ret
 
 
-def _sign(
-    csr: tls_certificates.CertificateSigningRequest, key: tls_certificates.PrivateKey
-) -> tls_certificates.Certificate:
-    return csr.sign(ca=_CA_CERT, ca_private_key=key, validity=datetime.timedelta(days=42))
+def _sign(csr: tls_certificates.CertificateSigningRequest) -> tls_certificates.Certificate:
+    return csr.sign(ca=_CA_CERT, ca_private_key=_CA_KEY, validity=datetime.timedelta(days=42))
 
 
 def _relation(endpoint: str, kwargs: _RelationKwargs) -> testing.Relation:
