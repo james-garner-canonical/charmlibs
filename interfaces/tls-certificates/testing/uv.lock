@@ -114,9 +114,8 @@ provides-extras = ["testing"]
 [package.metadata.requires-dev]
 functional = []
 integration = [
-    { name = "juju", specifier = ">3" },
-    { name = "pytest-asyncio", specifier = "==0.21.2" },
-    { name = "pytest-operator" },
+    { name = "jubilant", specifier = "<2" },
+    { name = "pytest-jubilant", specifier = "~=2.0" },
 ]
 lint = [{ name = "typing-extensions" }]
 unit = [

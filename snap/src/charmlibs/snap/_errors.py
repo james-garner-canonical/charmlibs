@@ -1,0 +1,222 @@
+# Copyright 2021 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Logical error types for responses from the snapd API."""
+
+from __future__ import annotations
+
+import builtins as _builtins
+import typing
+
+if typing.TYPE_CHECKING:
+    from typing_extensions import Self
+
+
+class Error(Exception):
+    """Base class for all library errors, not raised directly.
+
+    Args:
+        message: Typically the 'message' field from a snapd API response.
+        kind: The 'kind' field from a snapd API response, used to derive the specific error type.
+            Errors the library raises itself have a kind starting with 'charmlibs-snap', so that
+            they can't collide with a kind snapd may add in future.
+        value: The 'value' field from a snapd API response, which may contain additional details.
+            Almost always a string, but can be any JSON value.
+        status_code: The HTTP status code from the snapd API response, if applicable.
+            Stored privately for logging and debugging, not part of the public error API.
+        status: The 'status' field from a snapd API response, if applicable.
+            Stored privately for logging and debugging, not part of the public error API.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        kind: str,
+        value: object,
+        status_code: int | None = None,
+        status: str | None = None,
+    ):
+        super().__init__(message)
+        # Exposed publicly as read-only properties.
+        self._message = message
+        self._kind = kind
+        self._value = value
+        # Too low-level to be part of the public API, but useful for debugging and logging.
+        self._status_code = status_code
+        self._status = status
+
+    @classmethod
+    def _from(cls, error: Error) -> Self:
+        return cls(
+            error._message,
+            kind=error._kind,
+            value=error._value,
+            status_code=error._status_code,
+            status=error._status,
+        )
+
+    @property
+    def message(self) -> str:
+        """The error message, typically from the snapd API response."""
+        return self._message
+
+    @property
+    def kind(self) -> str:
+        """The error kind, typically from the snapd API response."""
+        return self._kind
+
+    @property
+    def value(self) -> object:
+        """The error value, typically from the snapd API response.
+
+        Currently a string, but future library versions may return any ``object`` subtype.
+        """
+        return str(self._value)
+
+    def __str__(self) -> str:
+        # Surface `value` when it adds information the message doesn't already carry.
+        # Most useful for _NotFoundError, with message 'snap not installed' and value '<snap>'.
+        # Skip OptionNotFoundError's non-string value, which is redundant with its message.
+        value = self._value
+        if isinstance(value, str) and value and value not in self._message:
+            return f'{self._message} ({value})'
+        return self._message
+
+    def __repr__(self) -> str:
+        return (
+            f'{type(self).__module__}.{type(self).__name__}('
+            f'{self.message!r}'
+            f', kind={self.kind!r}'
+            f', value={self.value!r}'
+            f', status_code={self._status_code!r}'
+            f', status={self._status!r}'
+            ')'
+        )
+
+
+#####################################################
+# Errors raised when communicating with snapd fails #
+#####################################################
+
+
+class BadResponseError(Error):
+    """Raised manually when the snapd API returns a response we don't understand.
+
+    Callers will not be able to resolve this error directly. It means the library and snapd
+    disagree about the shape of a response, so it should be reported to the library maintainers.
+    """
+
+
+class ConnectionError(Error, _builtins.ConnectionError):  # noqa: A001 (shadowing a Python builtin)
+    """Raised when a connection to the snapd socket fails.
+
+    This typically indicates that snapd isn't running -- for example, it may be restarting
+    as part of a snap operation. The library briefly retries read-only requests before giving
+    up, so a caller that sees this error is looking at a system where snapd stayed unreachable.
+    Requests that change state aren't retried, since the library can't tell whether snapd
+    received them.
+
+    See :class:`SocketNotFoundError` for the case where the socket doesn't exist at all.
+    """
+
+
+class SocketNotFoundError(ConnectionError):
+    """Raised when the snapd socket does not exist.
+
+    This typically indicates that snapd is not installed on the system. Unlike other connection
+    failures, this is not retried: a socket that isn't there won't appear moments later.
+    """
+
+
+class TimeoutError(Error, _builtins.TimeoutError):  # noqa: A001 (shadowing a Python builtin)
+    """Raised when snapd does not respond to a request in time.
+
+    This typically indicates that snapd is waiting on the snap store, which may indicate
+    a transient issue with the store or a problem with the system's network connection.
+    Callers may want to catch this for retry logic or to surface a user-friendly message.
+    """
+
+
+##############################################
+# Errors raised from snapd's error responses #
+##############################################
+
+
+class APIError(Error):
+    """Raised when the snapd API returns an error response."""
+
+
+class _AlreadyInstalledError(APIError):  # pyright: ignore[reportUnusedClass]
+    """Raised via the API when an install is attempted for a snap that is already installed."""
+
+
+class AppNotFoundError(APIError):
+    """Raised via the API when a specified app is not found within an installed snap."""
+
+
+class _NotFoundError(APIError):
+    """Raised via the API when a snap is not found.
+
+    Internal only: callers must narrow to either NotInstalledError or NotInStoreError.
+    """
+
+
+class NotInstalledError(_NotFoundError):
+    """Raised when a snap is not installed on the system."""
+
+
+class NotInStoreError(_NotFoundError):
+    """Raised when the snap store has no snap by that name.
+
+    Distinct from :class:`ChannelNotAvailableError` and :class:`RevisionNotAvailableError`.
+    """
+
+
+class NeedsClassicError(APIError):
+    """Raised via the API if classic is not specified for a classic confinement snap.
+
+    This can occur for a snap install or refresh.
+    """
+
+
+class ChannelNotAvailableError(APIError):
+    """Raised via the API when no snap revision is available on the specified channel."""
+
+
+class RevisionNotAvailableError(APIError):
+    """Raised via the API when the specified snap revision is not available."""
+
+
+class _NoUpdatesAvailableError(APIError):  # pyright: ignore[reportUnusedClass]
+    """Raised via the API when a refresh is attempted but no updates are available."""
+
+
+class _InterfacesUnchangedError(APIError):  # pyright: ignore[reportUnusedClass]
+    """Raised via the API when a connect/disconnect would result in no change.
+
+    This class is private because the public disconnect function suppresses this error,
+    following the snap CLI's lead.
+    """
+
+
+class OptionNotFoundError(APIError):
+    """Raised via the API when the specified snap config option is not found.
+
+    ``OptionNotFoundError.value`` looks like ``"{'SnapName': 'hello-world', 'Key': 'foo'}"``.
+    """
+
+
+class ChangeError(APIError):
+    """Raised when a snap change results in an error or has an unexpected status."""
