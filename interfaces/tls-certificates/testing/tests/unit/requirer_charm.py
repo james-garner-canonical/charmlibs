@@ -46,6 +46,10 @@ class RequirerCharm(ops.CharmBase):
             certificate_requests=REQUESTS,
         )
         framework.observe(self.on.update_status, self._reconcile)
+        # The library emits certificate_available on every reconcile that finds a matching
+        # certificate -- it is level-triggered, not a change signal -- so the handler must
+        # also reconcile against installed state rather than treat each event as news.
+        framework.observe(self.certificates.on.certificate_available, self._reconcile)
 
     def _reconcile(self, _: ops.EventBase) -> None:
         """Handle relation changed event with certificates."""
