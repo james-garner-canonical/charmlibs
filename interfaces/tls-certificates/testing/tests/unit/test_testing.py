@@ -272,6 +272,33 @@ def test_local_requirer_w_ca_request():
     assert not tls_certificates.Certificate.from_string(published["certificate"]).is_ca
 
 
+def test_local_requirer_wo_capabilities():
+    rel = tls_certificates_testing.relation_for_requirer("foo")
+    # absent means "the provider has not advertised yet" -- not an empty object
+    assert "capabilities" not in rel.remote_app_data
+
+
+def test_local_requirer_w_capabilities():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        capabilities=tls_certificates.ProviderCapabilities(supports_wildcard_dns=False),
+    )
+    published = json.loads(rel.remote_app_data["capabilities"])
+    # advertised-as-unsupported (False) must survive as distinct from unspecified (None)
+    assert published["supports_wildcard_dns"] is False
+
+
+def test_local_requirer_w_capabilities_and_response_false():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        capabilities=tls_certificates.ProviderCapabilities(),
+        response=False,
+    )
+    # a provider can advertise capabilities before it answers any requests
+    assert "certificates" not in rel.remote_app_data
+    assert "capabilities" in rel.remote_app_data
+
+
 def test_respond_to_requests():
     rel = tls_certificates_testing.relation_for_requirer("foo", response=False)
     answered = tls_certificates_testing.respond_to_requests(rel)

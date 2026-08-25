@@ -405,6 +405,87 @@ def test_requirer_with_ca_request(monkeypatch: pytest.MonkeyPatch):
     assert assigned[0].certificate.is_ca
 
 
+def test_provider_capabilities_absent():
+    """No capabilities argument models a provider that has not advertised yet.
+
+    Per the library's contract that means get_provider_capabilities() is None -- "not
+    known yet, defer" -- which is distinct from advertising an empty set.
+    """
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates", certificate_requests=requirer_charm.REQUESTS
+    )
+    state_in = ops.testing.State(
+        relations=[relation], secrets=[tls_certificates_testing.private_key_secret("certificates")]
+    )
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        manager.run()
+        assert manager.charm.certificates.get_provider_capabilities() is None
+
+
+def test_provider_capabilities_advertised():
+    """Advertised capabilities reach the charm with all three field states intact.
+
+    A non-None object means the provider has advertised; on it, True is supported, False
+    is advertised-as-unsupported, and None is left-unspecified.
+    """
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates",
+        certificate_requests=requirer_charm.REQUESTS,
+        capabilities=tls_certificates.ProviderCapabilities(
+            supports_ip_sans=True, supports_wildcard_dns=False
+        ),
+    )
+    state_in = ops.testing.State(
+        relations=[relation], secrets=[tls_certificates_testing.private_key_secret("certificates")]
+    )
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        manager.run()
+        capabilities = manager.charm.certificates.get_provider_capabilities()
+    assert capabilities is not None
+    assert capabilities.supports_ip_sans is True
+    assert capabilities.supports_wildcard_dns is False
+    assert capabilities.supports_subdomain is None  # unspecified, not a default
+
+
+def test_certificate_requests_callable_receives_capabilities(monkeypatch: pytest.MonkeyPatch):
+    """The callable form of certificate_requests is re-resolved with the capabilities.
+
+    The charm requests a wildcard certificate only when the provider advertises support
+    for one; with the fixture advertising it, the wildcard request is made and answered.
+    """
+    wildcard = tls_certificates.CertificateRequestAttributes(common_name="*.example.com")
+    plain = tls_certificates.CertificateRequestAttributes(common_name="example.com")
+    seen: list[tls_certificates.ProviderCapabilities | None] = []
+
+    def choose(
+        capabilities: tls_certificates.ProviderCapabilities | None,
+    ) -> list[tls_certificates.CertificateRequestAttributes]:
+        seen.append(capabilities)
+        if capabilities is not None and capabilities.supports_wildcard_dns:
+            return [wildcard]
+        return [plain]
+
+    monkeypatch.setattr(requirer_charm, "REQUESTS", choose)
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates",
+        certificate_requests=[wildcard],
+        capabilities=tls_certificates.ProviderCapabilities(supports_wildcard_dns=True),
+    )
+    state_in = ops.testing.State(
+        relations=[relation], secrets=[tls_certificates_testing.private_key_secret("certificates")]
+    )
+    with ctx(ctx.on.relation_changed(relation), state_in) as manager:
+        manager.run()
+        assigned, _ = manager.charm.certificates.get_assigned_certificates()
+    # the callable saw the advertised capabilities and chose the wildcard request
+    assert seen
+    assert all(c is not None and c.supports_wildcard_dns for c in seen)
+    assert {c.certificate.common_name for c in assigned} == {wildcard.common_name}
+
+
 def test_requirer_without_key_secret_gets_no_certs():
     """Regression guard: this is the failure mode private_key_secret exists to prevent."""
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)

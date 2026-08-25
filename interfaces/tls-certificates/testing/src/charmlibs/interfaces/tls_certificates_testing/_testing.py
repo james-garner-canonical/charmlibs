@@ -209,6 +209,7 @@ def relation_for_requirer(
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
     certificate_requests: Iterable[_CertificateRequest] = (_REQUEST,),
+    capabilities: tls_certificates.ProviderCapabilities | None = None,
     # interface 'conversation' args
     response: bool = True,
 ) -> testing.Relation:
@@ -238,10 +239,20 @@ def relation_for_requirer(
             past its validity period, or with :func:`revoked` to answer it with a
             certificate marked as revoked -- all in the same relation as its issued
             neighbours.
+        capabilities: What the simulated provider has advertised about its certificate
+            server. The default ``None`` models a provider that has not advertised
+            anything, which ``get_provider_capabilities()`` reports as ``None`` ("not
+            known yet"); pass a ``ProviderCapabilities`` -- even an empty one -- to model
+            a provider that has, with each field carrying its own three-way meaning per
+            the library's docs. Only :func:`relation_for_requirer` takes this, because it
+            describes the simulated remote provider; a provider charm under test
+            advertises its own capabilities itself.
         response: Whether the provider has answered. Pass ``False`` to populate only the
             requirer's side, modelling a request the provider hasn't issued a certificate for
-            yet. Note the requirer's requests are present either way, so a relation from this
-            function always implies the charm already holds a private key.
+            yet (``capabilities`` are still advertised if given -- a provider can advertise
+            before it answers anything). Note the requirer's requests are present either
+            way, so a relation from this function always implies the charm already holds a
+            private key.
 
     Returns:
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
@@ -255,7 +266,9 @@ def relation_for_requirer(
         kwargs["local_unit_data"] = _dump_requirer(resolved)
     # remote provider
     if response:
-        kwargs["remote_app_data"] = _dump_provider(resolved)
+        kwargs["remote_app_data"] = _dump_provider(resolved, capabilities=capabilities)
+    elif capabilities is not None:
+        kwargs["remote_app_data"] = _dump_provider([], capabilities=capabilities)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -470,7 +483,10 @@ def _dump_requirer(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
     return ret
 
 
-def _dump_provider(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
+def _dump_provider(
+    resolved: Iterable[_ResolvedRequest],
+    capabilities: tls_certificates.ProviderCapabilities | None = None,
+) -> dict[str, str]:
     certificates: list[tls_certificates._tls_certificates._Certificate] = []
     request_errors: list[tls_certificates._tls_certificates._RequestError] = []
     for request in resolved:
@@ -493,7 +509,7 @@ def _dump_provider(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
             )
         )
     provider = tls_certificates._tls_certificates._ProviderApplicationData(
-        certificates=certificates, request_errors=request_errors
+        certificates=certificates, request_errors=request_errors, capabilities=capabilities
     )
     ret: dict[str, str] = {}
     provider.dump(ret)
