@@ -1,6 +1,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import json
 import types
 import typing
 
@@ -100,6 +101,41 @@ def test_local_requirer_w_response_false():
     assert not rel.remote_app_data
     assert 0 in rel.remote_units_data
     assert all(k in JUJU_NETWORK_KEYS for k in rel.remote_units_data[0])
+
+
+def test_respond_to_requests():
+    rel = tls_certificates_testing.relation_for_requirer("foo", response=False)
+    answered = tls_certificates_testing.respond_to_requests(rel)
+    # a copy with the same identity, the requirer's side untouched
+    assert answered is not rel
+    assert (answered.id, answered.endpoint, answered.interface) == (
+        rel.id,
+        rel.endpoint,
+        rel.interface,
+    )
+    assert answered.local_unit_data == rel.local_unit_data
+    # and a certificate answering each CSR the requirer had on the relation
+    csrs = json.loads(rel.local_unit_data["certificate_signing_requests"])
+    certs = json.loads(answered.remote_app_data["certificates"])
+    assert {c["certificate_signing_request"].strip() for c in certs} == {
+        r["certificate_signing_request"].strip() for r in csrs
+    }
+
+
+def test_respond_to_requests_w_mode_app():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo", mode=tls_certificates.Mode.APP, response=False
+    )
+    answered = tls_certificates_testing.respond_to_requests(rel)
+    assert answered.local_app_data == rel.local_app_data
+    assert "certificates" in answered.remote_app_data
+
+
+def test_respond_to_requests_wo_requests():
+    rel = testing.Relation("foo", interface="tls-certificates")
+    answered = tls_certificates_testing.respond_to_requests(rel)
+    # no requests, so nothing to answer
+    assert not answered.remote_app_data
 
 
 def test_private_key_secret():

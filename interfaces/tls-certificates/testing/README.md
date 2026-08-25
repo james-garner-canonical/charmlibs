@@ -52,6 +52,24 @@ Pass the same `endpoint` and `mode` you passed to `relation_for_requirer`, and s
 
 `relation_for_provider` needs none of this: `TLSCertificatesProvidesV4` doesn't manage a private key.
 
+## Answering requests made during a test
+
+`relation_for_requirer` is a static snapshot built before the charm runs, so it can't answer requests your charm makes *during* a test. Key rotation and certificate renewal both have this shape: the charm withdraws its old requests and writes new ones, which nothing has issued certificates for. `respond_to_requests` plays the provider's next move — it returns a copy of a relation with a certificate issued for every request currently on it:
+
+```py
+import dataclasses
+
+state = ctx.run(ctx.on.update_status(), state)  # the charm rotates its key
+relation = state.get_relations("certificates")[0]
+relation = tls_certificates_testing.respond_to_requests(relation)
+state = dataclasses.replace(state, relations={relation})
+state = ctx.run(ctx.on.relation_changed(relation), state)  # the charm picks up the new certificates
+```
+
+It answers whatever requests are present, whichever key signed them, so it also serves charms that manage their own key — even ones starting from a bare `ops.testing.Relation` rather than `relation_for_requirer`.
+
+## The key material is not API
+
 Only the symbol `DEFAULT_PRIVATE_KEY` is API — its value is not. The key, along with the testing CA's key and certificate, may be regenerated in any release. So don't write tests that depend on the bytes: in particular, don't snapshot-test raw relation data, which embeds the certificate signing requests and therefore the key. Assert on parsed values through the library's accessors instead — not having to touch the wire format is the point of this package.
 
 Read more:

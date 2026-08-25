@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import datetime
 import typing
 
@@ -204,6 +205,49 @@ def private_key_secret(
     return testing.Secret(
         tracked_content={"private-key": str(private_key)}, label=label, owner=owner
     )
+
+
+def respond_to_requests(relation: testing.Relation) -> testing.Relation:
+    """Return a copy of ``relation`` with the provider answering the CSRs currently present.
+
+    :func:`relation_for_requirer` builds a static snapshot before the charm runs, so it
+    cannot answer requests the charm makes *during* a test -- after key rotation, or
+    certificate renewal, the charm withdraws its old CSRs and writes new ones, and nothing
+    has issued certificates for those. This function plays the provider's next move: pass
+    the relation from the output state, and every CSR the requirer currently has on the
+    relation gets a certificate in the returned copy. Build the next input state with it
+    to observe the charm picking the new certificates up::
+
+        state = ctx.run(ctx.on.update_status(), state)  # charm rotates its key
+        relation = state.get_relations("certificates")[0]
+        state = dataclasses.replace(
+            state, relations={tls_certificates_testing.respond_to_requests(relation)}
+        )
+        state = ctx.run(ctx.on.relation_changed(relation), state)
+
+    The certificates answer whatever CSRs are present, so unlike
+    :func:`relation_for_requirer` this is key-agnostic: it serves charms using
+    :data:`DEFAULT_PRIVATE_KEY`, charms that just rotated to a fresh key, and
+    charm-managed keys alike.
+
+    Args:
+        relation: A relation whose *local* side holds the requirer's certificate signing
+            requests -- typically taken from the output state of a previous run of a
+            requirer charm. Both databag locations are read, so any ``Mode`` works.
+
+    Returns:
+        A copy of ``relation``, with the remote provider's application data holding a
+        certificate for each of the requirer's current certificate signing requests.
+    """
+    csrs = [
+        tls_certificates.CertificateSigningRequest.from_string(csr.certificate_signing_request)
+        for databag in (relation.local_app_data, relation.local_unit_data)
+        if "certificate_signing_requests" in databag
+        for csr in tls_certificates._tls_certificates._RequirerData.load(
+            databag
+        ).certificate_signing_requests
+    ]
+    return dataclasses.replace(relation, remote_app_data=_dump_provider(csrs))
 
 
 def _make_csrs(
