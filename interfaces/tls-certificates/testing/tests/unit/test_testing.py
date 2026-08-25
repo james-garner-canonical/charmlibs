@@ -103,6 +103,72 @@ def test_local_requirer_w_response_false():
     assert all(k in JUJU_NETWORK_KEYS for k in rel.remote_units_data[0])
 
 
+def test_local_requirer_w_denied_request():
+    issued = tls_certificates.CertificateRequestAttributes(common_name="issued.example.com")
+    refused = tls_certificates.CertificateRequestAttributes(common_name="denied.example.com")
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            issued,
+            tls_certificates_testing.denied(
+                refused,
+                code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED,
+                message="that domain is not allowed",
+            ),
+        ],
+    )
+    # both requests are in the requirer's databag -- the charm asked for both
+    csrs = json.loads(rel.local_unit_data["certificate_signing_requests"])
+    assert len(csrs) == 2
+    # but only the issued one got a certificate; the denied one got an error
+    certs = json.loads(rel.remote_app_data["certificates"])
+    assert len(certs) == 1
+    errors = json.loads(rel.remote_app_data["request_errors"])
+    assert len(errors) == 1
+    code = tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED
+    assert errors[0]["error"]["code"] == code.value
+    assert errors[0]["error"]["name"] == code.name
+    assert errors[0]["error"]["message"] == "that domain is not allowed"
+    # the error is attached to the denied request's CSR, not the issued one's
+    assert errors[0]["csr"].strip() != certs[0]["certificate_signing_request"].strip()
+    assert {errors[0]["csr"].strip(), certs[0]["certificate_signing_request"].strip()} == {
+        c["certificate_signing_request"].strip() for c in csrs
+    }
+
+
+def test_local_requirer_w_denied_request_and_response_false():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            tls_certificates_testing.denied(
+                tls_certificates.CertificateRequestAttributes(common_name="example.com")
+            )
+        ],
+        response=False,
+    )
+    # response=False means nothing answered yet, error outcomes included
+    assert "certificate_signing_requests" in rel.local_unit_data
+    assert not rel.remote_app_data
+
+
+def test_local_provider_w_denied_request():
+    issued = tls_certificates.CertificateRequestAttributes(common_name="issued.example.com")
+    refused = tls_certificates.CertificateRequestAttributes(common_name="denied.example.com")
+    rel = tls_certificates_testing.relation_for_provider(
+        "foo",
+        certificate_requests=[issued, tls_certificates_testing.denied(refused)],
+    )
+    # the remote requirer asked for both
+    csrs = json.loads(rel.remote_units_data[0]["certificate_signing_requests"])
+    assert len(csrs) == 2
+    # this charm has answered one with a certificate and one with an error
+    assert len(json.loads(rel.local_app_data["certificates"])) == 1
+    errors = json.loads(rel.local_app_data["request_errors"])
+    assert len(errors) == 1
+    code = tls_certificates.CertificateRequestErrorCode.OTHER  # denied()'s default
+    assert errors[0]["error"]["code"] == code.value
+
+
 def test_respond_to_requests():
     rel = tls_certificates_testing.relation_for_requirer("foo", response=False)
     answered = tls_certificates_testing.respond_to_requests(rel)

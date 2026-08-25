@@ -42,13 +42,65 @@ class _RelationKwargs(typing.TypedDict, total=False):
     remote_units_data: dict[int, dict[str, str]]
 
 
+@dataclasses.dataclass(frozen=True)
+class _DeniedRequest:
+    """A certificate request the provider has answered with an error. See :func:`denied`."""
+
+    request: tls_certificates.CertificateRequestAttributes
+    error: tls_certificates.CertificateError
+
+
+def denied(
+    request: tls_certificates.CertificateRequestAttributes,
+    *,
+    code: tls_certificates.CertificateRequestErrorCode = (
+        tls_certificates.CertificateRequestErrorCode.OTHER
+    ),
+    message: str = "Denied by the simulated provider.",
+    reason: str | None = None,
+) -> _DeniedRequest:
+    """Mark a certificate request as denied by the provider.
+
+    Pass the result in ``certificate_requests`` in place of the bare request::
+
+        relation_for_requirer("certificates", certificate_requests=[
+            REQUEST_A,  # issued as usual
+            tls_certificates_testing.denied(
+                REQUEST_B,
+                code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED,
+            ),
+        ])
+
+    The request still appears in the requirer's databag -- the charm asked -- but instead
+    of a certificate the provider records an error for it, which the requirer library
+    surfaces through ``get_request_errors()``/``get_request_error()`` and the
+    ``certificate_denied`` event.
+
+    Args:
+        request: The request the provider denies.
+        code: The error code the provider reports.
+        message: The human-readable error message the provider reports.
+        reason: Optional further detail, carried in the error's ``reason`` field.
+
+    Returns:
+        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
+        and :func:`relation_for_provider`.
+    """
+    error = tls_certificates.CertificateError(
+        code=code.value, name=code.name, message=message, reason=reason
+    )
+    return _DeniedRequest(request=request, error=error)
+
+
 def relation_for_requirer(
     # testing.Relation args
     endpoint: str,
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
+    certificate_requests: Iterable[
+        tls_certificates.CertificateRequestAttributes | _DeniedRequest
+    ] = (_REQUEST,),
     # interface 'conversation' args
     response: bool = True,
 ) -> testing.Relation:
@@ -70,7 +122,10 @@ def relation_for_requirer(
         endpoint: The charm's endpoint name for this relation.
         mode: Must match the ``mode`` passed to ``TLSCertificatesRequiresV4``. ``Mode.APP``
             puts the requests in the application databag, anything else in the unit databag.
-        certificate_requests: The requests the requirer has made.
+        certificate_requests: The requests the requirer has made. A bare
+            ``CertificateRequestAttributes`` is answered with a certificate; wrap an entry
+            with :func:`denied` to have the provider answer it with an error instead, in
+            the same relation as its issued neighbours.
         response: Whether the provider has answered. Pass ``False`` to populate only the
             requirer's side, modelling a request the provider hasn't issued a certificate for
             yet. Note the requirer's requests are present either way, so a relation from this
@@ -80,7 +135,7 @@ def relation_for_requirer(
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
     """
     kwargs: _RelationKwargs = {}
-    csrs = _make_csrs(certificate_requests, key=DEFAULT_PRIVATE_KEY)
+    csrs, issued, errors = _split_requests(certificate_requests, key=DEFAULT_PRIVATE_KEY)
     # local requirer
     if mode is tls_certificates.Mode.APP:
         kwargs["local_app_data"] = _dump_requirer(csrs)
@@ -88,7 +143,7 @@ def relation_for_requirer(
         kwargs["local_unit_data"] = _dump_requirer(csrs)
     # remote provider
     if response:
-        kwargs["remote_app_data"] = _dump_provider(csrs)
+        kwargs["remote_app_data"] = _dump_provider(issued, errors)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -98,7 +153,9 @@ def relation_for_provider(
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] = (_REQUEST,),
+    certificate_requests: Iterable[
+        tls_certificates.CertificateRequestAttributes | _DeniedRequest
+    ] = (_REQUEST,),
     private_key: tls_certificates.PrivateKey = DEFAULT_PRIVATE_KEY,
     # interface 'conversation' args
     response: bool = True,
@@ -118,7 +175,10 @@ def relation_for_provider(
         endpoint: The charm's endpoint name for this relation.
         mode: Must match the ``mode`` used by the remote requirer. ``Mode.APP`` puts its requests
             in the remote application databag, anything else in the remote unit databag.
-        certificate_requests: The requests the remote requirer has made.
+        certificate_requests: The requests the remote requirer has made. A bare
+            ``CertificateRequestAttributes`` is one this charm has issued a certificate
+            for (when ``response=True``); wrap an entry with :func:`denied` to model this
+            charm having answered it with an error instead.
         private_key: The remote requirer's key, used to sign its requests. Free to choose.
         response: Whether the provider charm has answered. Pass ``False`` to populate only the
             remote requirer's side, modelling requests this charm hasn't issued certificates for
@@ -128,7 +188,7 @@ def relation_for_provider(
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
     """
     kwargs: _RelationKwargs = {}
-    csrs = _make_csrs(certificate_requests, key=private_key)
+    csrs, issued, errors = _split_requests(certificate_requests, key=private_key)
     # remote requirer
     if mode is tls_certificates.Mode.APP:
         kwargs["remote_app_data"] = _dump_requirer(csrs)
@@ -136,7 +196,7 @@ def relation_for_provider(
         kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
     # local provider
     if response:
-        kwargs["local_app_data"] = _dump_provider(csrs)
+        kwargs["local_app_data"] = _dump_provider(issued, errors)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -250,14 +310,36 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
     return dataclasses.replace(relation, remote_app_data=_dump_provider(csrs))
 
 
-def _make_csrs(
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes],
+def _split_requests(
+    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes | _DeniedRequest],
     key: tls_certificates.PrivateKey,
-) -> list[tls_certificates.CertificateSigningRequest]:
-    return [
-        tls_certificates.CertificateSigningRequest.generate(attributes=r, private_key=key)
-        for r in certificate_requests
-    ]
+) -> tuple[
+    list[tls_certificates.CertificateSigningRequest],
+    list[tls_certificates.CertificateSigningRequest],
+    list[tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]],
+]:
+    """Sign each request with ``key`` and sort the CSRs by requested outcome.
+
+    Returns ``(all_csrs, issued, errors)``: every CSR in request order (the requirer made
+    all of these requests, whatever became of them), the ones the provider answers with a
+    certificate, and the ones it answers with an error.
+    """
+    csrs: list[tls_certificates.CertificateSigningRequest] = []
+    issued: list[tls_certificates.CertificateSigningRequest] = []
+    errors: list[
+        tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]
+    ] = []
+    for item in certificate_requests:
+        attributes = item.request if isinstance(item, _DeniedRequest) else item
+        csr = tls_certificates.CertificateSigningRequest.generate(
+            attributes=attributes, private_key=key
+        )
+        csrs.append(csr)
+        if isinstance(item, _DeniedRequest):
+            errors.append((csr, item.error))
+        else:
+            issued.append(csr)
+    return csrs, issued, errors
 
 
 def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -> dict[str, str]:
@@ -277,6 +359,9 @@ def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
 
 def _dump_provider(
     csrs: Iterable[tls_certificates.CertificateSigningRequest],
+    errors: Iterable[
+        tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]
+    ] = (),
 ) -> dict[str, str]:
     provider = tls_certificates._tls_certificates._ProviderApplicationData(
         certificates=[
@@ -287,7 +372,11 @@ def _dump_provider(
                 chain=[],
             )
             for csr in csrs
-        ]
+        ],
+        request_errors=[
+            tls_certificates._tls_certificates._RequestError(csr=str(csr), error=error)
+            for csr, error in errors
+        ],
     )
     ret: dict[str, str] = {}
     provider.dump(ret)

@@ -218,6 +218,57 @@ def test_respond_to_requests_completes_key_rotation():
     assert isinstance(state.unit_status, ops.testing.ActiveStatus)
 
 
+def test_requirer_with_denied_request():
+    """A mixed relation: one request issued, the other denied by the provider.
+
+    The denied request reaches the charm as a request error and a certificate_denied
+    event; the issued one is assigned as usual. Mixed outcomes are the realistic case --
+    a provider that refuses one domain still serves the others.
+    """
+    issued, refused = requirer_charm.REQUESTS
+    code = tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates",
+        certificate_requests=[
+            issued,
+            tls_certificates_testing.denied(refused, code=code, message="computer says no"),
+        ],
+    )
+    secret = tls_certificates_testing.private_key_secret("certificates")
+    state_in = ops.testing.State(relations=[relation], secrets=[secret])
+    with ctx(ctx.on.relation_changed(relation), state_in) as manager:
+        manager.run()
+        assigned, _ = manager.charm.certificates.get_assigned_certificates()
+        errors = manager.charm.certificates.get_request_errors()
+        csrs = manager.charm.certificates.get_csrs_from_requirer_relation_data()
+        refused_csr = next(
+            c.certificate_signing_request
+            for c in csrs
+            if c.certificate_signing_request.common_name == refused.common_name
+        )
+        error = manager.charm.certificates.get_request_error(refused_csr)
+    # the issued request is assigned as usual
+    assert {c.certificate.common_name for c in assigned} == {issued.common_name}
+    # the denied one is reported as a request error ...
+    assert len(errors) == 1
+    assert errors[0].certificate_signing_request.common_name == refused.common_name
+    assert error is not None
+    assert error.error.code == code.value
+    assert error.error.message == "computer says no"
+    # ... and emitted as certificate_denied, alongside the issued one's certificate_available
+    denied_events = [
+        e for e in ctx.emitted_events if isinstance(e, tls_certificates.CertificateDeniedEvent)
+    ]
+    assert len(denied_events) == 1
+    assert denied_events[0].certificate_signing_request.common_name == refused.common_name
+    assert denied_events[0].error.code == code.value
+    available_events = [
+        e for e in ctx.emitted_events if isinstance(e, tls_certificates.CertificateAvailableEvent)
+    ]
+    assert {e.certificate.common_name for e in available_events} == {issued.common_name}
+
+
 def test_requirer_without_key_secret_gets_no_certs():
     """Regression guard: this is the failure mode private_key_secret exists to prevent."""
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)

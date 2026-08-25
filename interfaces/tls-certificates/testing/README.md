@@ -35,7 +35,7 @@ def test_requirer_receives_certificates():
 
 The defaults describe a typical, fully answered relation: one certificate request for `example.com`, with the provider's signed certificate already in place. The remaining arguments are keyword-only:
 
-- `certificate_requests` — the requests the requirer has made.
+- `certificate_requests` — the requests the requirer has made. Wrap an entry in `denied(...)` to have the provider answer it with an error instead of a certificate; mixed outcomes in one relation are fine, and the denied request still appears on the requirer's side (the charm asked — the provider refused).
 - `mode` — whether the requirer's data is unit-scoped (`Mode.UNIT`, the default) or app-scoped (`Mode.APP`).
 - `response=False` — populate only the requirer's side, for a request the provider hasn't answered yet.
 - `private_key` (`relation_for_provider` only) — the key belonging to the simulated remote requirer. Defaults to `DEFAULT_PRIVATE_KEY`.
