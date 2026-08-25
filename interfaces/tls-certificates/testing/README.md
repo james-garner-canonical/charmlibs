@@ -52,6 +52,8 @@ Pass the same `endpoint` and `mode` you passed to `relation_for_requirer`, and s
 
 `relation_for_provider` needs none of this: `TLSCertificatesProvidesV4` doesn't manage a private key.
 
+Only the symbol `DEFAULT_PRIVATE_KEY` is API — its value is not. The key, along with the testing CA's key and certificate, may be regenerated in any release. So don't write tests that depend on the bytes: in particular, don't snapshot-test raw relation data, which embeds the certificate signing requests and therefore the key. Assert on parsed values through the library's accessors instead — not having to touch the wire format is the point of this package.
+
 Read more:
 - [How to provide relation data for charm tests](https://canonical.com/juju/docs/charmlibs/how-to/provide-relation-data-for-charm-tests/)
 - [Library reference](https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/tls-certificates/)

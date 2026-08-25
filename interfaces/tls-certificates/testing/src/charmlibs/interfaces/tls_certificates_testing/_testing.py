@@ -16,6 +16,17 @@ if typing.TYPE_CHECKING:
     from collections.abc import Iterable
 
 DEFAULT_PRIVATE_KEY = tls_certificates.PrivateKey(raw=_raw.KEY)
+"""The private key the requirer fixtures sign certificate signing requests with.
+
+The charm under test must use this key too, or its requests won't match the fixture's
+certificates -- see :func:`relation_for_requirer` for how to arrange that.
+
+Only the symbol is API. Its value is not: the key (like the testing CA's key and
+certificate) may be regenerated in any release, so don't depend on the bytes -- for
+example by snapshot-testing relation data, which embeds the CSRs and therefore the key.
+Assert on parsed values via the library's accessors instead; not having to touch the
+wire format is the point of this package.
+"""
 _INTERFACE_NAME = "tls-certificates"
 _LIBID = tls_certificates._tls_certificates.LIBID
 _REQUEST = tls_certificates.CertificateRequestAttributes(common_name="example.com")
