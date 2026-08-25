@@ -17,6 +17,8 @@
 See test_requirer_charm_manual.py for a charm that manages its own private key.
 """
 
+import dataclasses
+
 import ops
 import ops.testing
 
@@ -165,6 +167,55 @@ def test_fixture_state_is_stable_across_reconciles():
         state = ctx.run(ctx.on.relation_changed(state.get_relations("certificates")[0]), state)
         relation_out = state.get_relations("certificates")[0]
         assert relation_out.local_unit_data["certificate_signing_requests"] == original_csrs
+
+
+def test_respond_to_requests_completes_key_rotation():
+    """Full key-rotation round trip: rotate, re-request, have the provider answer.
+
+    `relation_for_requirer` is a static snapshot, so it cannot answer the CSRs the charm
+    writes *during* the test when `regenerate_private_key()` withdraws the old requests.
+    `respond_to_requests` plays the provider's next move, letting the test observe the
+    charm pick up certificates issued against the rotated key.
+    """
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates", certificate_requests=requirer_charm.REQUESTS
+    )
+    secret = tls_certificates_testing.private_key_secret("certificates")
+    state = ops.testing.State(relations=[relation], secrets=[secret])
+    # the charm holds certificates against the default key
+    with ctx(ctx.on.relation_changed(relation), state) as manager:
+        state = manager.run()
+        assigned, key_before = manager.charm.certificates.get_assigned_certificates()
+        assert key_before == tls_certificates_testing.DEFAULT_PRIVATE_KEY
+        assert len(assigned) == len(requirer_charm.REQUESTS)
+    # the charm rotates its key: old CSRs withdrawn, new ones sent, nothing answered yet
+    with ctx(ctx.on.update_status(), state) as manager:
+        manager.charm.certificates.regenerate_private_key()
+        state = manager.run()
+        assigned, key_after = manager.charm.certificates.get_assigned_certificates()
+        assert key_after is not None
+        assert key_after != key_before
+        assert not assigned
+    # the provider answers the fresh CSRs, and the charm picks the certificates up
+    relation_out = state.get_relations("certificates")[0]
+    assert isinstance(relation_out, ops.testing.Relation)
+    answered = tls_certificates_testing.respond_to_requests(relation_out)
+    state = dataclasses.replace(state, relations={answered})
+    with ctx(ctx.on.relation_changed(answered), state) as manager:
+        state = manager.run()
+        assigned, key_final = manager.charm.certificates.get_assigned_certificates()
+    assert key_final is not None
+    assert key_before is not None
+    assert key_final == key_after
+    assert {c.certificate.common_name for c in assigned} == {
+        r.common_name for r in requirer_charm.REQUESTS
+    }
+    # the new certificates are bound to the rotated key, not the old one
+    for cert in assigned:
+        assert cert.certificate.matches_private_key(key_final)
+        assert not cert.certificate.matches_private_key(key_before)
+    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
 
 
 def test_requirer_without_key_secret_gets_no_certs():
