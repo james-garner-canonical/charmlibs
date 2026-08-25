@@ -17,9 +17,11 @@
 from ._testing import (
     DEFAULT_PRIVATE_KEY,
     denied,
+    expired,
     private_key_secret,
     relation_for_provider,
     relation_for_requirer,
+    renewing,
     respond_to_requests,
 )
 from ._version import __version__ as __version__
@@ -27,8 +29,10 @@ from ._version import __version__ as __version__
 __all__ = [
     "DEFAULT_PRIVATE_KEY",
     "denied",
+    "expired",
     "private_key_secret",
     "relation_for_provider",
     "relation_for_requirer",
+    "renewing",
     "respond_to_requests",
 ]

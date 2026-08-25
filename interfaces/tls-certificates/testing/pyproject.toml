@@ -16,6 +16,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "charmlibs-interfaces-tls-certificates==1.10.0",
+    "cryptography>=43.0.0",  # match the library's constraint
     "ops[testing]",
 ]
 

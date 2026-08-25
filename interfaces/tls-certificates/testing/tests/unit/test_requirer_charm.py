@@ -18,6 +18,7 @@ See test_requirer_charm_manual.py for a charm that manages its own private key.
 """
 
 import dataclasses
+import json
 
 import ops
 import ops.testing
@@ -267,6 +268,76 @@ def test_requirer_with_denied_request():
         e for e in ctx.emitted_events if isinstance(e, tls_certificates.CertificateAvailableEvent)
     ]
     assert {e.certificate.common_name for e in available_events} == {issued.common_name}
+
+
+def test_renewing_certificate_completes_renewal():
+    """Full renewal round trip: stale certificate, re-request, provider answers.
+
+    `renewing()` back-dates one certificate past the library's renewal safety threshold.
+    On the next reconcile the library withdraws that request's CSR and sends a fresh one
+    (the same key -- renewal is not rotation); `respond_to_requests` answers it, and the
+    charm ends up holding a fresh certificate. The other request must ride along
+    untouched throughout.
+    """
+    live, stale = requirer_charm.REQUESTS
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates",
+        certificate_requests=[live, tls_certificates_testing.renewing(stale)],
+    )
+    secret = tls_certificates_testing.private_key_secret("certificates")
+    state = ops.testing.State(relations=[relation], secrets=[secret])
+
+    def csrs_by_common_name(rel: ops.testing.RelationBase) -> dict[str, str]:
+        data = json.loads(rel.local_unit_data["certificate_signing_requests"])
+        return {
+            tls_certificates.CertificateSigningRequest.from_string(
+                entry["certificate_signing_request"]
+            ).common_name: entry["certificate_signing_request"]
+            for entry in data
+        }
+
+    original = csrs_by_common_name(relation)
+    original_stale_cert = next(
+        c
+        for c in json.loads(relation.remote_app_data["certificates"])
+        if tls_certificates.CertificateSigningRequest.from_string(
+            c["certificate_signing_request"]
+        ).common_name
+        == stale.common_name
+    )["certificate"]
+
+    # reconcile: the library's safety net withdraws the stale CSR and re-requests
+    state = ctx.run(ctx.on.relation_changed(relation), state)
+    relation_out = state.get_relations("certificates")[0]
+    renewed = csrs_by_common_name(relation_out)
+    assert renewed[live.common_name] == original[live.common_name]  # untouched
+    assert renewed[stale.common_name] != original[stale.common_name]  # re-requested
+
+    # nothing has answered the fresh CSR yet, so only the live request is assigned
+    with ctx(ctx.on.update_status(), state) as manager:
+        state = manager.run()
+        assigned, _ = manager.charm.certificates.get_assigned_certificates()
+        assert {c.certificate.common_name for c in assigned} == {live.common_name}
+
+    # the provider answers it, completing the renewal
+    relation_out = state.get_relations("certificates")[0]
+    assert isinstance(relation_out, ops.testing.Relation)
+    answered = tls_certificates_testing.respond_to_requests(relation_out)
+    state = dataclasses.replace(state, relations={answered})
+    with ctx(ctx.on.relation_changed(answered), state) as manager:
+        state = manager.run()
+        assigned, private_key = manager.charm.certificates.get_assigned_certificates()
+    assert {c.certificate.common_name for c in assigned} == {
+        r.common_name for r in requirer_charm.REQUESTS
+    }
+    # a fresh certificate, on the same key: renewal is not rotation
+    renewed_cert = next(
+        c for c in assigned if c.certificate.common_name == stale.common_name
+    ).certificate
+    assert str(renewed_cert) != original_stale_cert
+    assert private_key == tls_certificates_testing.DEFAULT_PRIVATE_KEY
+    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
 
 
 def test_requirer_without_key_secret_gets_no_certs():

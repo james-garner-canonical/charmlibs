@@ -128,12 +128,14 @@ name = "charmlibs-interfaces-tls-certificates-testing"
 source = { editable = "." }
 dependencies = [
     { name = "charmlibs-interfaces-tls-certificates" },
+    { name = "cryptography" },
     { name = "ops", extra = ["testing"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "charmlibs-interfaces-tls-certificates", editable = "../" },
+    { name = "cryptography", specifier = ">=43.0.0" },
     { name = "ops", extras = ["testing"] },
 ]
 

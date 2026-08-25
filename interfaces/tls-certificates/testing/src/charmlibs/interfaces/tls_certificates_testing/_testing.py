@@ -7,6 +7,9 @@ import dataclasses
 import datetime
 import typing
 
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from ops import testing
 
 from charmlibs.interfaces import tls_certificates
@@ -92,6 +95,73 @@ def denied(
     return _DeniedRequest(request=request, error=error)
 
 
+@dataclasses.dataclass(frozen=True)
+class _AgedRequest:
+    """A request answered with a back-dated certificate. See :func:`renewing`/:func:`expired`."""
+
+    request: tls_certificates.CertificateRequestAttributes
+    age: float
+    """Fraction of the certificate's validity period already elapsed. Must be positive."""
+
+
+def renewing(
+    request: tls_certificates.CertificateRequestAttributes,
+    *,
+    renewal_relative_time: float = 0.9,
+) -> _AgedRequest:
+    """Mark a certificate request as answered with a certificate that is due for renewal.
+
+    Pass the result in ``certificate_requests`` in place of the bare request. The
+    certificate is issued back-dated, far enough through its validity period that the
+    library's renewal safety net fires on the charm's next reconcile: the charm withdraws
+    the request and replaces it with a fresh one for the provider to answer -- which
+    :func:`respond_to_requests` can then do, completing the renewal.
+
+    To model *every* certificate being stale, wrap each request::
+
+        relation_for_requirer(
+            "certificates", certificate_requests=[renewing(r) for r in REQUESTS]
+        )
+
+    Args:
+        request: The request the provider answered with a soon-to-expire certificate.
+        renewal_relative_time: Must match the ``renewal_relative_time`` the charm passes
+            to ``TLSCertificatesRequiresV4``, which is where this default comes from. The
+            library renews from slightly after that point; the certificate is back-dated
+            to halfway between the renewal threshold and expiry.
+
+    Returns:
+        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
+        and :func:`relation_for_provider`.
+    """
+    # The library's safety net renews from min(0.99, renewal_relative_time + 0.05) of the
+    # validity period through to expiry; the secret-expiry path starts earlier, at
+    # renewal_relative_time itself. Aim halfway between the safety threshold and expiry
+    # to be comfortably inside both windows regardless of rounding.
+    threshold = min(0.99, renewal_relative_time + 0.05)
+    return _AgedRequest(request=request, age=(threshold + 1.0) / 2)
+
+
+def expired(request: tls_certificates.CertificateRequestAttributes) -> _AgedRequest:
+    """Mark a certificate request as answered with a certificate that has expired.
+
+    Pass the result in ``certificate_requests`` in place of the bare request. The
+    certificate is issued back-dated so that its entire validity period is in the past.
+
+    Note the library currently keeps an expired certificate assigned and does not
+    re-request it: its renewal safety net stops at expiry. This wrapper models the
+    relation state; what a charm should do about it is up to the charm.
+
+    Args:
+        request: The request the provider answered with a now-expired certificate.
+
+    Returns:
+        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
+        and :func:`relation_for_provider`.
+    """
+    return _AgedRequest(request=request, age=1.5)
+
+
 def relation_for_requirer(
     # testing.Relation args
     endpoint: str,
@@ -99,7 +169,7 @@ def relation_for_requirer(
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
     certificate_requests: Iterable[
-        tls_certificates.CertificateRequestAttributes | _DeniedRequest
+        tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest
     ] = (_REQUEST,),
     # interface 'conversation' args
     response: bool = True,
@@ -124,8 +194,10 @@ def relation_for_requirer(
             puts the requests in the application databag, anything else in the unit databag.
         certificate_requests: The requests the requirer has made. A bare
             ``CertificateRequestAttributes`` is answered with a certificate; wrap an entry
-            with :func:`denied` to have the provider answer it with an error instead, in
-            the same relation as its issued neighbours.
+            with :func:`denied` to have the provider answer it with an error instead, or
+            with :func:`renewing`/:func:`expired` to answer it with a certificate late in
+            or past its validity period -- all in the same relation as its issued
+            neighbours.
         response: Whether the provider has answered. Pass ``False`` to populate only the
             requirer's side, modelling a request the provider hasn't issued a certificate for
             yet. Note the requirer's requests are present either way, so a relation from this
@@ -154,7 +226,7 @@ def relation_for_provider(
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
     certificate_requests: Iterable[
-        tls_certificates.CertificateRequestAttributes | _DeniedRequest
+        tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest
     ] = (_REQUEST,),
     private_key: tls_certificates.PrivateKey = DEFAULT_PRIVATE_KEY,
     # interface 'conversation' args
@@ -178,7 +250,9 @@ def relation_for_provider(
         certificate_requests: The requests the remote requirer has made. A bare
             ``CertificateRequestAttributes`` is one this charm has issued a certificate
             for (when ``response=True``); wrap an entry with :func:`denied` to model this
-            charm having answered it with an error instead.
+            charm having answered it with an error instead, or with
+            :func:`renewing`/:func:`expired` to model it having issued a certificate late
+            in or past its validity period.
         private_key: The remote requirer's key, used to sign its requests. Free to choose.
         response: Whether the provider charm has answered. Pass ``False`` to populate only the
             remote requirer's side, modelling requests this charm hasn't issued certificates for
@@ -307,38 +381,45 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
             databag
         ).certificate_signing_requests
     ]
-    return dataclasses.replace(relation, remote_app_data=_dump_provider(csrs))
+    return dataclasses.replace(
+        relation, remote_app_data=_dump_provider((csr, 0.0) for csr in csrs)
+    )
 
 
 def _split_requests(
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes | _DeniedRequest],
+    certificate_requests: Iterable[
+        tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest
+    ],
     key: tls_certificates.PrivateKey,
 ) -> tuple[
     list[tls_certificates.CertificateSigningRequest],
-    list[tls_certificates.CertificateSigningRequest],
+    list[tuple[tls_certificates.CertificateSigningRequest, float]],
     list[tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]],
 ]:
     """Sign each request with ``key`` and sort the CSRs by requested outcome.
 
     Returns ``(all_csrs, issued, errors)``: every CSR in request order (the requirer made
     all of these requests, whatever became of them), the ones the provider answers with a
-    certificate, and the ones it answers with an error.
+    certificate -- paired with the fraction of the certificate's validity period already
+    elapsed, 0.0 for a fresh one -- and the ones it answers with an error.
     """
     csrs: list[tls_certificates.CertificateSigningRequest] = []
-    issued: list[tls_certificates.CertificateSigningRequest] = []
+    issued: list[tuple[tls_certificates.CertificateSigningRequest, float]] = []
     errors: list[
         tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]
     ] = []
     for item in certificate_requests:
-        attributes = item.request if isinstance(item, _DeniedRequest) else item
+        attributes = item.request if isinstance(item, (_DeniedRequest, _AgedRequest)) else item
         csr = tls_certificates.CertificateSigningRequest.generate(
             attributes=attributes, private_key=key
         )
         csrs.append(csr)
         if isinstance(item, _DeniedRequest):
             errors.append((csr, item.error))
+        elif isinstance(item, _AgedRequest):
+            issued.append((csr, item.age))
         else:
-            issued.append(csr)
+            issued.append((csr, 0.0))
     return csrs, issued, errors
 
 
@@ -358,7 +439,7 @@ def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
 
 
 def _dump_provider(
-    csrs: Iterable[tls_certificates.CertificateSigningRequest],
+    issued: Iterable[tuple[tls_certificates.CertificateSigningRequest, float]],
     errors: Iterable[
         tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]
     ] = (),
@@ -366,12 +447,12 @@ def _dump_provider(
     provider = tls_certificates._tls_certificates._ProviderApplicationData(
         certificates=[
             tls_certificates._tls_certificates._Certificate(
-                certificate=str(_sign(csr)),
+                certificate=str(_sign(csr, age=age)),
                 certificate_signing_request=str(csr),
                 ca=str(_CA_CERT),
                 chain=[],
             )
-            for csr in csrs
+            for csr, age in issued
         ],
         request_errors=[
             tls_certificates._tls_certificates._RequestError(csr=str(csr), error=error)
@@ -383,8 +464,47 @@ def _dump_provider(
     return ret
 
 
-def _sign(csr: tls_certificates.CertificateSigningRequest) -> tls_certificates.Certificate:
-    return csr.sign(ca=_CA_CERT, ca_private_key=_CA_KEY, validity=datetime.timedelta(days=42))
+_VALIDITY = datetime.timedelta(days=42)
+
+
+def _sign(
+    csr: tls_certificates.CertificateSigningRequest, age: float = 0.0
+) -> tls_certificates.Certificate:
+    certificate = csr.sign(ca=_CA_CERT, ca_private_key=_CA_KEY, validity=_VALIDITY)
+    if not age:
+        return certificate
+    return _backdate(certificate, age=age)
+
+
+def _backdate(
+    certificate: tls_certificates.Certificate, age: float
+) -> tls_certificates.Certificate:
+    """Re-issue ``certificate`` with ``age`` of its validity period already elapsed.
+
+    The library computes renewal as a fraction of ``validity_end - validity_start``, and
+    ``Certificate.generate`` hardcodes ``not_valid_before`` to the time of issue, so aged
+    certificates can only be built by hand: sign through the library as usual (keeping
+    its extension handling), then rebuild the result with shifted validity dates and
+    everything else copied verbatim, re-signed by the same testing CA.
+    """
+    cert = x509.load_pem_x509_certificate(str(certificate).encode())
+    not_valid_before = datetime.datetime.now(datetime.timezone.utc) - _VALIDITY * age
+    builder = x509.CertificateBuilder(
+        subject_name=cert.subject,
+        issuer_name=cert.issuer,
+        public_key=cert.public_key(),
+        serial_number=cert.serial_number,
+        not_valid_before=not_valid_before,
+        not_valid_after=not_valid_before + _VALIDITY,
+    )
+    for extension in cert.extensions:
+        builder = builder.add_extension(extension.value, extension.critical)
+    ca_key = serialization.load_pem_private_key(str(_CA_KEY).encode(), password=None)
+    assert isinstance(ca_key, rsa.RSAPrivateKey)  # the testing CA is RSA
+    backdated = builder.sign(ca_key, hashes.SHA256())
+    return tls_certificates.Certificate.from_string(
+        backdated.public_bytes(serialization.Encoding.PEM).decode()
+    )
 
 
 def _relation(endpoint: str, kwargs: _RelationKwargs) -> testing.Relation:

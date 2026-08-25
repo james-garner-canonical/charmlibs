@@ -1,6 +1,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import datetime
 import json
 import types
 import typing
@@ -167,6 +168,56 @@ def test_local_provider_w_denied_request():
     assert len(errors) == 1
     code = tls_certificates.CertificateRequestErrorCode.OTHER  # denied()'s default
     assert errors[0]["error"]["code"] == code.value
+
+
+def test_local_requirer_w_renewing_request():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            tls_certificates_testing.renewing(
+                tls_certificates.CertificateRequestAttributes(common_name="example.com")
+            )
+        ],
+    )
+    cert = tls_certificates.Certificate.from_string(
+        json.loads(rel.remote_app_data["certificates"])[0]["certificate"]
+    )
+    # past the library's renewal safety threshold, but not yet expired
+    now = datetime.datetime.now(datetime.timezone.utc)
+    start, end = cert.validity_start_time, cert.expiry_time
+    safety_threshold = start + (end - start) * 0.95  # min(0.99, default 0.9 + 0.05)
+    assert safety_threshold <= now < end
+
+
+def test_local_requirer_w_expired_request():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            tls_certificates_testing.expired(
+                tls_certificates.CertificateRequestAttributes(common_name="example.com")
+            )
+        ],
+    )
+    cert = tls_certificates.Certificate.from_string(
+        json.loads(rel.remote_app_data["certificates"])[0]["certificate"]
+    )
+    assert cert.expiry_time < datetime.datetime.now(datetime.timezone.utc)
+
+
+def test_aged_certificates_still_chain_and_match():
+    """Back-dating must not break the signature chain or the key binding."""
+    request = tls_certificates.CertificateRequestAttributes(common_name="example.com")
+    for wrapper in (tls_certificates_testing.renewing, tls_certificates_testing.expired):
+        rel = tls_certificates_testing.relation_for_requirer(
+            "foo", certificate_requests=[wrapper(request)]
+        )
+        published = json.loads(rel.remote_app_data["certificates"])[0]
+        cert = tls_certificates.Certificate.from_string(published["certificate"])
+        csr = tls_certificates.CertificateSigningRequest.from_string(
+            published["certificate_signing_request"]
+        )
+        assert cert.matches_private_key(tls_certificates_testing.DEFAULT_PRIVATE_KEY)
+        assert csr.matches_certificate(cert)
 
 
 def test_respond_to_requests():
