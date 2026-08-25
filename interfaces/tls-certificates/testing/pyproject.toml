@@ -58,7 +58,7 @@ quote-style = "double"
 
 [tool.pyright]
 extends = "../pyproject.toml"
-include = ["src", "tests"]
+include = ["src", "tests", "generate_raw.py"]
 pythonVersion = "3.10"  # check no python > 3.10 features are used
 
 [tool.uv.sources]
