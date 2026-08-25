@@ -23,6 +23,7 @@ from ._testing import (
     relation_for_requirer,
     renewing,
     respond_to_requests,
+    revoked,
 )
 from ._version import __version__ as __version__
 
@@ -35,4 +36,5 @@ __all__ = [
     "relation_for_requirer",
     "renewing",
     "respond_to_requests",
+    "revoked",
 ]

@@ -220,6 +220,58 @@ def test_aged_certificates_still_chain_and_match():
         assert csr.matches_certificate(cert)
 
 
+def test_local_requirer_w_revoked_request():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            tls_certificates_testing.revoked(
+                tls_certificates.CertificateRequestAttributes(common_name="example.com")
+            )
+        ],
+    )
+    # the certificate is published as usual, but flagged revoked
+    certs = json.loads(rel.remote_app_data["certificates"])
+    assert len(certs) == 1
+    assert certs[0]["revoked"] is True
+    # an ordinary request is not
+    rel = tls_certificates_testing.relation_for_requirer("foo")
+    certs = json.loads(rel.remote_app_data["certificates"])
+    assert certs[0].get("revoked") in (None, False)
+
+
+def test_published_certificates_carry_a_valid_chain():
+    for rel in (
+        tls_certificates_testing.relation_for_requirer("foo").remote_app_data,
+        tls_certificates_testing.relation_for_provider("foo").local_app_data,
+    ):
+        published = json.loads(rel["certificates"])[0]
+        chain = published["chain"]
+        # leaf to root: the issued certificate, then the CA that signed it
+        assert chain[0].strip() == published["certificate"].strip()
+        assert chain[-1].strip() == published["ca"].strip()
+        assert tls_certificates.chain_has_valid_order(chain)
+
+
+def test_local_requirer_w_ca_request():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            tls_certificates.CertificateRequestAttributes(common_name="example.com", is_ca=True)
+        ],
+    )
+    # the requirer's databag flags the request as a CA request ...
+    csrs = json.loads(rel.local_unit_data["certificate_signing_requests"])
+    assert csrs[0]["ca"] is True
+    # ... and the provider answered with a CA certificate
+    published = json.loads(rel.remote_app_data["certificates"])[0]
+    assert tls_certificates.Certificate.from_string(published["certificate"]).is_ca
+    # while an ordinary request gets a leaf certificate
+    rel = tls_certificates_testing.relation_for_requirer("foo")
+    assert json.loads(rel.local_unit_data["certificate_signing_requests"])[0]["ca"] is False
+    published = json.loads(rel.remote_app_data["certificates"])[0]
+    assert not tls_certificates.Certificate.from_string(published["certificate"]).is_ca
+
+
 def test_respond_to_requests():
     rel = tls_certificates_testing.relation_for_requirer("foo", response=False)
     answered = tls_certificates_testing.respond_to_requests(rel)
@@ -246,6 +298,19 @@ def test_respond_to_requests_w_mode_app():
     answered = tls_certificates_testing.respond_to_requests(rel)
     assert answered.local_app_data == rel.local_app_data
     assert "certificates" in answered.remote_app_data
+
+
+def test_respond_to_requests_answers_ca_requests_with_ca_certificates():
+    rel = tls_certificates_testing.relation_for_requirer(
+        "foo",
+        certificate_requests=[
+            tls_certificates.CertificateRequestAttributes(common_name="example.com", is_ca=True)
+        ],
+        response=False,
+    )
+    answered = tls_certificates_testing.respond_to_requests(rel)
+    published = json.loads(answered.remote_app_data["certificates"])[0]
+    assert tls_certificates.Certificate.from_string(published["certificate"]).is_ca
 
 
 def test_respond_to_requests_wo_requests():

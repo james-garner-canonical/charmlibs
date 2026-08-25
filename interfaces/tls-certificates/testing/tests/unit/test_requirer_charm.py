@@ -22,6 +22,7 @@ import json
 
 import ops
 import ops.testing
+import pytest
 
 import charmlibs.interfaces.tls_certificates as tls_certificates
 import charmlibs.interfaces.tls_certificates_testing as tls_certificates_testing
@@ -338,6 +339,70 @@ def test_renewing_certificate_completes_renewal():
     assert str(renewed_cert) != original_stale_cert
     assert private_key == tls_certificates_testing.DEFAULT_PRIVATE_KEY
     assert isinstance(state.unit_status, ops.testing.ActiveStatus)
+
+
+def test_revoked_certificate_secret_is_removed(monkeypatch: pytest.MonkeyPatch):
+    """When the provider revokes a certificate, the library removes its Juju secret.
+
+    Two fixture relations with identical requests stand in for before and after: the
+    requests disable the library's unique-subject-id so both sign to byte-identical CSRs,
+    letting the revoked relation's certificate match the secret stored from the live one.
+    """
+    request = tls_certificates.CertificateRequestAttributes(
+        common_name="example.com", add_unique_id_to_subject_name=False
+    )
+    monkeypatch.setattr(requirer_charm, "REQUESTS", [request])
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    live = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates", certificate_requests=[request]
+    )
+    secret = tls_certificates_testing.private_key_secret("certificates")
+    state = ops.testing.State(relations=[live], secrets=[secret])
+    with ctx(ctx.on.relation_changed(live), state) as manager:
+        state = manager.run()
+        assigned, _ = manager.charm.certificates.get_assigned_certificates()
+        assert len(assigned) == 1
+    # the certificate is assigned and stored in a secret alongside the key secret
+    assert len(list(state.secrets)) == 2
+
+    # the provider revokes it: same request, same CSR, certificate flagged revoked
+    revoked_source = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates",
+        certificate_requests=[tls_certificates_testing.revoked(request)],
+    )
+    relation_out = state.get_relations("certificates")[0]
+    assert isinstance(relation_out, ops.testing.Relation)
+    revoked_relation = dataclasses.replace(
+        relation_out, remote_app_data=revoked_source.remote_app_data
+    )
+    state = dataclasses.replace(state, relations={revoked_relation})
+    state = ctx.run(ctx.on.relation_changed(revoked_relation), state)
+    # the certificate secret is gone; only the private key secret remains
+    assert {s.label for s in state.secrets} == {secret.label}
+
+
+def test_requirer_with_ca_request(monkeypatch: pytest.MonkeyPatch):
+    """A CA certificate request is answered with a CA certificate the library accepts.
+
+    The library matches on the databag's ca flag as well as the certificate's own
+    BasicConstraints, so both have to agree for the certificate to be assigned at all.
+    """
+    ca_request = tls_certificates.CertificateRequestAttributes(
+        common_name="ca.example.com", is_ca=True
+    )
+    monkeypatch.setattr(requirer_charm, "REQUESTS", [ca_request])
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates", certificate_requests=[ca_request]
+    )
+    secret = tls_certificates_testing.private_key_secret("certificates")
+    state_in = ops.testing.State(relations=[relation], secrets=[secret])
+    with ctx(ctx.on.relation_changed(relation), state_in) as manager:
+        manager.run()
+        assigned, _ = manager.charm.certificates.get_assigned_certificates()
+    assert len(assigned) == 1
+    assert assigned[0].certificate.common_name == ca_request.common_name
+    assert assigned[0].certificate.is_ca
 
 
 def test_requirer_without_key_secret_gets_no_certs():

@@ -162,15 +162,53 @@ def expired(request: tls_certificates.CertificateRequestAttributes) -> _AgedRequ
     return _AgedRequest(request=request, age=1.5)
 
 
+@dataclasses.dataclass(frozen=True)
+class _RevokedRequest:
+    """A request whose issued certificate the provider has revoked. See :func:`revoked`."""
+
+    request: tls_certificates.CertificateRequestAttributes
+
+
+def revoked(request: tls_certificates.CertificateRequestAttributes) -> _RevokedRequest:
+    """Mark a certificate request as answered with a certificate since revoked.
+
+    Pass the result in ``certificate_requests`` in place of the bare request. The
+    certificate is published with the relation's ``revoked`` flag set, which makes the
+    requirer library remove the certificate's Juju secret on the next reconcile.
+
+    Args:
+        request: The request whose certificate the provider has revoked.
+
+    Returns:
+        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
+        and :func:`relation_for_provider`.
+    """
+    return _RevokedRequest(request=request)
+
+
+_CertificateRequest: typing.TypeAlias = (
+    tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest | _RevokedRequest
+)
+
+
+@dataclasses.dataclass(frozen=True)
+class _ResolvedRequest:
+    """A certificate request signed into a CSR, together with its requested outcome."""
+
+    csr: tls_certificates.CertificateSigningRequest
+    is_ca: bool = False
+    age: float = 0.0
+    revoked: bool = False
+    error: tls_certificates.CertificateError | None = None
+
+
 def relation_for_requirer(
     # testing.Relation args
     endpoint: str,
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
-    certificate_requests: Iterable[
-        tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest
-    ] = (_REQUEST,),
+    certificate_requests: Iterable[_CertificateRequest] = (_REQUEST,),
     # interface 'conversation' args
     response: bool = True,
 ) -> testing.Relation:
@@ -193,10 +231,12 @@ def relation_for_requirer(
         mode: Must match the ``mode`` passed to ``TLSCertificatesRequiresV4``. ``Mode.APP``
             puts the requests in the application databag, anything else in the unit databag.
         certificate_requests: The requests the requirer has made. A bare
-            ``CertificateRequestAttributes`` is answered with a certificate; wrap an entry
-            with :func:`denied` to have the provider answer it with an error instead, or
-            with :func:`renewing`/:func:`expired` to answer it with a certificate late in
-            or past its validity period -- all in the same relation as its issued
+            ``CertificateRequestAttributes`` is answered with a certificate (a CA
+            certificate, for a request with ``is_ca=True``); wrap an entry with
+            :func:`denied` to have the provider answer it with an error instead, with
+            :func:`renewing`/:func:`expired` to answer it with a certificate late in or
+            past its validity period, or with :func:`revoked` to answer it with a
+            certificate marked as revoked -- all in the same relation as its issued
             neighbours.
         response: Whether the provider has answered. Pass ``False`` to populate only the
             requirer's side, modelling a request the provider hasn't issued a certificate for
@@ -207,15 +247,15 @@ def relation_for_requirer(
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
     """
     kwargs: _RelationKwargs = {}
-    csrs, issued, errors = _split_requests(certificate_requests, key=DEFAULT_PRIVATE_KEY)
+    resolved = _split_requests(certificate_requests, key=DEFAULT_PRIVATE_KEY)
     # local requirer
     if mode is tls_certificates.Mode.APP:
-        kwargs["local_app_data"] = _dump_requirer(csrs)
+        kwargs["local_app_data"] = _dump_requirer(resolved)
     else:
-        kwargs["local_unit_data"] = _dump_requirer(csrs)
+        kwargs["local_unit_data"] = _dump_requirer(resolved)
     # remote provider
     if response:
-        kwargs["remote_app_data"] = _dump_provider(issued, errors)
+        kwargs["remote_app_data"] = _dump_provider(resolved)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -225,9 +265,7 @@ def relation_for_provider(
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
-    certificate_requests: Iterable[
-        tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest
-    ] = (_REQUEST,),
+    certificate_requests: Iterable[_CertificateRequest] = (_REQUEST,),
     private_key: tls_certificates.PrivateKey = DEFAULT_PRIVATE_KEY,
     # interface 'conversation' args
     response: bool = True,
@@ -250,9 +288,10 @@ def relation_for_provider(
         certificate_requests: The requests the remote requirer has made. A bare
             ``CertificateRequestAttributes`` is one this charm has issued a certificate
             for (when ``response=True``); wrap an entry with :func:`denied` to model this
-            charm having answered it with an error instead, or with
+            charm having answered it with an error instead, with
             :func:`renewing`/:func:`expired` to model it having issued a certificate late
-            in or past its validity period.
+            in or past its validity period, or with :func:`revoked` to model it having
+            revoked the certificate it issued.
         private_key: The remote requirer's key, used to sign its requests. Free to choose.
         response: Whether the provider charm has answered. Pass ``False`` to populate only the
             remote requirer's side, modelling requests this charm hasn't issued certificates for
@@ -262,15 +301,15 @@ def relation_for_provider(
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
     """
     kwargs: _RelationKwargs = {}
-    csrs, issued, errors = _split_requests(certificate_requests, key=private_key)
+    resolved = _split_requests(certificate_requests, key=private_key)
     # remote requirer
     if mode is tls_certificates.Mode.APP:
-        kwargs["remote_app_data"] = _dump_requirer(csrs)
+        kwargs["remote_app_data"] = _dump_requirer(resolved)
     else:
-        kwargs["remote_units_data"] = {0: _dump_requirer(csrs)}
+        kwargs["remote_units_data"] = {0: _dump_requirer(resolved)}
     # local provider
     if response:
-        kwargs["local_app_data"] = _dump_provider(issued, errors)
+        kwargs["local_app_data"] = _dump_provider(resolved)
     return _relation(endpoint, kwargs=kwargs)
 
 
@@ -373,64 +412,57 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
         A copy of ``relation``, with the remote provider's application data holding a
         certificate for each of the requirer's current certificate signing requests.
     """
-    csrs = [
-        tls_certificates.CertificateSigningRequest.from_string(csr.certificate_signing_request)
+    resolved = [
+        _ResolvedRequest(
+            csr=tls_certificates.CertificateSigningRequest.from_string(
+                entry.certificate_signing_request
+            ),
+            is_ca=bool(entry.ca),
+        )
         for databag in (relation.local_app_data, relation.local_unit_data)
         if "certificate_signing_requests" in databag
-        for csr in tls_certificates._tls_certificates._RequirerData.load(
+        for entry in tls_certificates._tls_certificates._RequirerData.load(
             databag
         ).certificate_signing_requests
     ]
-    return dataclasses.replace(
-        relation, remote_app_data=_dump_provider((csr, 0.0) for csr in csrs)
-    )
+    return dataclasses.replace(relation, remote_app_data=_dump_provider(resolved))
 
 
 def _split_requests(
-    certificate_requests: Iterable[
-        tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest
-    ],
+    certificate_requests: Iterable[_CertificateRequest],
     key: tls_certificates.PrivateKey,
-) -> tuple[
-    list[tls_certificates.CertificateSigningRequest],
-    list[tuple[tls_certificates.CertificateSigningRequest, float]],
-    list[tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]],
-]:
-    """Sign each request with ``key`` and sort the CSRs by requested outcome.
-
-    Returns ``(all_csrs, issued, errors)``: every CSR in request order (the requirer made
-    all of these requests, whatever became of them), the ones the provider answers with a
-    certificate -- paired with the fraction of the certificate's validity period already
-    elapsed, 0.0 for a fresh one -- and the ones it answers with an error.
-    """
-    csrs: list[tls_certificates.CertificateSigningRequest] = []
-    issued: list[tuple[tls_certificates.CertificateSigningRequest, float]] = []
-    errors: list[
-        tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]
-    ] = []
+) -> list[_ResolvedRequest]:
+    """Sign each request with ``key``, keeping each one's requested outcome alongside."""
+    resolved: list[_ResolvedRequest] = []
     for item in certificate_requests:
-        attributes = item.request if isinstance(item, (_DeniedRequest, _AgedRequest)) else item
+        attributes = (
+            item
+            if isinstance(item, tls_certificates.CertificateRequestAttributes)
+            else item.request
+        )
         csr = tls_certificates.CertificateSigningRequest.generate(
             attributes=attributes, private_key=key
         )
-        csrs.append(csr)
+        is_ca = attributes.is_ca
         if isinstance(item, _DeniedRequest):
-            errors.append((csr, item.error))
+            resolved.append(_ResolvedRequest(csr=csr, is_ca=is_ca, error=item.error))
         elif isinstance(item, _AgedRequest):
-            issued.append((csr, item.age))
+            resolved.append(_ResolvedRequest(csr=csr, is_ca=is_ca, age=item.age))
+        elif isinstance(item, _RevokedRequest):
+            resolved.append(_ResolvedRequest(csr=csr, is_ca=is_ca, revoked=True))
         else:
-            issued.append((csr, 0.0))
-    return csrs, issued, errors
+            resolved.append(_ResolvedRequest(csr=csr, is_ca=is_ca))
+    return resolved
 
 
-def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -> dict[str, str]:
+def _dump_requirer(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
     requirer = tls_certificates._tls_certificates._RequirerData(
         certificate_signing_requests=[
             tls_certificates._tls_certificates._CertificateSigningRequest(
-                certificate_signing_request=str(csr).strip(),
-                ca=False,
+                certificate_signing_request=str(request.csr).strip(),
+                ca=request.is_ca,
             )
-            for csr in csrs
+            for request in resolved
         ]
     )
     ret: dict[str, str] = {}
@@ -438,26 +470,30 @@ def _dump_requirer(csrs: Iterable[tls_certificates.CertificateSigningRequest]) -
     return ret
 
 
-def _dump_provider(
-    issued: Iterable[tuple[tls_certificates.CertificateSigningRequest, float]],
-    errors: Iterable[
-        tuple[tls_certificates.CertificateSigningRequest, tls_certificates.CertificateError]
-    ] = (),
-) -> dict[str, str]:
-    provider = tls_certificates._tls_certificates._ProviderApplicationData(
-        certificates=[
-            tls_certificates._tls_certificates._Certificate(
-                certificate=str(_sign(csr, age=age)),
-                certificate_signing_request=str(csr),
-                ca=str(_CA_CERT),
-                chain=[],
+def _dump_provider(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
+    certificates: list[tls_certificates._tls_certificates._Certificate] = []
+    request_errors: list[tls_certificates._tls_certificates._RequestError] = []
+    for request in resolved:
+        if request.error is not None:
+            request_errors.append(
+                tls_certificates._tls_certificates._RequestError(
+                    csr=str(request.csr), error=request.error
+                )
             )
-            for csr, age in issued
-        ],
-        request_errors=[
-            tls_certificates._tls_certificates._RequestError(csr=str(csr), error=error)
-            for csr, error in errors
-        ],
+            continue
+        certificate = _sign(request.csr, age=request.age, is_ca=request.is_ca)
+        certificates.append(
+            tls_certificates._tls_certificates._Certificate(
+                certificate=str(certificate),
+                certificate_signing_request=str(request.csr),
+                ca=str(_CA_CERT),
+                # leaf to root, the order chain_has_valid_order expects
+                chain=[str(certificate), str(_CA_CERT)],
+                revoked=True if request.revoked else None,
+            )
+        )
+    provider = tls_certificates._tls_certificates._ProviderApplicationData(
+        certificates=certificates, request_errors=request_errors
     )
     ret: dict[str, str] = {}
     provider.dump(ret)
@@ -468,9 +504,9 @@ _VALIDITY = datetime.timedelta(days=42)
 
 
 def _sign(
-    csr: tls_certificates.CertificateSigningRequest, age: float = 0.0
+    csr: tls_certificates.CertificateSigningRequest, age: float = 0.0, is_ca: bool = False
 ) -> tls_certificates.Certificate:
-    certificate = csr.sign(ca=_CA_CERT, ca_private_key=_CA_KEY, validity=_VALIDITY)
+    certificate = csr.sign(ca=_CA_CERT, ca_private_key=_CA_KEY, validity=_VALIDITY, is_ca=is_ca)
     if not age:
         return certificate
     return _backdate(certificate, age=age)
