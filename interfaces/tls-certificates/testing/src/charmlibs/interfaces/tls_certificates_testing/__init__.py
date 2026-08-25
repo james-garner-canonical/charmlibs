@@ -16,6 +16,7 @@
 
 from ._testing import (
     DEFAULT_PRIVATE_KEY,
+    CertificateRequest,
     denied,
     expired,
     private_key_secret,
@@ -29,6 +30,7 @@ from ._version import __version__ as __version__
 
 __all__ = [
     "DEFAULT_PRIVATE_KEY",
+    "CertificateRequest",
     "denied",
     "expired",
     "private_key_secret",

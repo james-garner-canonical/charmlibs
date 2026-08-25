@@ -497,3 +497,35 @@ def test_requirer_without_key_secret_gets_no_certs():
         state_out = manager.run()
     assert isinstance(state_out.unit_status, ops.BlockedStatus)
     assert manager.charm.certs is None
+
+
+def test_bare_relation_answered_by_respond_to_requests():
+    """The two-step recipe: let the charm ask first, then answer whatever it asked for.
+
+    Nothing here has to agree with the charm -- not its requests, not its private key. The
+    charm reconciles against an empty relation, generating its own key and writing its own
+    CSRs; `respond_to_requests` issues certificates for exactly those. This is the way to
+    build a requirer test that can't fail silently through a mismatched fixture.
+    """
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = ops.testing.Relation("certificates", interface="tls-certificates")
+    state = ops.testing.State(relations=[relation])
+    # the charm asks
+    state = ctx.run(ctx.on.relation_changed(relation), state)
+    relation_out = state.get_relations("certificates")[0]
+    assert isinstance(relation_out, ops.testing.Relation)
+    # the provider answers
+    answered = tls_certificates_testing.respond_to_requests(relation_out)
+    state = dataclasses.replace(state, relations={answered})
+    with ctx(ctx.on.relation_changed(answered), state) as manager:
+        state = manager.run()
+        assigned, private_key = manager.charm.certificates.get_assigned_certificates()
+    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
+    assert {c.certificate.common_name for c in assigned} == {
+        r.common_name for r in requirer_charm.REQUESTS
+    }
+    # the charm generated its own key, and the certificates are bound to it
+    assert private_key is not None
+    assert private_key != tls_certificates_testing.DEFAULT_PRIVATE_KEY
+    for cert in assigned:
+        assert cert.certificate.matches_private_key(private_key)

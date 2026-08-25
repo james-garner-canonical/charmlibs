@@ -57,7 +57,7 @@ def test_ca_key_is_not_the_requirer_key():
 )
 def test_issued_certificates_chain_to_the_ca(private_key: tls_certificates.PrivateKey):
     """A caller-supplied requirer key must not break the chain."""
-    csr = _testing._split_requests([_testing._REQUEST], key=private_key)[0].csr
+    csr = _testing._resolve_requests([_testing._REQUEST], key=private_key)[0].csr
     certificate = _testing._sign(csr)
     assert _verified_by_ca(certificate)
     assert certificate.matches_private_key(private_key)  # still bound to the requirer

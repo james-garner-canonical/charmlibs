@@ -14,10 +14,17 @@ from ops import testing
 
 from charmlibs.interfaces import tls_certificates
 
+# The library's private module. Building relation data means writing the interface's wire
+# format, which is private: the pydantic models below, the databag encoding, the secret
+# labels and the renewal threshold all live here. Reusing them is deliberate -- this package
+# and the library are released in lockstep and pin each other exactly, so they cannot drift,
+# whereas a second copy of the wire format could. Every use is covered by a test.
+from charmlibs.interfaces.tls_certificates import _tls_certificates as _internal
+
 from . import _raw
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Mapping
 
 DEFAULT_PRIVATE_KEY = tls_certificates.PrivateKey(raw=_raw.KEY)
 """The private key the requirer fixtures sign certificate signing requests with.
@@ -32,10 +39,13 @@ Assert on parsed values via the library's accessors instead; not having to touch
 wire format is the point of this package.
 """
 _INTERFACE_NAME = "tls-certificates"
-_LIBID = tls_certificates._tls_certificates.LIBID
+_LIBID = _internal.LIBID
 _REQUEST = tls_certificates.CertificateRequestAttributes(common_name="example.com")
+_APP_REQUEST = tls_certificates.CertificateRequestAttributes(common_name="app.example.com")
+_UNIT_REQUEST = tls_certificates.CertificateRequestAttributes(common_name="unit.example.com")
 _CA_CERT = tls_certificates.Certificate(raw=_raw.CERT)
 _CA_KEY = tls_certificates.PrivateKey(raw=_raw.CA_KEY)
+_SINGLE_UNIT = (0,)
 
 
 class _RelationKwargs(typing.TypedDict, total=False):
@@ -61,7 +71,7 @@ def denied(
     ),
     message: str = "Denied by the simulated provider.",
     reason: str | None = None,
-) -> _DeniedRequest:
+) -> CertificateRequest:
     """Mark a certificate request as denied by the provider.
 
     Pass the result in ``certificate_requests`` in place of the bare request::
@@ -86,8 +96,8 @@ def denied(
         reason: Optional further detail, carried in the error's ``reason`` field.
 
     Returns:
-        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
-        and :func:`relation_for_provider`.
+        A :data:`CertificateRequest` accepted by ``certificate_requests`` in
+        :func:`relation_for_requirer` and :func:`relation_for_provider`.
     """
     error = tls_certificates.CertificateError(
         code=code.value, name=code.name, message=message, reason=reason
@@ -108,7 +118,7 @@ def renewing(
     request: tls_certificates.CertificateRequestAttributes,
     *,
     renewal_relative_time: float = 0.9,
-) -> _AgedRequest:
+) -> CertificateRequest:
     """Mark a certificate request as answered with a certificate that is due for renewal.
 
     Pass the result in ``certificate_requests`` in place of the bare request. The
@@ -127,22 +137,23 @@ def renewing(
         request: The request the provider answered with a soon-to-expire certificate.
         renewal_relative_time: Must match the ``renewal_relative_time`` the charm passes
             to ``TLSCertificatesRequiresV4``, which is where this default comes from. The
-            library renews from slightly after that point; the certificate is back-dated
-            to halfway between the renewal threshold and expiry.
+            certificate is back-dated to halfway between the library's renewal threshold
+            for that value and expiry.
 
     Returns:
-        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
-        and :func:`relation_for_provider`.
+        A :data:`CertificateRequest` accepted by ``certificate_requests`` in
+        :func:`relation_for_requirer` and :func:`relation_for_provider`.
     """
-    # The library's safety net renews from min(0.99, renewal_relative_time + 0.05) of the
-    # validity period through to expiry; the secret-expiry path starts earlier, at
-    # renewal_relative_time itself. Aim halfway between the safety threshold and expiry
-    # to be comfortably inside both windows regardless of rounding.
-    threshold = min(0.99, renewal_relative_time + 0.05)
+    # The threshold comes from the library itself rather than a copy of its formula, so
+    # that changing it there can't leave this fixture quietly failing to trigger renewal.
+    # The library's safety net renews from the threshold through to expiry; the
+    # secret-expiry path starts earlier, at renewal_relative_time itself. Aim halfway
+    # between the threshold and expiry to be comfortably inside both windows.
+    threshold = _internal._renewal_safety_threshold(renewal_relative_time)
     return _AgedRequest(request=request, age=(threshold + 1.0) / 2)
 
 
-def expired(request: tls_certificates.CertificateRequestAttributes) -> _AgedRequest:
+def expired(request: tls_certificates.CertificateRequestAttributes) -> CertificateRequest:
     """Mark a certificate request as answered with a certificate that has expired.
 
     Pass the result in ``certificate_requests`` in place of the bare request. The
@@ -156,8 +167,8 @@ def expired(request: tls_certificates.CertificateRequestAttributes) -> _AgedRequ
         request: The request the provider answered with a now-expired certificate.
 
     Returns:
-        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
-        and :func:`relation_for_provider`.
+        A :data:`CertificateRequest` accepted by ``certificate_requests`` in
+        :func:`relation_for_requirer` and :func:`relation_for_provider`.
     """
     return _AgedRequest(request=request, age=1.5)
 
@@ -169,7 +180,7 @@ class _RevokedRequest:
     request: tls_certificates.CertificateRequestAttributes
 
 
-def revoked(request: tls_certificates.CertificateRequestAttributes) -> _RevokedRequest:
+def revoked(request: tls_certificates.CertificateRequestAttributes) -> CertificateRequest:
     """Mark a certificate request as answered with a certificate since revoked.
 
     Pass the result in ``certificate_requests`` in place of the bare request. The
@@ -180,15 +191,30 @@ def revoked(request: tls_certificates.CertificateRequestAttributes) -> _RevokedR
         request: The request whose certificate the provider has revoked.
 
     Returns:
-        A wrapper accepted by ``certificate_requests`` in :func:`relation_for_requirer`
-        and :func:`relation_for_provider`.
+        A :data:`CertificateRequest` accepted by ``certificate_requests`` in
+        :func:`relation_for_requirer` and :func:`relation_for_provider`.
     """
     return _RevokedRequest(request=request)
 
 
-_CertificateRequest: typing.TypeAlias = (
+CertificateRequest: typing.TypeAlias = (
     tls_certificates.CertificateRequestAttributes | _DeniedRequest | _AgedRequest | _RevokedRequest
 )
+"""An entry in ``certificate_requests``: a request, and what the provider did about it.
+
+A bare ``tls_certificates.CertificateRequestAttributes`` is a request the provider
+answered with a certificate; :func:`denied`, :func:`renewing`, :func:`expired` and
+:func:`revoked` return the other outcomes. The wrapper types themselves are opaque --
+build them with those functions, and use this alias to annotate mixed lists::
+
+    requests: list[tls_certificates_testing.CertificateRequest] = [
+        REQUEST_A, tls_certificates_testing.denied(REQUEST_B)
+    ]
+"""
+
+_Scope: typing.TypeAlias = "typing.Literal[tls_certificates.Mode.APP, tls_certificates.Mode.UNIT]"
+"""The two scopes a certificate request can belong to, as the library names them."""
+_RequestsByMode: typing.TypeAlias = "Mapping[_Scope, Iterable[CertificateRequest]]"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -208,8 +234,12 @@ def relation_for_requirer(
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
-    certificate_requests: Iterable[_CertificateRequest] = (_REQUEST,),
+    certificate_requests: Iterable[CertificateRequest] | None = None,
+    certificate_requests_by_mode: _RequestsByMode | None = None,
     capabilities: tls_certificates.ProviderCapabilities | None = None,
+    # ops.testing args
+    remote_app_name: str = "remote",
+    remote_unit_ids: Iterable[int] = _SINGLE_UNIT,
     # interface 'conversation' args
     response: bool = True,
 ) -> testing.Relation:
@@ -218,19 +248,33 @@ def relation_for_requirer(
     By default this models a typical, fully answered relation: the requirer has made
     ``certificate_requests``, and the provider has issued a certificate for each.
 
-    The requests are signed with :data:`DEFAULT_PRIVATE_KEY`, so the charm under test must use
-    that key too, or its own requests won't match the issued certificates. There is deliberately
-    no argument for the charm's key -- point the charm at :data:`DEFAULT_PRIVATE_KEY` instead:
+    Two things must agree with the charm under test, and both fail *silently* if they
+    don't -- the library discards data it can't match, and the charm simply sees no
+    certificates:
 
-    - If the library manages the charm's key (the recommended configuration), add
-      :func:`private_key_secret` to ``ops.testing.State(secrets=...)``.
-    - If the charm passes ``private_key`` to ``TLSCertificatesRequiresV4``, supply
-      :data:`DEFAULT_PRIVATE_KEY` through whatever seam the charm already uses for its key.
+    - **The requests.** Pass the same ``CertificateRequestAttributes`` the charm passes to
+      ``TLSCertificatesRequiresV4``. On its next reconcile the library removes any request
+      in the databag that doesn't match one of its own, and nothing has issued a
+      certificate for the ones it writes in their place.
+    - **The private key.** The requests are signed with :data:`DEFAULT_PRIVATE_KEY`, so the
+      charm must use that key too. There is deliberately no argument for the charm's key --
+      point the charm at :data:`DEFAULT_PRIVATE_KEY` instead:
+
+      - If the library manages the charm's key (the recommended configuration), add
+        :func:`private_key_secret` to ``ops.testing.State(secrets=...)``.
+      - If the charm passes ``private_key`` to ``TLSCertificatesRequiresV4``, supply
+        :data:`DEFAULT_PRIVATE_KEY` through whatever seam the charm already uses for its key.
+
+    To avoid both couplings entirely, start from a bare ``ops.testing.Relation``, let the
+    charm make its own requests with its own key, and answer them with
+    :func:`respond_to_requests`. That needs no agreement of any kind, at the cost of an
+    extra ``ctx.run``.
 
     Args:
         endpoint: The charm's endpoint name for this relation.
         mode: Must match the ``mode`` passed to ``TLSCertificatesRequiresV4``. ``Mode.APP``
-            puts the requests in the application databag, anything else in the unit databag.
+            puts the requests in the application databag, ``Mode.UNIT`` in the unit databag,
+            and ``Mode.APP_AND_UNIT`` splits them per ``certificate_requests_by_mode``.
         certificate_requests: The requests the requirer has made. A bare
             ``CertificateRequestAttributes`` is answered with a certificate (a CA
             certificate, for a request with ``is_ca=True``); wrap an entry with
@@ -238,15 +282,22 @@ def relation_for_requirer(
             :func:`renewing`/:func:`expired` to answer it with a certificate late in or
             past its validity period, or with :func:`revoked` to answer it with a
             certificate marked as revoked -- all in the same relation as its issued
-            neighbours.
+            neighbours. Must not be given when ``mode`` is ``Mode.APP_AND_UNIT``.
+        certificate_requests_by_mode: The requests the requirer has made, per mode,
+            mirroring ``TLSCertificatesRequiresV4(certificate_requests_by_mode=...)``.
+            Required when ``mode`` is ``Mode.APP_AND_UNIT`` (where it defaults to one app
+            and one unit request), and rejected otherwise. Keys must be ``Mode.APP`` and/or
+            ``Mode.UNIT``; values take the same entries as ``certificate_requests``.
         capabilities: What the simulated provider has advertised about its certificate
             server. The default ``None`` models a provider that has not advertised
             anything, which ``get_provider_capabilities()`` reports as ``None`` ("not
             known yet"); pass a ``ProviderCapabilities`` -- even an empty one -- to model
             a provider that has, with each field carrying its own three-way meaning per
-            the library's docs. Only :func:`relation_for_requirer` takes this, because it
-            describes the simulated remote provider; a provider charm under test
-            advertises its own capabilities itself.
+            the library's docs.
+        remote_app_name: The name of the simulated provider application.
+        remote_unit_ids: The unit numbers the simulated provider has on this relation. The
+            provider writes only application data, so these units' databags are empty; they
+            exist for charms that look at ``relation.units``.
         response: Whether the provider has answered. Pass ``False`` to populate only the
             requirer's side, modelling a request the provider hasn't issued a certificate for
             yet (``capabilities`` are still advertised if given -- a provider can advertise
@@ -256,20 +307,32 @@ def relation_for_requirer(
 
     Returns:
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
+
+    Raises:
+        ValueError: If ``certificate_requests`` and ``certificate_requests_by_mode`` are
+            not used in the combination ``mode`` requires.
     """
+    by_mode = _requests_by_mode(mode, certificate_requests, certificate_requests_by_mode)
     kwargs: _RelationKwargs = {}
-    resolved = _split_requests(certificate_requests, key=DEFAULT_PRIVATE_KEY)
+    resolved: list[_ResolvedRequest] = []
     # local requirer
-    if mode is tls_certificates.Mode.APP:
-        kwargs["local_app_data"] = _dump_requirer(resolved)
-    else:
-        kwargs["local_unit_data"] = _dump_requirer(resolved)
+    if tls_certificates.Mode.APP in by_mode:
+        app = _resolve_requests(by_mode[tls_certificates.Mode.APP], key=DEFAULT_PRIVATE_KEY)
+        resolved.extend(app)
+        kwargs["local_app_data"] = _dump_requirer(app)
+    if tls_certificates.Mode.UNIT in by_mode:
+        unit = _resolve_requests(by_mode[tls_certificates.Mode.UNIT], key=DEFAULT_PRIVATE_KEY)
+        resolved.extend(unit)
+        kwargs["local_unit_data"] = _dump_requirer(unit)
     # remote provider
+    unit_ids = tuple(remote_unit_ids)
+    if unit_ids != _SINGLE_UNIT:
+        kwargs["remote_units_data"] = {unit_id: {} for unit_id in unit_ids}
     if response:
         kwargs["remote_app_data"] = _dump_provider(resolved, capabilities=capabilities)
     elif capabilities is not None:
         kwargs["remote_app_data"] = _dump_provider([], capabilities=capabilities)
-    return _relation(endpoint, kwargs=kwargs)
+    return _relation(endpoint, remote_app_name=remote_app_name, kwargs=kwargs)
 
 
 def relation_for_provider(
@@ -278,8 +341,13 @@ def relation_for_provider(
     *,
     # charmlibs.interfaces.tls_certificates args
     mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
-    certificate_requests: Iterable[_CertificateRequest] = (_REQUEST,),
+    certificate_requests: Iterable[CertificateRequest] | None = None,
+    certificate_requests_by_mode: _RequestsByMode | None = None,
     private_key: tls_certificates.PrivateKey = DEFAULT_PRIVATE_KEY,
+    capabilities: tls_certificates.ProviderCapabilities | None = None,
+    # ops.testing args
+    remote_app_name: str = "remote",
+    remote_unit_ids: Iterable[int] = _SINGLE_UNIT,
     # interface 'conversation' args
     response: bool = True,
 ) -> testing.Relation:
@@ -297,33 +365,70 @@ def relation_for_provider(
     Args:
         endpoint: The charm's endpoint name for this relation.
         mode: Must match the ``mode`` used by the remote requirer. ``Mode.APP`` puts its requests
-            in the remote application databag, anything else in the remote unit databag.
+            in the remote application databag, ``Mode.UNIT`` in the remote unit databags, and
+            ``Mode.APP_AND_UNIT`` splits them per ``certificate_requests_by_mode``.
         certificate_requests: The requests the remote requirer has made. A bare
             ``CertificateRequestAttributes`` is one this charm has issued a certificate
             for (when ``response=True``); wrap an entry with :func:`denied` to model this
             charm having answered it with an error instead, with
             :func:`renewing`/:func:`expired` to model it having issued a certificate late
             in or past its validity period, or with :func:`revoked` to model it having
-            revoked the certificate it issued.
+            revoked the certificate it issued. Must not be given when ``mode`` is
+            ``Mode.APP_AND_UNIT``.
+        certificate_requests_by_mode: The remote requirer's requests, per mode, mirroring
+            ``TLSCertificatesRequiresV4(certificate_requests_by_mode=...)``. Required when
+            ``mode`` is ``Mode.APP_AND_UNIT`` (where it defaults to one app and one unit
+            request), and rejected otherwise.
         private_key: The remote requirer's key, used to sign its requests. Free to choose.
+            All remote units share it; their requests still differ, because the library
+            gives each request a unique subject identifier by default. Requests built with
+            ``add_unique_id_to_subject_name=False`` are identical across units, which is
+            what a real deployment of such a requirer would also produce.
+        capabilities: What this charm has already advertised about its certificate server,
+            for testing a provider that starts with capabilities in its own databag --
+            stale ones it should replace, say. A provider charm publishes its own
+            capabilities when it runs, so leave this out unless the starting state matters.
+        remote_app_name: The name of the simulated requirer application.
+        remote_unit_ids: The unit numbers the simulated requirer has on this relation. In
+            ``Mode.UNIT`` and ``Mode.APP_AND_UNIT`` each one makes its own copy of the
+            requests, so a provider charm can be tested against a multi-unit requirer.
         response: Whether the provider charm has answered. Pass ``False`` to populate only the
             remote requirer's side, modelling requests this charm hasn't issued certificates for
-            yet.
+            yet (``capabilities`` are still advertised if given).
 
     Returns:
         An ``ops.testing.Relation`` to include in ``ops.testing.State(relations=...)``.
+
+    Raises:
+        ValueError: If ``certificate_requests`` and ``certificate_requests_by_mode`` are
+            not used in the combination ``mode`` requires.
     """
+    by_mode = _requests_by_mode(mode, certificate_requests, certificate_requests_by_mode)
     kwargs: _RelationKwargs = {}
-    resolved = _split_requests(certificate_requests, key=private_key)
+    resolved: list[_ResolvedRequest] = []
     # remote requirer
-    if mode is tls_certificates.Mode.APP:
-        kwargs["remote_app_data"] = _dump_requirer(resolved)
-    else:
-        kwargs["remote_units_data"] = {0: _dump_requirer(resolved)}
+    if tls_certificates.Mode.APP in by_mode:
+        app = _resolve_requests(by_mode[tls_certificates.Mode.APP], key=private_key)
+        resolved.extend(app)
+        kwargs["remote_app_data"] = _dump_requirer(app)
+    unit_ids = tuple(remote_unit_ids)
+    if tls_certificates.Mode.UNIT in by_mode:
+        units: dict[int, dict[str, str]] = {}
+        for unit_id in unit_ids:
+            # Resolved once per unit: each unit signs its own requests, so (unless the
+            # requests disable the unique subject id) each unit's CSRs are its own.
+            unit = _resolve_requests(by_mode[tls_certificates.Mode.UNIT], key=private_key)
+            resolved.extend(unit)
+            units[unit_id] = _dump_requirer(unit)
+        kwargs["remote_units_data"] = units
+    elif unit_ids != _SINGLE_UNIT:
+        kwargs["remote_units_data"] = {unit_id: {} for unit_id in unit_ids}
     # local provider
     if response:
-        kwargs["local_app_data"] = _dump_provider(resolved)
-    return _relation(endpoint, kwargs=kwargs)
+        kwargs["local_app_data"] = _dump_provider(resolved, capabilities=capabilities)
+    elif capabilities is not None:
+        kwargs["local_app_data"] = _dump_provider([], capabilities=capabilities)
+    return _relation(endpoint, remote_app_name=remote_app_name, kwargs=kwargs)
 
 
 # Why seeding a secret, rather than any of the more obvious alternatives? All of these were
@@ -362,13 +467,22 @@ def private_key_secret(
     adopts ``private_key`` as its own managed key via its normal lookup path. Pass the same
     ``endpoint``, ``mode`` and ``private_key`` used to build the relation.
 
+    This describes *one* secret, so ``Mode.APP_AND_UNIT`` is not accepted: the library keeps
+    a separate key per scope there. Call this once per mode instead, seeding the same key in
+    both, since :func:`relation_for_requirer` signs both scopes' requests with it::
+
+        secrets = [
+            private_key_secret("certificates", mode=tls_certificates.Mode.APP),
+            private_key_secret("certificates", mode=tls_certificates.Mode.UNIT),
+        ]
+
     Charms that pass ``private_key`` to ``TLSCertificatesRequiresV4`` should NOT use this: the
     library deletes the managed secret when the charm supplies its own key.
 
     Args:
         endpoint: The charm's endpoint name for this relation.
-        mode: Must match the ``mode`` passed to ``TLSCertificatesRequiresV4``. ``Mode.APP``
-            produces an app-owned secret; anything else a unit-owned one.
+        mode: Must be ``Mode.APP`` or ``Mode.UNIT``, matching the scope of the key being
+            seeded. ``Mode.APP`` produces an app-owned secret, ``Mode.UNIT`` a unit-owned one.
         private_key: The key to seed. Must match the one used to build the relation.
         unit_id: Must match the ``unit_id`` of the ``ops.testing.Context`` under test. In
             ``Mode.UNIT`` the label embeds the unit number, and a mismatch surfaces as
@@ -376,12 +490,20 @@ def private_key_secret(
 
     Returns:
         An ``ops.testing.Secret`` to include in ``ops.testing.State(secrets=...)``.
+
+    Raises:
+        ValueError: If ``mode`` is ``Mode.APP_AND_UNIT``.
     """
     # The library matches a provider certificate to a request on two gates: the CSR strings must
     # be equal, and `certificate.matches_private_key(key)` must hold for the requirer's key. Both
     # fail if the charm's key differs from the one the relation's requests were signed with -- and
     # both fail silently, as "no certificates" rather than an error. Hence this helper: it seeds
     # the key at the label the library looks the key up under, so the two agree.
+    if mode is tls_certificates.Mode.APP_AND_UNIT:
+        raise ValueError(
+            "private_key_secret describes a single secret, and Mode.APP_AND_UNIT uses one key "
+            "per scope. Call it once with mode=Mode.APP and once with mode=Mode.UNIT."
+        )
     if mode is tls_certificates.Mode.APP:
         label = f"{_LIBID}-private-key-app-{endpoint}"
         owner = "app"
@@ -394,7 +516,7 @@ def private_key_secret(
 
 
 def respond_to_requests(relation: testing.Relation) -> testing.Relation:
-    """Return a copy of ``relation`` with the provider answering the CSRs currently present.
+    """Return a copy of ``relation`` with the provider answering any unanswered requests.
 
     :func:`relation_for_requirer` builds a static snapshot before the charm runs, so it
     cannot answer requests the charm makes *during* a test -- after key rotation, or
@@ -411,10 +533,19 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
         )
         state = ctx.run(ctx.on.relation_changed(relation), state)
 
+    Only requests the provider hasn't answered are issued for. Anything it has already
+    published stays as it is -- advertised capabilities, recorded errors from
+    :func:`denied`, and existing certificates with their :func:`renewing`, :func:`expired`
+    and :func:`revoked` state -- so this is safe to call on a fully populated relation and
+    safe to call repeatedly. Answers to requests the requirer has since withdrawn are
+    dropped, which is what the provider library does too.
+
     The certificates answer whatever CSRs are present, so unlike
     :func:`relation_for_requirer` this is key-agnostic: it serves charms using
     :data:`DEFAULT_PRIVATE_KEY`, charms that just rotated to a fresh key, and
-    charm-managed keys alike.
+    charm-managed keys alike. Starting from a bare ``ops.testing.Relation`` and letting the
+    charm make its own requests is the one way to build a requirer test that needs no
+    agreement with the fixture at all.
 
     Args:
         relation: A relation whose *local* side holds the requirer's certificate signing
@@ -434,15 +565,86 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
         )
         for databag in (relation.local_app_data, relation.local_unit_data)
         if "certificate_signing_requests" in databag
-        for entry in tls_certificates._tls_certificates._RequirerData.load(
-            databag
-        ).certificate_signing_requests
+        for entry in _internal._RequirerData.load(databag).certificate_signing_requests
     ]
-    return dataclasses.replace(relation, remote_app_data=_dump_provider(resolved))
+    published = _load_provider(relation.remote_app_data)
+    # Load-modify-dump: keep what the provider has already said, about requests that are
+    # still on the relation, and add certificates only for the ones it hasn't answered.
+    requested = {request.csr for request in resolved}
+    certificates = [
+        certificate
+        for certificate in published.certificates
+        if _as_csr(certificate.certificate_signing_request) in requested
+    ]
+    request_errors = [
+        error for error in published.request_errors if _as_csr(error.csr) in requested
+    ]
+    answered = {_as_csr(entry.certificate_signing_request) for entry in certificates}
+    answered |= {_as_csr(error.csr) for error in request_errors}
+    certificates.extend(
+        _certificate_entry(request) for request in resolved if request.csr not in answered
+    )
+    data = _internal._ProviderApplicationData(
+        certificates=certificates,
+        request_errors=request_errors,
+        capabilities=published.capabilities,
+    )
+    ret: dict[str, str] = {}
+    data.dump(ret)
+    return dataclasses.replace(relation, remote_app_data=ret)
 
 
-def _split_requests(
-    certificate_requests: Iterable[_CertificateRequest],
+def _requests_by_mode(
+    mode: tls_certificates.Mode,
+    certificate_requests: Iterable[CertificateRequest] | None,
+    certificate_requests_by_mode: _RequestsByMode | None,
+) -> dict[tls_certificates.Mode, tuple[CertificateRequest, ...]]:
+    """Validate the request arguments against ``mode`` and return them keyed by scope.
+
+    Mirrors the pairing rules ``TLSCertificatesRequiresV4`` enforces on its own
+    ``certificate_requests``/``certificate_requests_by_mode`` arguments, so a fixture can't
+    be built in a shape the charm under test could not have produced.
+    """
+    app_and_unit = tls_certificates.Mode.APP_AND_UNIT
+    if certificate_requests is not None and certificate_requests_by_mode is not None:
+        raise ValueError(
+            "certificate_requests and certificate_requests_by_mode are mutually exclusive."
+        )
+    if mode is app_and_unit:
+        if certificate_requests is not None:
+            raise ValueError(
+                "certificate_requests must not be given when mode is Mode.APP_AND_UNIT; "
+                "use certificate_requests_by_mode."
+            )
+        if certificate_requests_by_mode is None:
+            certificate_requests_by_mode = {
+                tls_certificates.Mode.APP: (_APP_REQUEST,),
+                tls_certificates.Mode.UNIT: (_UNIT_REQUEST,),
+            }
+        # Iterate as plain Modes: the annotation rules APP_AND_UNIT out, but callers
+        # without a type checker can still pass it, and it must not reach the databag.
+        keys = typing.cast("Iterable[tls_certificates.Mode]", certificate_requests_by_mode)
+        invalid = sorted(m.name for m in keys if m is app_and_unit)
+        if invalid:
+            raise ValueError(
+                "certificate_requests_by_mode keys must be Mode.APP or Mode.UNIT, "
+                f"not {', '.join(invalid)}."
+            )
+        return {m: tuple(requests) for m, requests in certificate_requests_by_mode.items()}
+    if certificate_requests_by_mode is not None:
+        raise ValueError(
+            "certificate_requests_by_mode is only valid when mode is Mode.APP_AND_UNIT; "
+            "use certificate_requests."
+        )
+    if certificate_requests is None:
+        certificate_requests = (_REQUEST,)
+    if mode is tls_certificates.Mode.APP:
+        return {tls_certificates.Mode.APP: tuple(certificate_requests)}
+    return {tls_certificates.Mode.UNIT: tuple(certificate_requests)}
+
+
+def _resolve_requests(
+    certificate_requests: Iterable[CertificateRequest],
     key: tls_certificates.PrivateKey,
 ) -> list[_ResolvedRequest]:
     """Sign each request with ``key``, keeping each one's requested outcome alongside."""
@@ -468,10 +670,23 @@ def _split_requests(
     return resolved
 
 
+def _as_csr(raw: str) -> tls_certificates.CertificateSigningRequest:
+    """Parse a CSR from a databag entry, so entries compare by content not by whitespace."""
+    return tls_certificates.CertificateSigningRequest.from_string(raw)
+
+
+def _load_provider(databag: dict[str, str]) -> _internal._ProviderApplicationData:
+    """Load the provider's application databag, treating unreadable data as empty."""
+    try:
+        return _internal._ProviderApplicationData.load(databag)
+    except tls_certificates.DataValidationError:
+        return _internal._ProviderApplicationData()
+
+
 def _dump_requirer(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
-    requirer = tls_certificates._tls_certificates._RequirerData(
+    requirer = _internal._RequirerData(
         certificate_signing_requests=[
-            tls_certificates._tls_certificates._CertificateSigningRequest(
+            _internal._CertificateSigningRequest(
                 certificate_signing_request=str(request.csr).strip(),
                 ca=request.is_ca,
             )
@@ -483,32 +698,32 @@ def _dump_requirer(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
     return ret
 
 
+def _certificate_entry(request: _ResolvedRequest) -> _internal._Certificate:
+    certificate = _sign(request.csr, age=request.age, is_ca=request.is_ca)
+    return _internal._Certificate(
+        certificate=str(certificate),
+        certificate_signing_request=str(request.csr),
+        ca=str(_CA_CERT),
+        # leaf to root, the order chain_has_valid_order expects
+        chain=[str(certificate), str(_CA_CERT)],
+        revoked=True if request.revoked else None,
+    )
+
+
 def _dump_provider(
     resolved: Iterable[_ResolvedRequest],
     capabilities: tls_certificates.ProviderCapabilities | None = None,
 ) -> dict[str, str]:
-    certificates: list[tls_certificates._tls_certificates._Certificate] = []
-    request_errors: list[tls_certificates._tls_certificates._RequestError] = []
+    certificates: list[_internal._Certificate] = []
+    request_errors: list[_internal._RequestError] = []
     for request in resolved:
         if request.error is not None:
             request_errors.append(
-                tls_certificates._tls_certificates._RequestError(
-                    csr=str(request.csr), error=request.error
-                )
+                _internal._RequestError(csr=str(request.csr), error=request.error)
             )
             continue
-        certificate = _sign(request.csr, age=request.age, is_ca=request.is_ca)
-        certificates.append(
-            tls_certificates._tls_certificates._Certificate(
-                certificate=str(certificate),
-                certificate_signing_request=str(request.csr),
-                ca=str(_CA_CERT),
-                # leaf to root, the order chain_has_valid_order expects
-                chain=[str(certificate), str(_CA_CERT)],
-                revoked=True if request.revoked else None,
-            )
-        )
-    provider = tls_certificates._tls_certificates._ProviderApplicationData(
+        certificates.append(_certificate_entry(request))
+    provider = _internal._ProviderApplicationData(
         certificates=certificates, request_errors=request_errors, capabilities=capabilities
     )
     ret: dict[str, str] = {}
@@ -559,5 +774,7 @@ def _backdate(
     )
 
 
-def _relation(endpoint: str, kwargs: _RelationKwargs) -> testing.Relation:
-    return testing.Relation(endpoint, interface=_INTERFACE_NAME, **kwargs)
+def _relation(endpoint: str, remote_app_name: str, kwargs: _RelationKwargs) -> testing.Relation:
+    return testing.Relation(
+        endpoint, interface=_INTERFACE_NAME, remote_app_name=remote_app_name, **kwargs
+    )

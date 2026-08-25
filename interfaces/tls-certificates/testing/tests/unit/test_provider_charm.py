@@ -14,6 +14,8 @@
 
 """Tests for the TLS Certificates testing library from a provider charm perspective."""
 
+import json
+
 import ops.testing
 
 import provider_charm
@@ -100,3 +102,43 @@ def test_provider_relation_answered_has_no_outstanding_requests():
         outstanding = manager.charm.certificates.get_outstanding_certificate_requests()
     assert manager.charm.requests is not None
     assert not outstanding
+
+
+def test_provider_relation_with_a_multi_unit_requirer():
+    """A provider charm must see every requirer unit's own request, not just unit 0's."""
+    ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
+    request = tls_certificates.CertificateRequestAttributes(common_name="example.com")
+    relation = tls_certificates_testing.relation_for_provider(
+        endpoint="certificates",
+        certificate_requests=[request],
+        remote_unit_ids=[0, 1, 2],
+        response=False,
+    )
+    state_in = ops.testing.State(leader=True, relations=[relation])
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        manager.run()
+        outstanding = manager.charm.certificates.get_outstanding_certificate_requests()
+    assert manager.charm.requests is not None
+    # three units asked for the same common name, but each with its own request
+    assert len(manager.charm.requests) == 3
+    assert len(set(manager.charm.requests)) == 3
+    assert {r.certificate_signing_request.common_name for r in outstanding} == {
+        request.common_name
+    }
+    assert len(outstanding) == 3
+
+
+def test_provider_relation_with_stale_capabilities():
+    """A provider charm replaces capabilities already in its databag when it reconciles."""
+    ctx = ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
+    relation = tls_certificates_testing.relation_for_provider(
+        endpoint="certificates",
+        capabilities=tls_certificates.ProviderCapabilities(provider_type="stale"),
+    )
+    # the fixture put them in this charm's own databag, alongside its issued certificates
+    assert json.loads(relation.local_app_data["capabilities"])["provider_type"] == "stale"
+    state_in = ops.testing.State(leader=True, relations=[relation])
+    state_out = ctx.run(ctx.on.update_status(), state_in)
+    relation_out = state_out.get_relations("certificates")[0]
+    # this charm advertises nothing, so its reconcile clears what the fixture published
+    assert "capabilities" not in relation_out.local_app_data

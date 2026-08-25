@@ -1398,6 +1398,22 @@ def generate_private_key(
     return PrivateKey.generate(key_size=key_size, public_exponent=public_exponent)
 
 
+_RENEWAL_SAFETY_MARGIN = 0.05
+"""How far past ``renewal_relative_time`` the renewal safety net waits before firing."""
+_MAX_RENEWAL_FRACTION = 0.99
+"""Cap on the safety net's threshold, so it always fires before the certificate expires."""
+
+
+def _renewal_safety_threshold(renewal_relative_time: float) -> float:
+    """Return the fraction of a certificate's validity period at which renewal is forced.
+
+    The safety net in ``_renew_expiring_certificates`` fires from this point through to
+    expiry. The testing package derives back-dated certificates from this same function, so
+    that a change here can't leave its ``renewing()`` fixture quietly failing to renew.
+    """
+    return min(_MAX_RENEWAL_FRACTION, renewal_relative_time + _RENEWAL_SAFETY_MARGIN)
+
+
 def calculate_relative_datetime(target_time: datetime, fraction: float) -> datetime:
     """Calculate a datetime that is a given percentage from now to a target time.
 
@@ -3059,7 +3075,7 @@ class TLSCertificatesRequiresV4(Object):
         expiry to prevent downtime.
         """
         now = datetime.now(timezone.utc)
-        safety_threshold = min(0.99, self.renewal_relative_time + 0.05)
+        safety_threshold = _renewal_safety_threshold(self.renewal_relative_time)
 
         for mode in self._flatten_modes():
             assigned_certificates, _ = self.get_assigned_certificates(mode)
