@@ -185,3 +185,7 @@ interfaces/.example/**/uv.lock
 
 # Workshop lock file (machine-local state)
 .workshop.lock
+
+# TEMPORARY -- remove before merging this branch.
+# Working plan for the interface library API design guide. Not for merge.
+.plan/
