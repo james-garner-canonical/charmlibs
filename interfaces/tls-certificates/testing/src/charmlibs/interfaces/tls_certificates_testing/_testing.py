@@ -212,6 +212,13 @@ build them with those functions, and use this alias to annotate mixed lists::
     ]
 """
 
+# FIXME: this private name appears in the public signatures of relation_for_requirer and
+# relation_for_provider, so callers see a type they can't import. Spelling it out inline
+# would fix that -- every part of it is public. Left alone for now to match the library,
+# which leaks _CertificateRequestsArg and _CertificateRequestsByModeArg from the public
+# TLSCertificatesRequiresV4.__init__ in the same way; fix both together.
+# Reusing the library's _CertificateRequestsByMode is not an option: its values are
+# list[CertificateRequestAttributes], which excludes the wrapped outcomes above.
 _Scope: typing.TypeAlias = "typing.Literal[tls_certificates.Mode.APP, tls_certificates.Mode.UNIT]"
 """The two scopes a certificate request can belong to, as the library names them."""
 _RequestsByMode: typing.TypeAlias = "Mapping[_Scope, Iterable[CertificateRequest]]"

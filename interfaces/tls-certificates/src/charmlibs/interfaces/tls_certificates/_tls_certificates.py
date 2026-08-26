@@ -1790,6 +1790,11 @@ class CertificatesRequirerCharmEvents(CharmEvents):
 
 
 if TYPE_CHECKING:
+    # FIXME: _CertificateRequestsArg and _CertificateRequestsByModeArg appear in the public
+    # signature of TLSCertificatesRequiresV4.__init__, so callers see names they can't
+    # import. Spelling the types out inline would fix that -- every part of them is already
+    # exported. The tls_certificates_testing package leaks its own equivalent from
+    # relation_for_requirer and relation_for_provider the same way; fix both together.
     _CertificateRequestsByMode: TypeAlias = dict[
         Literal[Mode.APP, Mode.UNIT], list[CertificateRequestAttributes]
     ]
