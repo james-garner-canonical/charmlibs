@@ -29,6 +29,8 @@ When the interface evolves, some version of the library has to support both the 
 
 The relation data format is a long-lived contract, while the charm-facing library API is easier to change. Design the charm-facing API and relation data format separately from the start.
 
+Read more: {ref}`design-interface-library-apis`
+
 ### Unit tests
 
 Unit tests must capture the interface schema evolution. Unit tests typically also capture the charm-facing API evolution.
