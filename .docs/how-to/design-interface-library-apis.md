@@ -21,6 +21,16 @@ of them can be learned once.
 This guide recommends **reconciler-only** libraries: a typed accessor over relation data, with no
 events of its own, where the charm decides when to read and when to write.
 
+```{admonition} Which page covers what
+:class: seealso
+This page owns the charm-facing API: the readiness and no-raise guarantees, the constructor, the
+method shapes and their names, and the tests that demonstrate conformance to them.
+
+{ref}`design-relation-interfaces` owns the wire format, and also owns **interface upgrades** — what
+may change in a published interface, and the rule that unit tests must run against both old and new
+test vectors. Those rules are not restated here.
+```
+
 ```{note}
 This guide applies to **new interface libraries and new major versions** of existing ones. It is not
 a declaration that shipped libraries must be rewritten. See [Scope](#scope).
