@@ -336,6 +336,7 @@ The full menu, with the strength of each:
 | `get_data()` | SHOULD | whenever anything is read |
 | `publish()` | SHOULD | whenever anything is written |
 | a way to report *why* it is not ready | SHOULD | see [Report why it isn't ready](#report-why-it-isnt-ready) |
+| a named handshake write, e.g. `publish_version()` | SHOULD | if the requirer declares anything — see [When the requirer has to write too](#when-the-requirer-has-to-write-too) |
 | `get_published(relation)` or `get_outstanding_requests()` | SHOULD | request/response providers — see [Request and response](#request-and-response-without-events) |
 | `clean_up(relation)` | SHOULD | **if** the library creates anything outside the databag — see [Libraries that do real work](#libraries-that-do-real-work) |
 | an explicitly named charm-initiated mutation | SHOULD | `regenerate_private_key()`, `renew(certificate)`. Name the verb; never `do_*` or `handle_*` |
