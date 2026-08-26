@@ -4,7 +4,6 @@
 import dataclasses
 import datetime
 import json
-import types
 import typing
 
 import pytest
@@ -376,31 +375,6 @@ def test_private_key_secret_w_private_key():
     assert key != tls_certificates_testing.DEFAULT_PRIVATE_KEY
     secret = tls_certificates_testing.private_key_secret("foo", private_key=key)
     assert secret.tracked_content == {"private-key": str(key)}
-
-
-@pytest.mark.parametrize(
-    ("mode", "unit_id"),
-    [(tls_certificates.Mode.UNIT, 3), (tls_certificates.Mode.APP, 0)],
-    ids=["unit", "app"],
-)
-def test_private_key_secret_label_matches_the_library(
-    mode: typing.Literal[tls_certificates.Mode.UNIT, tls_certificates.Mode.APP],
-    unit_id: int,
-):
-    """The label must be exactly what the library looks up, or the charm silently sees no key.
-
-    Guards against the library changing `_get_private_key_secret_label` without this
-    package following. The two are released in lockstep, so this test is the contract.
-    """
-    secret = tls_certificates_testing.private_key_secret("foo", mode=mode, unit_id=unit_id)
-    # Call the library's own label derivation with a stand-in supplying the two
-    # attributes it reads.
-    stub = types.SimpleNamespace(relationship_name="foo", _get_unit_number=lambda: str(unit_id))
-    expected = tls_certificates.TLSCertificatesRequiresV4._get_private_key_secret_label(
-        stub,  # type: ignore[arg-type]
-        mode,
-    )
-    assert secret.label == expected
 
 
 def test_certificate_request_alias_covers_every_outcome():

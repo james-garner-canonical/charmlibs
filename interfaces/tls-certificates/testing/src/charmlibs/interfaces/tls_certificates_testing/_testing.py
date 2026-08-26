@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import types
 import typing
 
 from cryptography import x509
@@ -39,7 +40,6 @@ Assert on parsed values via the library's accessors instead; not having to touch
 wire format is the point of this package.
 """
 _INTERFACE_NAME = "tls-certificates"
-_LIBID = _internal.LIBID
 _REQUEST = tls_certificates.CertificateRequestAttributes(common_name="example.com")
 _APP_REQUEST = tls_certificates.CertificateRequestAttributes(common_name="app.example.com")
 _UNIT_REQUEST = tls_certificates.CertificateRequestAttributes(common_name="unit.example.com")
@@ -511,12 +511,17 @@ def private_key_secret(
             "private_key_secret describes a single secret, and Mode.APP_AND_UNIT uses one key "
             "per scope. Call it once with mode=Mode.APP and once with mode=Mode.UNIT."
         )
-    if mode is tls_certificates.Mode.APP:
-        label = f"{_LIBID}-private-key-app-{endpoint}"
-        owner = "app"
-    else:
-        label = f"{_LIBID}-private-key-{unit_id}-{endpoint}"
-        owner = "unit"
+    owner = "app" if mode is tls_certificates.Mode.APP else "unit"
+    # Derive the label with the library's own code rather than a copy of its format, so that
+    # changing it there can't leave this helper seeding a secret the library never looks up.
+    # The method reads only these two attributes off the requirer object.
+    requirer = typing.cast(
+        "tls_certificates.TLSCertificatesRequiresV4",
+        types.SimpleNamespace(relationship_name=endpoint, _get_unit_number=lambda: str(unit_id)),
+    )
+    label = tls_certificates.TLSCertificatesRequiresV4._get_private_key_secret_label(
+        requirer, mode
+    )
     return testing.Secret(
         tracked_content={"private-key": str(private_key)}, label=label, owner=owner
     )

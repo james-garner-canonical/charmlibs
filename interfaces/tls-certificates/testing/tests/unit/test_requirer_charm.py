@@ -486,6 +486,30 @@ def test_certificate_requests_callable_receives_capabilities(monkeypatch: pytest
     assert {c.certificate.common_name for c in assigned} == {wildcard.common_name}
 
 
+def test_private_key_secret_is_found_on_a_non_default_unit():
+    """The seeded secret must sit at the label the library looks the key up under.
+
+    `private_key_secret` derives that label with the library's own code rather than a copy
+    of its format, and this is the end the derivation exists for: a charm on a unit other
+    than 0 finds the key, and resolves the certificates issued against it. A label the
+    library didn't look up would surface here as "no certificates" rather than an error.
+    """
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META, unit_id=3)
+    relation = tls_certificates_testing.relation_for_requirer(
+        endpoint="certificates", certificate_requests=requirer_charm.REQUESTS
+    )
+    secret = tls_certificates_testing.private_key_secret("certificates", unit_id=3)
+    state_in = ops.testing.State(relations=[relation], secrets=[secret])
+    with ctx(ctx.on.update_status(), state_in) as manager:
+        state_out = manager.run()
+        assigned, private_key = manager.charm.certificates.get_assigned_certificates()
+    assert private_key == tls_certificates_testing.DEFAULT_PRIVATE_KEY
+    assert {c.certificate.common_name for c in assigned} == {
+        r.common_name for r in requirer_charm.REQUESTS
+    }
+    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
+
+
 def test_requirer_without_key_secret_gets_no_certs():
     """Regression guard: this is the failure mode private_key_secret exists to prevent."""
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
