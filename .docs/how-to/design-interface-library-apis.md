@@ -330,7 +330,7 @@ def get_data(self) -> FooData | None:
 
 def _load(self) -> FooData | None:
     relation = self._relation
-    if relation is None or not relation.data.get(relation.app):
+    if relation is None or relation.app is None or not relation.data.get(relation.app):
         return None
     try:
         return relation.load(FooData, relation.app)
@@ -430,6 +430,19 @@ Concretely:
 - **`is_ready` catches parse and validation errors** and returns `False`.
 - **Exceptions are still right** for programming errors and transient failures: a relation name that
   is not in the charm's metadata, a hook tool that failed. Those are not remote data.
+
+```{important}
+"Must not raise" is scoped to **relation databag contents**, not to everything. OP083 is explicit
+that exceptions "can and should be used to report incorrect initialization (e.g. wrong relation
+name), or transient errors (hook command unexpectedly erroring out)". So an `ops.ModelError` from a
+failing hook tool propagating out of `is_ready` is correct behaviour, not a violation — the charm
+should go into error and be retried. What must not escape is a `ValidationError` because a remote
+application wrote something you did not expect.
+
+Catch the exceptions the databag can cause. Do not wrap the body in a bare `except Exception`: that
+converts a broken hook tool into a silent `False`, which is a much harder bug to find than an error
+state.
+```
 
 ### The getter is allowed to be strict — and that is the point
 
