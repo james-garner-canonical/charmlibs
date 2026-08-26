@@ -131,8 +131,13 @@ class FooRequirer:
         self._relation_name = relation_name
 ```
 
-In this repo, 17 of 30 endpoint classes subclass `ops.Object` and 13 do not — including
-`istio_metadata`, `k8s_backup_target` and `otlp`. The plain class is already established practice.
+In this repo, only **5 of 30** endpoint classes are genuinely plain: both halves of
+`istio_metadata`, both halves of `otlp`, and `k8s_backup_target`'s requirer. Another 8 look plain at
+a glance because they inherit from a library-internal base — `AuthProxyRelation`,
+`ForwardAuthRelation`, `OAuthRelation`, `_LdapInterface` — but each of those is itself an
+`ops.Object`. So 25 of 30 are `ops.Object`, some of them without their authors having decided to be.
+
+That is the status quo, not a precedent to follow. `istio_metadata` and `otlp` are the ones to copy.
 
 ## Take the narrowest thing you need
 
@@ -520,7 +525,7 @@ Across the 30 endpoint classes in the 15 interface libraries in this repo:
 | Class name suffix | `Provider`=13, `Requirer`=11, `Requires`=3, `Provides`=2, `Consumer`=1 |
 | Relation keyword argument | `relation_name`=24, `relationship_name`=4 |
 | First constructor argument | `charm`=29, `relation_mapping`=1 |
-| Base class | `ops.Object`=17, plain object=13 |
+| Base class | `ops.Object`=17 directly, plain=13 — but 8 of the 13 subclass `ops.Object` one level up, so the real split is 25 / 5 |
 | Readiness API | none=21, `is_ready()`=4, `is_ready` property=3, `ready()`=1, `is_client_created()`=1 |
 
 Beyond that there are roughly **ten different names for "read the remote data"** — `get_metadata`,

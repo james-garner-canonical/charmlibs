@@ -1,6 +1,8 @@
 # Words accepted by Vale's spell checker (Canonical.000-US-spellcheck).
 # One entry per line. Entries are treated as case-sensitive regular expressions.
 # Ensure the last line in this file has a newline at the end, to support concatenation.
+accessor
+accessors
 ACME
 ACME's
 addons
@@ -12,6 +14,8 @@ armor
 autocomplete
 autocompletions
 balancer
+boolean
+booleans
 bugfixes
 charmcraft
 Charmhub
@@ -19,14 +23,15 @@ charmlib
 charmlibs
 CLI
 codebase
+conformant
 ContainerPath
 databag
 databags
 DCO
 deserialised
 dev
-Diátaxis
 discoverability
+Diátaxis
 DNS
 docstring
 docstrings
@@ -129,12 +134,13 @@ tooltip
 tooltips
 Ubuntu
 UI
+unparseable
 URI
 URIs
 userinfo
 UTF
-uv
 UUID
+uv
 validator
 validators
 vendored
@@ -142,5 +148,5 @@ vlatest
 VM
 webhook
 xr
-yaml
 YAML
+yaml
