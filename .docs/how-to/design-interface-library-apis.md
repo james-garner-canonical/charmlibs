@@ -1392,7 +1392,10 @@ plus the ordinary readers and two explicitly named charm-driven mutators,
 `regenerate_private_key()` and `import_private_key()`.
 
 `certificate_transfer` answers **no, no, no**: it writes CA certificates to relation data and reads
-them back. It is a typed accessor, and it gets `is_ready` / `get_data` / `publish`, full stop.
+them back. It is a typed accessor, and it gets `is_ready` / `get_data` / `publish` — plus, because
+its interface has a version handshake, the requirer-side `publish_version()` from
+[When the requirer has to write too](#when-the-requirer-has-to-write-too). That is an ordinary
+publishing method, not a carve-out.
 
 The questions name **mechanisms, not intentions** — that is what stops "my library does real work"
 from being claimable by everyone. Question 1 is checkable by grepping for `add_secret`, file writes
@@ -1456,6 +1459,12 @@ A full worked before/after — `certificate_transfer` rewritten to this shape, w
 three real consumer charms — is being prepared and will land here. The figures it opens with: 33
 charms import `certificate_transfer`, 22 observe its events, across 47 observations, **70% of which
 never read the payload**.
+
+Two results from that rewrite are already reflected above, because they changed the rules rather
+than illustrating them: three mutating methods (`add_certificates`, `remove_certificate`,
+`remove_all_certificates`) collapsed into one declarative `publish()`, and the delta event everyone
+expected to be irreplaceable — `certificates_removed` — turned out
+[not to need replacing](#request-and-response-without-events).
 ```
 
 ## Rules at a glance
