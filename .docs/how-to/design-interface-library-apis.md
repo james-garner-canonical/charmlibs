@@ -133,12 +133,17 @@ mechanism in one step gives consumers two problems to debug at once.
 
 Two conventions in this page:
 
-- **MUST** marks a rule that OP083 states as a requirement. These are the ones that become
-  gates in review.
+- **MUST** marks a requirement. These are the ones that become gates in review. Almost all of them
+  are OP083's, and the [rules at a glance](#rules-at-a-glance) table names the source of each.
 - **SHOULD** marks a recommendation — from OP083's own weaker wording, or from consistency across
   this repo. Deviate when you have a reason, and say what it is.
 
-"Reconciler only" is a SHOULD.
+"Reconciler only" is a SHOULD. So is providing an advanced-status API, which OP083 marks *advised*
+and deliberately leaves unshaped.
+
+This guide adds exactly **one** MUST of its own, and it is there because removing the library's
+events moves a responsibility onto the charm that nothing else can carry:
+[say which Juju events you need](#say-which-juju-events-you-need).
 
 ## Don't subclass `ops.Object`
 
@@ -793,6 +798,76 @@ URLs writes `store_id` as the literal string `null`. Either:
 
 Whichever you pick, say in the docstring which fields the method owns.
 
+(say-which-juju-events-you-need)=
+## Say which Juju events you need
+
+**MUST.** If your library has to act at a particular moment — not merely "whenever the charm gets
+round to it" — then **document the Juju events the charm must route to you**, in the class
+docstring, as a list.
+
+This is the one requirement this guide adds that OP083 does not state, and it exists because of what
+reconciler-only takes away. An event-emitting library registers its own observers in its own
+`__init__`, so no charm can get the wiring wrong. A reconciler-only library cannot: it has no
+`self.on`, it observes nothing, and the wiring lives in the charm. What used to be a guarantee the
+library enforced becomes a fact the charm has to know — so the library's obligation is to *state* it,
+precisely, where the charm author will read it.
+
+Not this:
+
+```python
+"""Call sync() regularly."""
+```
+
+This:
+
+```python
+class TlsCertificatesRequirer:
+    """Requirer side of the tls-certificates interface.
+
+    The charm must call :meth:`sync` from each of these Juju events:
+
+    * ``<endpoint>-relation-created``
+    * ``<endpoint>-relation-changed``
+    * ``config-changed``
+    * ``update-status``
+    * ``secret-expired`` -- **required**; without it, certificates are never renewed
+
+    and :meth:`clean_up` from ``<endpoint>-relation-broken``.
+    """
+```
+
+Three cases where this bites, all of them found by rewriting real libraries against these rules:
+
+- **A deadline.** `tls-certificates` schedules its own renewal wake-up by stamping a Juju secret
+  expiry, but only the charm can receive `secret-expired`. A charm that does not route it gets a TLS
+  outage weeks later, with no error at deploy time and no error in any hook.
+- **A handshake write.** `certificate_transfer`'s requirer must declare `version: 1` on
+  `relation-created` or the provider serves it the deprecated format — silently, and successfully.
+  See [When the requirer has to write too](#when-the-requirer-has-to-write-too).
+- **Removal.** A reconciler recomputes correctly after a relation goes away, but only if the charm
+  observes `relation-broken` — which the library used to do on its behalf.
+
+**Put the list in the usage example too, not only in prose.** A charm author copies the example.
+
+And where you can, **make the un-wiring detectable**: if a missed event degrades silently, your
+readiness or status API should be able to say so, rather than leaving the charm to discover it in
+production. That is a SHOULD, not a MUST — but for a library whose missed deadline is an outage, it
+is the difference between a visible blocked status and a surprise.
+
+```{admonition} We think this rule deserves a better mechanism than a docstring
+:class: seealso
+Documenting a wiring requirement in prose is the weakest form of the thing we actually want, which is
+for the charm to be *unable* to get it wrong. A one-line call in the charm's `__init__` that lets the
+library advertise the events it needs — and lets the framework, or the library, wire them — would be
+strictly better than asking every charm author to read carefully.
+
+We have not designed that yet, and this guide deliberately does not invent it: it would be new API
+surface, it interacts with how the charm orders its own handlers, and getting it wrong would
+reintroduce exactly the invisible-observer problem that reconciler-only removes. **This is the
+biggest known wart in the reconciler-only model, and it is open.** If you have a proposal, we want
+it.
+```
+
 (initialisation-and-is-ready-must-not-raise)=
 ## Initialisation and `is_ready` must not raise
 
@@ -1339,9 +1414,9 @@ this: it stamps a Juju secret expiry on the certificate secret it writes
 (`secret.set_info(expire=...)`), and Juju fires `secret-expired` at the renewal point. Scheduling the
 wake-up is still yours. **Receiving it is not.** So:
 
-1. **Name the hooks the charm must route to `sync()`, in your class docstring, as a list.** Not "call
-   `sync()` regularly" — name them: `relation-created`, `relation-changed`, `config-changed`,
-   `secret-expired`, `update-status`.
+1. **Name the hooks the charm must route to `sync()`** — this is the MUST in
+   [Say which Juju events you need](#say-which-juju-events-you-need), and a deadline library is the
+   case it exists for.
 2. **Make the missed deadline visible.** Your readiness or status API must be able to report "the
    deadline has passed and nothing acted on it". A library that cannot detect its own un-wiring
    should not be reconciler-only.
@@ -1354,8 +1429,8 @@ the answer is **no**.
 Today `tls-certificates` sets the timer *and* registers the observer, in its own `__init__`, and no
 charm can get that wrong. Under reconciler-only the observer moves into the charm — and a charm that
 forgets to observe `secret-expired` gets a TLS outage weeks after its author's last deploy, with no
-error at deploy time and no error in any hook. That is a real cost, and it is why point 2 above is
-not optional. The mitigation is detection, not delegation.
+error at deploy time and no error in any hook. That is a real cost. The mitigation is detection, not
+delegation — which is why the wiring list is a MUST and point 2 above matters so much here.
 ```
 
 **3. Irreducible payload.** *Does a Juju hook hand my library a value that ops gives me no way to
@@ -1468,6 +1543,7 @@ expected to be irreplaceable — `certificates_removed` — turned out
 [not to need replacing](#request-and-response-without-events).
 ```
 
+(rules-at-a-glance)=
 ## Rules at a glance
 
 | Rule | Strength | Source |
@@ -1478,6 +1554,7 @@ expected to be irreplaceable — `certificates_removed` — turned out
 | Ship tests that demonstrate conformance to the above | **MUST** | OP083 `### Testing` |
 | Decouple the charm-facing API from the wire format | SHOULD | OP083 `### Charm library` preamble |
 | Provide an advanced-status API | SHOULD | OP083 `#### Advanced status` (*advised*) |
+| Document the Juju events the charm must route to you | **MUST** | this guide — see [Say which Juju events you need](#say-which-juju-events-you-need) |
 | Reconciler-only: emit no custom events | SHOULD | this guide |
 | Don't subclass `ops.Object` | SHOULD | this guide |
 | Take `ops.Model`, not `ops.CharmBase`; no payload, callables or mode switches in the constructor | SHOULD | this guide |
