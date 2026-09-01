@@ -114,11 +114,7 @@ class _AgedRequest:
     """Fraction of the certificate's validity period already elapsed. Must be positive."""
 
 
-def renewing(
-    request: tls_certificates.CertificateRequestAttributes,
-    *,
-    renewal_relative_time: float = 0.9,
-) -> CertificateRequest:
+def renewing(request: tls_certificates.CertificateRequestAttributes) -> CertificateRequest:
     """Mark a certificate request as answered with a certificate that is due for renewal.
 
     Pass the result in ``certificate_requests`` in place of the bare request. The
@@ -133,24 +129,36 @@ def renewing(
             "certificates", certificate_requests=[renewing(r) for r in REQUESTS]
         )
 
+    This takes no ``renewal_relative_time``: it needs no agreement with the charm, whatever
+    value the charm passes to ``TLSCertificatesRequiresV4``.
+
+    The library renews by two routes, and this wrapper reaches one of them. When it stores
+    a certificate it schedules a Juju secret expiry, and Juju's ``secret-expired`` drives
+    the renewal; separately, a safety net re-checks every certificate on every reconcile,
+    for when that event doesn't fire or doesn't complete. A fixture can only trigger the
+    safety net: the certificate secret is created by the library as the charm runs, so a
+    state built *before* the charm has run holds none, and there is nothing for a test to
+    fire ``ctx.on.secret_expired`` at. Both routes withdraw the request and re-request, so
+    the charm ends up in the same place; only the event that takes it there differs. To
+    exercise the secret-expiry route, run the charm until it holds certificates and fire
+    the event at the secret it created.
+
     Args:
         request: The request the provider answered with a soon-to-expire certificate.
-        renewal_relative_time: Must match the ``renewal_relative_time`` the charm passes
-            to ``TLSCertificatesRequiresV4``, which is where this default comes from. The
-            certificate is back-dated to halfway between the library's renewal threshold
-            for that value and expiry.
 
     Returns:
         A :data:`CertificateRequest` accepted by ``certificate_requests`` in
         :func:`relation_for_requirer` and :func:`relation_for_provider`.
     """
-    # The threshold comes from the library itself rather than a copy of its formula, so
-    # that changing it there can't leave this fixture quietly failing to trigger renewal.
-    # The library's safety net renews from the threshold through to expiry; the
-    # secret-expiry path starts earlier, at renewal_relative_time itself. Aim halfway
-    # between the threshold and expiry to be comfortably inside both windows.
-    threshold = _internal._renewal_safety_threshold(renewal_relative_time)
-    return _AgedRequest(request=request, age=(threshold + 1.0) / 2)
+    # The library validates 0.5 < renewal_relative_time <= 1.0 and caps its renewal
+    # threshold at _MAX_RENEWAL_FRACTION, so a certificate aged past that cap is due for
+    # renewal under every value a charm can legally pass -- no argument needed here, and no
+    # coupling for a caller to get silently wrong. The safety net renews from the threshold
+    # through to expiry and the secret-expiry path starts earlier still, so aiming halfway
+    # between the cap and expiry sits comfortably inside both windows. The cap comes from
+    # the library rather than a copy of its value, so that raising it there can't leave this
+    # fixture quietly failing to trigger renewal.
+    return _AgedRequest(request=request, age=(_internal._MAX_RENEWAL_FRACTION + 1.0) / 2)
 
 
 def expired(request: tls_certificates.CertificateRequestAttributes) -> CertificateRequest:
@@ -159,9 +167,16 @@ def expired(request: tls_certificates.CertificateRequestAttributes) -> Certifica
     Pass the result in ``certificate_requests`` in place of the bare request. The
     certificate is issued back-dated so that its entire validity period is in the past.
 
-    Note the library currently keeps an expired certificate assigned and does not
-    re-request it: its renewal safety net stops at expiry. This wrapper models the
-    relation state; what a charm should do about it is up to the charm.
+    Use this to test what a charm does when renewal has failed and it is left holding a
+    dead certificate. The library will not rescue it: the renewal safety net covers
+    certificates *approaching* expiry and stops at expiry itself, so an expired
+    certificate stays assigned and is never re-requested. Whether the charm keeps serving,
+    goes blocked, or raises the alarm is the charm's own decision, and this is how to pin
+    it down.
+
+    Reaching this state means renewal did not happen, which is what the safety net exists
+    to prevent -- so a test built on this is a resilience test, not a description of normal
+    operation. For the renewal path itself, use :func:`renewing`.
 
     Args:
         request: The request the provider answered with a now-expired certificate.
@@ -559,6 +574,12 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
     charm make its own requests is the one way to build a requirer test that needs no
     agreement with the fixture at all.
 
+    This answers requests on the relation's *local* side, so it is for testing a requirer
+    charm. It is not the counterpart for a provider charm under test: there the charm
+    itself issues the certificates, and the requests live on the remote side. Passing a
+    relation from :func:`relation_for_provider` raises ``ValueError`` rather than
+    discarding the simulated requirer's requests.
+
     Args:
         relation: A relation whose *local* side holds the requirer's certificate signing
             requests -- typically taken from the output state of a previous run of a
@@ -567,6 +588,10 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
     Returns:
         A copy of ``relation``, with the remote provider's application data holding a
         certificate for each of the requirer's current certificate signing requests.
+
+    Raises:
+        ValueError: If the relation has no requests on its local side but does have some
+            on its remote side, which means it describes a provider charm under test.
     """
     resolved = [
         _ResolvedRequest(
@@ -579,6 +604,17 @@ def respond_to_requests(relation: testing.Relation) -> testing.Relation:
         if "certificate_signing_requests" in databag
         for entry in _internal._RequirerData.load(databag).certificate_signing_requests
     ]
+    if not resolved and _has_requests(
+        relation.remote_app_data, *relation.remote_units_data.values()
+    ):
+        raise ValueError(
+            "respond_to_requests found certificate signing requests on the relation's remote "
+            "side and none on its local side, so this looks like a relation for testing a "
+            "provider charm. It answers a requirer charm's requests by writing the remote "
+            "provider's databag; on a provider's relation that would discard the simulated "
+            "requirer's requests instead. A provider charm issues its own certificates, so "
+            "there is nothing here for this function to do."
+        )
     published = _load_provider(relation.remote_app_data)
     # Load-modify-dump: keep what the provider has already said, about requests that are
     # still on the relation, and add certificates only for the ones it hasn't answered.
@@ -682,6 +718,11 @@ def _resolve_requests(
     return resolved
 
 
+def _has_requests(*databags: Mapping[str, str]) -> bool:
+    """Whether any of ``databags`` holds certificate signing requests."""
+    return any("certificate_signing_requests" in databag for databag in databags)
+
+
 def _as_csr(raw: str) -> tls_certificates.CertificateSigningRequest:
     """Parse a CSR from a databag entry, so entries compare by content not by whitespace."""
     return tls_certificates.CertificateSigningRequest.from_string(raw)
@@ -699,7 +740,7 @@ def _dump_requirer(resolved: Iterable[_ResolvedRequest]) -> dict[str, str]:
     requirer = _internal._RequirerData(
         certificate_signing_requests=[
             _internal._CertificateSigningRequest(
-                certificate_signing_request=str(request.csr).strip(),
+                certificate_signing_request=str(request.csr),
                 ca=request.is_ca,
             )
             for request in resolved

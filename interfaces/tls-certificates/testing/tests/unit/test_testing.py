@@ -396,19 +396,18 @@ def test_certificate_request_alias_covers_every_outcome():
 
 
 @pytest.mark.parametrize("renewal_relative_time", [0.51, 0.9, 0.95, 1.0])
-def test_renewing_uses_the_librarys_own_threshold(renewal_relative_time: float):
-    """``renewing`` must back-date past whatever threshold the library actually uses.
+def test_renewing_is_due_for_every_legal_renewal_relative_time(renewal_relative_time: float):
+    """``renewing`` must back-date past the library's threshold without being told it.
 
-    The threshold comes from the library rather than a copy of its formula, so this holds
-    for any ``renewal_relative_time`` a charm may pass -- including ones where the
-    library's cap, not the charm's value, decides.
+    The library validates ``0.5 < renewal_relative_time <= 1.0`` and caps the threshold it
+    derives from it, so one back-dating covers every value a charm can legally pass. That
+    is why ``renewing`` takes no argument -- there is no coupling here to get wrong.
     """
     rel = tls_certificates_testing.relation_for_requirer(
         "foo",
         certificate_requests=[
             tls_certificates_testing.renewing(
-                tls_certificates.CertificateRequestAttributes(common_name="example.com"),
-                renewal_relative_time=renewal_relative_time,
+                tls_certificates.CertificateRequestAttributes(common_name="example.com")
             )
         ],
     )
@@ -475,6 +474,18 @@ def test_respond_to_requests_drops_answers_to_withdrawn_requests():
     withdrawn = dataclasses.replace(rel, local_unit_data={"certificate_signing_requests": "[]"})
     answered = tls_certificates_testing.respond_to_requests(withdrawn)
     assert not answered.remote_app_data
+
+
+def test_respond_to_requests_rejects_a_provider_relation():
+    """A provider charm's relation must raise, not silently lose the requests on it.
+
+    The requests live on the remote side there, and the databag this function writes is
+    the one holding them -- so answering would discard the simulated requirer's requests.
+    """
+    for mode in (tls_certificates.Mode.APP, tls_certificates.Mode.UNIT):
+        rel = tls_certificates_testing.relation_for_provider("foo", mode=mode)
+        with pytest.raises(ValueError, match="provider charm"):
+            tls_certificates_testing.respond_to_requests(rel)
 
 
 def test_respond_to_requests_treats_unreadable_provider_data_as_empty():
