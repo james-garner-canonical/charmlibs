@@ -4,7 +4,7 @@
 :maxdepth: 1
 
 Design relation interfaces <design-relation-interfaces>
-Design interface library APIs <design-interface-library-apis>
+Design an interface library API <design-interface-library-apis>
 Manage charm libraries <manage-libraries>
 Distribute charm libraries <python-package>
 Migrate to the charmlibs monorepo <migrate>

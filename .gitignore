@@ -187,5 +187,6 @@ interfaces/.example/**/uv.lock
 .workshop.lock
 
 # TEMPORARY -- remove before merging this branch.
-# Working plan for the interface library API design guide. Not for merge.
+# Working plan and notes for the interface library API design guide. Not for merge.
 .plan/
+DESIGN.md

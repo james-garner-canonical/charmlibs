@@ -2,7 +2,6 @@
 # One entry per line. Entries are treated as case-sensitive regular expressions.
 # Ensure the last line in this file has a newline at the end, to support concatenation.
 accessor
-accessors
 ACME
 ACME's
 addons
@@ -15,7 +14,6 @@ autocomplete
 autocompletions
 balancer
 boolean
-booleans
 bugfixes
 callables
 charmcraft
@@ -24,16 +22,14 @@ charmlib
 charmlibs
 CLI
 codebase
-codec
-conformant
 ContainerPath
 databag
 databags
 DCO
 deserialised
 dev
-discoverability
 Diátaxis
+discoverability
 DNS
 docstring
 docstrings
@@ -53,7 +49,6 @@ GitHub
 GPG
 Grafana
 gRPC
-hardcodes
 hashable
 HPC
 HTTPS
@@ -78,14 +73,12 @@ Makefile
 Makefiles
 Matrix
 Mattermost
-memoised
 MicroCeph
 MicroCloud
 MicroOVN
 monorepo
 monorepos
 Multus
-mutators
 MyST
 namespace
 namespaces
@@ -93,7 +86,6 @@ namespacing
 Nginx
 NodePort
 Numbat
-OAuth
 observability
 OCI
 OEM
@@ -110,7 +102,6 @@ pre
 preprocessor
 Pydantic
 pydantic
-Pydantic's
 PYDEPS
 PyPI
 pytest
@@ -132,7 +123,6 @@ RSA
 RTD
 rw
 scaffolded
-serialiser
 stateful
 subclasses
 subdirectories
@@ -157,8 +147,8 @@ URI
 URIs
 userinfo
 UTF
-UUID
 uv
+UUID
 validator
 validators
 vendored
@@ -166,5 +156,5 @@ vlatest
 VM
 webhook
 xr
-YAML
 yaml
+YAML
