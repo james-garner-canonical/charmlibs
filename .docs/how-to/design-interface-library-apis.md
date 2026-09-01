@@ -280,7 +280,7 @@ Before ops 3.8.1, `load` decoded every value in the databag and only then filter
 That wasn't an edge case: Juju writes `egress-subnets`, `ingress-address`, and `private-address` into every unit databag as bare strings, so reading a unit databag with the default decoder raised `json.JSONDecodeError` every time.
 Since [ops 3.8.1](https://github.com/canonical/operator/pull/2636), `load` decodes only the fields that your class declares, and the keys Juju sets never reach the decoder.
 
-So require `ops>=3.8.1`, and reading a unit databag needs nothing special.
+So require `ops>=3.8.1,<4`, and reading a unit databag needs nothing special.
 Two cases still need a tolerant decoder:
 
 - **Your library supports the 2.23 LTS series.** The fix wasn't backported, and 2.23.5 still decodes the whole databag before filtering. A pin such as `ops>=2.23.1,<4`, which several libraries in this repository use, allows those versions.
@@ -877,7 +877,7 @@ Neither is detectable from a single run.
 | Don't subclass `ops.Object` | Should |
 | Take `ops.Model`; no payload, callables, or mode switches in the constructor | Should |
 | Use `<Name>Provider` and `<Name>Requirer`, `relation_name`, `get_*`, and `publish*` | Should |
-| Require `ops>=3.8.1`, or pass a tolerant `decoder` to `Relation.load` | Should |
+| Require `ops>=3.8.1,<4`, or pass a tolerant `decoder` to `Relation.load` | Should |
 | Catch `ValueError`, not `pydantic.ValidationError`, around `Relation.load` | Should |
 | Provide an API reporting advanced status | Should |
 
