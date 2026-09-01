@@ -182,13 +182,12 @@ def is_ready(self) -> bool:
     if relation.app is None or not relation.data.get(relation.app):
         return False
     try:
-        relation.load(FooData, relation.app, decoder=_decode)
+        relation.load(FooData, relation.app)
     except (ValueError, TypeError):
         return False
     return True
 ```
 
-`_decode` is the tolerant decoder from [Pass a decoder to `Relation.load`](#pass-a-decoder).
 Three things in that body are easy to get wrong:
 
 - **Check the raw databag before parsing.** Because the wire format forbids mandatory fields, an empty databag validates cleanly into an all-defaults model, so "nothing published yet" is only detectable before validation.
@@ -250,7 +249,7 @@ def get_data(self) -> FooData:
     if relation.app is None or not relation.data.get(relation.app):
         raise FooNotReadyError(self.rich_status)
     try:
-        return relation.load(FooData, relation.app, decoder=_decode)
+        return relation.load(FooData, relation.app)
     except (ValueError, TypeError) as e:
         logger.warning('Unparseable %s data: %s', self._relation_name, e)
         raise FooNotReadyError(self.rich_status) from e
@@ -273,17 +272,21 @@ Two kinds of endpoint should always take the total shape:
 Pick one shape per library and be consistent within it.
 
 (pass-a-decoder)=
-#### Pass a decoder to `Relation.load`
+#### Pin a minimum `ops` version
 
-`ops.Relation.load` and `ops.Relation.save` are the modern idioms for reading and writing databags.
-Both JSON-encode every field by default, and `load` decodes the whole databag before filtering it down to your model's fields.
-So a single value that isn't JSON fails the entire load, even one that your model would have ignored.
+`ops.Relation.load` and `ops.Relation.save` are the modern idioms for reading and writing databags, and both JSON-encode every field by default.
 
-That isn't an edge case.
-Juju writes `egress-subnets`, `ingress-address`, and `private-address` into every unit databag as bare strings, so reading a unit databag with the default decoder raises `json.JSONDecodeError` every time.
-Application databags hit the same problem as soon as anything else writes a non-JSON value into them.
+Before ops 3.8.1, `load` decoded every value in the databag and only then filtered down to your model's fields, so a single value that wasn't JSON failed the whole load -- including one that your model would have ignored.
+That wasn't an edge case: Juju writes `egress-subnets`, `ingress-address`, and `private-address` into every unit databag as bare strings, so reading a unit databag with the default decoder raised `json.JSONDecodeError` every time.
+Since [ops 3.8.1](https://github.com/canonical/operator/pull/2636), `load` decodes only the fields that your class declares, and the keys Juju sets never reach the decoder.
 
-Pass a tolerant decoder, and let the field filter drop what isn't yours:
+So require `ops>=3.8.1`, and reading a unit databag needs nothing special.
+Two cases still need a tolerant decoder:
+
+- **Your library supports the 2.23 LTS series.** The fix wasn't backported, and 2.23.5 still decodes the whole databag before filtering. A pin such as `ops>=2.23.1,<4`, which several libraries in this repository use, allows those versions.
+- **Your model is neither a dataclass nor a pydantic v2 model.** The field filter is built from `dataclasses.fields` or `model_fields`, and anything else -- a pydantic v1 model included -- falls back to decoding the whole databag on every version.
+
+In either case, pass a decoder and let the field filter drop what isn't yours:
 
 ```py
 def _decode(value: str) -> Any:
@@ -297,17 +300,12 @@ def _decode(value: str) -> Any:
 relation.load(FooData, unit, decoder=_decode)
 ```
 
-The write side fails silently rather than loudly.
+The write side is a separate problem that no `ops` version fixes, and it fails silently rather than loudly.
 Since `encoder` defaults to `json.dumps`, adopting `save` for an existing wire format whose fields are bare strings writes every value JSON-quoted, and breaks every deployed remote.
 Pass a matching encoder, and use the same pair on both sides:
 
 ```py
 relation.save(data, self._model.app, encoder=lambda v: '' if v is None else str(v))
-```
-
-```{note}
-`Relation.load` and `Relation.save` need `ops>=3`, and pydantic v2 for pydantic models.
-If your library still supports pydantic v1, adopting them is a major version change on its own.
 ```
 
 Two more things about `save` that are easy to be surprised by:
@@ -543,7 +541,7 @@ def rich_status(self) -> str | None:
     if relation.app is None or not relation.data.get(relation.app):
         return f'waiting for data on {self._relation_name}'
     try:
-        relation.load(FooData, relation.app, decoder=_decode)
+        relation.load(FooData, relation.app)
     except (ValueError, TypeError) as e:
         return f'unparseable {self._relation_name} data: {e}'
     return None
@@ -568,7 +566,7 @@ def is_blocked(self) -> bool:
     if relation.app is None or not relation.data.get(relation.app):
         return False  # waiting for the provider to publish
     try:
-        relation.load(FooData, relation.app, decoder=_decode)
+        relation.load(FooData, relation.app)
     except (ValueError, TypeError):
         return True  # the remote application published something unusable
     return False
@@ -879,7 +877,8 @@ Neither is detectable from a single run.
 | Don't subclass `ops.Object` | Should |
 | Take `ops.Model`; no payload, callables, or mode switches in the constructor | Should |
 | Use `<Name>Provider` and `<Name>Requirer`, `relation_name`, `get_*`, and `publish*` | Should |
-| Pass a tolerant `decoder` to `Relation.load`, and catch `ValueError` | Should |
+| Require `ops>=3.8.1`, or pass a tolerant `decoder` to `Relation.load` | Should |
+| Catch `ValueError`, not `pydantic.ValidationError`, around `Relation.load` | Should |
 | Provide an API reporting advanced status | Should |
 
 Read more: {ref}`design-relation-interfaces`, {ref}`how-to-provide-data-for-charm-tests`

@@ -12,6 +12,7 @@ args
 armor
 autocomplete
 autocompletions
+backported
 balancer
 boolean
 bugfixes
@@ -25,6 +26,7 @@ codebase
 ContainerPath
 databag
 databags
+dataclass
 DCO
 deserialised
 dev
