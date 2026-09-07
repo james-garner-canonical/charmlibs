@@ -26,7 +26,7 @@ for charm in 'provider' 'requirer'; do
 
         : copy charm files to temporary directory for packing, dereferencing symlinks
         rm -rf "$charm_tmp_dir"
-        cp --recursive --dereference "charms/$variant-$charm" "$charm_tmp_dir"
+        cp --recursive --dereference "charms/$variant-$charm-charm" "$charm_tmp_dir"
 
         : pack charm
         cd "$charm_tmp_dir"
@@ -48,7 +48,7 @@ for variant_and_lib in 'fetch-lib-latest=4' 'fetch-lib-pre-fix=4.26'; do
     charm_tmp_dir="$TMP_DIR/requirer-$variant"
 
     rm -rf "$charm_tmp_dir"
-    cp --recursive --dereference "charms/$variant-requirer" "$charm_tmp_dir"
+    cp --recursive --dereference "charms/$variant-requirer-charm" "$charm_tmp_dir"
 
     : declare the Charmhub lib at the pinned version, then fetch and pack
     printf '\ncharm-libs:\n  - lib: tls_certificates_interface.tls_certificates\n    version: "%s"\n' \
