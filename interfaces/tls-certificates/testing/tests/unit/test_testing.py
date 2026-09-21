@@ -100,7 +100,7 @@ def test_remotes_are_immutable(remote: _Remote):
 
 def test_provider_arguments_are_immutable():
     remote = tls_certificates_testing.RemoteProvider("certificates")
-    for name in ("outcome", "capabilities", "validity", "error_code", "error_message"):
+    for name in ("outcome", "capabilities", "validity"):
         with pytest.raises(AttributeError):
             setattr(remote, name, None)
 
@@ -154,13 +154,14 @@ def test_repr_shows_the_arguments_the_caller_gave():
         tls_certificates_testing.RemoteProvider(
             "certificates",
             remote_app_name="ca",
-            outcome=tls_certificates_testing.Outcome.DENIED,
-            error_code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED,
+            outcome=tls_certificates_testing.Outcome.denied(
+                code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED
+            ),
         )
     )
     assert text == (
-        "RemoteProvider('certificates', remote_app_name='ca', outcome=Outcome.DENIED, "
-        "error_code=CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED)"
+        "RemoteProvider('certificates', remote_app_name='ca', "
+        "outcome=Outcome.denied(code=CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED))"
     )
     text = repr(
         tls_certificates_testing.RemoteRequirer("certificates", mode=tls_certificates.Mode.APP)
@@ -181,14 +182,12 @@ def test_repr_covers_every_argument():
     request = tls_certificates.CertificateRequestAttributes(common_name="example.com")
     provider = tls_certificates_testing.RemoteProvider(
         "certificates",
-        outcome=lambda _: tls_certificates_testing.Outcome.ISSUED,
+        outcome=lambda _: tls_certificates_testing.Outcome.issued(),
         capabilities=tls_certificates.ProviderCapabilities(provider_type="acme"),
         validity=datetime.timedelta(days=7),
-        error_message="nope",
-        error_reason="because",
     )
     text = repr(provider)
-    for expected in ("outcome=", "capabilities=", "validity=", "error_message=", "error_reason="):
+    for expected in ("outcome=", "capabilities=", "validity="):
         assert expected in text
     requirer = tls_certificates_testing.RemoteRequirer(
         "certificates",
@@ -214,20 +213,14 @@ def test_the_arguments_are_readable_as_attributes():
     key = tls_certificates.PrivateKey.generate()
     provider = tls_certificates_testing.RemoteProvider(
         "certificates",
-        outcome=tls_certificates_testing.Outcome.REVOKED,
+        outcome=tls_certificates_testing.Outcome.revoked(),
         capabilities=tls_certificates.ProviderCapabilities(provider_type="acme"),
         validity=datetime.timedelta(days=7),
-        error_code=tls_certificates.CertificateRequestErrorCode.IP_NOT_ALLOWED,
-        error_message="nope",
-        error_reason="because",
     )
-    assert provider.outcome is tls_certificates_testing.Outcome.REVOKED
+    assert provider.outcome is tls_certificates_testing.Outcome.revoked()
     assert provider.capabilities is not None
     assert provider.capabilities.provider_type == "acme"
     assert provider.validity == datetime.timedelta(days=7)
-    assert provider.error_code is tls_certificates.CertificateRequestErrorCode.IP_NOT_ALLOWED
-    assert provider.error_message == "nope"
-    assert provider.error_reason == "because"
     requirer = tls_certificates_testing.RemoteRequirer(
         "certificates", certificate_requests=iter([request]), private_key=key
     )
@@ -683,6 +676,103 @@ def test_provider_rejects_a_second_remote_on_one_endpoint(requirer_ctx: _Ctx, mo
         second.integrate(requirer_ctx, state)
 
 
+# ------------------------------------------------------------------------------- Outcome
+
+_Outcome = tls_certificates_testing.Outcome
+"""Alias, because the assertions below compare several outcomes per line."""
+
+
+def test_outcome_no_argument_constructors_are_singletons():
+    """Outcome.issued() is Outcome.issued(): no reason for two instances to ever differ."""
+    assert tls_certificates_testing.Outcome.issued() is tls_certificates_testing.Outcome.issued()
+    assert (
+        tls_certificates_testing.Outcome.renewing() is tls_certificates_testing.Outcome.renewing()
+    )
+    assert tls_certificates_testing.Outcome.expired() is tls_certificates_testing.Outcome.expired()
+    assert tls_certificates_testing.Outcome.revoked() is tls_certificates_testing.Outcome.revoked()
+
+
+def test_outcome_denied_constructs_fresh_each_call():
+    """Unlike the others, denied() carries per-call arguments, so it can't be a singleton."""
+    assert (
+        tls_certificates_testing.Outcome.denied() is not tls_certificates_testing.Outcome.denied()
+    )
+
+
+def test_outcome_equality():
+    assert _Outcome.denied() == _Outcome.denied()
+    assert _Outcome.issued() == _Outcome.issued()
+    assert _Outcome.issued() != _Outcome.denied()
+    assert _Outcome.issued() != _Outcome.renewing()
+    assert _Outcome.denied(
+        code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED
+    ) != _Outcome.denied(code=tls_certificates.CertificateRequestErrorCode.IP_NOT_ALLOWED)
+    assert _Outcome.denied(message="a") != _Outcome.denied(message="b")
+    assert _Outcome.denied(reason="a") != _Outcome.denied(reason="b")
+    assert _Outcome.issued() != object()
+    assert _Outcome.issued().__eq__(object()) is NotImplemented
+
+
+def test_outcome_hash_is_consistent_with_equality():
+    assert hash(_Outcome.denied()) == hash(_Outcome.denied())
+    assert hash(_Outcome.issued()) == hash(_Outcome.issued())
+    seen = {_Outcome.issued(), _Outcome.denied(), _Outcome.denied()}
+    assert seen == {_Outcome.issued(), _Outcome.denied()}
+
+
+@pytest.mark.parametrize(
+    ("outcome", "expected"),
+    [
+        (tls_certificates_testing.Outcome.issued(), "Outcome.issued()"),
+        (tls_certificates_testing.Outcome.renewing(), "Outcome.renewing()"),
+        (tls_certificates_testing.Outcome.expired(), "Outcome.expired()"),
+        (tls_certificates_testing.Outcome.revoked(), "Outcome.revoked()"),
+        (tls_certificates_testing.Outcome.denied(), "Outcome.denied()"),
+        (
+            tls_certificates_testing.Outcome.denied(
+                code=tls_certificates.CertificateRequestErrorCode.SERVER_NOT_AVAILABLE,
+                message="the server is unavailable",
+                reason="maintenance",
+            ),
+            "Outcome.denied(code=CertificateRequestErrorCode.SERVER_NOT_AVAILABLE, "
+            "message='the server is unavailable', reason='maintenance')",
+        ),
+    ],
+    ids=["issued", "renewing", "expired", "revoked", "denied-defaults", "denied-customised"],
+)
+def test_outcome_repr(outcome: tls_certificates_testing.Outcome, expected: str):
+    assert repr(outcome) == expected
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    [
+        tls_certificates_testing.Outcome.issued(),
+        tls_certificates_testing.Outcome.renewing(),
+        tls_certificates_testing.Outcome.expired(),
+        tls_certificates_testing.Outcome.revoked(),
+    ],
+    ids=["issued", "renewing", "expired", "revoked"],
+)
+def test_outcome_fields_are_none_for_every_non_denied_outcome(
+    outcome: tls_certificates_testing.Outcome,
+):
+    assert outcome.code is None
+    assert outcome.message is None
+    assert outcome.reason is None
+
+
+def test_outcome_denied_fields_are_readable():
+    outcome = tls_certificates_testing.Outcome.denied(
+        code=tls_certificates.CertificateRequestErrorCode.WILDCARD_NOT_ALLOWED,
+        message="no wildcards",
+        reason="policy",
+    )
+    assert outcome.code is tls_certificates.CertificateRequestErrorCode.WILDCARD_NOT_ALLOWED
+    assert outcome.message == "no wildcards"
+    assert outcome.reason == "policy"
+
+
 # -------------------------------------------------------------- RemoteProvider: outcomes
 
 
@@ -690,10 +780,11 @@ def test_outcome_denied(mocked: None):
     requests = [tls_certificates.CertificateRequestAttributes(common_name="example.com")]
     remote = tls_certificates_testing.RemoteProvider(
         "certificates",
-        outcome=tls_certificates_testing.Outcome.DENIED,
-        error_code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED,
-        error_message="that domain is not allowed",
-        error_reason="policy",
+        outcome=tls_certificates_testing.Outcome.denied(
+            code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED,
+            message="that domain is not allowed",
+            reason="policy",
+        ),
     )
     ctx = ops.testing.Context(_charm_requesting(requests), meta=requirer_charm.META)
     state = remote.integrate(ctx, ops.testing.State.from_context(ctx), end="published")
@@ -711,7 +802,7 @@ def test_outcome_denied(mocked: None):
 
 def test_outcome_denied_defaults(mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.DENIED
+        "certificates", outcome=tls_certificates_testing.Outcome.denied()
     )
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
     state = remote.integrate(ctx, ops.testing.State(), end="published")
@@ -725,9 +816,9 @@ def test_outcome_callable_selects_per_request(mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
         "certificates",
         outcome=lambda request: (
-            tls_certificates_testing.Outcome.DENIED
+            tls_certificates_testing.Outcome.denied()
             if request.common_name.startswith("egg")
-            else tls_certificates_testing.Outcome.ISSUED
+            else tls_certificates_testing.Outcome.issued()
         ),
     )
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
@@ -753,7 +844,7 @@ def test_outcome_callable_receives_the_charms_attributes(mocked: None):
         request: tls_certificates.CertificateRequestAttributes,
     ) -> tls_certificates_testing.Outcome:
         seen.append(request)
-        return tls_certificates_testing.Outcome.ISSUED
+        return tls_certificates_testing.Outcome.issued()
 
     requests = [
         tls_certificates.CertificateRequestAttributes(
@@ -781,7 +872,7 @@ def test_outcome_callable_must_return_an_outcome(mocked: None):
 
 def test_outcome_renewing_is_past_the_libraries_threshold(mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.RENEWING
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
     )
     certificate = _one_certificate(remote, mocked)
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -802,7 +893,7 @@ def test_outcome_renewing_covers_every_legal_renewal_relative_time(
     from charmlibs.interfaces.tls_certificates import _tls_certificates as internal
 
     remote = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.RENEWING
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
     )
     certificate = _one_certificate(remote, mocked)
     threshold = internal._renewal_safety_threshold(renewal_relative_time)
@@ -813,7 +904,7 @@ def test_outcome_renewing_covers_every_legal_renewal_relative_time(
 
 def test_outcome_expired(mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.EXPIRED
+        "certificates", outcome=tls_certificates_testing.Outcome.expired()
     )
     certificate = _one_certificate(remote, mocked)
     assert certificate.expiry_time < datetime.datetime.now(datetime.timezone.utc)
@@ -822,8 +913,8 @@ def test_outcome_expired(mocked: None):
 @pytest.mark.parametrize(
     "outcome",
     [
-        tls_certificates_testing.Outcome.RENEWING,
-        tls_certificates_testing.Outcome.EXPIRED,
+        tls_certificates_testing.Outcome.renewing(),
+        tls_certificates_testing.Outcome.expired(),
     ],
     ids=["renewing", "expired"],
 )
@@ -845,7 +936,7 @@ def test_back_dating_keeps_the_chain_and_the_key_binding(
 
 def test_outcome_revoked(mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.REVOKED
+        "certificates", outcome=tls_certificates_testing.Outcome.revoked()
     )
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
     state = remote.integrate(ctx, ops.testing.State(), end="published")
@@ -899,7 +990,7 @@ def test_capabilities_are_published_before_any_answer(mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
         "certificates",
         capabilities=tls_certificates.ProviderCapabilities(),
-        outcome=tls_certificates_testing.Outcome.DENIED,
+        outcome=tls_certificates_testing.Outcome.denied(),
     )
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
     state = remote.integrate(ctx, ops.testing.State(), end="published")

@@ -50,68 +50,194 @@ _DEFAULT_DENIAL_MESSAGE = "Denied by the simulated provider."
 _End: typing.TypeAlias = 'typing.Literal["integrated", "published", "received"]'
 
 
-class Outcome(enum.Enum):
+class _Kind(enum.Enum):
+    """Which of the five things the simulated provider can do with a request. Not public."""
+
+    ISSUED = enum.auto()
+    DENIED = enum.auto()
+    RENEWING = enum.auto()
+    EXPIRED = enum.auto()
+    REVOKED = enum.auto()
+
+
+class Outcome:
     """What the simulated provider does with each certificate request it sees.
 
     Passed to :class:`RemoteProvider` as ``outcome``, either as a single value applying to
     every request, or as a callable choosing one per request::
 
-        RemoteProvider("certificates", outcome=Outcome.DENIED)
+        RemoteProvider("certificates", outcome=Outcome.denied())
         RemoteProvider(
             "certificates",
             outcome=lambda request: (
-                Outcome.DENIED if request.common_name.startswith("*") else Outcome.ISSUED
+                Outcome.denied() if request.common_name.startswith("*") else Outcome.issued()
             ),
         )
 
     The callable receives the ``CertificateRequestAttributes`` the charm asked for,
     reconstructed from the request the charm actually published, so a test can select on
     whatever distinguishes its requests -- usually the common name.
+
+    Built through the classmethods below, never by calling ``Outcome()`` directly.
     """
 
-    ISSUED = enum.auto()
-    """A certificate, valid from now. The happy path, and the default."""
-    DENIED = enum.auto()
-    """An error instead of a certificate.
+    def __init__(
+        self,
+        kind: _Kind,
+        *,
+        code: tls_certificates.CertificateRequestErrorCode | None = None,
+        message: str | None = None,
+        reason: str | None = None,
+    ) -> None:
+        # Not part of the public contract -- instances are built through the classmethods
+        # below, which is what keeps a denied outcome's fields meaningless on every other
+        # kind rather than merely unused.
+        self._kind = kind
+        self._code = code
+        self._message = message
+        self._reason = reason
 
-    The requirer library surfaces it through ``get_request_errors()`` and
-    ``get_request_error()``, and emits ``certificate_denied``. Customise it with
-    ``error_code``, ``error_message`` and ``error_reason``.
-    """
-    RENEWING = enum.auto()
-    """A certificate far enough through its validity period to be due for renewal.
+    @classmethod
+    def issued(cls) -> Outcome:
+        """A certificate, valid from now. The happy path, and the default."""
+        return _ISSUED
 
-    On its next reconcile the requirer library's renewal safety net withdraws the request
-    and replaces it with a fresh one. Answering *that* takes a second remote with the
-    default outcome -- see :class:`RemoteProvider` for the pattern.
+    @classmethod
+    def denied(
+        cls,
+        *,
+        code: tls_certificates.CertificateRequestErrorCode = (
+            tls_certificates.CertificateRequestErrorCode.OTHER
+        ),
+        message: str = _DEFAULT_DENIAL_MESSAGE,
+        reason: str | None = None,
+    ) -> Outcome:
+        """An error instead of a certificate.
 
-    This needs no agreement with the charm's ``renewal_relative_time``: the library caps the
-    threshold it derives from that argument, so one back-dating covers every value a charm
-    can legally pass.
+        The requirer library surfaces it through ``get_request_errors()`` and
+        ``get_request_error()``, and emits ``certificate_denied``. Customise it with this
+        method's own ``code``, ``message`` and ``reason`` arguments.
 
-    Note which of the library's two renewal routes this reaches. When the library stores a
-    certificate it schedules a Juju secret expiry, and Juju's ``secret-expired`` drives the
-    renewal; separately, a safety net re-checks every certificate on every reconcile, for
-    when that event doesn't fire or doesn't complete. This reaches the safety net. Both
-    routes withdraw the request and re-request, so the charm ends up in the same place; only
-    the event that takes it there differs. To exercise the secret-expiry route, run the
-    charm until it holds certificates and fire ``ctx.on.secret_expired`` at the secret it
-    created.
-    """
-    EXPIRED = enum.auto()
-    """A certificate whose whole validity period is in the past.
+        Args:
+            code: The error code the provider reports.
+            message: The message it reports.
+            reason: Optional further detail, carried in the error's ``reason`` field.
+        """
+        return cls(_Kind.DENIED, code=code, message=message, reason=reason)
 
-    Use this to test what a charm does when renewal has *failed* and it is left holding a
-    dead certificate. The library will not rescue it: the safety net covers certificates
-    approaching expiry and stops at expiry itself, so an expired certificate stays assigned
-    and is never re-requested. Whether the charm keeps serving, goes blocked, or raises the
-    alarm is the charm's own decision, and this is how to pin it down.
-    """
-    REVOKED = enum.auto()
-    """A certificate published with the relation's ``revoked`` flag set.
+    @classmethod
+    def renewing(cls) -> Outcome:
+        """A certificate far enough through its validity period to be due for renewal.
 
-    The requirer library removes the certificate's Juju secret on its next reconcile.
-    """
+        On its next reconcile the requirer library's renewal safety net withdraws the
+        request and replaces it with a fresh one. Answering *that* takes a second remote
+        with the default outcome -- see :class:`RemoteProvider` for the pattern.
+
+        This needs no agreement with the charm's ``renewal_relative_time``: the library caps
+        the threshold it derives from that argument, so one back-dating covers every value a
+        charm can legally pass.
+
+        Note which of the library's two renewal routes this reaches. When the library stores
+        a certificate it schedules a Juju secret expiry, and Juju's ``secret-expired`` drives
+        the renewal; separately, a safety net re-checks every certificate on every reconcile,
+        for when that event doesn't fire or doesn't complete. This reaches the safety net.
+        Both routes withdraw the request and re-request, so the charm ends up in the same
+        place; only the event that takes it there differs. To exercise the secret-expiry
+        route, run the charm until it holds certificates and fire ``ctx.on.secret_expired``
+        at the secret it created.
+        """
+        return _RENEWING
+
+    @classmethod
+    def expired(cls) -> Outcome:
+        """A certificate whose whole validity period is in the past.
+
+        Use this to test what a charm does when renewal has *failed* and it is left holding
+        a dead certificate. The library will not rescue it: the safety net covers
+        certificates approaching expiry and stops at expiry itself, so an expired
+        certificate stays assigned and is never re-requested. Whether the charm keeps
+        serving, goes blocked, or raises the alarm is the charm's own decision, and this is
+        how to pin it down.
+        """
+        return _EXPIRED
+
+    @classmethod
+    def revoked(cls) -> Outcome:
+        """A certificate published with the relation's ``revoked`` flag set.
+
+        The requirer library removes the certificate's Juju secret on its next reconcile.
+        """
+        return _REVOKED
+
+    @property
+    def code(self) -> tls_certificates.CertificateRequestErrorCode | None:
+        """The code the provider reports for a denied outcome.
+
+        ``None`` for every other outcome.
+        """
+        return self._code
+
+    @property
+    def message(self) -> str | None:
+        """The message the provider reports for a denied outcome.
+
+        ``None`` for every other outcome.
+        """
+        return self._message
+
+    @property
+    def reason(self) -> str | None:
+        """The further detail the provider reports for a denied outcome.
+
+        ``None`` for every other outcome, and for a denied outcome constructed without one.
+        """
+        return self._reason
+
+    def __repr__(self) -> str:
+        if self._kind is not _Kind.DENIED:
+            return f"Outcome.{self._kind.name.lower()}()"
+        args: list[str] = []
+        if (
+            code := self._code
+        ) is not None and code is not tls_certificates.CertificateRequestErrorCode.OTHER:
+            args.append(f"code=CertificateRequestErrorCode.{code.name}")
+        if self._message != _DEFAULT_DENIAL_MESSAGE:
+            args.append(f"message={self._message!r}")
+        if self._reason is not None:
+            args.append(f"reason={self._reason!r}")
+        return f"Outcome.denied({', '.join(args)})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Outcome):
+            return NotImplemented
+        return (
+            self._kind is other._kind
+            and self._code == other._code
+            and self._message == other._message
+            and self._reason == other._reason
+        )
+
+    def __hash__(self) -> int:
+        return hash((self._kind, self._code, self._message, self._reason))
+
+    def _denial(self) -> tls_certificates.CertificateError | None:
+        """This outcome's ``CertificateError``, or ``None`` if it isn't a denial. Not public.
+
+        ``code`` and ``message`` are only ever ``None`` on a non-denied outcome, because
+        :meth:`denied` defaults both, so the checks below narrow rather than validate.
+        """
+        code, message = self._code, self._message
+        if self._kind is not _Kind.DENIED or code is None or message is None:
+            return None
+        return tls_certificates.CertificateError(
+            code=code.value, name=code.name, message=message, reason=self._reason
+        )
+
+
+_ISSUED = Outcome(_Kind.ISSUED)
+_RENEWING = Outcome(_Kind.RENEWING)
+_EXPIRED = Outcome(_Kind.EXPIRED)
+_REVOKED = Outcome(_Kind.REVOKED)
 
 
 _OutcomeArg: typing.TypeAlias = (
@@ -407,26 +533,23 @@ class RemoteProvider(_Remote):
     Args:
         endpoint: The charm's endpoint name for this relation.
         remote_app_name: The name of the simulated provider application.
-        outcome: What the provider does with each request -- an :class:`Outcome`, or a
-            callable choosing one per request. Defaults to issuing a certificate for
-            everything.
+        outcome: What the provider does with each request -- an :class:`Outcome` from one of
+            its constructors, or a callable choosing one per request. Defaults to issuing a
+            certificate for everything.
         capabilities: What the provider has advertised about its certificate server.
             ``None``, the default, models a provider that has not advertised anything, which
             ``get_provider_capabilities()`` reports as ``None`` ("not known yet"). Pass a
             ``ProviderCapabilities`` -- even an empty one -- to model a provider that has,
             with each field carrying its own three-way meaning per the library's docs.
         validity: How long issued certificates are valid for. Rarely worth changing:
-            ``Outcome.RENEWING`` and ``Outcome.EXPIRED`` express the interesting positions
-            within the validity period without needing a specific length.
-        error_code: The error code the provider reports for ``Outcome.DENIED`` requests.
-        error_message: The message it reports for them.
-        error_reason: Optional further detail, carried in the error's ``reason`` field.
+            ``Outcome.renewing()`` and ``Outcome.expired()`` express the interesting
+            positions within the validity period without needing a specific length.
 
     To complete a renewal, publish again with a remote whose outcome is the default. The
     remote is immutable and its results depend only on its arguments and the state, so two
     remotes for the same application are just two ways of answering::
 
-        STALE = RemoteProvider("certificates", outcome=Outcome.RENEWING)
+        STALE = RemoteProvider("certificates", outcome=Outcome.renewing())
         FRESH = RemoteProvider("certificates")
 
         with tls_certificates_testing.mocked():
@@ -442,22 +565,14 @@ class RemoteProvider(_Remote):
         endpoint: str,
         *,
         remote_app_name: str = "remote",
-        outcome: _OutcomeArg = Outcome.ISSUED,
+        outcome: _OutcomeArg = _ISSUED,
         capabilities: tls_certificates.ProviderCapabilities | None = None,
         validity: datetime.timedelta = _DEFAULT_VALIDITY,
-        error_code: tls_certificates.CertificateRequestErrorCode = (
-            tls_certificates.CertificateRequestErrorCode.OTHER
-        ),
-        error_message: str = _DEFAULT_DENIAL_MESSAGE,
-        error_reason: str | None = None,
     ) -> None:
         super().__init__(endpoint, remote_app_name=remote_app_name)
         self._outcome = outcome
         self._capabilities = capabilities
         self._validity = validity
-        self._error_code = error_code
-        self._error_message = error_message
-        self._error_reason = error_reason
 
     @property
     def outcome(self) -> _OutcomeArg:
@@ -474,39 +589,16 @@ class RemoteProvider(_Remote):
         """How long issued certificates are valid for."""
         return self._validity
 
-    @property
-    def error_code(self) -> tls_certificates.CertificateRequestErrorCode:
-        """The error code reported for ``Outcome.DENIED`` requests."""
-        return self._error_code
-
-    @property
-    def error_message(self) -> str:
-        """The error message reported for ``Outcome.DENIED`` requests."""
-        return self._error_message
-
-    @property
-    def error_reason(self) -> str | None:
-        """The error's ``reason`` field, reported for ``Outcome.DENIED`` requests."""
-        return self._error_reason
-
     def _repr_args(self) -> list[str]:
         args = super()._repr_args()
-        if self._outcome is not Outcome.ISSUED:
-            # A callable has no name to show, so fall back to its own repr.
-            if isinstance(self._outcome, Outcome):
-                args.append(f"outcome=Outcome.{self._outcome.name}")
-            else:
-                args.append(f"outcome={self._outcome!r}")
+        if self._outcome != Outcome.issued():
+            # Outcome's own __repr__ is self-describing, and a callable's own repr is still
+            # the fallback -- so there is nothing left for this method to add.
+            args.append(f"outcome={self._outcome!r}")
         if self._capabilities is not None:
             args.append(f"capabilities={self._capabilities!r}")
         if self._validity != _DEFAULT_VALIDITY:
             args.append(f"validity={self._validity!r}")
-        if self._error_code is not tls_certificates.CertificateRequestErrorCode.OTHER:
-            args.append(f"error_code=CertificateRequestErrorCode.{self._error_code.name}")
-        if self._error_message != _DEFAULT_DENIAL_MESSAGE:
-            args.append(f"error_message={self._error_message!r}")
-        if self._error_reason is not None:
-            args.append(f"error_reason={self._error_reason!r}")
         return args
 
     def publish(self, state: testing.State) -> testing.State:
@@ -571,18 +663,9 @@ class RemoteProvider(_Remote):
             if request.csr in answered:
                 continue
             outcome = self._outcome_for(request)
-            if outcome is Outcome.DENIED:
-                errors.append(
-                    _internal._RequestError(
-                        csr=str(request.csr),
-                        error=tls_certificates.CertificateError(
-                            code=self.error_code.value,
-                            name=self.error_code.name,
-                            message=self.error_message,
-                            reason=self.error_reason,
-                        ),
-                    )
-                )
+            denial = outcome._denial()
+            if denial is not None:
+                errors.append(_internal._RequestError(csr=str(request.csr), error=denial))
                 continue
             certificates.append(self._certificate_entry(request, outcome))
         return _internal._ProviderApplicationData(
@@ -609,7 +692,7 @@ class RemoteProvider(_Remote):
         certificate = request.csr.sign(
             ca=_CA_CERT, ca_private_key=_CA_KEY, validity=self.validity, is_ca=request.is_ca
         )
-        if outcome is Outcome.RENEWING:
+        if outcome == Outcome.renewing():
             # The library validates 0.5 < renewal_relative_time <= 1.0 and caps the safety
             # net's threshold, so a certificate aged past that cap is due for renewal under
             # every value a charm can legally pass -- hence no argument here, and no
@@ -619,14 +702,14 @@ class RemoteProvider(_Remote):
             # copy of its value, so raising it there can't leave this quietly not renewing.
             age = (_internal._MAX_RENEWAL_FRACTION + 1.0) / 2
             certificate = _backdate(certificate, age=age, validity=self.validity)
-        elif outcome is Outcome.EXPIRED:
+        elif outcome == Outcome.expired():
             certificate = _backdate(certificate, age=1.5, validity=self.validity)
         return _internal._Certificate(
             certificate=str(certificate),
             certificate_signing_request=str(request.csr),
             ca=str(_CA_CERT),
             chain=[str(certificate), str(_CA_CERT)],  # leaf to root
-            revoked=True if outcome is Outcome.REVOKED else None,
+            revoked=True if outcome == Outcome.revoked() else None,
         )
 
     def _check_can_add(self, state: testing.State) -> None:

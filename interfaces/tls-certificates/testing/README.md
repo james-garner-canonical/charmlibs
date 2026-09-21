@@ -78,13 +78,13 @@ relation = testing.Relation(
 
 ### What the provider does with each request
 
-`outcome` takes an `Outcome`, or a callable choosing one per request:
+`outcome` takes an `Outcome` from one of its constructors, or a callable choosing one per request:
 
-- `Outcome.ISSUED` (the default) — a certificate, valid from now.
-- `Outcome.DENIED` — an error instead. Reaches your charm through `get_request_errors()`, `get_request_error()`, and the `certificate_denied` event. Customise it with `error_code`, `error_message` and `error_reason`.
-- `Outcome.RENEWING` — a certificate far enough through its validity period that the library's renewal safety net re-requests it on your charm's next reconcile.
-- `Outcome.EXPIRED` — a certificate whose validity period is entirely in the past, for testing what your charm does when renewal has *failed*. The library won't rescue it: the safety net stops at expiry.
-- `Outcome.REVOKED` — a certificate flagged revoked, which makes the library remove its Juju secret.
+- `Outcome.issued()` (the default) — a certificate, valid from now.
+- `Outcome.denied()` — an error instead. Reaches your charm through `get_request_errors()`, `get_request_error()`, and the `certificate_denied` event. Customise it with `code`, `message` and `reason`.
+- `Outcome.renewing()` — a certificate far enough through its validity period that the library's renewal safety net re-requests it on your charm's next reconcile.
+- `Outcome.expired()` — a certificate whose validity period is entirely in the past, for testing what your charm does when renewal has *failed*. The library won't rescue it: the safety net stops at expiry.
+- `Outcome.revoked()` — a certificate flagged revoked, which makes the library remove its Juju secret.
 
 The callable receives the `CertificateRequestAttributes` your charm asked for, so it can select on whatever distinguishes your requests:
 
@@ -92,11 +92,12 @@ The callable receives the `CertificateRequestAttributes` your charm asked for, s
 STRICT = tls_certificates_testing.RemoteProvider(
     "certificates",
     outcome=lambda request: (
-        tls_certificates_testing.Outcome.DENIED
+        tls_certificates_testing.Outcome.denied(
+            code=tls_certificates.CertificateRequestErrorCode.WILDCARD_NOT_ALLOWED
+        )
         if request.common_name.startswith("*")
-        else tls_certificates_testing.Outcome.ISSUED
+        else tls_certificates_testing.Outcome.issued()
     ),
-    error_code=tls_certificates.CertificateRequestErrorCode.WILDCARD_NOT_ALLOWED,
 )
 ```
 
@@ -135,7 +136,7 @@ def test_key_rotation(ctx: testing.Context, mocked: None):
 Renewal is the same shape. Because a remote is immutable and depends only on its arguments and the state, two remotes for the same application are just two ways of answering:
 
 ```py
-STALE = tls_certificates_testing.RemoteProvider("certificates", outcome=Outcome.RENEWING)
+STALE = tls_certificates_testing.RemoteProvider("certificates", outcome=Outcome.renewing())
 FRESH = tls_certificates_testing.RemoteProvider("certificates")
 
 

@@ -207,7 +207,7 @@ def test_renewal_round_trip(requirer_ctx: _Ctx, mocked: None):
     so this is just two ways of answering.
     """
     stale = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.RENEWING
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
     )
     state = stale.integrate(
         requirer_ctx, ops.testing.State.from_context(requirer_ctx), end="published"
@@ -244,7 +244,7 @@ def test_expired_certificates_are_not_renewed(requirer_ctx: _Ctx, mocked: None):
     charm does about it is the charm's own decision.
     """
     expired = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.EXPIRED
+        "certificates", outcome=tls_certificates_testing.Outcome.expired()
     )
     state = expired.integrate(requirer_ctx, ops.testing.State.from_context(requirer_ctx))
     state = expired.run_changed(requirer_ctx, state)
@@ -265,12 +265,10 @@ def test_denied_requests_reach_the_charm(requirer_ctx: _Ctx, mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
         "certificates",
         outcome=lambda request: (
-            tls_certificates_testing.Outcome.DENIED
+            tls_certificates_testing.Outcome.denied(code=code, message="computer says no")
             if request.common_name == refused.common_name
-            else tls_certificates_testing.Outcome.ISSUED
+            else tls_certificates_testing.Outcome.issued()
         ),
-        error_code=code,
-        error_message="computer says no",
     )
     state = remote.integrate(requirer_ctx, ops.testing.State.from_context(requirer_ctx))
     with requirer_ctx(requirer_ctx.on.update_status(), state) as manager:
@@ -313,7 +311,7 @@ def test_revoking_a_certificate_removes_its_secret(requirer_ctx: _Ctx, mocked: N
     assert len(before) == len(requirer_charm.REQUESTS)
     # The provider revokes what it issued.
     revoker = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.REVOKED
+        "certificates", outcome=tls_certificates_testing.Outcome.revoked()
     )
     state = _forget_the_provider_answer(state)
     state = revoker.publish(state)

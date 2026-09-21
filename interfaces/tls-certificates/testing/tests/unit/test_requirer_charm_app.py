@@ -90,7 +90,7 @@ def test_the_non_leader_warning(ctx: _Ctx, mocked: None, caplog: pytest.LogCaptu
 
 def test_renewal(ctx: _Ctx, mocked: None):
     stale = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.RENEWING
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
     )
     state = stale.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
     state = stale.run_changed(ctx, state)  # the safety net re-requests

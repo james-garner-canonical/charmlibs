@@ -97,7 +97,7 @@ def test_a_non_leader_holds_only_its_unit_certificate(ctx: _Ctx, mocked: None):
 
 def test_renewal_of_both_scopes(ctx: _Ctx, mocked: None):
     stale = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.RENEWING
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
     )
     state = stale.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
     with ctx(ctx.on.update_status(), state) as manager:
@@ -124,9 +124,9 @@ def test_a_denied_application_request(ctx: _Ctx, mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
         "certificates",
         outcome=lambda request: (
-            tls_certificates_testing.Outcome.DENIED
+            tls_certificates_testing.Outcome.denied()
             if request.common_name == charm_module.APP_REQUEST.common_name
-            else tls_certificates_testing.Outcome.ISSUED
+            else tls_certificates_testing.Outcome.issued()
         ),
     )
     state = remote.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))

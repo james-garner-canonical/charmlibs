@@ -95,7 +95,7 @@ def test_integrated_means_asked_but_unanswered(ctx: _Ctx, mocked: None):
 
 def test_a_denied_request(ctx: _Ctx, mocked: None):
     remote = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.DENIED
+        "certificates", outcome=tls_certificates_testing.Outcome.denied()
     )
     state = remote.integrate(ctx, ops.testing.State.from_context(ctx))
     with ctx(ctx.on.update_status(), state) as manager:
@@ -110,7 +110,7 @@ def test_a_denied_request(ctx: _Ctx, mocked: None):
 def test_renewal_does_not_rotate_a_charm_supplied_key(ctx: _Ctx, mocked: None):
     """Renewal replaces the certificate, not the key -- and the charm owns the key here."""
     stale = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.RENEWING
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
     )
     state = stale.integrate(ctx, ops.testing.State.from_context(ctx), end="published")
     with ctx(ctx.on.update_status(), state) as manager:
