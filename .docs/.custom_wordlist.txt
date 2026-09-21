@@ -92,6 +92,8 @@ PEM
 Permalink
 podspec
 posix
+postcondition
+postconditions
 pre
 preprocessor
 PYDEPS
@@ -102,6 +104,7 @@ Quickstart
 radix
 ReadMe
 READMEs
+reentrant
 reimplemented
 repo
 requirer
