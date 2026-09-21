@@ -29,7 +29,7 @@ from . import _raw
 from ._mocking import require_mocked as _require_mocked
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Mapping
+    from collections.abc import Callable, Iterable, Mapping, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,6 @@ _RequestsByMode: typing.TypeAlias = (
 )
 
 
-@dataclasses.dataclass(frozen=True)
 class _Remote:
     """Shared plumbing for the two remote classes. Not public.
 
@@ -132,12 +131,47 @@ class _Remote:
     implement them the same way. They live here so that this package writes them once. If
     they later move to a shared dependency or into ``ops.testing`` itself, nothing visible
     to a charm author changes -- see OP093.
+
+    A plain class rather than a frozen dataclass, though OP093 suggests one and a dataclass
+    would satisfy every property it asks for. A dataclass commits a library to a much larger
+    API surface than it looks like: ``dataclasses.replace``, ``astuple``, ``asdict``,
+    ``is_dataclass`` and ``__dataclass_fields__`` all become part of the contract, which
+    makes even adding an optional argument or reordering the existing ones a breaking
+    change. See "Don't use dataclasses in your library's public API" on the Charmhub forum.
+    The properties OP093 specifies -- immutability, readable ``endpoint`` and
+    ``remote_app_name``, a useful ``__repr__`` -- are provided explicitly instead, since the
+    spec is of those properties rather than of the mechanism.
     """
 
-    endpoint: str
-    """The charm's endpoint name for this relation."""
-    remote_app_name: str = dataclasses.field(default="remote", kw_only=True)
-    """The name of the simulated remote application."""
+    def __init__(self, endpoint: str, *, remote_app_name: str = "remote") -> None:
+        self._endpoint = endpoint
+        self._remote_app_name = remote_app_name
+
+    @property
+    def endpoint(self) -> str:
+        """The charm's endpoint name for this relation."""
+        return self._endpoint
+
+    @property
+    def remote_app_name(self) -> str:
+        """The name of the simulated remote application."""
+        return self._remote_app_name
+
+    def _repr_args(self) -> list[str]:
+        """Constructor arguments to show in ``__repr__``, defaults omitted. Extended below."""
+        args = [repr(self._endpoint)]
+        if self._remote_app_name != "remote":
+            args.append(f"remote_app_name={self._remote_app_name!r}")
+        return args
+
+    def __repr__(self) -> str:
+        """Return a constructor-like representation, omitting arguments left at default.
+
+        Worth having because ``pytest`` derives parametrize IDs from it, and because it
+        locates any error raised here when several remotes are in play -- so it stays short
+        by showing only what the caller actually chose.
+        """
+        return f"{type(self).__name__}({', '.join(self._repr_args())})"
 
     def integrate(
         self,
@@ -346,7 +380,6 @@ class _Remote:
         )
 
 
-@dataclasses.dataclass(frozen=True)
 class RemoteProvider(_Remote):
     """A simulated ``tls-certificates`` provider, for testing a **requirer** charm.
 
@@ -404,16 +437,77 @@ class RemoteProvider(_Remote):
             state_out = FRESH.run_changed(ctx, state)
     """
 
-    outcome: _OutcomeArg = dataclasses.field(default=Outcome.ISSUED, kw_only=True)
-    capabilities: tls_certificates.ProviderCapabilities | None = dataclasses.field(
-        default=None, kw_only=True
-    )
-    validity: datetime.timedelta = dataclasses.field(default=_DEFAULT_VALIDITY, kw_only=True)
-    error_code: tls_certificates.CertificateRequestErrorCode = dataclasses.field(
-        default=tls_certificates.CertificateRequestErrorCode.OTHER, kw_only=True
-    )
-    error_message: str = dataclasses.field(default=_DEFAULT_DENIAL_MESSAGE, kw_only=True)
-    error_reason: str | None = dataclasses.field(default=None, kw_only=True)
+    def __init__(
+        self,
+        endpoint: str,
+        *,
+        remote_app_name: str = "remote",
+        outcome: _OutcomeArg = Outcome.ISSUED,
+        capabilities: tls_certificates.ProviderCapabilities | None = None,
+        validity: datetime.timedelta = _DEFAULT_VALIDITY,
+        error_code: tls_certificates.CertificateRequestErrorCode = (
+            tls_certificates.CertificateRequestErrorCode.OTHER
+        ),
+        error_message: str = _DEFAULT_DENIAL_MESSAGE,
+        error_reason: str | None = None,
+    ) -> None:
+        super().__init__(endpoint, remote_app_name=remote_app_name)
+        self._outcome = outcome
+        self._capabilities = capabilities
+        self._validity = validity
+        self._error_code = error_code
+        self._error_message = error_message
+        self._error_reason = error_reason
+
+    @property
+    def outcome(self) -> _OutcomeArg:
+        """What the provider does with each request."""
+        return self._outcome
+
+    @property
+    def capabilities(self) -> tls_certificates.ProviderCapabilities | None:
+        """What the provider has advertised, or ``None`` if it has advertised nothing."""
+        return self._capabilities
+
+    @property
+    def validity(self) -> datetime.timedelta:
+        """How long issued certificates are valid for."""
+        return self._validity
+
+    @property
+    def error_code(self) -> tls_certificates.CertificateRequestErrorCode:
+        """The error code reported for ``Outcome.DENIED`` requests."""
+        return self._error_code
+
+    @property
+    def error_message(self) -> str:
+        """The error message reported for ``Outcome.DENIED`` requests."""
+        return self._error_message
+
+    @property
+    def error_reason(self) -> str | None:
+        """The error's ``reason`` field, reported for ``Outcome.DENIED`` requests."""
+        return self._error_reason
+
+    def _repr_args(self) -> list[str]:
+        args = super()._repr_args()
+        if self._outcome is not Outcome.ISSUED:
+            # A callable has no name to show, so fall back to its own repr.
+            if isinstance(self._outcome, Outcome):
+                args.append(f"outcome=Outcome.{self._outcome.name}")
+            else:
+                args.append(f"outcome={self._outcome!r}")
+        if self._capabilities is not None:
+            args.append(f"capabilities={self._capabilities!r}")
+        if self._validity != _DEFAULT_VALIDITY:
+            args.append(f"validity={self._validity!r}")
+        if self._error_code is not tls_certificates.CertificateRequestErrorCode.OTHER:
+            args.append(f"error_code=CertificateRequestErrorCode.{self._error_code.name}")
+        if self._error_message != _DEFAULT_DENIAL_MESSAGE:
+            args.append(f"error_message={self._error_message!r}")
+        if self._error_reason is not None:
+            args.append(f"error_reason={self._error_reason!r}")
+        return args
 
     def publish(self, state: testing.State) -> testing.State:
         """Write the provider's answer to whatever the charm has currently requested.
@@ -552,7 +646,6 @@ class RemoteProvider(_Remote):
             )
 
 
-@dataclasses.dataclass(frozen=True)
 class RemoteRequirer(_Remote):
     """A simulated ``tls-certificates`` requirer, for testing a **provider** charm.
 
@@ -601,49 +694,89 @@ class RemoteRequirer(_Remote):
             shape a real requirer could not have produced.
     """
 
-    certificate_requests: Iterable[tls_certificates.CertificateRequestAttributes] | None = (
-        dataclasses.field(default=None, kw_only=True)
-    )
-    mode: tls_certificates.Mode = dataclasses.field(
-        default=tls_certificates.Mode.UNIT, kw_only=True
-    )
-    certificate_requests_by_mode: _RequestsByMode | None = dataclasses.field(
-        default=None, kw_only=True
-    )
-    private_key: tls_certificates.PrivateKey = dataclasses.field(
-        default=_DEFAULT_KEY, kw_only=True
-    )
+    def __init__(
+        self,
+        endpoint: str,
+        *,
+        remote_app_name: str = "remote",
+        certificate_requests: (
+            Iterable[tls_certificates.CertificateRequestAttributes] | None
+        ) = None,
+        mode: tls_certificates.Mode = tls_certificates.Mode.UNIT,
+        certificate_requests_by_mode: _RequestsByMode | None = None,
+        private_key: tls_certificates.PrivateKey = _DEFAULT_KEY,
+    ) -> None:
+        super().__init__(endpoint, remote_app_name=remote_app_name)
+        # The iterables are consumed into tuples straight away, so that a remote really is
+        # immutable and reusable across tests: a generator would otherwise be consumed by
+        # the first call and empty for the second. Accepting an Iterable while exposing a
+        # Sequence is one of the things a dataclass can't express.
+        self._certificate_requests = (
+            None if certificate_requests is None else tuple(certificate_requests)
+        )
+        self._mode = mode
+        by_mode: dict[_Scope, tuple[tls_certificates.CertificateRequestAttributes, ...]] | None
+        by_mode = (
+            None
+            if certificate_requests_by_mode is None
+            else {
+                scope: tuple(requests) for scope, requests in certificate_requests_by_mode.items()
+            }
+        )
+        self._certificate_requests_by_mode = by_mode
+        self._private_key = private_key
+        # Validate here rather than on first use, so that a badly built remote fails at the
+        # point it is written -- which for a module-level remote is at import.
+        self._scopes  # noqa: B018
 
-    def __post_init__(self) -> None:
-        """Validate the request arguments against ``mode``, and normalise them to tuples.
+    @property
+    def certificate_requests(
+        self,
+    ) -> Sequence[tls_certificates.CertificateRequestAttributes] | None:
+        """The requests the simulated requirer makes, or ``None`` if split by mode."""
+        return self._certificate_requests
 
-        Validating here rather than on first use means a badly built remote fails at the
-        point it is written, which for a module-level remote is at import. Normalising the
-        iterables means a remote really is immutable and reusable across tests: a generator
-        passed in would otherwise be consumed by the first call and empty for the second.
-        """
-        # Normalise before validating: validation reads the iterables, which would consume a
-        # generator and leave the stored field empty. object.__setattr__ because the
-        # dataclass is frozen; this is the documented way to normalise a field here.
-        if self.certificate_requests is not None:
-            object.__setattr__(self, "certificate_requests", tuple(self.certificate_requests))
-        if self.certificate_requests_by_mode is not None:
-            object.__setattr__(
-                self,
-                "certificate_requests_by_mode",
-                {
-                    scope: tuple(requests)
-                    for scope, requests in self.certificate_requests_by_mode.items()
-                },
-            )
-        _requests_by_mode(self.mode, self.certificate_requests, self.certificate_requests_by_mode)
+    @property
+    def mode(self) -> tls_certificates.Mode:
+        """Which databag the requests go in."""
+        return self._mode
+
+    @property
+    def certificate_requests_by_mode(
+        self,
+    ) -> Mapping[_Scope, Sequence[tls_certificates.CertificateRequestAttributes]] | None:
+        """The requests per scope, or ``None`` unless ``mode`` is ``Mode.APP_AND_UNIT``."""
+        return self._certificate_requests_by_mode
+
+    @property
+    def private_key(self) -> tls_certificates.PrivateKey:
+        """The key the simulated requirer signs its requests with."""
+        return self._private_key
 
     @property
     def _scopes(self) -> dict[_Scope, tuple[tls_certificates.CertificateRequestAttributes, ...]]:
-        """This remote's requests keyed by scope. Cheap, and the fields are now tuples."""
+        """This remote's requests keyed by scope, validating them. Cheap: already tuples."""
         return _requests_by_mode(
-            self.mode, self.certificate_requests, self.certificate_requests_by_mode
+            self._mode, self._certificate_requests, self._certificate_requests_by_mode
         )
+
+    def _repr_args(self) -> list[str]:
+        args = super()._repr_args()
+        if self._certificate_requests is not None:
+            args.append(f"certificate_requests={list(self._certificate_requests)!r}")
+        if self._mode is not tls_certificates.Mode.UNIT:
+            args.append(f"mode=Mode.{self._mode.name}")
+        if self._certificate_requests_by_mode is not None:
+            by_mode = {
+                f"Mode.{scope.name}": list(requests)
+                for scope, requests in self._certificate_requests_by_mode.items()
+            }
+            args.append(f"certificate_requests_by_mode={by_mode!r}")
+        if self._private_key != _DEFAULT_KEY:
+            # Not the key itself: a PEM private key in a pytest parametrize ID is unreadable,
+            # and printing key material in test output is a habit worth not forming.
+            args.append("private_key=<custom>")
+        return args
 
     def publish(self, state: testing.State) -> testing.State:
         """Write the simulated requirer's certificate requests.
@@ -694,7 +827,7 @@ class RemoteRequirer(_Remote):
             entry = published.get(attributes)
             if entry is None:
                 csr = tls_certificates.CertificateSigningRequest.generate(
-                    attributes=attributes, private_key=self.private_key
+                    attributes=attributes, private_key=self._private_key
                 )
                 entry = _internal._CertificateSigningRequest(
                     certificate_signing_request=str(csr), ca=attributes.is_ca
@@ -705,7 +838,11 @@ class RemoteRequirer(_Remote):
 
 @dataclasses.dataclass(frozen=True)
 class _Request:
-    """A certificate request read off the wire: the signing request and its ``ca`` flag."""
+    """A certificate request read off the wire: the signing request and its ``ca`` flag.
+
+    A dataclass, unlike the public classes above: this one never leaves the package, so none
+    of the compatibility surface a dataclass commits you to is exposed to anyone.
+    """
 
     csr: tls_certificates.CertificateSigningRequest
     is_ca: bool

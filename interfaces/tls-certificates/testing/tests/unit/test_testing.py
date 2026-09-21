@@ -71,20 +71,64 @@ def test_every_other_argument_is_keyword_only(cls: type[_Remote]):
         cls("certificates", "remote")  # pyright: ignore[reportCallIssue]
 
 
-@pytest.mark.parametrize("remote", REMOTES, ids=IDS)
-def test_endpoint_and_remote_app_name_are_readable(remote: _Remote):
+@pytest.mark.parametrize(
+    "cls",
+    [
+        tls_certificates_testing.RemoteProvider,
+        tls_certificates_testing.RemoteRequirer,
+    ],
+    ids=IDS,
+)
+def test_endpoint_and_remote_app_name_are_readable(cls: type[_Remote]):
     """OP093: both must be readable, so a hand-built bare Relation can agree with them."""
-    assert remote.endpoint == "certificates"
-    assert remote.remote_app_name == "remote"
-    named = dataclasses.replace(remote, remote_app_name="ca")
-    assert named.remote_app_name == "ca"
+    assert cls("certificates").endpoint == "certificates"
+    assert cls("certificates").remote_app_name == "remote"
+    assert cls("certificates", remote_app_name="ca").remote_app_name == "ca"
 
 
 @pytest.mark.parametrize("remote", REMOTES, ids=IDS)
 def test_remotes_are_immutable(remote: _Remote):
-    """OP093: the arguments given at construction cannot be changed afterwards."""
-    with pytest.raises(dataclasses.FrozenInstanceError):
+    """OP093: the arguments given at construction cannot be changed afterwards.
+
+    Read-only properties rather than a frozen dataclass, so the error is AttributeError.
+    """
+    with pytest.raises(AttributeError):
         remote.endpoint = "other"  # pyright: ignore[reportAttributeAccessIssue]
+    with pytest.raises(AttributeError):
+        remote.remote_app_name = "other"  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def test_provider_arguments_are_immutable():
+    remote = tls_certificates_testing.RemoteProvider("certificates")
+    for name in ("outcome", "capabilities", "validity", "error_code", "error_message"):
+        with pytest.raises(AttributeError):
+            setattr(remote, name, None)
+
+
+def test_requirer_arguments_are_immutable():
+    remote = tls_certificates_testing.RemoteRequirer("certificates")
+    for name in ("certificate_requests", "mode", "certificate_requests_by_mode", "private_key"):
+        with pytest.raises(AttributeError):
+            setattr(remote, name, None)
+
+
+@pytest.mark.parametrize(
+    "cls",
+    [
+        tls_certificates_testing.RemoteProvider,
+        tls_certificates_testing.RemoteRequirer,
+    ],
+    ids=IDS,
+)
+def test_remotes_are_not_dataclasses(cls: type[_Remote]):
+    """Plain classes, deliberately.
+
+    A dataclass would satisfy every property OP093 asks for, but it commits the package to
+    `replace`, `astuple`, `asdict`, `is_dataclass` and `__dataclass_fields__` as public API
+    -- which makes adding an optional argument, or reordering the existing ones, a breaking
+    change. See "Don't use dataclasses in your library's public API" on the Charmhub forum.
+    """
+    assert not dataclasses.is_dataclass(cls)
 
 
 @pytest.mark.parametrize("remote", REMOTES, ids=IDS)
@@ -93,6 +137,110 @@ def test_remotes_have_a_useful_repr(remote: _Remote):
     text = repr(remote)
     assert type(remote).__name__ in text
     assert "certificates" in text
+
+
+def test_repr_omits_arguments_left_at_default():
+    """Short enough to read in a parametrize ID, and it shows what the caller chose."""
+    assert repr(tls_certificates_testing.RemoteProvider("certificates")) == (
+        "RemoteProvider('certificates')"
+    )
+    assert repr(tls_certificates_testing.RemoteRequirer("certificates")) == (
+        "RemoteRequirer('certificates')"
+    )
+
+
+def test_repr_shows_the_arguments_the_caller_gave():
+    text = repr(
+        tls_certificates_testing.RemoteProvider(
+            "certificates",
+            remote_app_name="ca",
+            outcome=tls_certificates_testing.Outcome.DENIED,
+            error_code=tls_certificates.CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED,
+        )
+    )
+    assert text == (
+        "RemoteProvider('certificates', remote_app_name='ca', outcome=Outcome.DENIED, "
+        "error_code=CertificateRequestErrorCode.DOMAIN_NOT_ALLOWED)"
+    )
+    text = repr(
+        tls_certificates_testing.RemoteRequirer("certificates", mode=tls_certificates.Mode.APP)
+    )
+    assert text == "RemoteRequirer('certificates', mode=Mode.APP)"
+
+
+def test_repr_does_not_print_key_material():
+    """A PEM key is unreadable in a parametrize ID, and printing one is a bad habit."""
+    key = tls_certificates.PrivateKey.generate()
+    text = repr(tls_certificates_testing.RemoteRequirer("certificates", private_key=key))
+    assert "private_key=<custom>" in text
+    assert "PRIVATE KEY" not in text
+
+
+def test_repr_covers_every_argument():
+    """Every argument a caller can give must be visible, so a failure names the right remote."""
+    request = tls_certificates.CertificateRequestAttributes(common_name="example.com")
+    provider = tls_certificates_testing.RemoteProvider(
+        "certificates",
+        outcome=lambda _: tls_certificates_testing.Outcome.ISSUED,
+        capabilities=tls_certificates.ProviderCapabilities(provider_type="acme"),
+        validity=datetime.timedelta(days=7),
+        error_message="nope",
+        error_reason="because",
+    )
+    text = repr(provider)
+    for expected in ("outcome=", "capabilities=", "validity=", "error_message=", "error_reason="):
+        assert expected in text
+    requirer = tls_certificates_testing.RemoteRequirer(
+        "certificates",
+        mode=tls_certificates.Mode.APP_AND_UNIT,
+        certificate_requests_by_mode={tls_certificates.Mode.APP: [request]},
+    )
+    text = repr(requirer)
+    assert "mode=Mode.APP_AND_UNIT" in text
+    assert "certificate_requests_by_mode={'Mode.APP':" in text
+    text = repr(
+        tls_certificates_testing.RemoteRequirer("certificates", certificate_requests=[request])
+    )
+    assert "certificate_requests=[" in text
+
+
+def test_the_arguments_are_readable_as_attributes():
+    """Not required by OP093 beyond endpoint and remote_app_name, but cheap and expected.
+
+    Read-only, and normalised: the requests come back as tuples whatever iterable went in, so
+    a remote can't be emptied by being used once.
+    """
+    request = tls_certificates.CertificateRequestAttributes(common_name="example.com")
+    key = tls_certificates.PrivateKey.generate()
+    provider = tls_certificates_testing.RemoteProvider(
+        "certificates",
+        outcome=tls_certificates_testing.Outcome.REVOKED,
+        capabilities=tls_certificates.ProviderCapabilities(provider_type="acme"),
+        validity=datetime.timedelta(days=7),
+        error_code=tls_certificates.CertificateRequestErrorCode.IP_NOT_ALLOWED,
+        error_message="nope",
+        error_reason="because",
+    )
+    assert provider.outcome is tls_certificates_testing.Outcome.REVOKED
+    assert provider.capabilities is not None
+    assert provider.capabilities.provider_type == "acme"
+    assert provider.validity == datetime.timedelta(days=7)
+    assert provider.error_code is tls_certificates.CertificateRequestErrorCode.IP_NOT_ALLOWED
+    assert provider.error_message == "nope"
+    assert provider.error_reason == "because"
+    requirer = tls_certificates_testing.RemoteRequirer(
+        "certificates", certificate_requests=iter([request]), private_key=key
+    )
+    assert requirer.certificate_requests == (request,)
+    assert requirer.mode is tls_certificates.Mode.UNIT
+    assert requirer.certificate_requests_by_mode is None
+    assert requirer.private_key == key
+    by_mode = tls_certificates_testing.RemoteRequirer(
+        "certificates",
+        mode=tls_certificates.Mode.APP_AND_UNIT,
+        certificate_requests_by_mode={tls_certificates.Mode.APP: iter([request])},
+    )
+    assert by_mode.certificate_requests_by_mode == {tls_certificates.Mode.APP: (request,)}
 
 
 # ---------------------------------------------------------------------- get_relation
@@ -135,7 +283,7 @@ def test_a_hand_built_bare_relation_agrees_with_the_remote(remote: _Remote):
     A relation with nothing written at all is below `end="integrated"`, so it is built by
     hand -- and the remote that will later operate on it has to find it.
     """
-    remote = dataclasses.replace(remote, remote_app_name="ca")
+    remote = type(remote)(remote.endpoint, remote_app_name="ca")
     relation = ops.testing.Relation(
         remote.endpoint, interface="tls-certificates", remote_app_name=remote.remote_app_name
     )
