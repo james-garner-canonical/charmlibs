@@ -8,6 +8,8 @@ Instead, charms only need to know about the library's public API and its testing
 As the author of an interface library, you should provide a separate testing package for your library.
 The testing package should expose functions that return fully populated `ops.testing.Relation` objects ready for use in state-transition tests.
 
+Read more: {ref}`how-to-use-a-testing-package`, for using a testing package rather than writing one.
+
 ## Create a separate testing package
 
 Your library's testing package should be distributed separately from runtime library code.
