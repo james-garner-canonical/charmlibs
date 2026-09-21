@@ -1,3 +1,9 @@
+# 1.11.0 - 21 September 2026
+
+Add the `charmlibs-interfaces-tls-certificates-testing` package, installable as the `testing` extra. It provides `RemoteProvider` and `RemoteRequirer` for state-transition tests of charms on either end of the relation, and a `mocked()` context manager that replaces the library's private key generation with a cached key. See the package's README for usage.
+
+No changes to the library's own behaviour. Internally, the renewal safety net's threshold moved into a private `_renewal_safety_threshold` function, which the testing package derives its back-dated certificates from.
+
 # 1.10.1 - 25 August 2026
 
 Fix `Mode.APP_AND_UNIT` requirers raising `RelationDataAccessError` on every non-leader unit. The library read the requirer's own application databag regardless of leadership, so once the leader had written its application certificate request, no other unit could complete a hook -- taking the unit scope down with the application one. Non-leaders now load the unit scope only, which is all they can act on: they can reach neither the application private key nor the application certificate secrets.
