@@ -22,6 +22,8 @@ codebase
 ContainerPath
 databag
 databags
+dataclass
+dataclasses
 DCO
 deserialised
 dev
