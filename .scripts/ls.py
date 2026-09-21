@@ -145,7 +145,8 @@ def _ls(
         include_placeholders: Whether to include the namespace placeholder packages.
             Typically included for testing and publishing, but excluded from docs.
         include_testing: Whether to include library testing packages.
-            Typically included for testing and publishing, but excluded from docs.
+            Typically included -- they're tested, published, and documented like any other
+            package -- but excluded where a testing package would shadow the library it's for.
         regex: Regular expression to match dirs on, or None to skip matching and include all.
         output: List of fields to include in the output, one or more of
             'name', 'path', or 'version'
@@ -170,7 +171,9 @@ def _ls(
             if only_if_version_changed:
                 dirs = _get_changed_versions_only(category, root, dirs, ref=old_ref)
         if category == 'packages' and include_testing:
-            dirs.extend([t for p in dirs if _is_package(t := p / 'testing')])
+            # `dirs` are relative to `root`, so join with `root` before checking on disk.
+            testing_dirs = [p / 'testing' for p in dirs]
+            dirs.extend(p for p in testing_dirs if _is_package(root / p))
         # Calculate only the information needed.
         infos: list[Info] = []
         for path in dirs:

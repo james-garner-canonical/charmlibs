@@ -32,6 +32,11 @@ same source tree but never mutate each other's rst files. The ``package_docs`` e
 the ``automodule`` directive for the current package in memory at ``source-read`` time, so the
 on-disk files stay plain placeholders.
 
+Library packages and their testing packages (see ``package_docs`` for details) both get a
+placeholder page here, cross-linked with a ``seealso`` back to each other. Where a page lives,
+and how it's titled and labelled, is decided by ``package_docs._page()`` -- imported from here
+rather than reimplemented, so that this script and the ``package_docs`` extension can't drift.
+
 Run from ``just docs``; see ``docs.just`` for the invocation.
 """
 
@@ -39,11 +44,14 @@ from __future__ import annotations
 
 import json
 import pathlib
-import re
 import subprocess
+import sys
 
 _DOCS_DIR = pathlib.Path(__file__).parent.parent.resolve()
 _REPO_ROOT = _DOCS_DIR.parent
+sys.path.insert(0, str(_DOCS_DIR / 'extensions'))
+import package_docs  # noqa: E402
+
 RST_TEMPLATE = """
 .. raw:: html
 
@@ -61,35 +69,27 @@ RST_TEMPLATE = """
 
 
 def _main() -> None:
-    """Write placeholder rst files for every package."""
-    ref_dir = _DOCS_DIR / 'reference'
-    (ref_dir / 'charmlibs' / 'interfaces').mkdir(parents=True, exist_ok=True)
+    """Write placeholder rst files for every package, including testing packages."""
     ls = _REPO_ROOT / '.scripts' / 'ls.py'
-    cmd = [ls, 'packages', '--exclude-examples', '--exclude-placeholders', '--exclude-testing']
-    packages = json.loads(subprocess.check_output(cmd, text=True))
-    for raw_package in packages:
-        subdir, _, p = raw_package.rpartition('/')
-        canonical_path = ['charmlibs']
-        if subdir:
-            canonical_path.append(_normalize(subdir))
-        canonical_path.append(_normalize(p))
-        *import_prefix_parts, import_name = (part.replace('-', '_') for part in canonical_path)
+    cmd = [ls, 'packages', '--exclude-examples', '--exclude-placeholders']
+    raw_packages: list[str] = json.loads(subprocess.check_output(cmd, text=True))
+    pages = {raw_package: package_docs._page(raw_package) for raw_package in raw_packages}
+    for raw_package, page in pages.items():
         content = RST_TEMPLATE.format(
-            import_prefix='.'.join(import_prefix_parts) + '.',
-            import_name=import_name,
-            underline='=' * len(p),
-            label='-'.join(canonical_path),
+            import_prefix=page.import_prefix,
+            import_name=page.import_name,
+            underline='=' * len(page.import_name),
+            label=page.label,
         )
-        path = ref_dir.joinpath(*canonical_path).with_suffix('.rst')
+        related = package_docs._related_page(raw_package, pages)
+        if related is not None:
+            text = 'Library reference:' if page.is_testing else 'Testing helpers:'
+            content += package_docs.SEEALSO_TEMPLATE.format(
+                text=text, import_path=related.import_path, label=related.label
+            )
+        path = _DOCS_DIR / f'{page.docname}.rst'
+        path.parent.mkdir(parents=True, exist_ok=True)
         _write_if_needed(path=path, content=content)
-
-
-def _normalize(name: str) -> str:
-    """Normalize distribution package name according to PyPI rules.
-
-    https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization
-    """
-    return re.sub(r'[-_.]+', '-', name).lower()
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:

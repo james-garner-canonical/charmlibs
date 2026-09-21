@@ -148,6 +148,7 @@ clean:
     # package reference docs
     rm -rf reference/charmlibs
     rm -rf reference/interfaces
+    rm -rf reference/testing
     rm -rf .save
     # per-library diataxis docs
     rm -rf tutorials/charmlibs

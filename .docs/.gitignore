@@ -27,6 +27,7 @@ __pycache__
 charmlibs/
 interfaces/
 generated/
+/reference/testing/
 
 # generated per-library diataxis include files
 _lib-*.md
