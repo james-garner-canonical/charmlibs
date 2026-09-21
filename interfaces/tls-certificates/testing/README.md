@@ -235,4 +235,6 @@ The scope is required even though there is only one thing being mocked today, an
 
 **The secret-expiry renewal route.** `Outcome.RENEWING` reaches the library's renewal safety net, not its `secret-expired` path. The certificate's secret is created by the library as the charm runs, so a state built before the charm has run holds none and there is nothing to fire `ctx.on.secret_expired` at. Both routes withdraw the request and re-request, so the charm ends up in the same place; to exercise the secret-expiry route specifically, run the charm until it holds certificates and fire the event at the secret it created.
 
-See the [library reference documentation](https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/tls-certificates) for more.
+Read more:
+- [Library reference](https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/tls-certificates/)
+- [Testing package reference](https://canonical.com/juju/docs/charmlibs/reference/testing/charmlibs-interfaces-tls-certificates-testing/)
