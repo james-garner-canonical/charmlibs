@@ -203,6 +203,10 @@ A *requirer* charm can have only one provider per endpoint: the library reads it
 
 It replaces the library's private key generation with a pre-generated RSA key. Generating a 2048-bit key takes a noticeable fraction of a second, and a charm that lets the library manage its key generates one on its first reconcile and again on every rotation, so a suite of a few hundred state-transition tests would otherwise spend most of its time on key generation.
 
+It also replaces two values the library would otherwise draw at random — a new certificate's serial number, and the identifier that distinguishes one certificate request from another — with counters that restart for each scope. Both are *sequences*, never constants, and the distinction matters: the library tells requests apart by that identifier, so a constant would make a re-request identical to the request it replaces, and a renewal would look like a request that had already been answered.
+
+**Certificates are still not reproducible between separately-arranged states.** Their validity dates come from the clock, which the library reads directly, and mocking that would mean mocking something outside the library — which would change the behaviour of charm code that never touches it. So two runs of the same arrangement agree only if they land in the same second. Assert on what the library reports rather than on certificate bytes, and use `publish`'s idempotence, not byte equality, to check that a certificate was not reissued.
+
 Nothing outside the library is patched, so a charm that generates its own keys — through `cryptography` or anything else — is unaffected. The key is a real RSA key, so everything that depends on having one keeps working: signing, `matches_private_key`, chain verification. The only observable difference is that a charm which lets the library manage its key gets the same key in every test.
 
 Key *rotation* still produces a distinct key: the mock returns a fresh key for each call after the first, so a test asserting that `regenerate_private_key()` changed the key still tests something.

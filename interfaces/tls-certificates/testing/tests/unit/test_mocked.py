@@ -3,7 +3,9 @@
 
 """Tests for the ``mocked`` context manager itself."""
 
+import datetime
 import threading
+import time
 import unittest.mock
 
 import ops.testing
@@ -102,6 +104,75 @@ def test_mocked_accepts_the_libraries_call_signature():
     with tls_certificates_testing.mocked():
         assert tls_certificates.PrivateKey.generate(key_size=2048).is_valid()
         assert tls_certificates.PrivateKey.generate(key_size=2048, public_exponent=65537)
+
+
+def test_mocked_serial_numbers_are_sequential():
+    """Serial numbers come from a counter, so certificates don't differ run to run."""
+    from charmlibs.interfaces.tls_certificates import _tls_certificates as internal
+
+    with tls_certificates_testing.mocked():
+        first = [internal._random_serial_number() for _ in range(3)]
+    with tls_certificates_testing.mocked():
+        again = [internal._random_serial_number() for _ in range(3)]
+    assert first == again
+    assert len(set(first)) == 3  # ... and still distinct within a scope.
+
+
+def test_mocked_unique_identifiers_are_sequential_but_distinct():
+    """The one replacement that must stay distinct. See ``_mocked_unique_identifiers``.
+
+    A constant here would make a re-request byte-identical to the request it replaces, so
+    the provider would treat it as already answered and a renewal test would assert nothing.
+    """
+    import uuid
+
+    from charmlibs.interfaces.tls_certificates import _tls_certificates as internal
+
+    with tls_certificates_testing.mocked():
+        first = [internal._unique_identifier() for _ in range(3)]
+    with tls_certificates_testing.mocked():
+        again = [internal._unique_identifier() for _ in range(3)]
+    assert first == again  # repeatable ...
+    assert len(set(first)) == 3  # ... and distinct, which is the load-bearing part.
+    for identifier in first:
+        assert uuid.UUID(identifier).version == 4  # still a valid UUID for anything parsing it
+
+
+def test_mocked_sequences_restart_for_each_scope():
+    """Each scope starts over, so one test's work can't change what another test sees."""
+    from charmlibs.interfaces.tls_certificates import _tls_certificates as internal
+    from charmlibs.interfaces.tls_certificates_testing import _mocking
+
+    with tls_certificates_testing.mocked():
+        internal._random_serial_number()
+        internal._random_serial_number()
+    with tls_certificates_testing.mocked():
+        assert internal._random_serial_number() == _mocking._FIRST_SERIAL_NUMBER
+
+
+def test_mocked_does_not_make_certificates_reproducible_across_a_second():
+    """The limit of what mocking can achieve here, and the reason worth knowing.
+
+    Serial numbers and subject identifiers are sequenced, but a certificate's validity dates
+    come from the clock, which the library reads directly. Mocking that would mean mocking
+    ``datetime`` -- outside the library, and so forbidden, since it would change the
+    behaviour of charm code that never touches this library. So two runs of the same
+    arrangement match only if they land in the same second, and a test must not compare
+    certificate bytes between separately-arranged states.
+    """
+    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    remote = tls_certificates_testing.RemoteProvider("certificates")
+
+    def certificate() -> str:
+        with tls_certificates_testing.mocked():
+            state = remote.integrate(ctx, ops.testing.State.from_context(ctx), end="published")
+        return remote.get_relation(state).remote_app_data["certificates"]
+
+    first = certificate()
+    second = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+    while datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0) == second:
+        time.sleep(0.01)  # wait for the clock to tick over
+    assert certificate() != first
 
 
 def test_mocked_does_not_patch_anything_outside_the_library():

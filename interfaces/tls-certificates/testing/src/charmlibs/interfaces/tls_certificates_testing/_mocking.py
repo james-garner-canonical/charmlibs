@@ -6,11 +6,13 @@
 from __future__ import annotations
 
 import contextlib
+import itertools
 import threading
 import typing
 import unittest.mock
 
 from charmlibs.interfaces import tls_certificates
+from charmlibs.interfaces.tls_certificates import _tls_certificates as _internal
 
 from . import _raw
 
@@ -86,18 +88,45 @@ def mocked() -> Iterator[None]:
             _state.depth = _depth() - 1
         return
     keys = _mocked_keys()
-    patch = unittest.mock.patch.object(
-        tls_certificates.PrivateKey,
-        "generate",
-        # The signature the library calls it with, so a mistyped call still fails.
-        side_effect=lambda key_size=2048, public_exponent=65537: next(keys),
-    )
+    serial_numbers = itertools.count(_FIRST_SERIAL_NUMBER)
+    unique_identifiers = _mocked_unique_identifiers()
     _state.depth = 1
     try:
-        with patch:
+        with (
+            unittest.mock.patch.object(
+                tls_certificates.PrivateKey,
+                "generate",
+                # The signature the library calls it with, so a mistyped call still fails.
+                side_effect=lambda key_size=2048, public_exponent=65537: next(keys),
+            ),
+            unittest.mock.patch.object(
+                _internal, "_random_serial_number", side_effect=lambda: next(serial_numbers)
+            ),
+            unittest.mock.patch.object(
+                _internal, "_unique_identifier", side_effect=lambda: next(unique_identifiers)
+            ),
+        ):
             yield
     finally:
         _state.depth = _depth() - 1
+
+
+_FIRST_SERIAL_NUMBER = 1
+"""Where the serial number sequence starts. Small, so that failures are readable."""
+
+
+def _mocked_unique_identifiers() -> Iterator[str]:
+    """Yield the identifiers the library puts in each request's subject name.
+
+    Sequential rather than constant, and this is the one thing a replacement here must get
+    right. The library uses this value to tell one request from another, so a constant would
+    make a re-request -- what a key rotation or a renewal produces -- byte-identical to the
+    request it replaces. The simulated provider would then see a request it had already
+    answered and keep the stale certificate.
+    """
+    for n in itertools.count(1):
+        # A valid version-4 UUID, so that anything parsing the subject name still works.
+        yield f"00000000-0000-4000-8000-{n:012d}"
 
 
 def _mocked_keys() -> Iterator[tls_certificates.PrivateKey]:

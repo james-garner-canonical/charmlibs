@@ -697,7 +697,7 @@ class Certificate:
             # TODO: Validate this is correct, the old code used `issuer`
             issuer_name=ca._cert.issuer,
             public_key=csr._csr.public_key(),
-            serial_number=x509.random_serial_number(),
+            serial_number=_random_serial_number(),
             not_valid_before=not_valid_before,
             not_valid_after=not_valid_before + validity,
         )
@@ -753,7 +753,7 @@ class Certificate:
         not_valid_before = datetime.now(timezone.utc)
         builder = x509.CertificateBuilder(
             public_key=public_key,
-            serial_number=x509.random_serial_number(),
+            serial_number=_random_serial_number(),
             not_valid_before=not_valid_before,
             not_valid_after=not_valid_before + validity,
         )
@@ -1403,6 +1403,28 @@ def generate_private_key(
     return PrivateKey.generate(key_size=key_size, public_exponent=public_exponent)
 
 
+def _random_serial_number() -> int:
+    """Return a serial number for a new certificate.
+
+    Wraps ``x509.random_serial_number`` so that the testing package has something of the
+    library's own to replace -- it cannot patch ``cryptography`` itself, because mocking
+    anything defined outside this library would change the behaviour of code that never
+    passes through it.
+    """
+    return x509.random_serial_number()
+
+
+def _unique_identifier() -> str:
+    """Return the X.500 unique identifier that distinguishes one request from another.
+
+    Wrapped for the same reason as :func:`_random_serial_number`. Note what a replacement
+    has to preserve: this value is what makes two requests for the same common name
+    distinguishable, so a replacement that returns a constant would make a re-request
+    indistinguishable from the request it replaces.
+    """
+    return str(uuid.uuid4())
+
+
 _RENEWAL_SAFETY_MARGIN = 0.05
 """How far past ``renewal_relative_time`` the renewal safety net waits before firing."""
 _MAX_RENEWAL_FRACTION = 0.99
@@ -1636,9 +1658,8 @@ def _extract_subject_name_attributes(
             x509.NameAttribute(x509.NameOID.COMMON_NAME, attributes.common_name)
         )
     if attributes.add_unique_id_to_subject_name:
-        unique_identifier = uuid.uuid4()
         subject_name_attributes.append(
-            x509.NameAttribute(x509.NameOID.X500_UNIQUE_IDENTIFIER, str(unique_identifier))
+            x509.NameAttribute(x509.NameOID.X500_UNIQUE_IDENTIFIER, _unique_identifier())
         )
     if attributes.organization:
         subject_name_attributes.append(

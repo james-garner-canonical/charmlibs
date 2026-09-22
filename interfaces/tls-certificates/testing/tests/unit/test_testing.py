@@ -620,6 +620,39 @@ def test_provider_publish_is_idempotent(requirer_ctx: _Ctx, mocked: None):
     assert twice == once
 
 
+def test_a_re_request_is_distinguishable_from_the_request_it_replaces(
+    requirer_ctx: _Ctx, mocked: None
+):
+    """The wire-format property that every renewal test rests on.
+
+    The library tells requests apart by the unique identifier in the subject name, and
+    ``mocked`` replaces that identifier with a sequence rather than a constant. Were it ever
+    a constant, a re-request would be byte-identical to the request it replaces: the provider
+    would see a request it had already answered, keep the stale certificate, and every
+    renewal test would still pass while exercising nothing. This is the guard for that.
+    """
+    stale = tls_certificates_testing.RemoteProvider(
+        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
+    )
+    state = stale.integrate(
+        requirer_ctx, ops.testing.State.from_context(requirer_ctx), end="published"
+    )
+    answered = {
+        entry["certificate_signing_request"]
+        for entry in json.loads(stale.get_relation(state).remote_app_data["certificates"])
+    }
+    # A reconcile: the safety net withdraws the stale requests and re-requests.
+    relation = stale.get_relation(stale.run_changed(requirer_ctx, state))
+    requested = {
+        entry["certificate_signing_request"]
+        for databag in (relation.local_app_data, relation.local_unit_data)
+        for entry in json.loads(databag.get("certificate_signing_requests", "[]"))
+    }
+    assert answered
+    assert requested
+    assert answered.isdisjoint(requested)
+
+
 def test_provider_publish_drops_answers_to_withdrawn_requests(requirer_ctx: _Ctx, mocked: None):
     """What the real provider's library does when a request disappears."""
     state = REMOTES[0].integrate(

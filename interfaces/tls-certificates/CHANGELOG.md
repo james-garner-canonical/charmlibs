@@ -4,7 +4,7 @@ Add the `charmlibs-interfaces-tls-certificates-testing` package, installable as 
 
 Fix a certificate's validity period being a second longer or shorter than requested when the two clock readings that set its bounds straddled a second boundary. Both bounds now come from one reading.
 
-No other changes to the library's own behaviour. Internally, the renewal safety net's threshold moved into a private `_renewal_safety_threshold` function, which the testing package derives its back-dated certificates from.
+No other changes to the library's own behaviour. Internally, three values moved behind private functions so that the testing package has something of the library's own to replace rather than patching `cryptography`: the renewal safety net's threshold (`_renewal_safety_threshold`, which the testing package derives its back-dated certificates from), a new certificate's serial number (`_random_serial_number`) and a certificate request's unique identifier (`_unique_identifier`).
 
 # 1.10.1 - 25 August 2026
 
