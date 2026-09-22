@@ -46,6 +46,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import typing
 
 _DOCS_DIR = pathlib.Path(__file__).parent.parent.resolve()
 _REPO_ROOT = _DOCS_DIR.parent
@@ -68,12 +69,22 @@ RST_TEMPLATE = """
 """.strip()
 
 
+TESTING_TOCTREE_TEMPLATE = """
+```{{toctree}}
+:maxdepth: 1
+
+{entries}
+```
+""".strip()
+
+
 def _main() -> None:
     """Write placeholder rst files for every package, including testing packages."""
     ls = _REPO_ROOT / '.scripts' / 'ls.py'
     cmd = [ls, 'packages', '--exclude-examples', '--exclude-placeholders']
     raw_packages: list[str] = json.loads(subprocess.check_output(cmd, text=True))
     pages = {raw_package: package_docs._page(raw_package) for raw_package in raw_packages}
+    _write_testing_toctree(pages.values())
     for raw_package, page in pages.items():
         content = RST_TEMPLATE.format(
             import_prefix=page.import_prefix,
@@ -90,6 +101,20 @@ def _main() -> None:
         path = _DOCS_DIR / f'{page.docname}.rst'
         path.parent.mkdir(parents=True, exist_ok=True)
         _write_if_needed(path=path, content=content)
+
+
+def _write_testing_toctree(pages: typing.Iterable[package_docs._Page]) -> None:
+    """Write the toctree that ``reference/testing.md`` includes.
+
+    A generated include rather than a ``:glob:`` in the page itself, because a glob that
+    matches nothing is a warning, and the docs build treats warnings as errors. Testing
+    packages are optional and there may be none at all -- in a repository that has none yet,
+    or on a branch where the only one has been split out -- and that has to build cleanly.
+    Mirrors what ``extensions/diataxis_docs_fallback.py`` does for the per-library docs.
+    """
+    entries = sorted(page.docname.removeprefix('reference/') for page in pages if page.is_testing)
+    content = TESTING_TOCTREE_TEMPLATE.format(entries='\n'.join(entries)) if entries else ''
+    _write_if_needed(path=_DOCS_DIR / 'reference' / '_testing-packages.md', content=content)
 
 
 def _write_if_needed(path: pathlib.Path, content: str) -> None:

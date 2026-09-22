@@ -5,9 +5,5 @@ Some libraries provide a separate testing package with helpers for writing state
 
 Read more: {ref}`how-to-provide-data-for-charm-tests`
 
-```{toctree}
-:glob:
-:maxdepth: 1
-
-testing/*
+```{include} _testing-packages.md
 ```

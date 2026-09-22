@@ -31,5 +31,7 @@ generated/
 
 # generated per-library diataxis include files
 _lib-*.md
+# generated testing-package toctree, included by reference/testing.md
+_testing-packages.md
 .~lock.*
 .save/
