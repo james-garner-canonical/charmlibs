@@ -2034,3 +2034,17 @@ interfaces:
   tags:
   - data
   - identity-auth
+- name: cosl
+  status: team
+  url: https://pypi.org/project/cosl/
+  docs: ''
+  src: https://github.com/canonical/cos-lib
+  kind: PyPI
+  rel_name: grafana_datasource_exchange
+  rel_url_charmhub: https://charmhub.io/integrations/grafana_datasource_exchange
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/grafana_datasource_exchange/v0/
+  description: Used internally by the Observability Charm Engineering Team. A dependency
+    (via ``PYDEPS``) of popular charm libs such as ``loki_push_api``.
+  tags:
+  - internal
+  - observability
