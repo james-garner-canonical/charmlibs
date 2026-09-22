@@ -1198,8 +1198,8 @@ interfaces:
   docs: ''
   src: https://github.com/canonical/grafana-k8s-operator
   kind: Charmhub
-  rel_name: grafana-source
-  rel_url_charmhub: https://charmhub.io/integrations/grafana-source
+  rel_name: grafana_datasource
+  rel_url_charmhub: https://charmhub.io/integrations/grafana_datasource
   rel_url_schema: ''
   description: Provide a data source for Grafana dashboards.
   tags:
