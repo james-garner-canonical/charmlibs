@@ -2,7 +2,9 @@
 
 Add the `charmlibs-interfaces-tls-certificates-testing` package, installable as the `testing` extra. It provides `RemoteProvider` and `RemoteRequirer` for state-transition tests of charms on either end of the relation, and a `mocked()` context manager that replaces the library's private key generation with a cached key. See the package's README for usage.
 
-No changes to the library's own behaviour. Internally, the renewal safety net's threshold moved into a private `_renewal_safety_threshold` function, which the testing package derives its back-dated certificates from.
+Fix a certificate's validity period being a second longer or shorter than requested when the two clock readings that set its bounds straddled a second boundary. Both bounds now come from one reading.
+
+No other changes to the library's own behaviour. Internally, the renewal safety net's threshold moved into a private `_renewal_safety_threshold` function, which the testing package derives its back-dated certificates from.
 
 # 1.10.1 - 25 August 2026
 

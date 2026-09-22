@@ -687,6 +687,9 @@ class Certificate:
         )
         assert isinstance(private_key, CertificateIssuerPrivateKeyTypes)
 
+        # One clock reading for both bounds, so that the validity period is exactly
+        # `validity` even if the two reads would have straddled a second boundary.
+        not_valid_before = datetime.now(timezone.utc)
         # Create a certificate builder
         cert_builder = x509.CertificateBuilder(
             subject_name=csr._csr.subject,
@@ -695,8 +698,8 @@ class Certificate:
             issuer_name=ca._cert.issuer,
             public_key=csr._csr.public_key(),
             serial_number=x509.random_serial_number(),
-            not_valid_before=datetime.now(timezone.utc),
-            not_valid_after=datetime.now(timezone.utc) + validity,
+            not_valid_before=not_valid_before,
+            not_valid_after=not_valid_before + validity,
         )
         extensions = _generate_certificate_request_extensions(
             authority_key_identifier=ca._cert.extensions.get_extension_for_class(
@@ -746,11 +749,13 @@ class Certificate:
 
         public_key = private_key._private_key.public_key()
 
+        # One clock reading for both bounds, as in `generate` above.
+        not_valid_before = datetime.now(timezone.utc)
         builder = x509.CertificateBuilder(
             public_key=public_key,
             serial_number=x509.random_serial_number(),
-            not_valid_before=datetime.now(timezone.utc),
-            not_valid_after=datetime.now(timezone.utc) + validity,
+            not_valid_before=not_valid_before,
+            not_valid_after=not_valid_before + validity,
         )
 
         if subject_name := _extract_subject_name_attributes(attributes):
