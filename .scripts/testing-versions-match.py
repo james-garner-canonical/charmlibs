@@ -43,6 +43,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import typing
 
 import tomllib
 
@@ -77,22 +78,25 @@ def _find_pin(requirements: list[str], dist: str) -> tuple[str, str | None] | No
     return None
 
 
-def _requirements(pyproject: dict[str, object], *extra: str) -> list[str]:
+def _strings(value: object) -> list[str]:
+    """Return the strings in ``value``, ignoring anything else.
+
+    A hand-written pyproject.toml can hold anything at all, so the shape is checked rather
+    than asserted -- a malformed dependency list should surface as a missing pin below,
+    named and explained, rather than as a traceback here.
+    """
+    if not isinstance(value, list):
+        return []
+    return [item for item in typing.cast('list[object]', value) if isinstance(item, str)]
+
+
+def _requirements(pyproject: dict[str, typing.Any], extra: str | None = None) -> list[str]:
     """Return ``project.dependencies``, or the named ``optional-dependencies`` extra."""
-    project = pyproject.get('project', {})
-    assert isinstance(project, dict)
-    if not extra:
-        dependencies = project.get('dependencies', [])
-        assert isinstance(dependencies, list)
-        return dependencies
-    optional = project.get('optional-dependencies', {})
-    assert isinstance(optional, dict)
-    result: list[str] = []
-    for name in extra:
-        requirements = optional.get(name, [])
-        assert isinstance(requirements, list)
-        result.extend(requirements)
-    return result
+    project: dict[str, typing.Any] = pyproject.get('project', {})
+    if extra is None:
+        return _strings(project.get('dependencies', []))
+    optional: dict[str, typing.Any] = project.get('optional-dependencies', {})
+    return _strings(optional.get(extra, []))
 
 
 def _check_pin(
@@ -140,7 +144,7 @@ def _main() -> None:
         problems.extend(
             _check_pin(
                 pyproject_path=library_pyproject,
-                requirements=_requirements(library, 'testing'),
+                requirements=_requirements(library, extra='testing'),
                 dist=testing_dist,
                 version=testing_version,
                 what='testing extra',
