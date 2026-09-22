@@ -797,7 +797,7 @@ interfaces:
   kind: Charmhub
   rel_name: filesystem_info
   rel_url_charmhub: https://charmhub.io/integrations/filesystem_info
-  rel_url_schema: ''
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/filesystem_info/v0/
   description: ''
   tags:
   - data
@@ -1200,7 +1200,7 @@ interfaces:
   kind: Charmhub
   rel_name: grafana_datasource
   rel_url_charmhub: https://charmhub.io/integrations/grafana_datasource
-  rel_url_schema: ''
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/grafana_datasource/v0/
   description: Provide a data source for Grafana dashboards.
   tags:
   - observability
@@ -1923,7 +1923,7 @@ interfaces:
   kind: Charmhub
   rel_name: istio_metadata
   rel_url_charmhub: ''
-  rel_url_schema: ''
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/istio_metadata/v0/
   description: Deprecated in favour of ``charmlibs.interfaces.istio_metadata``.
   tags:
   - networking
