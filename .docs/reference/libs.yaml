@@ -1979,3 +1979,58 @@ interfaces:
   description: Manage S3 (and Azure Blob Storage / GCS) credentials and metadata.
   tags:
   - data
+- name: charmlibs.interfaces.k8s_backup_target
+  status: recommended
+  url: https://pypi.org/project/charmlibs-interfaces-k8s-backup-target
+  docs: https://canonical.com/juju/docs/charmlibs/reference/charmlibs/interfaces/k8s-backup-target
+  src: https://github.com/canonical/charmlibs/tree/main/interfaces/k8s_backup_target
+  kind: PyPI
+  rel_name: k8s_backup_target
+  rel_url_charmhub: https://charmhub.io/integrations/k8s_backup_target
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/k8s_backup_target/v0/
+  description: Specify Kubernetes backup requirements -- namespaces, resource types
+    and retention policies -- to a backup integrator charm.
+  tags:
+  - operations
+- name: charms.data_platform_libs.data_interfaces
+  status: ''
+  url: https://charmhub.io/data-platform-libs/libraries/data_interfaces
+  docs: ''
+  src: https://github.com/canonical/data-platform-libs
+  kind: Charmhub
+  rel_name: azure_service_principal
+  rel_url_charmhub: https://charmhub.io/integrations/azure_service_principal
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/azure_service_principal/v0/
+  description: Database charms from the Data Platform Team recommend using the generic
+    ``data_platform_libs.data_interfaces`` library to implement the interface.
+  tags:
+  - data
+  - identity-auth
+- name: charms.data_platform_libs.data_interfaces
+  status: ''
+  url: https://charmhub.io/data-platform-libs/libraries/data_interfaces
+  docs: ''
+  src: https://github.com/canonical/data-platform-libs
+  kind: Charmhub
+  rel_name: connect_client
+  rel_url_charmhub: https://charmhub.io/integrations/connect_client
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/connect_client/v0/
+  description: Database charms from the Data Platform Team recommend using the generic
+    ``data_platform_libs.data_interfaces`` library to implement the interface.
+  tags:
+  - data
+  - identity-auth
+- name: charms.data_platform_libs.data_interfaces
+  status: ''
+  url: https://charmhub.io/data-platform-libs/libraries/data_interfaces
+  docs: ''
+  src: https://github.com/canonical/data-platform-libs
+  kind: Charmhub
+  rel_name: kafka_client
+  rel_url_charmhub: https://charmhub.io/integrations/kafka_client
+  rel_url_schema: https://canonical.com/juju/docs/charmlibs/reference/interfaces/kafka_client/v0/
+  description: Database charms from the Data Platform Team recommend using the generic
+    ``data_platform_libs.data_interfaces`` library to implement the interface.
+  tags:
+  - data
+  - identity-auth
