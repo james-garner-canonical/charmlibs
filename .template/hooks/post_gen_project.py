@@ -17,7 +17,6 @@
 import os
 import pathlib
 import shutil
-import sys
 import warnings
 
 ##############################################################################
@@ -32,6 +31,49 @@ if {{cookiecutter._interface}}:  # noqa: F821
     tmp = charmlibs.rename('.tmp')
     charmlibs.mkdir()
     tmp.rename(charmlibs / 'interfaces')
+
+
+#########################################################################################
+# unresolve symlinks -- we use these in the template for a better maintainer experience #
+#########################################################################################
+
+# skip restoring symlinks if CHARMLIBS_TEMPLATE environment variable is not set
+SKIP_MSG = """
+CHARMLIBS_TEMPLATE is not set, did you run cookiecutter via `just init`?
+Skipping restoring symlinks in `post_gen_project` hook ...
+""".strip()
+TEMPLATE_DIR = os.environ.get('CHARMLIBS_TEMPLATE')
+if not TEMPLATE_DIR:
+    warnings.warn(SKIP_MSG, stacklevel=2)
+else:
+    # get the relative path to every symlink in the template, and its target as a string
+    TEMPLATE_PROJECT_ROOT = pathlib.Path(
+        TEMPLATE_DIR,
+        # we use raw to preserve the templated dir name,
+        # as cookiecutter runs this script through jinja
+        '{% raw %}{{ cookiecutter.project_slug }}{% endraw %}',
+    )
+    RELATIVE_SYMLINK_PATHS = {
+        path.relative_to(TEMPLATE_PROJECT_ROOT): str(path.readlink())
+        for path in TEMPLATE_PROJECT_ROOT.rglob('*')
+        if path.is_symlink()
+    }
+
+    # iterate over relative paths and relink them in current working directory (generated project)
+    for symlink_path, target in RELATIVE_SYMLINK_PATHS.items():
+        # remove resolved copy of symlink target created by cookiecutter
+        if symlink_path.is_dir():
+            shutil.rmtree(symlink_path)
+        else:
+            symlink_path.unlink()
+        symlink_path.symlink_to(target)
+
+
+#########################################################
+# remove files that don't apply to this kind of library #
+#########################################################
+
+if {{cookiecutter._interface}}:  # noqa: F821
     # The interface test charms relate to each other, so there's no need for
     # the k8s and machine test charms or the version test.
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'k8s-charm'))
@@ -42,43 +84,4 @@ else:  # Not an interface library.
     # General libraries only use the k8s and machine test charms.
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'provider-charm'))
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'requirer-charm'))
-    pathlib.Path('tests', 'integration', 'test_relation.py').unlink(missing_ok=True)
-
-
-#########################################################################################
-# unresolve symlinks -- we use these in the template for a better maintainer experience #
-#########################################################################################
-
-# abort if CHARMLIBS_TEMPLATE environment  variable is not set
-ABORT_MSG = """
-CHARMLIBS_TEMPLATE is not set, did you run cookiecutter via `just init`?
-Aborting `post_gen_project` hook without restoring symlinks ...
-""".strip()
-TEMPLATE_DIR = os.environ.get('CHARMLIBS_TEMPLATE')
-if not TEMPLATE_DIR:
-    warnings.warn(ABORT_MSG, stacklevel=2)
-    sys.exit()
-
-# get the relative path to every symlink in the template, and its target as a string
-TEMPLATE_PROJECT_ROOT = pathlib.Path(
-    TEMPLATE_DIR,
-    # we use raw to preserve the templated dir name as cookiecutter runs this script through jinja
-    '{% raw %}{{ cookiecutter.project_slug }}{% endraw %}',
-)
-RELATIVE_SYMLINK_PATHS = {
-    path.relative_to(TEMPLATE_PROJECT_ROOT): str(path.readlink())
-    for path in TEMPLATE_PROJECT_ROOT.rglob('*')
-    if path.is_symlink()
-}
-
-# iterate over relative paths and relink them in current working directory (generated project)
-for symlink_path, target in RELATIVE_SYMLINK_PATHS.items():
-    # skip symlinks whose path was removed from the generated project above
-    if not symlink_path.exists() and not symlink_path.is_symlink():
-        continue
-    # remove resolved copy of symlink target created by cookiecutter
-    if symlink_path.is_dir():
-        shutil.rmtree(symlink_path)
-    else:
-        symlink_path.unlink()
-    symlink_path.symlink_to(target)
+    pathlib.Path('tests', 'integration', 'test_relation.py').unlink()
