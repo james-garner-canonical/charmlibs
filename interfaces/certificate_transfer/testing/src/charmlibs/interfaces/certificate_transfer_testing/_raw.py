@@ -5,9 +5,9 @@
 
 """Static certificate material for the testing library."""
 
-# Self-signed CA certificates, valid for a hundred years. The first is what a
-# ``RemoteProvider`` transfers unless the test says otherwise; the others are here so that a
-# test can model several certificates, or two providers offering different ones.
+# Self-signed CA certificates, valid for a hundred years. The first is what the stand-in
+# from ``provider()`` transfers unless the test says otherwise; the others are here so that
+# a test can model several certificates, or two providers offering different ones.
 CA_CERTS = (
     """
 -----BEGIN CERTIFICATE-----

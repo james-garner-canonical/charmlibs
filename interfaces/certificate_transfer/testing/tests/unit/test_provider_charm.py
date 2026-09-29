@@ -12,21 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the certificate_transfer testing library from a provider charm perspective.
+"""Tests from a provider charm's perspective, using the stand-in requirer.
 
-A provider charm is tested with a ``RemoteRequirer`` -- the remote plays the opposite role.
-These are the tests a charm author would write, so they only use the package's public API
-and never read relation data. The remote's own contract is tested in ``test_testing.py``.
-
-The charm under test is paired with a requirer charm here and there, rather than only having
-its relation data inspected, because what a provider charm publishes is only interesting
-inasmuch as a requirer can read it back.
+Note that the harness makes unit 0 of each application the leader, which is what both
+sides need: ``CertificateTransferRequires`` writes its version to the application databag,
+and ``CertificateTransferProvides.add_certificates`` writes the answer there too.
 """
 
 from __future__ import annotations
 
 import typing
 
+import ops
 import ops.testing
 
 import provider_charm
@@ -34,103 +31,24 @@ import requirer_charm
 from charmlibs.interfaces import certificate_transfer_testing as certificate_transfer_testing
 
 if typing.TYPE_CHECKING:
-    _Ctx: typing.TypeAlias = ops.testing.Context[provider_charm.ProviderCharm]
-
-CLIENT = certificate_transfer_testing.RemoteRequirer('send-ca-cert')
-OLD_CLIENT = certificate_transfer_testing.RemoteRequirer('send-ca-cert', interface_version=0)
+    import _juju
 
 
-def test_provider_no_relation(provider_ctx: _Ctx, mocked: None):
-    """Nobody is asking, so there is nothing to transfer to."""
-    with provider_ctx(provider_ctx.on.update_status(), ops.testing.State(leader=True)) as manager:
-        state_out = manager.run()
-        assert manager.charm.transferred is True
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
+def _deploy(juju: _juju.Juju, num_units: int = 1) -> _juju.App:
+    return juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META, num_units=num_units)
 
 
-def test_provider_has_transferred(provider_ctx: _Ctx, mocked: None):
-    """Once the whole conversation has happened, the charm's CA is on the wire.
-
-    ``integrate``'s default ``end="received"`` adds the relation, runs the charm for the
-    events Juju fires on integration, writes the requirer's advertised version, and runs the
-    charm again so that it answers in that version's format.
-    """
-    state_in = ops.testing.State.from_context(provider_ctx, leader=True)
-    state = CLIENT.integrate(provider_ctx, state_in)
-    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
-    assert _read_back(state) == {provider_charm.CA_CERT}
-
-
-def test_provider_before_the_requirer_has_spoken(provider_ctx: _Ctx, mocked: None):
-    """``end="integrated"`` is the state where nobody on the other end has said anything.
-
-    This charm transfers on ``relation-joined``, so it has already written by then -- in the
-    v0 format, because the requirer's ``version`` isn't on the wire yet. That is Juju's own
-    ordering rather than an artefact of this package: a provider can be joined before the
-    requirer's application data has propagated.
-    """
-    state_in = ops.testing.State.from_context(provider_ctx, leader=True)
-    state = CLIENT.integrate(provider_ctx, state_in, end='integrated')
-    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
-    assert _read_back(state) == {provider_charm.CA_CERT}
-
-
-def test_provider_request_not_yet_seen(provider_ctx: _Ctx, mocked: None):
-    """``end="published"`` leaves the requirer's version on the wire for the test's act step."""
-    state_in = ops.testing.State.from_context(provider_ctx, leader=True)
-    state = CLIENT.integrate(provider_ctx, state_in, end='published')
-    state_out = CLIENT.run_changed(provider_ctx, state)
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
-    assert _read_back(state_out) == {provider_charm.CA_CERT}
-
-
-def test_provider_answers_an_old_requirer(provider_ctx: _Ctx, mocked: None):
-    """``interface_version=0`` models a requirer charm that predates v1 of the interface.
-
-    It advertises nothing, so the charm under test keeps writing the v0 format, which is
-    what the library's fallback exists for.
-    """
-    state_in = ops.testing.State.from_context(provider_ctx, leader=True)
-    state = OLD_CLIENT.integrate(provider_ctx, state_in)
-    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
-    assert _read_back(state) == {provider_charm.CA_CERT}
-
-
-def test_provider_non_leader_transfers_nothing(provider_ctx: _Ctx, mocked: None):
-    """Transferring is leader-only, so this charm reads the request and does nothing."""
-    state_in = ops.testing.State.from_context(provider_ctx, leader=False)
-    state = CLIENT.integrate(provider_ctx, state_in)
-    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
-    assert _read_back(state) == set()
-
-
-def test_provider_several_requirers(provider_ctx: _Ctx, mocked: None):
-    """A remote stands for one application, so several clients take one remote each."""
-    remotes = [
-        certificate_transfer_testing.RemoteRequirer('send-ca-cert', remote_app_name=name)
-        for name in ('workload', 'dashboard')
-    ]
-    state = ops.testing.State.from_context(provider_ctx, leader=True)
-    for remote in remotes:
-        state = remote.integrate(provider_ctx, state)
-    for remote in remotes:
-        assert _read_back(state, remote) == {provider_charm.CA_CERT}
-
-
-def test_provider_relation_broken(provider_ctx: _Ctx, mocked: None):
-    """``get_relation`` is the escape hatch for the events the other methods don't cover."""
-    state = CLIENT.integrate(
-        provider_ctx, ops.testing.State.from_context(provider_ctx, leader=True)
+def _ctx(unit: _juju.Unit) -> ops.testing.Context[provider_charm.ProviderCharm]:
+    return ops.testing.Context(
+        provider_charm.ProviderCharm,
+        meta=provider_charm.META,
+        app_name=unit.app.name,
+        unit_id=unit.id,
     )
-    state_out = provider_ctx.run(
-        provider_ctx.on.relation_broken(CLIENT.get_relation(state)), state
-    )
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
 
 
 def _read_back(
-    state: ops.testing.State,
-    remote: certificate_transfer_testing.RemoteRequirer = CLIENT,
+    state: ops.testing.State, endpoint: str = 'send-ca-cert', remote_app_name: str | None = None
 ) -> set[str]:
     """What a real requirer charm would see, by running one against the provider's databags.
 
@@ -139,7 +57,13 @@ def _read_back(
     requirer over the same relation asks the question a charm author actually has -- "did
     this arrive?" -- and answers it the same way for both formats.
     """
-    relation = remote.get_relation(state)
+    (relation,) = [
+        r
+        for r in state.relations
+        if r.endpoint == endpoint
+        and isinstance(r, ops.testing.Relation)
+        and (remote_app_name is None or r.remote_app_name == remote_app_name)
+    ]
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
     # The two sides swap over: what the provider charm wrote locally is what the requirer
     # charm reads remotely, and vice versa.
@@ -154,3 +78,87 @@ def _read_back(
     with ctx(ctx.on.update_status(), ops.testing.State(leader=True, relations=[mirrored])) as m:
         m.run()
         return m.charm.certificates or set()
+
+
+def test_no_relation(juju: _juju.Juju, mocked: None):
+    """Nobody is asking, so there is nothing to transfer to -- but the charm still runs."""
+    app = _deploy(juju)
+    juju.dispatch(app.leader, 'update-status')
+    juju.settle()
+    assert isinstance(app.leader.state.unit_status, ops.ActiveStatus)
+
+
+def test_the_happy_path(juju: _juju.Juju, mocked: None):
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(certificate_transfer_testing.requirer()))
+    juju.settle()
+    assert isinstance(app.leader.state.unit_status, ops.ActiveStatus)
+    assert _read_back(app.leader.state) == {provider_charm.CA_CERT}
+
+
+def test_the_charm_has_transferred(juju: _juju.Juju, mocked: None):
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(certificate_transfer_testing.requirer()))
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
+        manager.run()
+        assert manager.charm.transferred is True
+
+
+def test_a_silent_requirer_is_answered_in_the_v0_format(juju: _juju.Juju, mocked: None):
+    """respond=False: the stand-in joins the relation and writes nothing.
+
+    An absent ``version`` key is how v0 is spelled, so the provider library falls back to
+    the v0 format -- which a modern requirer still reads.
+    """
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(certificate_transfer_testing.requirer(respond=False)))
+    juju.settle()
+    assert isinstance(app.leader.state.unit_status, ops.ActiveStatus)
+    assert _read_back(app.leader.state) == {provider_charm.CA_CERT}
+
+
+def test_an_old_requirer_is_answered_in_the_v0_format(juju: _juju.Juju, mocked: None):
+    """``interface_version=0`` models a requirer charm that predates v1 of the interface.
+
+    It advertises nothing, so the charm under test keeps writing the v0 format, which is
+    what the library's fallback exists for.
+    """
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(certificate_transfer_testing.requirer(interface_version=0)))
+    juju.settle()
+    assert isinstance(app.leader.state.unit_status, ops.ActiveStatus)
+    assert _read_back(app.leader.state) == {provider_charm.CA_CERT}
+
+
+def test_a_non_leader_provider_transfers_nothing(juju: _juju.Juju, mocked: None):
+    """Transferring is leader-only, so a non-leader reads the request and does nothing."""
+    app = _deploy(juju, num_units=2)
+    juju.integrate(app, juju.deploy(certificate_transfer_testing.requirer()))
+    juju.settle()
+    non_leader = app.units[1]
+    assert isinstance(non_leader.state.unit_status, ops.ActiveStatus)
+    # The leader wrote the certificates, and every unit can read them back.
+    assert _read_back(app.leader.state) == {provider_charm.CA_CERT}
+    ctx = _ctx(non_leader)
+    with ctx(ctx.on.update_status(), non_leader.state) as manager:
+        manager.run()
+        assert manager.charm.transferred is False
+
+
+def test_several_requirers_on_one_endpoint(juju: _juju.Juju, mocked: None):
+    """A stand-in stands for one application, so several clients take one each."""
+    app = _deploy(juju)
+    clients = [
+        juju.deploy(certificate_transfer_testing.requirer(), app=name)
+        for name in ('workload', 'dashboard')
+    ]
+    for client in clients:
+        juju.integrate(app, client)
+    juju.settle()
+    assert isinstance(app.leader.state.unit_status, ops.ActiveStatus)
+    for client in clients:
+        assert _read_back(app.leader.state, remote_app_name=client.name) == {
+            provider_charm.CA_CERT
+        }

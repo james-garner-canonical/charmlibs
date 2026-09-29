@@ -1,7 +1,18 @@
 # Copyright 2026 Canonical Ltd.
-# See LICENSE file for licensing details.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-"""Tests for the remote classes' own contract.
+"""Tests for the stand-in charms' own contract, as OP093 specifies it.
 
 These read relation data directly, which a charm test should never do -- the point of the
 package is that charm tests don't have to. Here it is the subject.
@@ -17,557 +28,357 @@ import ops
 import ops.testing
 import pytest
 
+import _juju
+import provider_charm
 import requirer_charm
 
 # The aliased form keeps these on separate lines, which a namespace package split across
 # two distributions needs for pyright to resolve both halves.
 from charmlibs.interfaces import certificate_transfer as certificate_transfer
 from charmlibs.interfaces import certificate_transfer_testing as certificate_transfer_testing
+from charmlibs.interfaces.certificate_transfer_testing import _raw
 
-if typing.TYPE_CHECKING:
-    _Ctx: typing.TypeAlias = ops.testing.Context[requirer_charm.RequirerCharm]
-
-_Remote: typing.TypeAlias = (
-    certificate_transfer_testing.RemoteProvider | certificate_transfer_testing.RemoteRequirer
-)
-
-CLASSES: list[type[_Remote]] = [
-    certificate_transfer_testing.RemoteProvider,
-    certificate_transfer_testing.RemoteRequirer,
-]
-PROVIDER = certificate_transfer_testing.RemoteProvider('certificates')
-REQUIRER = certificate_transfer_testing.RemoteRequirer('certificates')
-REMOTES: list[_Remote] = [PROVIDER, REQUIRER]
-IDS = ['RemoteProvider', 'RemoteRequirer']
+JUJU_NETWORK_KEYS = {'egress-subnets', 'ingress-address', 'private-address'}
 
 ROOT = '-----BEGIN CERTIFICATE-----\nroot\n-----END CERTIFICATE-----'
 INTERMEDIATE = '-----BEGIN CERTIFICATE-----\nintermediate\n-----END CERTIFICATE-----'
 
 
-def _bare_state(remote: _Remote) -> ops.testing.State:
-    """A bare relation for ``remote``, built from its own attributes so the two agree."""
-    relation = ops.testing.Relation(
-        remote.endpoint,
-        interface='certificate_transfer',
-        remote_app_name=remote.remote_app_name,
-    )
-    return ops.testing.State(leader=True, relations=[relation])
+def _interface_keys(databag: typing.Mapping[str, str]) -> set[str]:
+    """Return only the interface's own keys, excluding Juju's network ones."""
+    return set(databag) - JUJU_NETWORK_KEYS
 
 
-def _transferred(remote: _Remote, state: ops.testing.State) -> set[str] | None:
-    """The certificates this remote has published, straight off the wire, or ``None``.
+def _transferred(relation: ops.testing.Relation) -> set[str] | None:
+    """The certificates the stand-in provider has published, straight off the wire.
 
-    Looks in both of the interface's wire formats, and returns ``None`` where the remote has
-    written neither. Nothing else in this repository reads a databag this way; that is the
-    point of the package.
+    Looks in both of the interface's wire formats, and returns ``None`` where the stand-in
+    has written neither. Nothing else in this repository reads a databag this way; that is
+    the point of the package.
     """
-    relation = remote.get_relation(state)
-    if 'certificates' in relation.remote_app_data:
-        return set(json.loads(relation.remote_app_data['certificates']))
-    unit_data = relation.remote_units_data[0]
-    if 'chain' in unit_data:
-        return set(json.loads(unit_data['chain']))
+    if 'certificates' in relation.local_app_data:
+        return set(json.loads(relation.local_app_data['certificates']))
+    if 'chain' in relation.local_unit_data:
+        return set(json.loads(relation.local_unit_data['chain']))
     return None
 
 
-def _wire_version(remote: _Remote, state: ops.testing.State) -> int | None:
-    """Which of the interface's two formats this remote wrote in, or ``None`` for neither."""
-    relation = remote.get_relation(state)
-    if 'certificates' in relation.remote_app_data:
+def _wire_version(relation: ops.testing.Relation) -> int | None:
+    """Which of the interface's two formats the stand-in wrote in, or ``None`` for neither."""
+    if 'certificates' in relation.local_app_data:
         return 1
-    if 'chain' in relation.remote_units_data[0]:
+    if 'chain' in relation.local_unit_data:
         return 0
     return None
 
 
-# ----------------------------------------------------------- construction and identity
+# ---------------------------------------------------------------- construction & identity
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_endpoint_is_required_and_positional(cls: type[_Remote]):
-    """endpoint must be passable positionally or by keyword, and must be required."""
-    assert cls('certificates').endpoint == 'certificates'
-    assert cls(endpoint='certificates').endpoint == 'certificates'
+def test_provider_and_requirer_are_callable_with_no_arguments():
+    """OP093: both must be callable with no arguments, defaulting to the happy path."""
+    assert certificate_transfer_testing.provider() is not None
+    assert certificate_transfer_testing.requirer() is not None
+
+
+@pytest.mark.parametrize(
+    'function', [certificate_transfer_testing.provider, certificate_transfer_testing.requirer]
+)
+def test_every_argument_is_keyword_only(function: typing.Callable[..., typing.Any]):
+    """OP093: all arguments must be optional and keyword-only."""
     with pytest.raises(TypeError):
-        cls()  # pyright: ignore[reportCallIssue]
+        function('certificates')
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_every_other_argument_is_keyword_only(cls: type[_Remote]):
-    """All other arguments must be optional and keyword-only."""
-    with pytest.raises(TypeError):
-        cls('certificates', 'remote')  # pyright: ignore[reportCallIssue]
+@pytest.mark.parametrize(
+    ('function', 'name'),
+    [
+        (certificate_transfer_testing.provider, 'certificate-transfer-provider'),
+        (certificate_transfer_testing.requirer, 'certificate-transfer-requirer'),
+    ],
+)
+def test_the_stand_ins_metadata(function: typing.Callable[..., typing.Any], name: str):
+    """OP093: meta names the library and role, and declares exactly one endpoint."""
+    data = function()
+    assert data.meta['name'] == name
+    endpoints = {
+        endpoint: spec
+        for role in ('provides', 'requires')
+        for endpoint, spec in data.meta.get(role, {}).items()
+    }
+    assert endpoints == {'certificates': {'interface': 'certificate_transfer'}}
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_endpoint_and_remote_app_name_are_readable(cls: type[_Remote]):
-    """Both must be readable, so a hand-built bare Relation can agree with them."""
-    assert cls('certificates').endpoint == 'certificates'
-    assert cls('certificates').remote_app_name == 'remote'
-    assert cls('certificates', remote_app_name='other').remote_app_name == 'other'
+@pytest.mark.parametrize(
+    'function', [certificate_transfer_testing.provider, certificate_transfer_testing.requirer]
+)
+def test_the_result_is_a_charm_data(function: typing.Callable[..., typing.Any]):
+    """The shape OP089 specifies: charm type, metadata, and the package's mocking."""
+    data: certificate_transfer_testing.CharmData[ops.CharmBase] = function()
+    assert isinstance(data, certificate_transfer_testing.CharmData)
+    assert issubclass(data.charm_type, ops.CharmBase)
+    assert data.mocking is certificate_transfer_testing.mocked
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_remotes_are_immutable(remote: _Remote):
-    """The arguments given at construction cannot be changed afterwards.
-
-    Read-only properties rather than a frozen dataclass, so the error is AttributeError.
-    """
-    with pytest.raises(AttributeError):
-        remote.endpoint = 'other'  # pyright: ignore[reportAttributeAccessIssue]
-    with pytest.raises(AttributeError):
-        remote.remote_app_name = 'other'  # pyright: ignore[reportAttributeAccessIssue]
-    with pytest.raises(AttributeError):
-        remote.interface_version = 1  # pyright: ignore[reportAttributeAccessIssue]
-
-
-def test_provider_certificates_are_immutable():
-    with pytest.raises(AttributeError):
-        PROVIDER.certificates = ()  # pyright: ignore[reportAttributeAccessIssue]
+@pytest.mark.parametrize(
+    'function', [certificate_transfer_testing.provider, certificate_transfer_testing.requirer]
+)
+def test_the_result_is_immutable_and_reusable(function: typing.Callable[..., typing.Any]):
+    """OP093: a single result may be deployed any number of times, behaving identically."""
+    data = function()
+    assert dataclasses.is_dataclass(data)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        data.meta = {}  # pyright: ignore[reportAttributeAccessIssue]
+    # Two calls with equal arguments produce distinct but interchangeable results.
+    assert function() is not function()
 
 
-def test_provider_certificates_do_not_alias_the_argument():
-    """A caller mutating the list it passed must not change what the remote transfers."""
-    certificates = [ROOT]
-    remote = certificate_transfer_testing.RemoteProvider('certificates', certificates=certificates)
-    certificates.append(INTERMEDIATE)
-    assert remote.certificates == (ROOT,)
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_repr_shows_the_arguments_the_caller_chose(remote: _Remote):
-    """pytest derives parametrize IDs from it, so it must be short and self-describing."""
-    assert repr(remote) == f"{type(remote).__name__}('certificates')"
-    other = type(remote)('certificates', remote_app_name='other')
-    assert repr(other) == f"{type(remote).__name__}('certificates', remote_app_name='other')"
-
-
-def test_repr_shows_the_library_specific_arguments():
-    """The certificates are counted rather than shown: a PEM is over a kilobyte."""
-    assert repr(certificate_transfer_testing.RemoteProvider('certificates', certificates=[])) == (
-        "RemoteProvider('certificates', certificates=<0>)"
-    )
-    assert (
-        repr(
-            certificate_transfer_testing.RemoteProvider(
-                'certificates', certificates=[ROOT, INTERMEDIATE], interface_version=0
-            )
+def test_the_stand_in_charm_classes_are_private():
+    """Nothing a test does with a stand-in needs the concrete class."""
+    for data in (certificate_transfer_testing.provider(), certificate_transfer_testing.requirer()):
+        assert data.charm_type.__name__ in ('_ProviderCharm', '_RequirerCharm')
+        assert data.charm_type.__module__ == (
+            'charmlibs.interfaces.certificate_transfer_testing._testing'
         )
-        == "RemoteProvider('certificates', certificates=<2>, interface_version=0)"
-    )
-    assert (
-        repr(certificate_transfer_testing.RemoteRequirer('certificates', interface_version=0))
-        == "RemoteRequirer('certificates', interface_version=0)"
-    )
+        assert not hasattr(certificate_transfer_testing, data.charm_type.__name__)
 
 
-# ---------------------------------------------------------------- argument validation
+# ------------------------------------------------------------------ argument validation
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_rejects_a_version_the_interface_does_not_have(cls: type[_Remote]):
-    """Misuse raises early, at construction, rather than quietly writing the wrong format."""
+@pytest.mark.parametrize(
+    'function', [certificate_transfer_testing.provider, certificate_transfer_testing.requirer]
+)
+def test_rejects_a_version_the_interface_does_not_have(function: typing.Callable[..., typing.Any]):
+    """Misuse raises early, at call time, rather than quietly writing the wrong format."""
     with pytest.raises(ValueError, match='not a version'):
-        cls('certificates', interface_version=typing.cast('typing.Any', 2))
+        function(interface_version=typing.cast('typing.Any', 2))
 
 
 def test_requirer_rejects_no_version_at_all():
     """A requirer always has a version; v0's is spelled by writing nothing, not by None."""
     with pytest.raises(ValueError, match='not a version'):
-        certificate_transfer_testing.RemoteRequirer(
-            'certificates', interface_version=typing.cast('typing.Any', None)
-        )
+        certificate_transfer_testing.requirer(interface_version=typing.cast('typing.Any', None))
 
 
-def test_provider_accepts_deciding_the_version_for_itself():
+def test_provider_accepts_deciding_the_version_for_itself(juju: _juju.Juju, mocked: None):
     """None is the default, and is distinct from being told to use v1."""
-    assert certificate_transfer_testing.RemoteProvider('certificates').interface_version is None
-    forced = certificate_transfer_testing.RemoteProvider('certificates', interface_version=1)
-    assert forced.interface_version == 1
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    decided = juju.deploy(certificate_transfer_testing.provider(), app='decided')
+    juju.integrate(app, decided)
+    forced = juju.deploy(certificate_transfer_testing.provider(interface_version=1), app='forced')
+    juju.integrate(app, forced)
+    juju.settle()
+    for stand_in in (decided, forced):
+        (relation,) = _juju.relations(stand_in.leader.state, 'certificates')
+        assert _wire_version(relation) == 1
 
 
 def test_provider_accepts_having_nothing_to_transfer():
     """Distinct from the default: this provider answers, and its answer is empty."""
-    assert (
-        certificate_transfer_testing.RemoteProvider('certificates', certificates=[]).certificates
-        == ()
-    )
-    assert len(certificate_transfer_testing.RemoteProvider('certificates').certificates) == 1
+    assert certificate_transfer_testing.provider(certificates=[]) is not None
+    assert certificate_transfer_testing.provider() is not None
 
 
-# ------------------------------------------------------------------ the mocked() scope
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-@pytest.mark.parametrize('method', ['integrate', 'publish', 'run_changed'])
-def test_state_producing_methods_require_the_mocked_scope(
-    remote: _Remote, method: str, requirer_ctx: _Ctx
-):
-    """Every library requires the scope, including the ones that mock nothing.
-
-    A library that didn't would break every test written against it on the day it started
-    mocking. Requiring it from the start makes introducing mocking a non-breaking change.
+def test_provider_normalises_its_certificate_iterable(juju: _juju.Juju, mocked: None):
+    """A stand-in is deployed any number of times, so a one-shot iterator must not be
+    consumed once.
     """
-    state = _bare_state(remote)
-    args = (state,) if method == 'publish' else (requirer_ctx, state)
-    with pytest.raises(RuntimeError, match='mocked'):
-        getattr(remote, method)(*args)
+    data = certificate_transfer_testing.provider(certificates=iter([ROOT]))
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    first = juju.deploy(data, app='first')
+    juju.integrate(app, first)
+    second = juju.deploy(data, app='second')
+    juju.integrate(app, second)
+    juju.settle()
+    for stand_in in (first, second):
+        (relation,) = _juju.relations(stand_in.leader.state, 'certificates')
+        assert _transferred(relation) == {ROOT}
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_does_not_require_the_mocked_scope(remote: _Remote):
-    """Assertions commonly run after the scope has closed, so this must work outside it."""
-    state = _bare_state(remote)
-    assert remote.get_relation(state).endpoint == remote.endpoint
+# ------------------------------------------------- the stand-in provider: what it writes
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_mocked_is_reentrant(remote: _Remote):
-    """A fixture and the test that uses it may each open a scope."""
-    with certificate_transfer_testing.mocked(), certificate_transfer_testing.mocked():
-        remote.publish(_bare_state(remote))
-    # And the scope is properly closed again on the way out.
-    with pytest.raises(RuntimeError, match='mocked'):
-        remote.publish(_bare_state(remote))
+def test_provider_derives_the_format_from_what_the_charm_published(juju: _juju.Juju, mocked: None):
+    """The conformance test OP093 requires, as far as this interface has one.
 
-
-# ---------------------------------------------------------------------- get_relation
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_raises_when_there_is_no_relation(remote: _Remote):
-    with pytest.raises(KeyError, match='no relation'):
-        remote.get_relation(ops.testing.State())
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_matches_on_the_remote_app_name_too(remote: _Remote):
-    """A remote stands for one application on one endpoint, not for the endpoint."""
-    mine = ops.testing.Relation(remote.endpoint, remote_app_name=remote.remote_app_name)
-    theirs = ops.testing.Relation(remote.endpoint, remote_app_name='someone-else')
-    state = ops.testing.State(relations=[mine, theirs])
-    assert remote.get_relation(state).id == mine.id
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_raises_when_two_relations_match(remote: _Remote):
-    """Silently picking one would let a test assert against the wrong application."""
-    relations = [
-        ops.testing.Relation(remote.endpoint, remote_app_name=remote.remote_app_name)
-        for _ in range(2)
-    ]
-    with pytest.raises(ValueError, match='matches 2 relations'):
-        remote.get_relation(ops.testing.State(relations=relations))
-
-
-# ------------------------------------------------------------------------- integrate
-
-
-def test_integrate_adds_the_relation(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(requirer_ctx, ops.testing.State(leader=True))
-    relation = PROVIDER.get_relation(state)
-    assert relation.endpoint == PROVIDER.endpoint
-    assert relation.remote_app_name == PROVIDER.remote_app_name
-    assert relation.interface == 'certificate_transfer'
-
-
-def test_integrate_adopts_a_bare_relation(requirer_ctx: _Ctx, mocked: None):
-    """ops.testing.State.from_context puts one there for every endpoint in the metadata."""
-    state_in = ops.testing.State.from_context(requirer_ctx, leader=True)
-    state_out = PROVIDER.integrate(requirer_ctx, state_in)
-    assert len(state_out.relations) == len(state_in.relations)
-
-
-def test_integrate_rejects_an_invalid_end(requirer_ctx: _Ctx, mocked: None):
-    with pytest.raises(ValueError, match='end must be'):
-        PROVIDER.integrate(
-            requirer_ctx, ops.testing.State(), end=typing.cast('typing.Any', 'settled')
-        )
-
-
-def test_integrate_rejects_a_relation_the_conversation_has_begun_on(
-    requirer_ctx: _Ctx, mocked: None
-):
-    """integrate() starts a conversation; publish() and run_changed() carry one on."""
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    with pytest.raises(ValueError, match='already begun'):
-        PROVIDER.integrate(requirer_ctx, state)
-
-
-def test_integrate_end_integrated_leaves_the_charm_having_advertised_its_version(
-    requirer_ctx: _Ctx, mocked: None
-):
-    """The requirer's whole half of this interface is the version it understands."""
-    state = PROVIDER.integrate(
-        requirer_ctx,
-        ops.testing.State.from_context(requirer_ctx, leader=True),
-        end='integrated',
-    )
-    assert PROVIDER.get_relation(state).local_app_data == {'version': '1'}
-    assert _transferred(PROVIDER, state) is None
-
-
-def test_integrate_end_published_leaves_the_certificates_unread(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(
-        requirer_ctx,
-        ops.testing.State.from_context(requirer_ctx, leader=True),
-        end='published',
-    )
-    assert _transferred(PROVIDER, state) == set(PROVIDER.certificates)
-    # The charm hasn't run against them yet, so it is still waiting.
-    assert isinstance(state.unit_status, ops.testing.BlockedStatus)
-
-
-def test_integrate_end_received_settles_the_relation(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    assert _transferred(PROVIDER, state) == set(PROVIDER.certificates)
-    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
-
-
-def test_integrate_preserves_the_rest_of_the_state(requirer_ctx: _Ctx, mocked: None):
-    """Everything the remote isn't responsible for is left as it is.
-
-    Other *relations* are covered by the publish test below rather than here, because
-    integrate runs the charm and so every endpoint in the state has to be declared in the
-    charm's metadata.
+    ``certificate_transfer`` is a one-way interface: the provider writes first, so there is
+    nothing to derive the *certificates* from -- they come from the stand-in's arguments.
+    What is derived is the *format* they are written in: v1 where the charm advertised
+    ``version: 1``, v0 where it did not, exactly as the real provider library decides.
     """
-    secret = ops.testing.Secret({'a': 'b'}, label='unrelated', owner='unit')
-    state_in = ops.testing.State.from_context(requirer_ctx, leader=True, secrets=[secret])
-    state_out = PROVIDER.integrate(requirer_ctx, state_in)
-    assert {s.label for s in state_out.secrets} == {'unrelated'}
-    assert state_out.leader is True
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider())
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    # The charm under test is a leader, so it advertised version 1, and is answered in v1.
+    assert relation.remote_app_data.get('version') == '1'
+    assert _wire_version(relation) == 1
 
 
-# --------------------------------------------------------------------------- publish
+def test_provider_reconciles_when_its_certificates_change(juju: _juju.Juju, mocked: None):
+    """The other conformance test OP093 requires: the old answer is gone.
 
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_preserves_the_rest_of_the_state(remote: _Remote, mocked: None):
-    """OP093: other relations, endpoints, secrets and config are preserved as-is."""
-    other = ops.testing.Relation('other-endpoint', remote_app_data={'key': 'value'})
-    secret = ops.testing.Secret({'a': 'b'}, label='unrelated', owner='unit')
-    state = _bare_state(remote)
-    state = dataclasses.replace(
-        state,
-        relations=[*state.relations, other],
-        secrets=[secret],
-        config={'foo': 'bar'},
-    )
-    out = remote.publish(state)
-    published = next(r for r in out.relations if r.id == other.id)
-    assert isinstance(published, ops.testing.Relation)
-    assert published.remote_app_data == {'key': 'value'}
-    assert {s.label for s in out.secrets} == {'unrelated'}
-    assert out.config == {'foo': 'bar'}
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_preserves_other_remotes_on_the_same_endpoint(remote: _Remote, mocked: None):
-    """State belonging to another simulated application must be left alone."""
-    theirs = ops.testing.Relation(
-        remote.endpoint, remote_app_name='someone-else', remote_app_data={'version': '1'}
-    )
-    state = _bare_state(remote)
-    state = dataclasses.replace(state, relations=[*state.relations, theirs])
-    out = remote.publish(state)
-    untouched = next(r for r in out.relations if r.id == theirs.id)
-    assert isinstance(untouched, ops.testing.Relation)
-    assert untouched.remote_app_data == {'version': '1'}
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_raises_without_a_relation(remote: _Remote, mocked: None):
-    """A missing relation is not an absence of data -- it's an incoherent call."""
-    with pytest.raises(ValueError, match='needs a relation'):
-        remote.publish(ops.testing.State())
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_does_not_raise_on_a_relation_the_charm_has_not_run_against(
-    remote: _Remote, mocked: None
-):
-    """A test that arranges this relation incidentally shouldn't be obstructed."""
-    remote.publish(_bare_state(remote))
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_keeps_jujus_own_keys_in_the_unit_databag(remote: _Remote, mocked: None):
-    """ops.testing puts the network keys there; only the interface's keys are the remote's."""
-    state = remote.publish(_bare_state(remote))
-    assert 'ingress-address' in remote.get_relation(state).remote_units_data[0]
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_is_idempotent(remote: _Remote, mocked: None):
-    """publish recomputes, so calling it twice with nothing else changed changes nothing."""
-    once = remote.publish(_bare_state(remote))
-    twice = remote.publish(once)
-    assert twice == once
-
-
-def test_provider_publish_writes_v0_when_the_charm_has_not_advertised_a_version(mocked: None):
-    """Which is what the real provider library does, and is how v0 requirers still work."""
-    state = PROVIDER.publish(_bare_state(PROVIDER))
-    assert _wire_version(PROVIDER, state) == 0
-    assert _transferred(PROVIDER, state) == set(PROVIDER.certificates)
-
-
-def test_provider_publish_writes_nothing_for_v0_with_no_certificates(mocked: None):
-    """v0 has no way to say "none": ``ca`` and ``certificate`` are single required strings."""
-    remote = certificate_transfer_testing.RemoteProvider('certificates', certificates=[])
-    state = _bare_state(remote)
-    assert remote.publish(state) == state
-
-
-def test_provider_publish_writes_an_empty_set_for_v1_with_no_certificates(
-    requirer_ctx: _Ctx, mocked: None
-):
-    """Not the same as having nothing to say -- this is an answer, and it is empty."""
-    remote = certificate_transfer_testing.RemoteProvider('certificates', certificates=[])
-    state = remote.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    assert _transferred(remote, state) == set()
-
-
-def test_provider_publish_switching_format_clears_the_other_one(mocked: None):
-    """The state must never hold both halves of the conversation at once."""
-    as_v0 = certificate_transfer_testing.RemoteProvider('certificates', interface_version=0)
-    as_v1 = certificate_transfer_testing.RemoteProvider('certificates', interface_version=1)
-    state = as_v0.publish(_bare_state(as_v0))
-    assert _wire_version(as_v0, state) == 0
-    state = as_v1.publish(state)
-    assert _wire_version(as_v1, state) == 1
-    assert 'chain' not in as_v1.get_relation(state).remote_units_data[0]
-    state = as_v0.publish(state)
-    assert _wire_version(as_v0, state) == 0
-    assert as_v0.get_relation(state).remote_app_data == {}
-
-
-def test_provider_publish_removes_what_is_no_longer_warranted(requirer_ctx: _Ctx, mocked: None):
-    """publish recomputes rather than appends: a rotated-out CA goes away."""
-    remote = certificate_transfer_testing.RemoteProvider(
-        'certificates', certificates=[ROOT, INTERMEDIATE]
-    )
-    state = remote.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    assert _transferred(remote, state) == {ROOT, INTERMEDIATE}
-    rotated = certificate_transfer_testing.RemoteProvider('certificates', certificates=[ROOT])
-    assert _transferred(rotated, rotated.publish(state)) == {ROOT}
-
-
-def test_provider_publish_writes_the_certificates_in_a_stable_order(mocked: None):
-    """The interface carries a set, so only sorting keeps the bytes the same run to run."""
-    remote = certificate_transfer_testing.RemoteProvider(
-        'certificates', certificates=[INTERMEDIATE, ROOT], interface_version=1
-    )
-    state = remote.publish(_bare_state(remote))
-    written = remote.get_relation(state).remote_app_data['certificates']
-    assert written == json.dumps(sorted([ROOT, INTERMEDIATE]))
-
-
-def test_requirer_publish_advertises_its_version(mocked: None):
-    """The requirer speaks first, so it always writes: there is nothing to wait for."""
-    assert REQUIRER.interface_version == 1
-    state = REQUIRER.publish(_bare_state(REQUIRER))
-    assert REQUIRER.get_relation(state).remote_app_data == {'version': '1'}
-
-
-def test_requirer_publish_writes_nothing_for_v0(mocked: None):
-    """An absent version key *is* how v0 is spelled -- a remote that would not write."""
-    remote = certificate_transfer_testing.RemoteRequirer('certificates', interface_version=0)
-    state = _bare_state(remote)
-    assert remote.publish(state) == state
-
-
-def test_requirer_publish_removes_what_is_no_longer_warranted(mocked: None):
-    """A remote that has become a v0 one clears the key rather than leaving it behind."""
-    state = REQUIRER.publish(_bare_state(REQUIRER))
-    older = certificate_transfer_testing.RemoteRequirer('certificates', interface_version=0)
-    assert older.get_relation(older.publish(state)).remote_app_data == {}
-
-
-def test_requirer_publish_leaves_the_unit_databag_alone(mocked: None):
-    """``certificate_transfer`` requirers write to the application databag only."""
-    state = REQUIRER.publish(_bare_state(REQUIRER))
-    for databag in REQUIRER.get_relation(state).remote_units_data.values():
-        assert not {'version', 'certificates', 'ca', 'certificate', 'chain'} & set(databag)
-
-
-def test_publish_derives_its_answer_from_what_the_charm_published(mocked: None):
-    """The conformance test OP093 requires: two charms saying different things.
-
-    What a ``certificate_transfer`` requirer says is which version of the wire format it
-    understands, so that is what the provider's answer must be derived from -- and it is
-    what the real ``CertificateTransferProvides`` derives it from too. A remote that ignored
-    the charm's relation data and always wrote one format would satisfy every other clause
-    of the contract while handing a v0 charm data it cannot read.
-
-    There is no counterpart for ``RemoteRequirer``: the requirer writes first on this
-    interface, so it has nothing to derive from.
+    The provider writes first on this interface, so "what the charm asks for" is the
+    stand-in's own arguments. Replacing the stand-in -- the fallback OP093 documents for
+    behaviour with no config shape -- leaves only what the replacement transfers.
     """
-    remote = certificate_transfer_testing.RemoteProvider('certificates')
-    charms = {
-        # A modern requirer: the library advertises version 1 on relation-created.
-        1: requirer_charm.RequirerCharm,
-        # A requirer from before v1 of the interface, which advertises nothing.
-        0: _v0_requirer_charm(),
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    before = juju.deploy(
+        certificate_transfer_testing.provider(certificates=[ROOT, INTERMEDIATE]), app='ca'
+    )
+    juju.integrate(app, before)
+    juju.settle()
+    (relation,) = _juju.relations(before.leader.state, 'certificates')
+    assert _transferred(relation) == {ROOT, INTERMEDIATE}
+    after = juju.deploy(certificate_transfer_testing.provider(certificates=[ROOT]), app='new-ca')
+    juju.integrate(app, after)
+    juju.settle()
+    (relation,) = _juju.relations(after.leader.state, 'certificates')
+    assert _transferred(relation) == {ROOT}
+
+
+def test_provider_answers_each_relation_independently(juju: _juju.Juju, mocked: None):
+    """A stand-in integrated with several applications writes each relation's own databag."""
+    ca = juju.deploy(certificate_transfer_testing.provider(certificates=[ROOT]))
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    other = juju.deploy(requirer_charm.RequirerCharm, app='other', meta=requirer_charm.META)
+    juju.integrate(app, ca)
+    juju.integrate(other, ca)
+    juju.settle()
+    answers = {
+        relation.remote_app_name: _transferred(relation)
+        for relation in _juju.relations(ca.leader.state, 'certificates')
     }
-    answers: dict[int, int | None] = {}
-    for expected, charm_type in charms.items():
-        ctx = ops.testing.Context(charm_type, meta=requirer_charm.META)
-        state = remote.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-        answers[expected] = _wire_version(remote, state)
-        # Whichever format it chose, the certificates themselves got through.
-        assert _transferred(remote, state) == set(remote.certificates)
-    assert answers == {1: 1, 0: 0}
+    assert answers == {'requirer': {ROOT}, 'other': {ROOT}}
 
 
-def _v0_requirer_charm() -> type[ops.CharmBase]:
-    """A requirer charm as it was before v1 of the interface: it advertises no version.
-
-    Written out rather than assembled from the library, because the library has no v0
-    requirer left in it -- advertising nothing is precisely what it stopped doing.
-    """
-
-    class _Charm(ops.CharmBase):
-        def __init__(self, framework: ops.Framework):
-            super().__init__(framework)
-            framework.observe(self.on['certificates'].relation_changed, self._noop)
-
-        def _noop(self, _: ops.EventBase) -> None:
-            pass
-
-    return _Charm
+def test_provider_transfers_the_certificates_it_was_given(juju: _juju.Juju, mocked: None):
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(certificates=[ROOT, INTERMEDIATE]))
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    assert _transferred(relation) == {ROOT, INTERMEDIATE}
 
 
-# ----------------------------------------------------------------------- run_changed
+def test_provider_with_nothing_to_transfer_publishes_an_empty_answer(
+    juju: _juju.Juju, mocked: None
+):
+    """Not the same as having nothing to say -- in v1 this is an answer, and it is empty."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(certificates=[]))
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    assert _transferred(relation) == set()
 
 
-def test_run_changed_is_equivalent_to_one_ctx_run(requirer_ctx: _Ctx, mocked: None):
-    """Its equivalence to a single ctx.run for relation-changed is part of its contract."""
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True), end='published'
-    )
-    before = len(requirer_ctx.emitted_events)
-    PROVIDER.run_changed(requirer_ctx, state)
-    changed = [
-        event
-        for event in requirer_ctx.emitted_events[before:]
-        if isinstance(event, ops.RelationChangedEvent)
-    ]
-    assert len(changed) == 1
-    assert changed[0].relation.id == PROVIDER.get_relation(state).id
-    # The remote has one unit, so the method names it rather than let ops.testing warn.
-    assert changed[0].unit is not None
-    assert changed[0].unit.name == f'{PROVIDER.remote_app_name}/0'
+def test_provider_with_nothing_to_transfer_writes_nothing_in_v0(juju: _juju.Juju, mocked: None):
+    """v0 has no way to say "none": ``ca`` and ``certificate`` are single required strings."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(certificates=[], interface_version=0))
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    assert _transferred(relation) is None
+    assert not _interface_keys(relation.local_app_data)
+    assert not _interface_keys(relation.local_unit_data)
 
 
-def test_run_changed_raises_without_a_relation(requirer_ctx: _Ctx, mocked: None):
-    with pytest.raises(KeyError, match='no relation'):
-        PROVIDER.run_changed(requirer_ctx, ops.testing.State())
+def test_provider_forced_to_v0_writes_the_unit_databag(juju: _juju.Juju, mocked: None):
+    """``interface_version=0`` models an old provider charm, answered in the v0 format."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(interface_version=0))
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    assert _wire_version(relation) == 0
+    assert _transferred(relation) == set(_raw.CA_CERTS[:1])
+    # And the v1 half of the conversation is not there.
+    assert not _interface_keys(relation.local_app_data)
+
+
+def test_provider_respond_false_writes_nothing(juju: _juju.Juju, mocked: None):
+    """OP093: a stand-in that joins the relation but writes nothing."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(respond=False))
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    assert not _interface_keys(relation.local_app_data)
+    assert not _interface_keys(relation.local_unit_data)
+    # The charm advertised its version; nobody answered.
+    assert relation.remote_app_data.get('version') == '1'
+
+
+def test_provider_writes_nothing_until_it_is_leader(juju: _juju.Juju, mocked: None):
+    """Transferring is leader-only, so a non-leader unit of the stand-in writes nothing."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(), num_units=2)
+    juju.integrate(app, ca)
+    juju.settle()
+    non_leader = ca.units[1]
+    (relation,) = _juju.relations(non_leader.state, 'certificates')
+    assert not _interface_keys(relation.local_app_data)
+    assert not _interface_keys(relation.local_unit_data)
+
+
+def test_provider_writes_the_certificates_as_a_set(juju: _juju.Juju, mocked: None):
+    """The interface carries a set: every certificate given is on the wire, once."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    ca = juju.deploy(certificate_transfer_testing.provider(certificates=[INTERMEDIATE, ROOT]))
+    juju.integrate(app, ca)
+    juju.settle()
+    (relation,) = _juju.relations(ca.leader.state, 'certificates')
+    written = json.loads(relation.local_app_data['certificates'])
+    assert sorted(written) == sorted([ROOT, INTERMEDIATE])
+
+
+# ------------------------------------------------- the stand-in requirer: what it writes
+
+
+def test_requirer_advertises_its_version(juju: _juju.Juju, mocked: None):
+    """The requirer speaks first, so it always writes: there is nothing to wait for."""
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    client = juju.deploy(certificate_transfer_testing.requirer())
+    juju.integrate(app, client)
+    juju.settle()
+    (relation,) = _juju.relations(client.leader.state, 'certificates')
+    assert relation.local_app_data == {'version': '1'}
+    assert set(relation.local_unit_data) <= JUJU_NETWORK_KEYS
+
+
+def test_requirer_v0_advertises_nothing(juju: _juju.Juju, mocked: None):
+    """An absent version key *is* how v0 is spelled -- a stand-in that would not write."""
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    client = juju.deploy(certificate_transfer_testing.requirer(interface_version=0))
+    juju.integrate(app, client)
+    juju.settle()
+    (relation,) = _juju.relations(client.leader.state, 'certificates')
+    assert not _interface_keys(relation.local_app_data)
+    assert set(relation.local_unit_data) <= JUJU_NETWORK_KEYS
+
+
+def test_requirer_respond_false_writes_nothing(juju: _juju.Juju, mocked: None):
+    """OP093: a stand-in that joins the relation but writes nothing."""
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    client = juju.deploy(certificate_transfer_testing.requirer(respond=False))
+    juju.integrate(app, client)
+    juju.settle()
+    (relation,) = _juju.relations(client.leader.state, 'certificates')
+    assert not _interface_keys(relation.local_app_data)
+    assert set(relation.local_unit_data) <= JUJU_NETWORK_KEYS
+
+
+def test_requirer_writes_nothing_until_it_is_leader(juju: _juju.Juju, mocked: None):
+    """The version lives in the application databag, which only the leader writes."""
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    client = juju.deploy(certificate_transfer_testing.requirer(), num_units=2)
+    juju.integrate(app, client)
+    juju.settle()
+    non_leader = client.units[1]
+    (relation,) = _juju.relations(non_leader.state, 'certificates')
+    assert not _interface_keys(relation.local_app_data)
+    assert set(relation.local_unit_data) <= JUJU_NETWORK_KEYS

@@ -7,11 +7,9 @@ from __future__ import annotations
 
 import typing
 
-import ops.testing
 import pytest
 
-import provider_charm
-import requirer_charm
+import _juju
 from charmlibs.interfaces import certificate_transfer_testing
 
 if typing.TYPE_CHECKING:
@@ -20,18 +18,18 @@ if typing.TYPE_CHECKING:
 
 @pytest.fixture()
 def mocked() -> Iterator[None]:
-    """Open the library's mocking scope for the whole test, arrangement and act alike."""
+    """Open the library's mocking scope for the whole test, arrangement and act alike.
+
+    The stand-ins get the scope from Juju, as their ``CharmData.mocking``. The charm under
+    test gets no mocking from this harness, so tests wrap its dispatches themselves --
+    which is what this fixture is for.
+    """
     with certificate_transfer_testing.mocked():
         yield
 
 
 @pytest.fixture()
-def requirer_ctx() -> ops.testing.Context[requirer_charm.RequirerCharm]:
-    """A context for the requirer charm, which is tested with a RemoteProvider."""
-    return ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-
-
-@pytest.fixture()
-def provider_ctx() -> ops.testing.Context[provider_charm.ProviderCharm]:
-    """A context for the provider charm, which is tested with a RemoteRequirer."""
-    return ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
+def juju() -> Iterator[_juju.Juju]:
+    """A fresh model for one test."""
+    with _juju.Juju() as model:
+        yield model

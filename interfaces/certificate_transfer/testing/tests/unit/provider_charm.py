@@ -15,7 +15,7 @@
 """Example provider charm for unit tests.
 
 Transfers its own CA certificate to every relation on its endpoint, as a certificate
-authority charm does, so that a test can watch it answer a ``RemoteRequirer``.
+authority charm does, so that a test can watch it answer the stand-in from ``requirer()``.
 """
 
 from __future__ import annotations

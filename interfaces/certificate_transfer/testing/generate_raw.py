@@ -7,7 +7,7 @@ Writes ``src/charmlibs/interfaces/certificate_transfer_testing/_raw.py`` in plac
 
 ``certificate_transfer`` moves CA certificates between charms as opaque PEM strings -- the
 library never parses them. The charm under test may well parse them, though, to write a
-trust store or read an expiry, so the simulated provider hands out genuine self-signed CA
+trust store or read an expiry, so the stand-in provider hands out genuine self-signed CA
 certificates rather than placeholder text: ``BasicConstraints CA:TRUE`` and ``KeyUsage
 keyCertSign``, valid for a hundred years so that a test never starts failing on a date.
 
@@ -90,7 +90,7 @@ def _main() -> None:
 """Static certificate material for the testing library."""
 
 # Self-signed CA certificates, valid for a hundred years. The first is what a
-# ``RemoteProvider`` transfers unless the test says otherwise; the others are here so that a
+# ``provider()`` stand-in transfers unless the test says otherwise; the others are here so that a
 # test can model several certificates, or two providers offering different ones.
 CA_CERTS = (
 {entries}\

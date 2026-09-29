@@ -15,7 +15,7 @@
 """Example requirer charm for unit tests.
 
 Collects the CA certificates it has been given, as a charm writing a trust store does, so
-that a test can watch it receive what a ``RemoteProvider`` transfers. Its endpoint has no
+that a test can watch it receive what the stand-in from ``provider()`` transfers. Its endpoint has no
 ``limit``, so it aggregates over every provider it is related to.
 """
 
