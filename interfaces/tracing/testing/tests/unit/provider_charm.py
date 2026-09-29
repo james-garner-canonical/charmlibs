@@ -15,7 +15,7 @@
 """Example provider charm for unit tests.
 
 Enables a receiver for each protocol requested across all its relations, as a real tracing
-backend does, so that a test can watch it answer what a ``RemoteRequirer`` asks for.
+backend does, so that a test can watch it answer what the stand-in from ``requirer()`` asks for.
 """
 
 from __future__ import annotations

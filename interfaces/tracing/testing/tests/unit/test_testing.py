@@ -1,7 +1,18 @@
 # Copyright 2026 Canonical Ltd.
-# See LICENSE file for licensing details.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-"""Tests for the remote classes' own contract.
+"""Tests for the stand-in charms' own contract, as OP093 specifies it.
 
 These read relation data directly, which a charm test should never do -- the point of the
 package is that charm tests don't have to. Here it is the subject.
@@ -14,9 +25,10 @@ import json
 import typing
 
 import ops
-import ops.testing
 import pytest
 
+import _juju
+import provider_charm
 import requirer_charm
 
 # The aliased form keeps these on separate lines, which a namespace package split across
@@ -24,27 +36,7 @@ import requirer_charm
 from charmlibs.interfaces import tracing as tracing
 from charmlibs.interfaces import tracing_testing as tracing_testing
 
-if typing.TYPE_CHECKING:
-    _Ctx: typing.TypeAlias = ops.testing.Context[requirer_charm.RequirerCharm]
-
-_Remote: typing.TypeAlias = tracing_testing.RemoteProvider | tracing_testing.RemoteRequirer
-
-CLASSES: list[type[_Remote]] = [
-    tracing_testing.RemoteProvider,
-    tracing_testing.RemoteRequirer,
-]
-PROVIDER = tracing_testing.RemoteProvider('tracing')
-REQUIRER = tracing_testing.RemoteRequirer('tracing')
-REMOTES: list[_Remote] = [PROVIDER, REQUIRER]
-IDS = ['RemoteProvider', 'RemoteRequirer']
-
-
-def _bare_state(remote: _Remote) -> ops.testing.State:
-    """A bare relation for ``remote``, built from its own attributes so the two agree."""
-    relation = ops.testing.Relation(
-        remote.endpoint, interface='tracing', remote_app_name=remote.remote_app_name
-    )
-    return ops.testing.State(leader=True, relations=[relation])
+JUJU_NETWORK_KEYS = {'egress-subnets', 'ingress-address', 'private-address'}
 
 
 def _wire(databag: typing.Mapping[str, str]) -> typing.Any:
@@ -53,438 +45,346 @@ def _wire(databag: typing.Mapping[str, str]) -> typing.Any:
     return None if raw is None else json.loads(raw)
 
 
-def _answered(remote: _Remote, state: ops.testing.State) -> typing.Any:
-    """What this remote has published, straight off the wire."""
-    return _wire(remote.get_relation(state).remote_app_data)
-
-
-def _asked(remote: _Remote, state: ops.testing.State) -> typing.Any:
-    """What the charm under test has published, straight off the wire."""
-    return _wire(remote.get_relation(state).local_app_data)
-
-
 def _protocol_names(receivers: typing.Any) -> list[str]:
     """The protocol names in a provider's published receiver list."""
     return [receiver['protocol']['name'] for receiver in receivers]
 
 
-# ----------------------------------------------------------- construction and identity
+def _interface_keys(databag: typing.Mapping[str, str]) -> set[str]:
+    """Return only the interface's own keys, excluding Juju's network ones."""
+    return set(databag) - JUJU_NETWORK_KEYS
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_endpoint_is_required_and_positional(cls: type[_Remote]):
-    """endpoint must be passable positionally or by keyword, and must be required."""
-    assert cls('tracing').endpoint == 'tracing'
-    assert cls(endpoint='tracing').endpoint == 'tracing'
+def _charm_requesting(protocols: list[tracing.ReceiverProtocol]) -> type[ops.CharmBase]:
+    """Return a requirer charm class asking for exactly ``protocols``."""
+
+    class Charm(ops.CharmBase):
+        def __init__(self, framework: ops.Framework):
+            super().__init__(framework)
+            self.tracing = tracing.TracingEndpointRequirer(self, protocols=protocols)
+
+    return Charm
+
+
+# ---------------------------------------------------------------- construction & identity
+
+
+def test_provider_and_requirer_are_callable_with_no_arguments():
+    """OP093: both must be callable with no arguments, defaulting to the happy path."""
+    assert tracing_testing.provider() is not None
+    assert tracing_testing.requirer() is not None
+
+
+@pytest.mark.parametrize('function', [tracing_testing.provider, tracing_testing.requirer])
+def test_every_argument_is_keyword_only(function: typing.Callable[..., typing.Any]):
+    """OP093: all arguments must be optional and keyword-only."""
     with pytest.raises(TypeError):
-        cls()  # pyright: ignore[reportCallIssue]
+        function('tracing')
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_every_other_argument_is_keyword_only(cls: type[_Remote]):
-    """All other arguments must be optional and keyword-only."""
-    with pytest.raises(TypeError):
-        cls('tracing', 'remote')  # pyright: ignore[reportCallIssue]
+@pytest.mark.parametrize(
+    ('function', 'name'),
+    [
+        (tracing_testing.provider, 'tracing-provider'),
+        (tracing_testing.requirer, 'tracing-requirer'),
+    ],
+)
+def test_the_stand_ins_metadata(function: typing.Callable[..., typing.Any], name: str):
+    """OP093: meta names the library and role, and declares exactly one endpoint."""
+    data = function()
+    assert data.meta['name'] == name
+    endpoints = {
+        endpoint: spec
+        for role in ('provides', 'requires')
+        for endpoint, spec in data.meta.get(role, {}).items()
+    }
+    assert endpoints == {'tracing': {'interface': 'tracing'}}
 
 
-@pytest.mark.parametrize('cls', CLASSES, ids=IDS)
-def test_endpoint_and_remote_app_name_are_readable(cls: type[_Remote]):
-    """Both must be readable, so a hand-built bare Relation can agree with them."""
-    assert cls('tracing').endpoint == 'tracing'
-    assert cls('tracing').remote_app_name == 'remote'
-    assert cls('tracing', remote_app_name='other').remote_app_name == 'other'
+@pytest.mark.parametrize('function', [tracing_testing.provider, tracing_testing.requirer])
+def test_the_result_is_a_charm_data(function: typing.Callable[..., typing.Any]):
+    """The shape OP089 specifies: charm type, metadata, and the package's mocking."""
+    data: tracing_testing.CharmData[ops.CharmBase] = function()
+    assert isinstance(data, tracing_testing.CharmData)
+    assert issubclass(data.charm_type, ops.CharmBase)
+    assert data.mocking is tracing_testing.mocked
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_remotes_are_immutable(remote: _Remote):
-    """The arguments given at construction cannot be changed afterwards.
-
-    Read-only properties rather than a frozen dataclass, so the error is AttributeError.
-    """
-    with pytest.raises(AttributeError):
-        remote.endpoint = 'other'  # pyright: ignore[reportAttributeAccessIssue]
-    with pytest.raises(AttributeError):
-        remote.remote_app_name = 'other'  # pyright: ignore[reportAttributeAccessIssue]
-
-
-def test_provider_arguments_are_immutable():
-    provider = tracing_testing.RemoteProvider('tracing')
-    for name in ('supported_protocols', 'host', 'tls'):
-        with pytest.raises(AttributeError):
-            setattr(provider, name, None)
+@pytest.mark.parametrize('function', [tracing_testing.provider, tracing_testing.requirer])
+def test_the_result_is_immutable_and_reusable(function: typing.Callable[..., typing.Any]):
+    """OP093: a single result may be deployed any number of times, behaving identically."""
+    data = function()
+    assert dataclasses.is_dataclass(data)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        data.meta = {}  # pyright: ignore[reportAttributeAccessIssue]
+    # Two calls with equal arguments produce distinct but interchangeable results.
+    assert function() is not function()
 
 
-def test_requirer_arguments_are_immutable():
-    with pytest.raises(AttributeError):
-        tracing_testing.RemoteRequirer('tracing').protocols = ()  # pyright: ignore[reportAttributeAccessIssue]
+def test_the_stand_in_charm_classes_are_private():
+    """Nothing a test does with a stand-in needs the concrete class."""
+    for data in (tracing_testing.provider(), tracing_testing.requirer()):
+        assert data.charm_type.__name__ in ('_ProviderCharm', '_RequirerCharm')
+        assert data.charm_type.__module__ == 'charmlibs.interfaces.tracing_testing._testing'
+        assert not hasattr(tracing_testing, data.charm_type.__name__)
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_repr_shows_the_arguments_the_caller_chose(remote: _Remote):
-    """pytest derives parametrize IDs from it, so it must be short and self-describing."""
-    assert repr(remote) == f"{type(remote).__name__}('tracing')"
-    other = type(remote)('tracing', remote_app_name='other')
-    assert repr(other) == f"{type(remote).__name__}('tracing', remote_app_name='other')"
-
-
-def test_repr_shows_the_library_specific_arguments():
-    assert repr(tracing_testing.RemoteProvider('tracing', tls=True)) == (
-        "RemoteProvider('tracing', tls=True)"
-    )
-    assert repr(tracing_testing.RemoteProvider('tracing', supported_protocols=[])) == (
-        "RemoteProvider('tracing', supported_protocols=())"
-    )
-    assert repr(tracing_testing.RemoteRequirer('tracing', protocols=['zipkin'])) == (
-        "RemoteRequirer('tracing', protocols=('zipkin',))"
-    )
-
-
-# ---------------------------------------------------------------- argument validation
+# ------------------------------------------------------------------ argument validation
 
 
 def test_provider_rejects_a_protocol_the_interface_does_not_define():
-    """Misuse raises early, at construction, rather than quietly answering nothing."""
+    """Misuse raises early, at call time, rather than quietly answering nothing."""
     with pytest.raises(ValueError, match='does not define'):
-        tracing_testing.RemoteProvider(
-            'tracing',
-            supported_protocols=['otlp_http', typing.cast('typing.Any', 'smoke_signals')],
+        tracing_testing.provider(
+            supported_protocols=['otlp_http', typing.cast('typing.Any', 'smoke_signals')]
         )
 
 
 def test_requirer_rejects_a_protocol_the_interface_does_not_define():
     with pytest.raises(ValueError, match='does not define'):
-        tracing_testing.RemoteRequirer(
-            'tracing', protocols=[typing.cast('typing.Any', 'smoke_signals')]
-        )
+        tracing_testing.requirer(protocols=[typing.cast('typing.Any', 'smoke_signals')])
 
 
 def test_requirer_rejects_an_empty_request():
     """``request_protocols`` rejects one too -- a requirer that wants nothing doesn't write."""
     with pytest.raises(ValueError, match='at least one protocol'):
-        tracing_testing.RemoteRequirer('tracing', protocols=[])
+        tracing_testing.requirer(protocols=[])
 
 
 def test_provider_accepts_supporting_nothing():
     """Distinct from the default: this provider answers, and its answer is empty."""
-    assert (
-        tracing_testing.RemoteProvider('tracing', supported_protocols=[]).supported_protocols == ()
-    )
-    assert tracing_testing.RemoteProvider('tracing').supported_protocols is None
+    assert tracing_testing.provider(supported_protocols=[]) is not None
+    assert tracing_testing.provider() is not None
 
 
-# ------------------------------------------------------------------ the mocked() scope
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-@pytest.mark.parametrize('method', ['integrate', 'publish', 'run_changed'])
-def test_state_producing_methods_require_the_mocked_scope(
-    remote: _Remote, method: str, requirer_ctx: _Ctx
-):
-    """Every library requires the scope, including the ones that mock nothing.
-
-    A library that didn't would break every test written against it on the day it started
-    mocking. Requiring it from the start makes introducing mocking a non-breaking change.
+def test_provider_normalises_its_protocol_iterable(juju: _juju.Juju, mocked: None):
+    """A stand-in is deployed any number of times, so a one-shot iterator must not be
+    consumed once.
     """
-    state = _bare_state(remote)
-    args = (state,) if method == 'publish' else (requirer_ctx, state)
-    with pytest.raises(RuntimeError, match='mocked'):
-        getattr(remote, method)(*args)
+    protocols: list[tracing.ReceiverProtocol] = ['otlp_http']
+    data = tracing_testing.provider(supported_protocols=iter(protocols))
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    first = juju.deploy(data, app='first')
+    juju.integrate(app, first)
+    second = juju.deploy(data, app='second')
+    juju.integrate(app, second)
+    juju.settle()
+    for stand_in in (first, second):
+        (relation,) = _juju.relations(stand_in.leader.state, 'tracing')
+        assert _protocol_names(_wire(relation.local_app_data)) == ['otlp_http']
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_does_not_require_the_mocked_scope(remote: _Remote):
-    """Assertions commonly run after the scope has closed, so this must work outside it."""
-    state = _bare_state(remote)
-    assert remote.get_relation(state).endpoint == remote.endpoint
+# ------------------------------------------------- the stand-in provider: what it writes
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_mocked_is_reentrant(remote: _Remote):
-    """A fixture and the test that uses it may each open a scope."""
-    with tracing_testing.mocked(), tracing_testing.mocked():
-        remote.publish(_bare_state(remote))
-    # And the scope is properly closed again on the way out.
-    with pytest.raises(RuntimeError, match='mocked'):
-        remote.publish(_bare_state(remote))
+def test_provider_derives_its_answer_from_what_the_charm_published(juju: _juju.Juju, mocked: None):
+    """The conformance test OP093 requires: two charms asking for different things.
 
-
-# ---------------------------------------------------------------------- get_relation
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_raises_when_there_is_no_relation(remote: _Remote):
-    with pytest.raises(KeyError, match='no relation'):
-        remote.get_relation(ops.testing.State())
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_matches_on_the_remote_app_name_too(remote: _Remote):
-    """A remote stands for one application on one endpoint, not for the endpoint."""
-    mine = ops.testing.Relation(remote.endpoint, remote_app_name=remote.remote_app_name)
-    theirs = ops.testing.Relation(remote.endpoint, remote_app_name='someone-else')
-    state = ops.testing.State(relations=[mine, theirs])
-    assert remote.get_relation(state).id == mine.id
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_get_relation_raises_when_two_relations_match(remote: _Remote):
-    """Silently picking one would let a test assert against the wrong application."""
-    relations = [
-        ops.testing.Relation(remote.endpoint, remote_app_name=remote.remote_app_name)
-        for _ in range(2)
-    ]
-    with pytest.raises(ValueError, match='matches 2 relations'):
-        remote.get_relation(ops.testing.State(relations=relations))
-
-
-# ------------------------------------------------------------------------- integrate
-
-
-def test_integrate_adds_the_relation(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(requirer_ctx, ops.testing.State(leader=True))
-    relation = PROVIDER.get_relation(state)
-    assert relation.endpoint == PROVIDER.endpoint
-    assert relation.remote_app_name == PROVIDER.remote_app_name
-    assert relation.interface == 'tracing'
-
-
-def test_integrate_adopts_a_bare_relation(requirer_ctx: _Ctx, mocked: None):
-    """ops.testing.State.from_context puts one there for every endpoint in the metadata."""
-    state_in = ops.testing.State.from_context(requirer_ctx, leader=True)
-    state_out = PROVIDER.integrate(requirer_ctx, state_in)
-    assert len(state_out.relations) == len(state_in.relations)
-
-
-def test_integrate_rejects_an_invalid_end(requirer_ctx: _Ctx, mocked: None):
-    with pytest.raises(ValueError, match='end must be'):
-        PROVIDER.integrate(
-            requirer_ctx, ops.testing.State(), end=typing.cast('typing.Any', 'settled')
-        )
-
-
-def test_integrate_rejects_a_relation_the_conversation_has_begun_on(
-    requirer_ctx: _Ctx, mocked: None
-):
-    """integrate() starts a conversation; publish() and run_changed() carry one on."""
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    with pytest.raises(ValueError, match='already begun'):
-        PROVIDER.integrate(requirer_ctx, state)
-
-
-def test_integrate_end_integrated_leaves_the_charm_having_asked(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(
-        requirer_ctx,
-        ops.testing.State.from_context(requirer_ctx, leader=True),
-        end='integrated',
-    )
-    assert _asked(PROVIDER, state) == requirer_charm.PROTOCOLS
-    assert _answered(PROVIDER, state) is None
-
-
-def test_integrate_end_published_leaves_the_answer_unread(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(
-        requirer_ctx,
-        ops.testing.State.from_context(requirer_ctx, leader=True),
-        end='published',
-    )
-    assert _protocol_names(_answered(PROVIDER, state)) == requirer_charm.PROTOCOLS
-    # The charm hasn't run against the answer yet, so it is still blocked on it.
-    assert isinstance(state.unit_status, ops.testing.BlockedStatus)
-
-
-def test_integrate_end_received_settles_the_relation(requirer_ctx: _Ctx, mocked: None):
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    assert _protocol_names(_answered(PROVIDER, state)) == requirer_charm.PROTOCOLS
-    assert isinstance(state.unit_status, ops.testing.ActiveStatus)
-
-
-def test_integrate_preserves_the_rest_of_the_state(requirer_ctx: _Ctx, mocked: None):
-    """Everything the remote isn't responsible for is left as it is.
-
-    Other *relations* are covered by the publish test below rather than here, because
-    integrate runs the charm and so every endpoint in the state has to be declared in the
-    charm's metadata.
+    A provider that ignored the charm's relation data and wrote canned values would satisfy
+    every other clause of the spec while reintroducing exactly the silent mismatches the
+    package exists to prevent. This is the one property that can't be checked by reading a
+    signature.
     """
-    secret = ops.testing.Secret({'a': 'b'}, label='unrelated', owner='unit')
-    state_in = ops.testing.State.from_context(requirer_ctx, leader=True, secrets=[secret])
-    state_out = PROVIDER.integrate(requirer_ctx, state_in)
-    assert {s.label for s in state_out.secrets} == {'unrelated'}
-    assert state_out.leader is True
+    published: list[list[str]] = []
+    for name, protocols in (
+        ('first', ['otlp_http']),
+        ('second', ['zipkin', 'jaeger_grpc']),
+    ):
+        # One stand-in per model: the provider aggregates over every relation on its
+        # endpoint, so two charms in one model would be answered with the union.
+        with _juju.Juju() as model:
+            tempo = model.deploy(tracing_testing.provider())
+            app = model.deploy(
+                _charm_requesting(typing.cast('list[tracing.ReceiverProtocol]', protocols)),
+                app=name,
+                meta=requirer_charm.META,
+            )
+            model.integrate(app, tempo)
+            model.settle()
+            (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+            published.append(_protocol_names(_wire(relation.local_app_data)))
+    assert published[0] == ['otlp_http']
+    assert published[1] == ['jaeger_grpc', 'zipkin']
+    assert published[0] != published[1]
 
 
-# --------------------------------------------------------------------------- publish
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_preserves_the_rest_of_the_state(remote: _Remote, mocked: None):
-    """OP093: other relations, endpoints, secrets and config are preserved as-is."""
-    other = ops.testing.Relation('other-endpoint', remote_app_data={'key': 'value'})
-    secret = ops.testing.Secret({'a': 'b'}, label='unrelated', owner='unit')
-    state = _bare_state(remote)
-    state = dataclasses.replace(
-        state,
-        relations=[*state.relations, other],
-        secrets=[secret],
-        config={'foo': 'bar'},
-    )
-    out = remote.publish(state)
-    published = next(r for r in out.relations if r.id == other.id)
-    assert isinstance(published, ops.testing.Relation)
-    assert published.remote_app_data == {'key': 'value'}
-    assert {s.label for s in out.secrets} == {'unrelated'}
-    assert out.config == {'foo': 'bar'}
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_preserves_other_remotes_on_the_same_endpoint(remote: _Remote, mocked: None):
-    """State belonging to another simulated application must be left alone."""
-    theirs = ops.testing.Relation(
-        remote.endpoint, remote_app_name='someone-else', remote_app_data={'receivers': '[]'}
-    )
-    state = _bare_state(remote)
-    state = dataclasses.replace(state, relations=[*state.relations, theirs])
-    out = remote.publish(state)
-    untouched = next(r for r in out.relations if r.id == theirs.id)
-    assert isinstance(untouched, ops.testing.Relation)
-    assert untouched.remote_app_data == {'receivers': '[]'}
-
-
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_raises_without_a_relation(remote: _Remote, mocked: None):
-    """A missing relation is not an absence of data -- it's an incoherent call."""
-    with pytest.raises(ValueError, match='needs a relation'):
-        remote.publish(ops.testing.State())
-
-
-def test_provider_publish_does_nothing_when_there_is_nothing_to_answer(mocked: None):
-    """A test that arranges this relation incidentally shouldn't be obstructed."""
-    state = _bare_state(PROVIDER)
-    assert PROVIDER.publish(state) == state
-
-
-def test_provider_publish_answers_emptily_when_it_supports_none_of_what_was_asked(
-    requirer_ctx: _Ctx, mocked: None
+def test_provider_reconciles_when_the_charm_changes_what_it_asks_for(
+    juju: _juju.Juju, mocked: None
 ):
+    """The other conformance test OP093 requires: the answer to the old request is gone.
+
+    The charm re-requests on ``update-status`` -- the example charm asks for whatever its
+    config names -- and the stand-in drops the receiver for the protocol that is no longer
+    asked for, which is what the real provider's library does.
+    """
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    tempo = juju.deploy(tracing_testing.provider())
+    juju.integrate(app, tempo)
+    juju.settle()
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    assert _protocol_names(_wire(relation.local_app_data)) == ['otlp_http', 'zipkin']
+    # The charm now asks for otlp_http alone.
+    juju.config(app, {'protocols': 'otlp_http'})
+    juju.settle()
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    assert _protocol_names(_wire(relation.local_app_data)) == ['otlp_http']
+
+
+def test_provider_answers_each_relation_independently(juju: _juju.Juju, mocked: None):
+    """A stand-in integrated with several applications writes each relation's own databag.
+
+    The library's provider API aggregates the protocols requested across every relation
+    and publishes the union to each -- which is what a real provider does, since its
+    receivers serve every requirer at once. What stays independent is the databag itself:
+    each relation carries the stand-in's own answer, derived from what was asked.
+    """
+    tempo = juju.deploy(tracing_testing.provider())
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    other = juju.deploy(_charm_requesting(['zipkin']), app='other', meta=requirer_charm.META)
+    juju.integrate(app, tempo)
+    juju.integrate(other, tempo)
+    juju.settle()
+    answers = {
+        relation.remote_app_name: _protocol_names(_wire(relation.local_app_data))
+        for relation in _juju.relations(tempo.leader.state, 'tracing')
+    }
+    # The union of both requests, on each relation.
+    assert answers == {
+        'requirer': ['otlp_http', 'zipkin'],
+        'other': ['otlp_http', 'zipkin'],
+    }
+
+
+def test_provider_answers_only_the_protocols_it_supports(juju: _juju.Juju, mocked: None):
+    """A provider answers with the protocols it has and omits the rest."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    tempo = juju.deploy(tracing_testing.provider(supported_protocols=['otlp_http']))
+    juju.integrate(app, tempo)
+    juju.settle()
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    assert _protocol_names(_wire(relation.local_app_data)) == ['otlp_http']
+
+
+def test_provider_supporting_nothing_publishes_an_empty_answer(juju: _juju.Juju, mocked: None):
     """Not the same as having nothing to answer -- this is an answer, and it is empty.
 
     A requirer can tell the two apart: ``is_ready`` is false where nothing was published,
     and true where an empty receiver list was.
     """
-    remote = tracing_testing.RemoteProvider('tracing', supported_protocols=[])
-    state = remote.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    tempo = juju.deploy(tracing_testing.provider(supported_protocols=[]))
+    juju.integrate(app, tempo)
+    juju.settle()
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    assert _wire(relation.local_app_data) == []
+
+
+def test_provider_urls_carry_the_host_port_and_scheme(juju: _juju.Juju, mocked: None):
+    """Each protocol on its usual port; https for the HTTP protocols when tls=True."""
+    app = juju.deploy(
+        _charm_requesting(['otlp_http', 'otlp_grpc', 'zipkin']), meta=requirer_charm.META
     )
-    assert _answered(remote, state) == []
+    tempo = juju.deploy(tracing_testing.provider(host='tempo.example.org', tls=True))
+    juju.integrate(app, tempo)
+    juju.settle()
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    urls = {
+        receiver['protocol']['name']: receiver['url']
+        for receiver in _wire(relation.local_app_data)
+    }
+    assert urls == {
+        # gRPC URLs carry no scheme, as the interface requires.
+        'otlp_grpc': 'tempo.example.org:4317',
+        'otlp_http': 'https://tempo.example.org:4318',
+        'zipkin': 'https://tempo.example.org:9411',
+    }
 
 
-def test_requirer_publish_writes_its_request(mocked: None):
-    """The requirer speaks first, so it always writes: there is nothing to wait for."""
-    state = REQUIRER.publish(_bare_state(REQUIRER))
-    assert _answered(REQUIRER, state) == list(REQUIRER.protocols)
+def test_provider_respond_false_writes_nothing(juju: _juju.Juju, mocked: None):
+    """OP093: a stand-in that joins the relation but writes nothing."""
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    tempo = juju.deploy(tracing_testing.provider(respond=False))
+    juju.integrate(app, tempo)
+    juju.settle()
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    assert not _interface_keys(relation.local_app_data)
+    # The charm asked; nobody answered.
+    assert _wire(relation.remote_app_data) == requirer_charm.PROTOCOLS
 
 
-def test_requirer_publish_leaves_the_unit_databag_alone(mocked: None):
+def test_provider_writes_nothing_until_the_charm_asks(juju: _juju.Juju, mocked: None):
+    """A stand-in deployed incidentally, while the test is about something else, is not
+    obstructed: with nothing published to answer, it writes nothing.
+    """
+    app = juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    tempo = juju.deploy(tracing_testing.provider())
+    juju.integrate(app, tempo)
+    # Settle only the stand-in's side of the integration events: the charm under test has
+    # not run yet, so there is no request on the wire.
+    for _ in range(3):
+        unit, name, factory = juju._queue.popleft()
+        if unit.app is tempo:
+            juju._run(unit, name, factory)
+        else:
+            juju._queue.append((unit, name, factory))
+    (relation,) = _juju.relations(tempo.leader.state, 'tracing')
+    assert not _interface_keys(relation.local_app_data)
+
+
+# ------------------------------------------------- the stand-in requirer: what it writes
+
+
+def test_requirer_writes_its_request_to_the_application_databag(juju: _juju.Juju, mocked: None):
     """``tracing`` requirers write to the application databag only."""
-    state = REQUIRER.publish(_bare_state(REQUIRER))
-    for databag in REQUIRER.get_relation(state).remote_units_data.values():
-        assert 'receivers' not in databag
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    workload = juju.deploy(tracing_testing.requirer())
+    juju.integrate(app, workload)
+    juju.settle()
+    (relation,) = _juju.relations(workload.leader.state, 'tracing')
+    assert _wire(relation.local_app_data) == ['otlp_http']
+    assert set(relation.local_unit_data) <= JUJU_NETWORK_KEYS
 
 
-@pytest.mark.parametrize('remote', REMOTES, ids=IDS)
-def test_publish_is_idempotent(remote: _Remote, mocked: None):
-    """publish recomputes, so calling it twice with nothing else changed changes nothing."""
-    once = remote.publish(_bare_state(remote))
-    twice = remote.publish(once)
-    assert twice == once
+def test_requirer_asks_for_the_protocols_it_was_given(juju: _juju.Juju, mocked: None):
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    workload = juju.deploy(tracing_testing.requirer(protocols=['zipkin', 'otlp_grpc']))
+    juju.integrate(app, workload)
+    juju.settle()
+    (relation,) = _juju.relations(workload.leader.state, 'tracing')
+    assert _wire(relation.local_app_data) == ['zipkin', 'otlp_grpc']
 
 
-def test_provider_publish_removes_what_is_no_longer_warranted(requirer_ctx: _Ctx, mocked: None):
-    """publish recomputes rather than appends.
+def test_requirer_respond_false_writes_nothing(juju: _juju.Juju, mocked: None):
+    """OP093: a stand-in that joins the relation but writes nothing."""
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    workload = juju.deploy(tracing_testing.requirer(respond=False))
+    juju.integrate(app, workload)
+    juju.settle()
+    (relation,) = _juju.relations(workload.leader.state, 'tracing')
+    assert not _interface_keys(relation.local_app_data)
+    assert set(relation.local_unit_data) <= JUJU_NETWORK_KEYS
 
-    The charm withdraws one of its two requests -- edited onto the wire here, because no
-    charm in this repository changes its mind -- and the receiver answering it goes away
-    while the one still warranted stays.
+
+def test_requirer_reconciles_when_its_request_changes(juju: _juju.Juju, mocked: None):
+    """The stand-in requirer derives nothing, but its library still reconciles: protocols
+    it no longer asks for are removed from the relation, which is what a real requirer's
+    library does when its configuration changes.
+
+    There is no public way to change a deployed stand-in's arguments, so this deploys a
+    replacement -- the fallback OP093 documents for behaviour with no config shape.
     """
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
+    app = juju.deploy(provider_charm.ProviderCharm, meta=provider_charm.META)
+    before = juju.deploy(
+        tracing_testing.requirer(protocols=['otlp_http', 'zipkin']), app='workload'
     )
-    assert _protocol_names(_answered(PROVIDER, state)) == ['otlp_http', 'zipkin']
-    relation = PROVIDER.get_relation(state)
-    withdrawn = dataclasses.replace(relation, local_app_data={'receivers': '["otlp_http"]'})
-    state = dataclasses.replace(
-        state, relations={r for r in state.relations if r.id != relation.id} | {withdrawn}
-    )
-    state = PROVIDER.publish(state)
-    assert _protocol_names(_answered(PROVIDER, state)) == ['otlp_http']
-
-
-def test_requirer_publish_removes_what_is_no_longer_warranted(mocked: None):
-    """A remote asking for less writes less, rather than adding to what is there."""
-    state = REQUIRER.publish(_bare_state(REQUIRER))
-    narrower = tracing_testing.RemoteRequirer('tracing', protocols=['zipkin'])
-    assert _answered(narrower, narrower.publish(state)) == ['zipkin']
-
-
-def test_publish_derives_its_answer_from_what_the_charm_published(mocked: None):
-    """The conformance test OP093 requires: two charms asking for different things.
-
-    A remote that ignored the charm's relation data and wrote canned values would satisfy
-    every other clause of the contract while reintroducing exactly the silent mismatches the
-    package exists to prevent. This is the one property that can't be checked by reading a
-    signature.
-
-    There is no counterpart for ``RemoteRequirer``: the requirer writes first on this
-    interface, so it has nothing to derive from.
-    """
-    remote = tracing_testing.RemoteProvider('tracing')
-    requests: list[list[tracing.ReceiverProtocol]] = [['otlp_http'], ['zipkin', 'jaeger_grpc']]
-    answers: list[list[str]] = []
-    for protocols in requests:
-        ctx = ops.testing.Context(_requirer_charm_requesting(protocols), meta=requirer_charm.META)
-        state = remote.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-        answers.append(_protocol_names(_answered(remote, state)))
-    assert answers == [['otlp_http'], ['zipkin', 'jaeger_grpc']]
-
-
-def _requirer_charm_requesting(
-    protocols: list[tracing.ReceiverProtocol],
-) -> type[ops.CharmBase]:
-    """A requirer charm that asks for exactly ``protocols`` and does nothing else."""
-
-    class _Charm(ops.CharmBase):
-        def __init__(self, framework: ops.Framework):
-            super().__init__(framework)
-            self.tracing = tracing.TracingEndpointRequirer(self, protocols=protocols)
-
-    return _Charm
-
-
-# ----------------------------------------------------------------------- run_changed
-
-
-def test_run_changed_is_equivalent_to_one_ctx_run(requirer_ctx: _Ctx, mocked: None):
-    """Its equivalence to a single ctx.run for relation-changed is part of its contract."""
-    state = PROVIDER.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True), end='published'
-    )
-    before = len(requirer_ctx.emitted_events)
-    PROVIDER.run_changed(requirer_ctx, state)
-    changed = [
-        event
-        for event in requirer_ctx.emitted_events[before:]
-        if isinstance(event, ops.RelationChangedEvent)
-    ]
-    assert len(changed) == 1
-    assert changed[0].relation.id == PROVIDER.get_relation(state).id
-    # The remote has one unit, so the method names it rather than let ops.testing warn.
-    assert changed[0].unit is not None
-    assert changed[0].unit.name == f'{PROVIDER.remote_app_name}/0'
-
-
-def test_run_changed_raises_without_a_relation(requirer_ctx: _Ctx, mocked: None):
-    with pytest.raises(KeyError, match='no relation'):
-        PROVIDER.run_changed(requirer_ctx, ops.testing.State())
+    juju.integrate(app, before)
+    juju.settle()
+    (relation,) = _juju.relations(before.leader.state, 'tracing')
+    assert _wire(relation.local_app_data) == ['otlp_http', 'zipkin']
+    # Replacing the application is the documented fallback; the new stand-in asks only for
+    # what it was given.
+    after = juju.deploy(tracing_testing.requirer(protocols=['zipkin']), app='replacement')
+    juju.integrate(app, after)
+    juju.settle()
+    (relation,) = _juju.relations(after.leader.state, 'tracing')
+    assert _wire(relation.local_app_data) == ['zipkin']

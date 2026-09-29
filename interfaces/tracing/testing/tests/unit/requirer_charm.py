@@ -21,6 +21,8 @@ whose endpoint carries several providers.
 
 from __future__ import annotations
 
+import typing
+
 import ops
 
 from charmlibs.interfaces import tracing
@@ -33,18 +35,33 @@ META = {
         # preserved. ops.testing rejects a relation whose endpoint isn't in the metadata.
         'other-endpoint': {'interface': 'something-else'},
     },
+    'config': {
+        'options': {
+            'protocols': {
+                'type': 'string',
+                'default': 'otlp_http,zipkin',
+                'description': 'Comma-separated protocols to request.',
+            }
+        }
+    },
 }
 PROTOCOLS: list[tracing.ReceiverProtocol] = ['otlp_http', 'zipkin']
+"""The protocols the charm requests with its default config."""
 
 
 class RequirerCharm(ops.CharmBase):
-    """A minimal requirer charm for testing the tracing interface."""
+    """A minimal requirer charm for testing the tracing interface.
+
+    Requests the protocols its ``protocols`` config names, re-requesting on
+    ``config-changed`` -- which is how a test makes it change what it asks for.
+    """
 
     endpoints: dict[tracing.ReceiverProtocol, str] | None = None
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
-        self.tracing = tracing.TracingEndpointRequirer(self, protocols=PROTOCOLS)
+        self.tracing = tracing.TracingEndpointRequirer(self, protocols=self._protocols())
+        framework.observe(self.on.config_changed, self._on_config_changed)
         framework.observe(self.on.update_status, self._reconcile)
         # endpoint_changed is emitted on every relation-changed that finds usable data --
         # it is level-triggered, not a change signal -- so the handler reconciles against
@@ -52,20 +69,35 @@ class RequirerCharm(ops.CharmBase):
         framework.observe(self.tracing.on.endpoint_changed, self._reconcile)
         framework.observe(self.tracing.on.endpoint_removed, self._reconcile)
 
+    def _protocols(self) -> list[tracing.ReceiverProtocol]:
+        """The protocols the charm's config currently names."""
+        configured = str(self.config['protocols'])
+        return [
+            typing.cast('tracing.ReceiverProtocol', protocol.strip())
+            for protocol in configured.split(',')
+            if protocol.strip()
+        ]
+
+    def _on_config_changed(self, _: ops.EventBase) -> None:
+        if self.unit.is_leader():
+            self.tracing.request_protocols(self._protocols())
+        self._reconcile(_)
+
     def _reconcile(self, _: ops.EventBase) -> None:
         if not self.tracing.is_ready():
             self.endpoints = None
             self.unit.status = ops.BlockedStatus('tracing not available')
             return
         # imagine we configure a workload with these
+        wanted = self._protocols()
         endpoints: dict[tracing.ReceiverProtocol, str] = {}
-        for protocol in PROTOCOLS:
+        for protocol in wanted:
             url = self.tracing.get_endpoint(protocol)
             if url is not None:
                 endpoints[protocol] = url
         self.endpoints = endpoints
-        if len(endpoints) != len(PROTOCOLS):
-            missing = sorted(p for p in PROTOCOLS if p not in endpoints)
+        if len(endpoints) != len(wanted):
+            missing = sorted(p for p in wanted if p not in endpoints)
             self.unit.status = ops.BlockedStatus(f'no receiver for {missing}')
             return
         self.unit.status = ops.ActiveStatus('tracing ready')
