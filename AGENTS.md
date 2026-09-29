@@ -212,7 +212,7 @@ Interface libraries manage the structured data that charms exchange over a Juju 
 
 - Live under `interfaces/<interface-name>/`, named exactly as the interface name appears in `charmcraft.yaml`.
 - Source under `src/charmlibs/interfaces/<interface_name>/`.
-- Usually include a `testing/` subdirectory with a separate `charmlibs-interfaces-<name>-testing` package. This provides `RemoteProvider` and `RemoteRequirer` classes, which stand in for the application on the other end of the relation and execute the charm under test to build up the `ops.testing.State`, plus a `mocked()` context manager that mocks the library's internals for the duration of a test. Note that the class name is the role the *testing package* plays, so a requirer charm is tested with a `RemoteProvider`.
+- Usually include a `testing/` subdirectory with a separate `charmlibs-interfaces-<name>-testing` package. This provides `provider()` and `requirer()` functions, which return a `CharmData` describing a stand-in charm for the application on the other end of the relation, deployed alongside the charm under test with `ops.testing.Juju`, plus a `mocked()` context manager that mocks the library's internals for the duration of a test. Note that the function name is the role the *stand-in* plays, so a requirer charm is tested with `provider()`.
 - Typically have unit and integration tests but no functional tests (all meaningful interaction is through Juju).
 - Use `just init --interface` to scaffold.
 

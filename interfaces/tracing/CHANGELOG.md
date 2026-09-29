@@ -1,6 +1,6 @@
 # 1.1.0 - 22 September 2026
 
-Add the `charmlibs-interfaces-tracing-testing` package, installable as the `testing` extra. It provides `RemoteProvider` and `RemoteRequirer` for state-transition tests of charms on either end of the relation, and a `mocked()` context manager. See the package's README for usage.
+Add the `charmlibs-interfaces-tracing-testing` package, installable as the `testing` extra. It provides `provider()` and `requirer()`, stand-in charms for the other end of the relation in multi-charm state-transition tests of charms on either end, and a `mocked()` context manager. See the package's README for usage.
 
 No changes to the library's own behaviour.
 

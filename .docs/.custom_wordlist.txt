@@ -13,6 +13,7 @@ autocomplete
 autocompletions
 balancer
 bugfixes
+callables
 charmcraft
 Charmhub
 charmlib
@@ -40,10 +41,12 @@ EKS
 enablement
 favicon
 filesystem
+FIXMEs
 FQDN
 Furo
 Git
 GitHub
+globals
 GPG
 Grafana
 gRPC
@@ -55,6 +58,7 @@ implementer
 implementers
 installable
 instantiation
+iterable
 Jinja
 JSON
 Juju

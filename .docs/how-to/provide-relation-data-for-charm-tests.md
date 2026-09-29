@@ -6,10 +6,11 @@ By providing test data, charm libraries prevent charms from needing to know abou
 Instead, charms only need to know about the library's public API and its testing API.
 
 As the author of an interface library, you should provide a separate testing package for your library.
-The testing package should expose a pair of classes that stand in for the application on the other end of the relation, executing the charm under test to build up the `ops.testing.State` that a state-transition test needs.
+The testing package exposes a pair of functions, `provider()` and `requirer()`, each returning a `CharmData` that describes a *stand-in charm* for the other end of the relation — a small, real charm that answers the charm under test using your library's own implementation of the opposite side.
+The stand-in is deployed alongside the charm under test with `ops.testing.Juju`, and the package also exposes a `mocked()` context manager that mocks out your library's internals for the duration of a test.
 
-`just init --interface` scaffolds all of this for you: the package, its metadata, the two classes with the generic methods already written, the `mocked` context manager, and a test suite covering the parts of the contract that don't depend on your interface.
-Most of the work described below is filling in one method, `publish`, and the tests that go with it.
+`just init --interface` scaffolds all of this for you: the package, its metadata, the two functions with their stand-in charm classes sketched and the rules below spelled out in FIXMEs, the `mocked` context manager, and a test suite covering the parts of the contract that don't depend on your interface.
+Most of the work described below is implementing the stand-in charms themselves, and the tests that go with them.
 
 Read more: {ref}`how-to-use-a-testing-package`, for using a testing package rather than writing one.
 
@@ -68,164 +69,86 @@ dependencies = [
 charmlibs-interfaces-my-interface = { path = "..", editable = true }
 ```
 
-
 ## Implement the required testing API
 
-Your testing package must export two classes and one function:
+Your testing package must export two functions and one context manager:
 
 ```py
-class RemoteProvider:  # and RemoteRequirer
-    def __init__(self, endpoint: str, *, remote_app_name: str = "remote", ...) -> None: ...
-    @property
-    def endpoint(self) -> str: ...
-    @property
-    def remote_app_name(self) -> str: ...
-    def __repr__(self) -> str: ...
-    def integrate(
-        self,
-        ctx: ops.testing.Context,
-        state: ops.testing.State,
-        *,
-        end: Literal["integrated", "published", "received"] = "received",
-    ) -> ops.testing.State: ...
-    def publish(self, state: ops.testing.State) -> ops.testing.State: ...
-    def run_changed(
-        self, ctx: ops.testing.Context, state: ops.testing.State
-    ) -> ops.testing.State: ...
-    def get_relation(self, state: ops.testing.State) -> ops.testing.Relation: ...
-
-
+def provider(*, ...) -> CharmData[ops.CharmBase]: ...
+def requirer(*, ...) -> CharmData[ops.CharmBase]: ...
 def mocked() -> contextlib.AbstractContextManager[None]: ...
 ```
 
-Of the four methods, only `publish` needs to know your interface.
-`integrate`, `run_changed` and `get_relation` are generic plumbing that every testing package implements the same way, and the scaffolding writes them for you, in a private `_Remote` base class that the two public classes inherit from.
+`provider()` returns a stand-in that plays the *provider* role of your interface, so the charm under test is the **requirer**, and likewise `requirer()` stands in for a requirer charm and is used to test a **provider**.
+If your interface has only one role worth standing in for, define only that function.
 
-Read more: {ref}`how-to-use-a-testing-package`, which documents these classes from the charm author's side and is worth reading before implementing them.
+`CharmData` is the container OP089 defines in `ops.testing`: the stand-in's charm class, its `charmcraft.yaml`-shaped metadata (including any config options and actions), and the mocking scope to open around each of the stand-in's dispatches.
+`ops.testing.CharmData` doesn't exist in a released `ops` yet, so each package currently defines a private placeholder of the same shape and re-exports it; when OP089 lands, the placeholder becomes an alias.
 
-### Name the classes for the role the *testing library* plays
+Read more: {ref}`how-to-use-a-testing-package`, which documents these functions from the charm author's side and is worth reading before implementing them.
 
-`RemoteProvider` stands in for a provider charm, so the charm under test is the **requirer**, and likewise `RemoteRequirer` stands in for a requirer charm and is used to test a **provider**.
+### Name the functions for the role the *stand-in* plays
+
+`provider()` stands in for a provider charm, so the charm under test is the **requirer**, and likewise `requirer()` stands in for a requirer charm and is used to test a **provider**.
 
 ```{important}
-This is the opposite of the older `relation_for_<role>` functions that these classes replace, where the role named was the role of the *caller*.
-A test that asked the old API for a provider's relation wants a `RemoteRequirer`, and vice versa.
-This is the single most likely thing to go wrong when migrating an existing testing package, and it goes wrong quietly, because both roles exist and both produce a relation.
+This is the opposite of the older `relation_for_<role>` functions that this API replaces, where the role named was the role of the *caller*.
+A test that asked the old API for a provider's relation wants `requirer()`, and vice versa.
+This is the single most likely thing to go wrong when migrating an existing testing package, and it goes wrong quietly, because both roles exist and both produce a deployable charm.
 ```
 
-### Construct from an endpoint and nothing else
+### Take only optional, keyword-only arguments
 
-`endpoint`, the charm's endpoint name for this relation, must be required, and must be accepted positionally or by keyword.
-Every other constructor argument must be optional and keyword-only, and each must default to the happy-path behaviour of a well-behaved application on the other end of the relation.
+Both functions must be callable with no arguments.
+Every argument must be optional and keyword-only, and each must default to the happy-path behaviour of a well-behaved application on the other end of the relation.
 A test that wants an ordinary, valid relation should not have to say so.
 
-Add whatever optional arguments your interface needs to let a test ask the remote for something other than the happy path — malformed data, a missing field, an unsupported version.
+Add whatever arguments your interface needs to let a test ask the stand-in for something other than the happy path — a refusal, a partial answer, an old wire-format version.
+Invalid arguments, and invalid combinations, must raise `ValueError` when the function is called, not when the stand-in is deployed or dispatched.
+Callers are not expected to catch these, so precise subtypes aren't necessary — they always indicate an error in the calling test code, and the value is in the message.
 
-### Make instances immutable
+Every stand-in should accept `respond: bool = True`: `respond=False` joins the relation and writes nothing, so a test can assert on how the charm behaves while it waits.
+The template scaffolds this.
 
-An instance's constructor arguments must not be changeable afterwards, and a method's result must depend only on those arguments and the `State` it is passed.
-Nothing may accumulate across calls that changes what a later call does.
-Caching a derived value — a generated certificate authority, say — is fine, as long as the cache isn't observable in the results.
+Neither function takes an endpoint name or an application name.
+The application name is given to `Juju.deploy(app=...)`, defaulting to the stand-in's `meta["name"]`, and the endpoints to connect are resolved by `Juju.integrate`.
 
-Together these let a charm author construct a remote once, at module level, and share it across every test in the file.
+### Return an immutable, reusable `CharmData`
 
-`endpoint` and `remote_app_name` must be readable as attributes.
-This matters where a test builds a bare `ops.testing.Relation` itself, which is how a relation with nothing written on it at all is expressed: the relation the test builds has to agree with the remote that will later operate on it, and reading those two values off the remote is how it agrees without duplicating literals.
+The result must be immutable, and a single result may be deployed any number of times, in any number of tests, including concurrently in several models.
+Deploying the same result twice, or the results of two calls with equal arguments, must behave identically — so consume any iterable arguments into tuples at call time, since a generator would be exhausted by the first deployment.
 
-Give instances a useful `__repr__` too.
-`pytest` derives parametrize IDs from it, and it identifies which remote raised an error when a test has several in play.
+The returned `CharmData` has:
 
-A frozen dataclass satisfies all of this, and matches `ops.testing.State` and `Relation`, which are frozen dataclasses themselves.
-The specification is of the properties, though, not of the mechanism.
-The scaffolding and the `tls-certificates` testing package both use plain classes with read-only properties instead, because a dataclass in public API commits you to `dataclasses.replace`, `astuple`, `asdict`, `is_dataclass` and `__dataclass_fields__` as part of your contract, which makes even adding an optional argument or reordering existing ones a breaking change.
+- **`charm_type`**: the stand-in charm class, bound to the validated arguments. The framework constructs the charm itself, as `charm_type(framework)`, so bind the arguments through the class — the recommended way is a subclass created per call, carrying the options as a class attribute:
 
-### Require the `mocked` scope
+  ```py
+  def provider(*, respond: bool = True) -> CharmData[ops.CharmBase]:
+      options = _ProviderOptions(respond=respond)
+      charm_type = type("_ProviderCharm", (_ProviderCharm,), {"_options": options})
+      return CharmData(charm_type, meta=_PROVIDER_META, mocking=mocked)
+  ```
 
-`integrate`, `publish` and `run_changed` must raise if called outside an active `mocked()` scope.
-`get_relation` must not require it, because assertions read the relation after the scope has closed, and because it is the escape hatch for relation events the other methods don't cover.
+  Stand-ins run in the test process, so the arguments may be any Python object, including callables.
+- **`meta`**: `charmcraft.yaml`-shaped metadata declaring exactly one non-peer endpoint, for your interface, so that `Juju.integrate` can always resolve the stand-in's side unambiguously. Name the endpoint `<interface>-provider` or `<interface>-requirer`-style where the interface has no conventional name, and document the name. `meta["name"]` should identify the library and role, such as `tls-certificates-provider`. `meta` may also declare `config` options and `actions` where they fit your library's behaviour — a stand-in that declares an action must implement it.
+- **`mocking`**: your package's own `mocked`, so that `Juju` applies your library's mocking to the stand-in's dispatches.
 
-### Treat `end` as three postconditions
+Keep the stand-in charm classes private, and annotate the functions as returning `CharmData[ops.CharmBase]`.
+Nothing a test does with a stand-in needs the concrete class, and a private class can be restructured freely.
 
-`integrate` simulates `juju integrate`: it adds the relation to the state, executes the charm for `relation-created`, then `relation-joined` and `relation-changed` for the remote's single unit, and then goes as far as `end` says.
+### Write the stand-in charm
 
-| `end` | the relation is left with… |
-|---|---|
-| `"integrated"` | the relation made, and the charm having published whatever it publishes on integration |
-| `"published"` | the above, plus the remote's data on the wire, not yet seen by the charm |
-| `"received"` (default) | the above, plus the charm having been executed with `relation-changed` against it |
+The stand-in is a real charm, and most of what there is to say about writing it is the ordinary discipline of a well-behaved charm, applied to a fixed purpose.
+The rules:
 
-The three values name postconditions, not steps.
-That is what a test is actually choosing between: a charm that has asked and not been answered, a charm that has been answered and not reconciled, or a settled relation.
-Naming the situation rather than the number of moves needed to reach it also means the values keep their meaning for a role where a step doesn't apply.
-
-`integrate` must raise if this remote already has a relation with data on it, since the conversation has then already begun.
-An empty relation must be adopted rather than duplicated: `ops.testing.State.from_context` creates one for every endpoint in the charm's metadata, so this is the common case, not an edge case.
-
-### Make `publish` recompute
-
-`publish` writes the simulated remote's relation data, and any other state the remote is responsible for, such as `Secret` objects it owns or grants.
-It does not execute the charm.
-
-It recomputes that data from the current state rather than appending to it.
-It adds what the charm's published data now warrants, retains what is still warranted, and **removes what is no longer warranted** — an answer to a request the charm has since withdrawn, for instance, which is what the real remote charm's library does.
-Its postcondition is "the remote's data is correct for this state", not "an answer has been appended".
-
-Two things follow.
-`publish` is idempotent, so calling it twice with nothing else changed leaves the state unchanged.
-And it needs no separate API for later turns of the conversation: after a config change or a key rotation, calling it again drops the stale data and writes what the new situation warrants.
-
-### Don't raise on an absence of data
-
-`publish` must not raise merely because the charm published nothing to answer, or because the remote never writes on this interface at all.
-Write nothing and return the state unchanged.
-
-This is deliberate in both directions.
-A test that arranges this relation incidentally, while being about something else, must not be obstructed; and a charm that legitimately requests nothing still produces an output state worth asserting on.
-It also keeps the call forward-compatible: if the interface later grows a response where its remote previously wrote nothing, tests that already call `publish` pick that up, whereas tests written around an error would silently keep testing less.
-
-A **missing relation** is a different matter.
-That is not an absence of data but an incoherent call, and must raise.
-Distinguish likewise between what your interface *cannot express* — a capability the library does not have, which must raise `ValueError` — and what the remote simply *would not do* in this state, which is a no-op.
-
-Where you can identify a specific, unambiguous reason that the charm published nothing, you *should* raise and say so.
-The canonical case is a library that writes to the application databag being used with a non-leader state, which yields an empty relation for a reason that is invisible in the resulting state and easily mistaken for a bug in the charm.
-Judge that case for your own interface: the `tls-certificates` testing package logs a warning rather than raising, having judged non-leadership specific but not unambiguous, since a `Mode.UNIT` requirer publishes as a non-leader perfectly well and a charm with no requests configured also publishes nothing.
-
-### Derive the response, never can it
-
-Where the charm under test writes before the remote does, the remote's data **must** be derived from what the charm actually published.
-Read it off `relation.local_app_data` and `relation.local_unit_data`; don't write a fixed value supplied by your package or by the test author.
-
-This is the whole point of the design.
-A testing package that ignores the charm's relation data and writes canned values satisfies every other rule here while reintroducing exactly the silent mismatches it exists to prevent: relation data that the charm's own library will delete and rewrite on its next reconcile, or that the charm will accept as an answer to a question it never asked.
-
-`publish` taking no `ctx` does not enforce this on its own.
-It stops your package obtaining anything the charm has not already published, but you could still ignore the state and write canned data — so this is a rule to follow, and the one below is the test that checks it.
-
-Where the remote writes first, and the charm reads before it writes, there is nothing to derive from, and the remote's data is supplied by your package as usual.
-
-### Write the conformance test
-
-Every testing package must include a test that the response is derived rather than canned: run two charms that ask for **different** things, and assert that the simulated remote's data differs accordingly — not merely that it is non-empty.
-
-This is the only part of the contract that can't be checked by reading a signature, and it is the part that the whole design depends on, so it is worth the one test per package that it costs.
-For a role where the remote writes first there is nothing to derive, and the test does not apply.
-
-`just init --interface` scaffolds this test as a skipped placeholder with instructions, in `testing/tests/unit/test_testing.py`.
-A worked example is `test_provider_derives_its_answer_from_what_the_charm_published` in `interfaces/tls-certificates/testing/tests/unit/test_testing.py`.
-
-### One remote per application, one unit per remote
-
-An instance stands in for one remote application related to the charm over one endpoint, identified by `endpoint` **and** `remote_app_name`.
-
-Supporting several remotes on one endpoint is optional, so that libraries which aggregate over multiple remote applications can be tested.
-A library that does not support it must raise `ValueError` rather than silently replacing the first remote.
-
-Whichever you support, relation data and other library-managed state belonging to *this* remote may be removed or replaced, but state belonging to other remotes on the same endpoint must be preserved, and so must the rest of the state — other relations, other endpoints, containers, config.
-
-The simulated remote application has exactly one unit, with unit ID 0.
-`integrate` fires `relation-joined` and `relation-changed` once, for that unit, and `publish` writes the remote's application databag and unit 0's databag.
-Scale events — a unit joining or departing partway through a test — are out of scope for this revision, and `get_relation` plus an explicit `ctx.run` is the answer for them, as it is for `relation-departed` and `relation-broken`.
+- **Use the library's public API for the other role** — `TLSCertificatesProvidesV4` for the `tls-certificates` provider stand-in, for example — to read what the charm under test published and to write the answer, rather than touching the wire format. This is what keeps the stand-in's answer in agreement with the charm's question, and it makes the testing package immune to wire-format changes the library handles. Where the library has no public API for some part of the other side, the internals are allowed: the testing package is versioned in lockstep with the library and pins it exactly, so they can't drift. Say why in a comment where you do this.
+- **Derive the response from what the charm under test actually published**, never from a canned value supplied by your package or by the test author. A stand-in that ignores the charm's relation data and writes fixed values reintroduces exactly the silent mismatches the package exists to prevent: relation data the charm's own library will delete and rewrite on its next reconcile, or that the charm will accept as an answer to a question it never asked. A stand-in that gets its requests from the library's API — `get_outstanding_certificate_requests()`, say — meets this by construction. Where the stand-in writes first on your interface, there is nothing to derive from, and its data comes from its arguments as ordinary fixture configuration.
+- **Reconcile, don't append.** On every event the stand-in observes, it recomputes its side of the relation from the current relation data: it adds what the charm's published data now warrants, retains what is still warranted, and **removes what is no longer warranted** — an answer to a request the charm has since withdrawn, which is what the real remote charm's library does. The postcondition is "the stand-in's data is correct for this relation data", not "an answer has been appended". This is what lets `Juju.settle()` converge, and it means later turns of the conversation need nothing from your package. Mostly it's the library's job, and a library whose other side already reconciles gives it to the stand-in for free; where the stand-in adds writes of its own, they must be idempotent.
+- **Never raise because of an absence of data.** Where the charm has published nothing to answer, or where the stand-in never writes on this interface at all, write nothing. A test that deploys a stand-in incidentally, while being about something else, must not be obstructed, and a charm that legitimately requests nothing still produces a model worth asserting on. Distinguish this from something the interface **cannot express** — a capability the library does not have — which must raise `ValueError` from `provider()` or `requirer()` at call time.
+- **Only the leader writes application data**; each unit writes its own unit databag, where the interface uses one. The stand-in must behave correctly with any number of units.
+- **Answer each relation independently**, where the stand-in is integrated with several applications at once. Where your library itself aggregates across relations — as `tracing`'s provider does, answering every relation with the union of what was requested — reproduce that, and document it.
+- **Keep no state outside the model.** Charm instances are constructed afresh for each dispatch, and a `CharmData` may be deployed many times, so nothing may be written to the charm class, the options it is bound to, or module globals. Relation data, secrets, and `ops.StoredState` are the places Juju keeps state, and they are enough.
+- **Every behaviour must converge under `settle()`.** A behaviour that would make the charm under test re-request forever is a bug in the stand-in, reported as a failure to settle rather than a failure of the charm. Where a behaviour changes what the charm asks for, apply it once rather than always, and record that you have in `ops.StoredState`, keyed on what is stable across the re-requests. For example, `tls-certificates`' `Outcome.renewing()` issues a certificate already due for renewal, and the requirer library responds by re-requesting — so the stand-in applies it only to the first certificate it issues for each set of request attributes, and answers the re-request normally. Document where your behaviours apply once.
 
 ### Define `mocked`, even if it does nothing
 
@@ -237,21 +160,46 @@ The requirements are the same either way:
 - It must be callable with no arguments. Optional keyword-only arguments are allowed; required ones are not.
 - Only your own library's internals may be mocked. Nothing defined outside the library, so that charm code which doesn't pass through your library has no side effects.
 - It must be [reentrant](https://docs.python.org/3/library/contextlib.html#reentrant-context-managers), so that a fixture and the test that uses it may each open a scope, and so that several libraries' scopes nest in any order.
-- **Every** library must define it, including one that currently mocks nothing, in which case it is a no-op. A library that didn't define and require it would break every test written against it on the day it started mocking something; requiring it from the start makes introducing mocking a non-breaking change.
-- The scope must stay open for as long as the charm is executed, which includes the test's own act step and not only its arrangement.
+- **Every** library must define it, including one that currently mocks nothing, in which case it is a no-op. A library that didn't define it would break every test written against it on the day it started mocking something; defining it from the start makes introducing mocking a non-breaking change.
+
+`Juju` opens the scope around every dispatch it makes — it is the stand-in's `CharmData.mocking`, and one of the default mocks for the charm under test — and a test opens it itself when it runs the charm with `ops.testing.Context` directly.
+So the testing package does not check that a scope is open: a test that forgets gets the library's real behaviour, which is slower or has side effects, but is not wrong.
 
 Mocking can change what a charm's unit tests see, so let your library's version reflect that: substantial changes to mocking warrant a minor version bump rather than a patch bump, and truly breaking changes to testing should be avoided within a major version of the library.
 
-The specification is of a context manager, not of a generator decorated with `@contextlib.contextmanager`; either implementation is fine.
+The purpose of mocking is to remove side effects and costs that make a test impossible or intolerably slow.
+Reproducible databag contents are welcome if they follow, but are not the goal, and `mocked` is not required to make time-dependent content — a certificate's validity period, say — reproducible.
 
+### Write the conformance tests
+
+Two properties of the contract can't be checked by reading a signature, and the design depends on both, so each testing package must test them:
+
+1. **The response is derived, not canned.** Deploy two charms that ask for **different** things, integrate both with one stand-in, and assert that the stand-in's data differs accordingly — not merely that it is non-empty. For a role where the stand-in writes first there is nothing to derive, and this test does not apply.
+2. **The stand-in reconciles.** After the charm under test changes what it asks for and the model settles, the stand-in's answer to the old request is gone.
+
+`just init --interface` scaffolds both as skipped placeholders with instructions, in `testing/tests/unit/test_testing.py`.
+Worked examples are `test_provider_derives_its_answer_from_what_the_charm_published` and `test_provider_reconciles_when_the_charm_changes_what_it_asks_for` in `interfaces/tls-certificates/testing/tests/unit/test_testing.py`.
+
+These tests double as the package's examples.
+
+### Worked examples
+
+Three testing packages in the monorepo implement this design, and are worth reading whole:
+
+- `interfaces/tls-certificates/testing/` — a request-response interface. The provider stand-in derives its answers from the charm's published requests, applies one-shot behaviours through `ops.StoredState`, and goes through the library's internals for the one write the public API can't express. The requirer stand-in constructs the library's requirer object with its arguments and lets the library do the publishing.
+- `interfaces/tracing/testing/` — a provider stand-in that reproduces its library's aggregation across relations rather than answering each independently.
+- `interfaces/certificate_transfer/testing/` — a one-way interface, where what is derived is not the answer but the wire-format version it's written in, and where reconciling means removing as well as adding.
 
 ## Test the testing package
 
 The testing package should have its own test suites like any other package.
 It should only have unit tests, since the package itself only targets use in unit tests.
 
-`just init --interface` scaffolds tests covering the parts of the contract that don't depend on your interface: that the state-producing methods raise outside a `mocked` scope, that `integrate` honours each value of `end`, that the methods preserve the rest of the state, and that `run_changed` is equivalent to a single `ctx.run`.
-It also scaffolds skipped placeholders for the tests only you can write — that `publish` is idempotent, that it removes what is no longer warranted, and the conformance test above.
+`just init --interface` scaffolds tests covering the parts of the contract that don't depend on your interface: that both functions are callable with no arguments and take only keyword-only arguments, that the result is an immutable `CharmData` with exactly one endpoint and the package's own `mocked`, that invalid arguments raise `ValueError` at call time, and that `respond=False` writes nothing.
+It also scaffolds skipped placeholders for the tests only you can write — the conformance tests above, and tests of what your stand-in writes.
+
+Until OP089's `ops.testing.Juju` is released, the scaffolded suite drives the stand-ins with a minimal private harness of the same shape, in `testing/tests/unit/_juju.py`.
+When `Juju` lands, the tests switch to it and the harness is deleted.
 
 In the `charmlibs` monorepo, the testing package's tests are run automatically in CI whenever the interface package or its testing package are changed.
 You can run the tests locally like this:
@@ -260,36 +208,37 @@ You can run the tests locally like this:
 just unit interfaces/<interface name>/testing
 ```
 
-
 ## Example usage in charm tests
 
 Charms should specify the version of the library that they need in their dependencies.
 In their testing dependencies, they should require the library's `testing` extra, but not specify any version constraints.
 
-A charm author constructs a remote for the role opposite their charm's, opens your `mocked` scope, and arranges the relation in one line:
+A charm author deploys the stand-in for the role opposite their charm's, integrates it, and lets the model settle:
 
 ```python
 from charmlibs.interfaces import my_interface_testing
 
-# The charm under test is the requirer, so the remote is the provider.
-REMOTE = my_interface_testing.RemoteProvider("my-endpoint")
 
-
-def test_the_happy_path(ctx: testing.Context):
-    with my_interface_testing.mocked():
-        state_out = REMOTE.integrate(ctx, testing.State.from_context(ctx))
-    assert isinstance(state_out.unit_status, testing.ActiveStatus)
+def test_the_happy_path(juju: testing.Juju):
+    # The charm under test is the requirer, so the stand-in is the provider.
+    app = juju.deploy(MyCharm)
+    remote = juju.deploy(my_interface_testing.provider())
+    juju.integrate((app, "my-endpoint"), remote)
+    juju.settle()
+    assert app.leader.state.unit_status == testing.ActiveStatus()
 ```
 
-Later turns of the conversation are `publish` and `run_changed`, which is why they are separate methods rather than only steps inside `integrate`:
+Later turns of the conversation are more operations on the model and another `settle()`:
 
 ```python
-def test_a_later_turn(ctx: testing.Context, happy_state: testing.State):
-    with my_interface_testing.mocked():
-        state = ctx.run(ctx.on.config_changed(), happy_state)  # the charm asks for something else
-        state = REMOTE.publish(state)                          # the remote answers the new request
-        state_out = REMOTE.run_changed(ctx, state)             # the charm reconciles against it
-    assert isinstance(state_out.unit_status, testing.ActiveStatus)
+def test_a_later_turn(juju: testing.Juju):
+    app = juju.deploy(MyCharm)
+    remote = juju.deploy(my_interface_testing.provider())
+    juju.integrate((app, "my-endpoint"), remote)
+    juju.settle()
+    juju.config(app, {"some-option": "new-value"})  # the charm asks for something else
+    juju.settle()  # the stand-in drops the stale answer and answers the new request
+    assert app.leader.state.unit_status == testing.ActiveStatus()
 ```
 
 ```{tip}

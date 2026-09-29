@@ -8,9 +8,13 @@ myst:
 # How to use a testing package in state-transition tests
 % Based on: OP093 - Charm library testing API
 
-Every `charmlibs.interfaces` library ships a companion *testing package*, which stands in for the application on the other end of the relation while you test your charm. Using it means your charm's tests never touch the relation's wire format: they arrange a relation, run your charm, and assert on what your charm did.
+Every `charmlibs.interfaces` library ships a companion *testing package*, which stands in for the application on the other end of the relation while you test your charm. Using it means your charm's tests never touch the relation's wire format: they deploy a stand-in charm, integrate it with yours, let the model settle, and assert on what your charm did.
 
-This guide covers what is true of every testing package. For the arguments a particular library accepts — what its simulated remote can be asked to do — see that library's own how-to guide and reference docs.
+This guide covers what is true of every testing package. For the arguments a particular library accepts — what its stand-in can be asked to do — see that library's own how-to guide and reference docs.
+
+```{note}
+The API shown here is the one proposed by OP089 — *Multiple-charm state transition tests* — whose `ops.testing.Juju` is not yet released. Until it ships, each testing package's own test suite drives the stand-ins with a minimal private harness of the same shape, so the packages are real and tested today; what is pending is the `ops.testing` side of the examples below. When `Juju` lands, the examples work as written.
+```
 
 Read more: {ref}`how-to-provide-data-for-charm-tests`, for writing a testing package rather than using one.
 
@@ -33,124 +37,133 @@ Then import the testing package alongside the library:
 from charmlibs.interfaces import my_interface, my_interface_testing
 ```
 
-## The simulated remote
+## The stand-in charm
 
-A testing package exposes two classes, `RemoteProvider` and `RemoteRequirer`. Each instance stands in for **one remote application** related to your charm over **one endpoint**.
+A testing package exposes two functions, `provider()` and `requirer()`. Each returns a `CharmData` — a charm class plus `charmcraft.yaml`-shaped metadata — describing a **stand-in charm**: a small, real charm that plays the other end of the relation, reading and writing through the library's own implementation of the opposite side.
 
-The remote plays the *opposite* role to the charm under test: a requirer charm is tested with a `RemoteProvider`, and a provider charm with a `RemoteRequirer`.
+The function is named for the role the *stand-in* plays, so the charm under test plays the opposite one: a requirer charm is tested with `provider()`, and a provider charm with `requirer()`.
 
-An instance is immutable, and a method's result depends only on the arguments it was constructed with and the `State` it is given. Nothing accumulates between calls. So a remote can live at module level and be shared by every test in the file:
+Both functions are callable with no arguments. Every argument is optional and keyword-only, and defaults to the happy path — a typical, valid, well-behaved remote. One argument every stand-in shares is `respond`: `respond=False` gives you a stand-in that joins the relation but writes nothing, so you can assert on how your charm behaves while it waits for an answer.
+
+The result is immutable, and a single result can be deployed any number of times, in any number of tests. Stand-ins run in the test process, so arguments can be any Python object — including callables, where a library offers per-request behaviour.
+
+## Deploy and integrate the stand-in
+
+Deploy the stand-in alongside your charm with `ops.testing.Juju`, integrate the two, and let the model settle:
 
 ```py
-CERTS = my_interface_testing.RemoteProvider("certificates")
+import pytest
+from ops import testing
+
+from charmlibs.interfaces import tls_certificates_testing
+
+from charm import MyCharm
+
+
+@pytest.fixture()
+def juju():
+    with testing.Juju() as juju:
+        yield juju
+
+
+def test_the_happy_path(juju: testing.Juju):
+    app = juju.deploy(MyCharm)
+    ca = juju.deploy(tls_certificates_testing.provider())
+    juju.integrate((app, "certificates"), ca)
+    juju.settle()
+    assert app.leader.state.unit_status == testing.ActiveStatus()
 ```
 
-The first argument is `endpoint`, your charm's endpoint name for this relation. It is required, and can be given positionally or by keyword. Every other argument is optional and keyword-only, and defaults to the happy path — a typical, valid, well-behaved remote. `endpoint` and `remote_app_name` are readable back off the instance.
+`Juju.deploy` takes the charm class from the `CharmData` and its metadata, config and actions from its `meta`, and opens the package's `mocked()` scope around each of the stand-in's dispatches. The application name defaults to the stand-in's own; pass `app=` to choose one, which you must do when deploying the same stand-in twice. `Juju.integrate` resolves the stand-in's endpoint unambiguously, because its metadata declares exactly one; give your charm's endpoint as an `(app, endpoint)` tuple where it has more than one endpoint for the interface.
 
-Each remote has four methods:
+`Juju.settle()` dispatches events on both sides until nothing changes. Because the stand-in reconciles — it recomputes its side of the relation from whatever your charm has published, dropping answers to requests your charm has withdrawn — the two sides reach a fixed point, and the state you assert on is a genuinely settled one.
 
-| Method | What it does |
+The stand-in's own state is available too, which makes cross-application assertions a check on two states:
+
+```py
+def test_the_provider_answered_every_unit(juju: testing.Juju):
+    app = juju.deploy(MyCharm, num_units=3)
+    ca = juju.deploy(tls_certificates_testing.provider())
+    juju.integrate((app, "certificates"), ca)
+    juju.settle()
+    (relation,) = ca.leader.state.get_relations("certificates")
+    assert len(json.loads(relation.local_app_data["certificates"])) == 3
+```
+
+## The positions a test can reach
+
+Relations follow a small number of request-response patterns, and a test wants its charm in one of a few positions within the conversation. All but one are directly reachable:
+
+| Position | How |
 |---|---|
-| `integrate(ctx, state, *, end=...)` | Adds the relation and carries the conversation as far as `end` |
-| `publish(state)` | Writes the remote's data. Does not run your charm |
-| `run_changed(ctx, state)` | Runs your charm for `relation-changed` on this relation |
-| `get_relation(state)` | Returns this remote's `ops.testing.Relation` from the state |
+| The charm hasn't been related | Don't integrate |
+| Related, and the stand-in hasn't written | `provider(respond=False)` |
+| The stand-in has written, and the charm has reacted | `settle()` |
+| The stand-in has written, and the charm hasn't reacted yet | Not currently reachable |
 
-Each of the first three takes a `State` and returns a new one, leaving the state it was given untouched. `get_relation` is the escape hatch for every relation event the others don't cover, and is also how assertions read the relation afterwards.
+The last position — the answer on the wire, the charm not yet run for it — is where you would pin down "blocked while it waits for the certificate to be read". `settle()` always runs to convergence, so the charm's `relation-changed` fires before control returns. Reaching it needs OP089 to let `settle()` stop at a chosen dispatch; until then, assert on the settled state, or on the unanswered position with `respond=False`.
 
-The happy path is one line, and it is the same line for every interface and every role:
+## Single-event tests after settling
 
-```py
-def test_the_happy_path(ctx: testing.Context, mocked: None):
-    state_out = CERTS.integrate(ctx, testing.State.from_context(ctx))
-    assert isinstance(state_out.unit_status, testing.ActiveStatus)
-```
-
-## How far `integrate` goes
-
-`integrate` simulates `juju integrate`: it adds the relation to the state, then runs your charm for `relation-created`, `relation-joined` and `relation-changed`. Its `end` argument then says how much of the rest of the conversation to carry:
-
-| `end` | the relation is left with… |
-|---|---|
-| `"integrated"` | the relation made, and your charm having published whatever it publishes on integration |
-| `"published"` | the above, plus the remote's data on the wire, not yet seen by your charm |
-| `"received"` (default) | the above, plus your charm having run `relation-changed` against it |
-
-The three values name the three **postconditions**, not the steps, because a postcondition is what a test is choosing between. A test is about a charm in a particular situation — has it asked yet, has it been answered, has it reconciled — and `end` names that situation rather than the number of moves it took to reach it.
+A settled unit's `State` is the input to ordinary single-charm tests. Build an `ops.testing.Context` for your charm as usual, and run any event against `unit.state`:
 
 ```py
-def test_blocked_while_waiting(ctx: testing.Context, mocked: None):
-    state = CERTS.integrate(ctx, testing.State.from_context(ctx), end="integrated")
-    state_out = ctx.run(ctx.on.update_status(), state)
-    assert isinstance(state_out.unit_status, testing.BlockedStatus)
+def test_update_status_stays_active(juju: testing.Juju):
+    app = juju.deploy(MyCharm)
+    juju.integrate((app, "certificates"), juju.deploy(tls_certificates_testing.provider()))
+    juju.settle()
+    ctx = testing.Context(MyCharm)
+    with tls_certificates_testing.mocked():
+        state_out = ctx.run(ctx.on.update_status(), app.leader.state)
+    assert state_out.unit_status == testing.ActiveStatus()
 ```
 
-A relation that exists with *nothing* written on it at all is *below* `"integrated"`. That's a bare `ops.testing.Relation`, and needs nothing from a testing package — but build it from the remote's own attributes, so that the two agree and the remote can still find it later:
-
-```py
-relation = testing.Relation(
-    CERTS.endpoint, interface="my-interface", remote_app_name=CERTS.remote_app_name
-)
-```
-
-`integrate` adopts a bare relation that is already in the state, which is what `ops.testing.State.from_context` puts there for every endpoint in your charm's metadata. A relation that already has data on it means the conversation has begun, and raises: carrying one on is what `publish` and `run_changed` are for.
-
-(how-to-use-a-testing-package-settled)=
-## What `end="received"` does and does not settle
-
-`end="received"` leaves the relation settled *for the conversation `integrate` ran*. It is not a promise that no further hook would change anything.
-
-The gap opens where your charm publishes in response to what it received. `integrate` ends by running your charm against the remote's data; if that run made your charm publish something new, the remote has not answered it yet. Reaching a genuine fixed point takes another round:
-
-```py
-state = CERTS.integrate(ctx, testing.State.from_context(ctx))
-state = CERTS.publish(state)            # answer whatever the last run asked for
-state = CERTS.run_changed(ctx, state)   # let the charm reconcile against the answer
-```
-
-Repeat the pair until the state stops changing. There is deliberately no method that does this for you: a name for it would be a name for a composition of things that already have names, and any short name — `settle`, say — would claim more than it could deliver, since it says nothing about *what* settled.
-
-Whether the extra round is needed is a property of the interface and of your charm, not of the testing package, and most of the time it is not. The reliable way to find out is to look: run the extra round and compare.
-
-```py
-def test_the_extra_round_is_a_no_op(ctx: testing.Context, mocked: None):
-    settled = CERTS.integrate(ctx, testing.State.from_context(ctx))
-    again = CERTS.run_changed(ctx, CERTS.publish(settled))
-    assert CERTS.get_relation(again).local_unit_data == (
-        CERTS.get_relation(settled).local_unit_data
-    )
-```
-
-A test that reaches for the extra round when it isn't needed costs a little time and nothing else, since `publish` is idempotent and a redundant `relation-changed` on a settled relation changes nothing. Leaving it out when it *is* needed leaves the test asserting on a charm that hasn't finished.
+Open the library's `mocked()` scope yourself here: nothing `Juju` applies reaches a `Context.run` you make yourself. This is also how to test behaviour that needs the charm patched — a workload version, a clock — where the patch must be in place for the run.
 
 ## Later turns of the conversation
 
-`publish` and `run_changed` are the two moves that drive every turn after the first — after a config change, a credential rotation, or anything else that makes your charm publish again:
+A later turn — after a config change, a key rotation, or anything else that makes your charm publish again — is more operations on the model and another `settle()`:
 
 ```py
-state = ctx.run(ctx.on.config_changed(), state)  # the charm asks for something different
-state = CERTS.publish(state)                    # the remote answers the new request
-state = CERTS.run_changed(ctx, state)           # the charm reconciles against the answer
+def test_certificate_renewal(juju: testing.Juju):
+    app = juju.deploy(MyCharm)
+    ca = juju.deploy(tls_certificates_testing.provider())
+    juju.integrate((app, "certificates"), ca)
+    juju.settle()
+    # The charm rotates its key and withdraws its old certificate signing request.
+    juju.config(app, {"key-size": 4096})
+    # The stand-in drops the answer to the withdrawn request and answers the new one.
+    juju.settle()
+    assert app.leader.state.unit_status == testing.ActiveStatus()
 ```
 
-`publish` is *recomputing*, not appending. It adds what your charm's published data now warrants, keeps what is still warranted, and removes what no longer is — an answer to a request your charm has since withdrawn, for instance, which is what the real remote's library does too. Its postcondition is "the remote's data is correct for this state", not "an answer has been appended".
+The change that drives the turn must happen *in the model* — a config change, an action on your charm — so that the stand-in sees its effects. A change made in a single-charm `Context.run` never reaches the stand-in.
 
-Two things follow. It is idempotent: calling it twice with nothing else changed leaves the state unchanged. And it needs no separate API for later turns, because calling it again is exactly what a later turn requires.
+## Changing the stand-in's behaviour partway through
 
-`publish` does **not** raise merely because your charm published nothing for it to answer, or because the remote never writes on this interface at all. It writes nothing and hands the state back, so that a test which arranges a relation incidentally while being about something else isn't obstructed. A missing *relation* is a different matter: that is not an absence of data but an incoherent call, and does raise.
+A stand-in is deployed once per test, with fixed arguments. Where a test needs its behaviour to change partway through, there are three routes, in order of preference:
+
+- **`Juju.config`**, where the stand-in declares a config option for the behaviour: for a stand-in with an `outcome` option, `juju.config(ca, {"outcome": "denied"})`, then `settle()`. None of the current testing packages declare config options yet.
+- **An action** on the stand-in, where the behaviour is a verb with no config shape, such as revoking everything it has issued. This needs OP089 to run actions on a deployed application.
+- **Replacing the application**: remove the relation, deploy a stand-in built with different arguments, and integrate again. This always works.
+
+A library declares config options for whatever behaviour has a natural config shape; its own guide says which route it offers. The last route is the fallback for everything else.
 
 ## The `mocked()` scope
 
-Every testing package exposes a `mocked()` context manager, which mocks out the library's own internals for the duration of a test. Every call that builds state or runs your charm must be inside it, and raises if it isn't. `get_relation` is the exception, so that assertions can read the relation after the scope has closed.
+Every testing package exposes a `mocked()` context manager, which mocks out the library's own internals — nothing defined outside the library — for the duration of the scope. It is used in three places:
 
-Open it in a fixture, and keep it open for your charm's execution as well as the arrangement:
+- **Around the stand-in's dispatches**, opened by `Juju`, because it is the `mocking` of the `CharmData` that `provider()` and `requirer()` return.
+- **Around your charm's dispatches**, opened by `Juju`'s default mocks for each library your charm uses — or by you, where that isn't available, which is what a `mocked` fixture is for:
 
-```py
-@pytest.fixture()
-def mocked():
-    with my_interface_testing.mocked():
-        yield
-```
+  ```py
+  @pytest.fixture()
+  def mocked():
+      with tls_certificates_testing.mocked():
+          yield
+  ```
+
+- **Around single-charm tests**, opened by you, when you run your charm with `ops.testing.Context` yourself.
 
 The scope is reentrant, so a fixture and the test that uses it may each open one, and several libraries' scopes stack in any order:
 
@@ -164,25 +177,14 @@ def mocked():
         yield
 ```
 
-A test that needs a library mocked but has no interest in the relation can depend on the fixture alone.
-
-The scope is required even where the library mocks nothing today, and would be required even if it never mocked anything. A library that didn't require it would break every test written against it on the day it started mocking something. Requiring it from the start makes any future change to `mocked()` a non-breaking one.
+There is no "must be inside the scope" rule. A test that runs the charm with `Context` and forgets to open it gets the library's real behaviour — slower, or with side effects, but not wrong. A test that needs a library mocked but has no interest in the relation can open the scope alone.
 
 ## Shared limitations
 
-**One remote unit.** The simulated remote application has exactly one unit, with unit ID 0. `integrate` fires `relation-joined` and `relation-changed` once, for that unit, and `publish` writes the remote application's databag and unit 0's. An interface that aggregates across the *units* of one remote application can't be fully exercised. Aggregating across several remote *applications* on one endpoint can be, with one remote per application and a distinct `remote_app_name` each — where the library supports it; one that doesn't raises `ValueError` rather than silently replacing the first remote.
+**`ops.testing.Juju` is not released yet.** The examples above are written against OP089's proposed API. Until it ships, the testing packages' own suites exercise the stand-ins through a minimal private harness of the same shape; that harness is not part of the packages' public API and isn't something to use in your own tests.
 
-**No scale events.** A unit joining or departing partway through a test isn't expressible through these methods. `get_relation` plus an explicit `ctx.run` is the answer for now, and the same goes for `relation-departed` and `relation-broken`:
+**The "answered but not seen" position is unreachable.** `settle()` runs to convergence, so you can't leave the stand-in's answer on the wire with your charm not yet run for it. See the positions table above.
 
-```py
-def test_relation_broken(ctx: testing.Context, mocked: None):
-    state = CERTS.integrate(ctx, testing.State.from_context(ctx))
-    state_out = ctx.run(ctx.on.relation_broken(CERTS.get_relation(state)), state)
-    assert isinstance(state_out.unit_status, testing.BlockedStatus)
-```
+**Stand-ins run in-process.** A stand-in executes in the test process, against the test's copy of the library. That is what allows callable arguments, and it means the stand-in always speaks the library version you test against — which is the version your charm uses, since the two packages pin each other.
 
-## The `ops.testing.Context`
-
-`integrate` and `run_changed` run your charm, which mutates `ctx`: `ctx.run` appends to `ctx.emitted_events` and the other accumulating attributes. Don't assume how many times `integrate` runs your charm, or that a future version will run it the same number of times. `run_changed` is the exception — its equivalence to a single `ctx.run` for `relation-changed` is part of its specification.
-
-An exception raised while your charm is executing propagates to you. A charm that errors during `integrate` or `run_changed` — because it is broken, because state it needs hasn't been set up, or because another library it uses hasn't been mocked — fails the test, and the testing package won't catch or annotate it.
+**Some data isn't reproducible byte-for-byte.** Time-dependent content — a certificate's validity period, say — comes from the real clock, and `mocked()` is not required to fix it. Assert on what the library reports rather than on bytes, and rely on settling, not byte equality, to check that nothing was rewritten.
