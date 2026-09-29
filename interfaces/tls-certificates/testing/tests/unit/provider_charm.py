@@ -15,7 +15,7 @@
 """Example provider charm for unit tests.
 
 Runs a small certificate authority of its own, so that a test can watch it answer the
-requests a ``RemoteRequirer`` makes. Its CA is generated once at import, not per event, so
+requests the stand-in from ``requirer()`` makes. Its CA is generated once at import, not per event, so
 that repeated reconciles issue against a stable issuer.
 """
 

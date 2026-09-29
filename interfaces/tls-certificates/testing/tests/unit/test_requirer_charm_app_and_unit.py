@@ -22,121 +22,163 @@ each scope published.
 
 from __future__ import annotations
 
-import typing
+import datetime
+from typing import TYPE_CHECKING
 
 import ops
 import ops.testing
-import pytest
 
 import requirer_charm_app_and_unit as charm_module
 from charmlibs.interfaces import tls_certificates as tls_certificates
 from charmlibs.interfaces import tls_certificates_testing as tls_certificates_testing
 
-CERTS = tls_certificates_testing.RemoteProvider("certificates")
-
-_Ctx: typing.TypeAlias = "ops.testing.Context[charm_module.AppAndUnitRequirerCharm]"
-
-
-@pytest.fixture()
-def ctx() -> _Ctx:
-    return ops.testing.Context(charm_module.AppAndUnitRequirerCharm, meta=charm_module.META)
+if TYPE_CHECKING:
+    import _juju
 
 
-def test_the_happy_path(ctx: _Ctx, mocked: None):
-    state_out = CERTS.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
+def _deploy(juju: _juju.Juju, num_units: int = 1) -> _juju.App:
+    return juju.deploy(
+        charm_module.AppAndUnitRequirerCharm, meta=charm_module.META, num_units=num_units
+    )
 
 
-def test_both_scopes_get_their_certificate(ctx: _Ctx, mocked: None):
-    state = CERTS.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-    with ctx(ctx.on.update_status(), state) as manager:
+def _ctx(unit: _juju.Unit) -> ops.testing.Context[charm_module.AppAndUnitRequirerCharm]:
+    return ops.testing.Context(
+        charm_module.AppAndUnitRequirerCharm, meta=charm_module.META, unit_id=unit.id
+    )
+
+
+def test_the_happy_path(juju: _juju.Juju, mocked: None):
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(tls_certificates_testing.provider()))
+    juju.settle()
+    assert isinstance(app.leader.state.unit_status, ops.testing.ActiveStatus)
+
+
+def test_both_scopes_get_their_certificate(juju: _juju.Juju, mocked: None):
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(tls_certificates_testing.provider()))
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
         manager.run()
-        app, app_key = manager.charm.certificates.get_assigned_certificates(
+        app_certs, app_key = manager.charm.certificates.get_assigned_certificates(
             tls_certificates.Mode.APP
         )
-        unit, unit_key = manager.charm.certificates.get_assigned_certificates(
+        unit_certs, unit_key = manager.charm.certificates.get_assigned_certificates(
             tls_certificates.Mode.UNIT
         )
-    assert {c.certificate.common_name for c in app} == {charm_module.APP_REQUEST.common_name}
-    assert {c.certificate.common_name for c in unit} == {charm_module.UNIT_REQUEST.common_name}
+    assert {c.certificate.common_name for c in app_certs} == {charm_module.APP_REQUEST.common_name}
+    assert {c.certificate.common_name for c in unit_certs} == {
+        charm_module.UNIT_REQUEST.common_name
+    }
     # A separate key per scope, and each scope's certificates bound to its own key.
     assert app_key is not None
     assert unit_key is not None
     assert app_key != unit_key
-    for certificate in app:
+    for certificate in app_certs:
         assert certificate.certificate.matches_private_key(app_key)
-    for certificate in unit:
+    for certificate in unit_certs:
         assert certificate.certificate.matches_private_key(unit_key)
 
 
-def test_one_key_secret_per_scope(ctx: _Ctx, mocked: None):
+def test_one_key_secret_per_scope(juju: _juju.Juju, mocked: None):
     """The library keeps a key per scope, which is why seeding them was awkward before."""
-    state = CERTS.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-    keys = [s for s in state.secrets if s.label and "-private-key-" in s.label]
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(tls_certificates_testing.provider()))
+    juju.settle()
+    keys = [s for s in app.leader.state.secrets if s.label and "-private-key-" in s.label]
     assert len(keys) == 2
     assert {s.owner for s in keys} == {"app", "unit"}
 
 
-def test_a_non_leader_holds_only_its_unit_certificate(ctx: _Ctx, mocked: None):
+def test_a_non_leader_holds_only_its_unit_certificate(juju: _juju.Juju, mocked: None):
     """A non-leader can act on the unit scope only, per the library's 1.10.1 fix.
 
     It can reach neither the application key nor the application certificates, and must not
     take the unit scope down with the application one.
     """
-    state = CERTS.integrate(ctx, ops.testing.State.from_context(ctx, leader=False))
-    with ctx(ctx.on.update_status(), state) as manager:
-        state_out = manager.run()
-        unit, unit_key = manager.charm.certificates.get_assigned_certificates(
+    app = _deploy(juju, num_units=2)
+    juju.integrate(app, juju.deploy(tls_certificates_testing.provider()))
+    juju.settle()
+    non_leader = app.units[1]
+    assert isinstance(non_leader.state.unit_status, ops.testing.ActiveStatus)
+    ctx = _ctx(non_leader)
+    with ctx(ctx.on.update_status(), non_leader.state) as manager:
+        manager.run()
+        unit_certs, unit_key = manager.charm.certificates.get_assigned_certificates(
             tls_certificates.Mode.UNIT
         )
         assert manager.charm.app_certs is None
     assert unit_key is not None
-    assert {c.certificate.common_name for c in unit} == {charm_module.UNIT_REQUEST.common_name}
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
+    assert {c.certificate.common_name for c in unit_certs} == {
+        charm_module.UNIT_REQUEST.common_name
+    }
 
 
-def test_renewal_of_both_scopes(ctx: _Ctx, mocked: None):
-    stale = tls_certificates_testing.RemoteProvider(
-        "certificates", outcome=tls_certificates_testing.Outcome.renewing()
-    )
-    state = stale.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-    with ctx(ctx.on.update_status(), state) as manager:
-        manager.run()
-        app, _ = manager.charm.certificates.get_assigned_certificates(tls_certificates.Mode.APP)
-        unit, _ = manager.charm.certificates.get_assigned_certificates(tls_certificates.Mode.UNIT)
-        was_stale = {str(c.certificate) for c in (*app, *unit)}
-    state = stale.run_changed(ctx, state)  # the safety net re-requests both scopes
-    fresh = tls_certificates_testing.RemoteProvider("certificates")
-    state = fresh.publish(state)
-    state = fresh.run_changed(ctx, state)
-    with ctx(ctx.on.update_status(), state) as manager:
-        state_out = manager.run()
-        app, _ = manager.charm.certificates.get_assigned_certificates(tls_certificates.Mode.APP)
-        unit, _ = manager.charm.certificates.get_assigned_certificates(tls_certificates.Mode.UNIT)
-    assert {c.certificate.common_name for c in app} == {charm_module.APP_REQUEST.common_name}
-    assert {c.certificate.common_name for c in unit} == {charm_module.UNIT_REQUEST.common_name}
-    assert {str(c.certificate) for c in (*app, *unit)}.isdisjoint(was_stale)
-    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
-
-
-def test_a_denied_application_request(ctx: _Ctx, mocked: None):
-    """Mixed outcomes across scopes: the unit certificate is issued, the app one refused."""
-    remote = tls_certificates_testing.RemoteProvider(
-        "certificates",
-        outcome=lambda request: (
-            tls_certificates_testing.Outcome.denied()
-            if request.common_name == charm_module.APP_REQUEST.common_name
-            else tls_certificates_testing.Outcome.issued()
+def test_renewal_of_both_scopes(juju: _juju.Juju, mocked: None):
+    app = _deploy(juju)
+    juju.integrate(
+        app,
+        juju.deploy(
+            tls_certificates_testing.provider(outcome=tls_certificates_testing.Outcome.renewing())
         ),
     )
-    state = remote.integrate(ctx, ops.testing.State.from_context(ctx, leader=True))
-    with ctx(ctx.on.update_status(), state) as manager:
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
         state_out = manager.run()
-        app, _ = manager.charm.certificates.get_assigned_certificates(tls_certificates.Mode.APP)
-        unit, _ = manager.charm.certificates.get_assigned_certificates(tls_certificates.Mode.UNIT)
+        app_certs, _ = manager.charm.certificates.get_assigned_certificates(
+            tls_certificates.Mode.APP
+        )
+        unit_certs, _ = manager.charm.certificates.get_assigned_certificates(
+            tls_certificates.Mode.UNIT
+        )
+    assert {c.certificate.common_name for c in app_certs} == {charm_module.APP_REQUEST.common_name}
+    assert {c.certificate.common_name for c in unit_certs} == {
+        charm_module.UNIT_REQUEST.common_name
+    }
+    # The renewal replaced the certificates: none of them is anywhere near its threshold.
+    now = datetime.datetime.now(datetime.timezone.utc)
+    for certificate in (*app_certs, *unit_certs):
+        start, end = (
+            certificate.certificate.validity_start_time,
+            certificate.certificate.expiry_time,
+        )
+        assert now < start + (end - start) * 0.5
+    assert isinstance(state_out.unit_status, ops.testing.ActiveStatus)
+
+
+def test_a_denied_application_request(juju: _juju.Juju, mocked: None):
+    """Mixed outcomes across scopes: the unit certificate is issued, the app one refused."""
+    app = _deploy(juju)
+    juju.integrate(
+        app,
+        juju.deploy(
+            tls_certificates_testing.provider(
+                outcome=lambda request: (
+                    tls_certificates_testing.Outcome.denied()
+                    if request.common_name == charm_module.APP_REQUEST.common_name
+                    else tls_certificates_testing.Outcome.issued()
+                )
+            )
+        ),
+    )
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
+        state_out = manager.run()
+        app_certs, _ = manager.charm.certificates.get_assigned_certificates(
+            tls_certificates.Mode.APP
+        )
+        unit_certs, _ = manager.charm.certificates.get_assigned_certificates(
+            tls_certificates.Mode.UNIT
+        )
         errors = manager.charm.certificates.get_request_errors()
-    assert not app
-    assert {c.certificate.common_name for c in unit} == {charm_module.UNIT_REQUEST.common_name}
+    assert not app_certs
+    assert {c.certificate.common_name for c in unit_certs} == {
+        charm_module.UNIT_REQUEST.common_name
+    }
     assert {e.certificate_signing_request.common_name for e in errors} == {
         charm_module.APP_REQUEST.common_name
     }

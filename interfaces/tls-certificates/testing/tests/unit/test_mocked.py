@@ -4,7 +4,6 @@
 """Tests for the ``mocked`` context manager itself."""
 
 import datetime
-import threading
 import time
 import unittest.mock
 
@@ -14,8 +13,7 @@ import pytest
 import requirer_charm
 from charmlibs.interfaces import tls_certificates as tls_certificates
 from charmlibs.interfaces import tls_certificates_testing as tls_certificates_testing
-
-REMOTE = tls_certificates_testing.RemoteProvider("certificates")
+from charmlibs.interfaces.tls_certificates_testing import _raw
 
 
 def test_mocked_takes_no_arguments():
@@ -160,13 +158,20 @@ def test_mocked_does_not_make_certificates_reproducible_across_a_second():
     arrangement match only if they land in the same second, and a test must not compare
     certificate bytes between separately-arranged states.
     """
-    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-    remote = tls_certificates_testing.RemoteProvider("certificates")
 
     def certificate() -> str:
         with tls_certificates_testing.mocked():
-            state = remote.integrate(ctx, ops.testing.State.from_context(ctx), end="published")
-        return remote.get_relation(state).remote_app_data["certificates"]
+            key = tls_certificates.PrivateKey.generate()
+            csr = tls_certificates.CertificateSigningRequest.generate(
+                tls_certificates.CertificateRequestAttributes(common_name="example.com"), key
+            )
+            return str(
+                csr.sign(
+                    ca=tls_certificates.Certificate(raw=_raw.CERT),
+                    ca_private_key=tls_certificates.PrivateKey(raw=_raw.CA_KEY),
+                    validity=datetime.timedelta(days=1),
+                )
+            )
 
     first = certificate()
     second = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
@@ -184,55 +189,12 @@ def test_mocked_does_not_patch_anything_outside_the_library():
         assert rsa.generate_private_key is before
 
 
-def test_mocked_scope_is_thread_local():
-    """One thread's scope must not satisfy another's requirement.
-
-    The scope is process-wide by design -- a module-level remote has to see a scope opened in
-    a fixture -- but it is kept per-thread so that parallel tests can't see each other's.
-    """
-    seen: list[bool] = []
-
-    def check() -> None:
-        try:
-            REMOTE.publish(ops.testing.State())
-        except RuntimeError:
-            seen.append(False)
-        except Exception:  # any other failure means the scope was visible
-            seen.append(True)
-        else:
-            seen.append(True)
-
-    with tls_certificates_testing.mocked():
-        thread = threading.Thread(target=check)
-        thread.start()
-        thread.join()
-    assert seen == [False]
-
-
-@pytest.mark.parametrize("method", ["integrate", "publish", "run_changed"])
-def test_state_producing_methods_require_the_scope(method: str):
-    """Uniform requirement, so introducing mocking is never a breaking change."""
-    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-    state = ops.testing.State()
-    args = {"integrate": (ctx, state), "publish": (state,), "run_changed": (ctx, state)}[method]
-    with pytest.raises(RuntimeError, match="mocked"):
-        getattr(REMOTE, method)(*args)
-
-
-def test_get_relation_does_not_require_the_scope():
-    """Assertions commonly run after the scope has closed, so this one must work outside it."""
-    ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-    with tls_certificates_testing.mocked():
-        state = REMOTE.integrate(ctx, ops.testing.State.from_context(ctx))
-    relation = REMOTE.get_relation(state)  # outside the scope
-    assert relation.endpoint == "certificates"
-
-
 def test_the_scope_covers_the_charms_execution():
     """Mocking matters most while the charm runs, not only during arrangement."""
     ctx = ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
+    relation = ops.testing.Relation("certificates", interface="tls-certificates")
     with tls_certificates_testing.mocked():
-        state = REMOTE.integrate(ctx, ops.testing.State.from_context(ctx), end="integrated")
+        state = ctx.run(ctx.on.relation_created(relation), ops.testing.State(relations=[relation]))
         with ctx(ctx.on.update_status(), state) as manager:
             manager.run()
             _, key = manager.charm.certificates.get_assigned_certificates()

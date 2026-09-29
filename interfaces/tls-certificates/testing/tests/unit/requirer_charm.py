@@ -63,3 +63,21 @@ class RequirerCharm(ops.CharmBase):
             return
         self.certs = [c.certificate for c in certs]  # imagine we do something with these
         self.unit.status = ops.ActiveStatus("TLS ready")
+
+
+ROTATING_META: dict[str, object] = {**META, "actions": {"rotate-key": {}}}
+
+
+class RotatingRequirerCharm(RequirerCharm):
+    """The same charm, with an action that rotates its key.
+
+    Rotating inside the model, rather than in a single-charm run whose output is never
+    seen by the other side, is what lets the stand-in react to it.
+    """
+
+    def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        framework.observe(self.on.rotate_key_action, self._rotate)
+
+    def _rotate(self, _: ops.ActionEvent) -> None:
+        self.certificates.regenerate_private_key()

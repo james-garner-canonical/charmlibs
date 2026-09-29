@@ -1,7 +1,7 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""The ``mocked`` context manager, and the scope check the state-producing methods share."""
+"""The ``mocked`` context manager."""
 
 from __future__ import annotations
 
@@ -27,11 +27,9 @@ it off the library (``get_assigned_certificates`` returns it), which works wheth
 came from here, from the charm, or from a rotation -- so no test needs to name this.
 """
 
-# The scope is process-wide rather than per-instance because `mocked` and the remote classes
-# are independent pieces of API (see OP093): a fixture opens the scope, and remotes
-# constructed anywhere -- at module level, typically -- operate inside it. Thread-local so
-# that pytest-xdist-style parallelism, or a test that runs a charm on another thread, can't
-# see another scope's depth.
+# The nesting depth, so that only the outermost scope patches and un-patches. The patches
+# themselves are process-wide, as ``unittest.mock.patch`` always is; the depth is kept
+# per-thread so that a scope opened on one thread can't be closed by another.
 _state = threading.local()
 
 
@@ -43,19 +41,23 @@ def _depth() -> int:
 def mocked() -> Iterator[None]:
     """Mock out the library's internals for the duration of the context.
 
-    Every method that builds state or runs the charm -- :meth:`RemoteProvider.integrate`,
-    :meth:`RemoteProvider.publish`, :meth:`RemoteProvider.run_changed`, and the
-    :class:`RemoteRequirer` equivalents -- must be called inside this scope, and raises if
-    it isn't. :meth:`RemoteProvider.get_relation` does not, so assertions can read the
-    relation after the scope has closed.
+    The scope is opened for you in two of its three homes, and by the test itself in the
+    third:
 
-    Open it in a fixture, or inline, and keep it open for the charm's execution as well as
-    the arrangement::
+    - **Around the stand-in's dispatches**, by ``Juju``: it is the ``mocking`` of the
+      ``CharmData`` that :func:`provider` and :func:`requirer` return.
+    - **Around the charm under test's dispatches**, by ``Juju``'s default mocks -- or by
+      the test itself where that isn't available, which is what a ``mocked`` fixture is
+      for::
 
-        @pytest.fixture()
-        def mocked():
-            with tls_certificates_testing.mocked():
-                yield
+          @pytest.fixture()
+          def mocked():
+              with tls_certificates_testing.mocked():
+                  yield
+
+    - **Around single-charm tests**, opened by the test itself, when the charm under test
+      runs with ``ops.testing.Context``. Nothing ``Juju`` applies reaches a ``Context.run``
+      the test makes itself.
 
     Several libraries' scopes stack, in any order::
 
@@ -145,18 +147,3 @@ def _mocked_keys() -> Iterator[tls_certificates.PrivateKey]:
 
 # Bound before any patching, so that the fallback path can't recurse into the mock.
 _real_generate = tls_certificates.PrivateKey.generate
-
-
-def require_mocked(method: str) -> None:
-    """Raise unless a ``mocked`` scope is active. Called by every state-producing method."""
-    if _depth():
-        return
-    raise RuntimeError(
-        f"{method} must be called inside a tls_certificates_testing.mocked() scope, which "
-        "has to be entered before the charm runs:\n\n"
-        "    with tls_certificates_testing.mocked():\n"
-        f"        state = remote.{method}(...)\n\n"
-        "Every charmlibs.interfaces testing package requires this, including the ones that "
-        "currently mock nothing, so that a library can start mocking without breaking the "
-        "tests already written against it."
-    )
