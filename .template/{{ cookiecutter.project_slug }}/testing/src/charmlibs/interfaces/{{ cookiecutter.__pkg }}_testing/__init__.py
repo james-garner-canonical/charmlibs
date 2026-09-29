@@ -12,26 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The {{ cookiecutter.__import_pkg }}_testing package.
+"""Testing package for ``{{ cookiecutter.__import_pkg }}``.
 
-Two independent pieces of API. :class:`RemoteProvider` and :class:`RemoteRequirer` stand in
-for the charm on the other end of a ``{{ cookiecutter.project_slug }}`` relation, running
-the charm under test to build the state; and :func:`mocked` mocks the library's internals
-for the duration of a test. Every state-producing call must be made inside a :func:`mocked`
-scope.
+Two independent pieces of API. :func:`provider` and :func:`requirer` return a
+:class:`CharmData` describing a stand-in charm for the other end of a
+``{{ cookiecutter.project_slug }}`` relation, to be deployed alongside the charm under
+test with ``ops.testing.Juju``; and :func:`mocked` mocks the library's internals for the
+duration of a test.
 
-A requirer charm under test is paired with a :class:`RemoteProvider`, and a provider charm
-with a :class:`RemoteRequirer` -- the remote plays the opposite role.
+A requirer charm under test is paired with :func:`provider`, and a provider charm with
+:func:`requirer` -- the stand-in plays the opposite role.
+
+FIXME: say a word about the shape of the interface here -- who writes first, and so whose
+data is derived from what the charm under test published and whose comes from the
+stand-in's arguments.
 """
 
+from ._charm_data import CharmData
 from ._mocking import mocked
-from ._testing import RemoteProvider, RemoteRequirer
+from ._testing import provider, requirer
 from ._version import __version__ as __version__
 
 __all__ = [
     # only the names listed in __all__ are imported when executing:
     # from {{ cookiecutter.__import_pkg }}_testing import *
-    'RemoteProvider',
-    'RemoteRequirer',
+    'CharmData',
     'mocked',
+    'provider',
+    'requirer',
 ]

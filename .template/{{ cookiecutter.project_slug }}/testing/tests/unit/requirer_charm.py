@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Example requirer charm for unit tests."""
+"""Example requirer charm for unit tests.
+
+Asks for whatever a requirer of this interface asks for, so that a test can watch the
+stand-in from ``provider()`` answer it.
+"""
 
 import ops
 

@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Example provider charm for unit tests."""
+"""Example provider charm for unit tests.
+
+Answers whatever the stand-in from ``requirer()`` asks for, as a real provider charm
+does, so that a test can watch it respond.
+"""
 
 import ops
 

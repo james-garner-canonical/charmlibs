@@ -12,103 +12,111 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the example-interface testing library from a requirer charm perspective.
+"""Tests from a requirer charm's perspective, using the stand-in provider.
 
-A requirer charm is tested with a ``RemoteProvider`` -- the remote plays the opposite role.
-These are the tests a charm author would write, so they only use the package's public API and
-never read relation data. The remote's own contract is tested in ``test_testing.py``.
+These are the tests a charm author would write, so they only use the package's public API
+and never read relation data. The stand-in's own contract is tested in
+``test_testing.py``.
 """
 
 from __future__ import annotations
 
 import typing
 
+import ops
 import ops.testing
-import pytest
 
+import requirer_charm
 from charmlibs.interfaces import example_interface_testing as example_interface_testing
 
 if typing.TYPE_CHECKING:
-    _Ctx: typing.TypeAlias = ops.testing.Context[ops.CharmBase]
-
-REMOTE = example_interface_testing.RemoteProvider('endpoint')
+    import _juju
 
 
-def test_requirer_no_relation(requirer_ctx: _Ctx, mocked: None):
-    """Test requirer charm without any relation as a sanity check."""
-    with requirer_ctx(requirer_ctx.on.update_status(), ops.testing.State(leader=True)) as manager:
+def _deploy(juju: _juju.Juju, num_units: int = 1) -> _juju.App:
+    return juju.deploy(requirer_charm.RequirerCharm, meta=requirer_charm.META, num_units=num_units)
+
+
+def _ctx(unit: _juju.Unit) -> ops.testing.Context[requirer_charm.RequirerCharm]:
+    return ops.testing.Context(
+        requirer_charm.RequirerCharm,
+        meta=requirer_charm.META,
+        app_name=unit.app.name,
+        unit_id=unit.id,
+    )
+
+
+def test_no_relation(juju: _juju.Juju, mocked: None):
+    """Without a relation there is nothing to be ready for."""
+    app = _deploy(juju)
+    juju.dispatch(app.leader, 'update-status')
+    juju.settle()
+    # FIXME: Assert something about the charm -- it usually reports Blocked or Waiting.
+
+
+def test_the_happy_path(juju: _juju.Juju, mocked: None):
+    """The whole conversation, with nothing to keep in agreement with the charm."""
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(example_interface_testing.provider()))
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
+        manager.run()
+    # FIXME: Assert something about the charm's use of the library object.
+
+
+def test_related_but_unanswered(juju: _juju.Juju, mocked: None):
+    """The most common real intermediate state: asked, but nobody has answered.
+
+    The charm should report blocked because the provider hasn't answered -- not because
+    it failed to ask.
+    """
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(example_interface_testing.provider(respond=False)))
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
         manager.run()
     # FIXME: Assert something about the charm.
 
 
-def test_requirer_settled(requirer_ctx: _Ctx, mocked: None):
-    """Test requirer charm once the whole conversation has happened.
-
-    ``integrate``'s default ``end="received"`` adds the relation, runs the charm for the
-    events Juju fires on integration, writes the provider's data, and runs the charm again so
-    that it reconciles against it.
-    """
-    state_in = ops.testing.State.from_context(requirer_ctx, leader=True)
-    state = REMOTE.integrate(requirer_ctx, state_in)
-    with requirer_ctx(requirer_ctx.on.update_status(), state) as manager:
+def test_relation_variant(juju: _juju.Juju, mocked: None):
+    """Test the requirer charm against a provider behaving in some non-default way."""
+    # FIXME: construct the stand-in with some non-default argument, once the library has
+    # one.
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(example_interface_testing.provider()))
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
         manager.run()
     # FIXME: Assert something about the charm's use of the library object.
 
 
-def test_requirer_waiting_for_an_answer(requirer_ctx: _Ctx, mocked: None):
-    """Test requirer charm when it has asked but nobody has answered yet."""
-    state_in = ops.testing.State.from_context(requirer_ctx, leader=True)
-    state = REMOTE.integrate(requirer_ctx, state_in, end='integrated')
-    state_out = requirer_ctx.run(requirer_ctx.on.update_status(), state)
-    # FIXME: Assert something -- a charm usually reports Blocked or Waiting here.
-    del state_out
+def test_a_multi_unit_requirer(juju: _juju.Juju, mocked: None):
+    """Only the leader writes application data, but every unit may read the answer."""
+    app = _deploy(juju, num_units=2)
+    juju.integrate(app, juju.deploy(example_interface_testing.provider()))
+    juju.settle()
+    for unit in app.units:
+        ctx = _ctx(unit)
+        with ctx(ctx.on.update_status(), unit.state) as manager:
+            manager.run()
+        # FIXME: Assert something about the charm's use of the library object.
 
 
-def test_requirer_relation_variant(requirer_ctx: _Ctx, mocked: None):
-    """Test requirer charm against a provider behaving in some non-default way."""
-    # FIXME: construct the remote with some non-default argument, once the library has one.
-    remote = example_interface_testing.RemoteProvider('endpoint')
-    state = remote.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    with requirer_ctx(requirer_ctx.on.update_status(), state) as manager:
+def test_a_later_turn_of_the_conversation(juju: _juju.Juju, mocked: None):
+    """The charm asks for something different, and the stand-in's answer follows.
+
+    A config change is the usual way to make the charm re-request; the stand-in drops the
+    stale answer and writes the new one, which is what a real provider does.
+    """
+    app = _deploy(juju)
+    juju.integrate(app, juju.deploy(example_interface_testing.provider()))
+    juju.settle()
+    # FIXME: juju.config(app, {...}) to make the charm ask for something different.
+    juju.settle()
+    ctx = _ctx(app.leader)
+    with ctx(ctx.on.update_status(), app.leader.state) as manager:
         manager.run()
     # FIXME: Assert something about the charm's use of the library object.
-
-
-def test_requirer_later_turn_of_the_conversation(requirer_ctx: _Ctx, mocked: None):
-    """Test requirer charm after something makes it ask for something different.
-
-    ``publish`` and ``run_changed`` are the two moves that drive every turn after the first.
-    """
-    state = REMOTE.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    state = requirer_ctx.run(requirer_ctx.on.config_changed(), state)
-    state = REMOTE.publish(state)
-    state_out = REMOTE.run_changed(requirer_ctx, state)
-    # FIXME: Assert something about the charm's use of the library object.
-    del state_out
-
-
-def test_requirer_relation_broken(requirer_ctx: _Ctx, mocked: None):
-    """``get_relation`` is the escape hatch for the events the other methods don't cover."""
-    state = REMOTE.integrate(
-        requirer_ctx, ops.testing.State.from_context(requirer_ctx, leader=True)
-    )
-    state_out = requirer_ctx.run(
-        requirer_ctx.on.relation_broken(REMOTE.get_relation(state)), state
-    )
-    # FIXME: Assert something about the charm's use of the library object.
-    del state_out
-
-
-@pytest.mark.skip(reason='FIXME: fill this in, or delete it if one integrate is enough.')
-def test_requirer_needs_a_second_round():
-    """``end="received"`` settles the conversation ``integrate`` ran, and no more.
-
-    Where the charm publishes in *response* to what it received, the provider hasn't answered
-    that yet, so reaching a fixed point takes another ``publish`` and ``run_changed``. Whether
-    it's needed is a property of the interface and the charm, so check by looking: run the
-    extra round and compare.
-    """

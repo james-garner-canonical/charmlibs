@@ -1,39 +1,35 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Fixtures shared by the testing package's own tests."""
+"""Shared fixtures. Also the idiomatic shape of a charm repository's own conftest."""
 
 from __future__ import annotations
 
 import typing
 
-import ops.testing
 import pytest
 
-import provider_charm
-import requirer_charm
+import _juju
 from charmlibs.interfaces import example_interface_testing as example_interface_testing
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator
 
-_Ctx: typing.TypeAlias = 'ops.testing.Context[ops.CharmBase]'
-
 
 @pytest.fixture()
 def mocked() -> Iterator[None]:
-    """The library's mocking scope, which every state-producing call needs."""
+    """Open the library's mocking scope for the whole test, arrangement and act alike.
+
+    The stand-ins get the scope from Juju, as their ``CharmData.mocking``. The charm under
+    test gets no mocking from this harness, so tests wrap its dispatches themselves --
+    which is what this fixture is for.
+    """
     with example_interface_testing.mocked():
         yield
 
 
 @pytest.fixture()
-def requirer_ctx() -> _Ctx:
-    """A context for the requirer charm, which is tested with a RemoteProvider."""
-    return ops.testing.Context(requirer_charm.RequirerCharm, meta=requirer_charm.META)
-
-
-@pytest.fixture()
-def provider_ctx() -> _Ctx:
-    """A context for the provider charm, which is tested with a RemoteRequirer."""
-    return ops.testing.Context(provider_charm.ProviderCharm, meta=provider_charm.META)
+def juju() -> Iterator[_juju.Juju]:
+    """A fresh model for one test."""
+    with _juju.Juju() as model:
+        yield model
