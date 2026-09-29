@@ -15,15 +15,25 @@
 """Integration tests using real Juju and pre-packed charm(s)."""
 
 import jubilant
+import pytest
 
 from charmlibs.interfaces import example_interface
 
 
-def test_deploy(juju: jubilant.Juju, charm: str):
+def test_deploy(juju: jubilant.Juju, provider: str, requirer: str):
     """The deployment takes place in the module scoped `juju` fixture."""
-    assert charm in juju.status().apps
+    assert provider in juju.status().apps
+    assert requirer in juju.status().apps
 
 
-def test_lib_version(juju: jubilant.Juju, charm: str):
-    result = juju.run(f'{charm}/0', 'lib-version')
+def test_relate(juju: jubilant.Juju, provider: str, requirer: str):
+    juju.integrate(f'{provider}:endpoint', f'{requirer}:endpoint')
+    juju.wait(jubilant.all_active)
+    relations = juju.status().apps[provider].relations['endpoint']
+    assert any(relation.related_app == requirer for relation in relations)
+
+
+@pytest.mark.parametrize('app', ['provider', 'requirer'])
+def test_lib_version(juju: jubilant.Juju, app: str):
+    result = juju.run(f'{app}/0', 'lib-version')
     assert result.results['version'] == example_interface.__version__

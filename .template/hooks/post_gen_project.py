@@ -32,8 +32,17 @@ if {{cookiecutter._interface}}:  # noqa: F821
     tmp = charmlibs.rename('.tmp')
     charmlibs.mkdir()
     tmp.rename(charmlibs / 'interfaces')
+    # The interface test charms relate to each other, so there's no need for
+    # the k8s and machine test charms or the version test.
+    shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'k8s-charm'))
+    shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'machine-charm'))
+    pathlib.Path('tests', 'integration', 'test_version.py').unlink()
 else:  # Not an interface library.
     shutil.rmtree('testing')
+    # General libraries only use the k8s and machine test charms.
+    shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'provider-charm'))
+    shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'requirer-charm'))
+    pathlib.Path('tests', 'integration', 'test_relation.py').unlink(missing_ok=True)
 
 
 #########################################################################################
@@ -64,6 +73,9 @@ RELATIVE_SYMLINK_PATHS = {
 
 # iterate over relative paths and relink them in current working directory (generated project)
 for symlink_path, target in RELATIVE_SYMLINK_PATHS.items():
+    # skip symlinks whose path was removed from the generated project above
+    if not symlink_path.exists() and not symlink_path.is_symlink():
+        continue
     # remove resolved copy of symlink target created by cookiecutter
     if symlink_path.is_dir():
         shutil.rmtree(symlink_path)
