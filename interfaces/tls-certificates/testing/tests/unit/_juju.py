@@ -19,6 +19,7 @@ deleted. The names and signatures follow OP089 so that the switch is mostly an i
 from __future__ import annotations
 
 import collections
+import collections.abc
 import contextlib
 import dataclasses
 import typing
@@ -262,9 +263,9 @@ class Juju:
         charm = unit.app.charm
         ctx = ops.testing.Context(
             charm.charm_type,
-            meta=_without(charm.meta, "config", "actions"),
-            config=_as_config_meta(charm.meta),
-            actions=charm.meta.get("actions"),
+            meta=_thaw(_without(charm.meta, "config", "actions")),
+            config=_thaw(_as_config_meta(charm.meta)),
+            actions=_thaw(charm.meta.get("actions")),
             app_name=unit.app.name,
             unit_id=unit.id,
         )
@@ -377,6 +378,17 @@ def _roles_match(
     role1 = "provides" if e1 in meta1.get("provides", {}) else "requires"
     role2 = "provides" if e2 in meta2.get("provides", {}) else "requires"
     return role1 != role2
+
+
+def _thaw(value: typing.Any) -> typing.Any:
+    """Undo ``CharmData``'s freezing: ``ops.testing.Context`` deep-copies with pickle."""
+    if isinstance(value, collections.abc.Mapping):
+        return {
+            k: _thaw(v) for k, v in typing.cast("Mapping[typing.Any, typing.Any]", value).items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_thaw(v) for v in typing.cast("list[typing.Any]", value)]
+    return value
 
 
 def _without(meta: Mapping[str, typing.Any], *keys: str) -> dict[str, typing.Any]:
