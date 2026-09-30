@@ -75,13 +75,11 @@ else:
 
 if {{cookiecutter._interface}}:  # noqa: F821
     # The interface test charms relate to each other, so there's no need for
-    # the k8s and machine test charms or the version test.
+    # the k8s and machine test charms.
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'k8s-charm'))
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'machine-charm'))
-    pathlib.Path('tests', 'integration', 'test_version.py').unlink()
 else:  # Not an interface library.
     shutil.rmtree('testing')
     # General libraries only use the k8s and machine test charms.
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'provider-charm'))
     shutil.rmtree(pathlib.Path('tests', 'integration', 'charms', 'requirer-charm'))
-    pathlib.Path('tests', 'integration', 'test_relation.py').unlink()
