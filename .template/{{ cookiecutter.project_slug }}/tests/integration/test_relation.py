@@ -15,7 +15,6 @@
 """Integration tests using real Juju and pre-packed charm(s)."""
 
 import jubilant
-import pytest
 
 from {{ cookiecutter.__ns }} import {{ cookiecutter.__pkg }}
 
@@ -33,7 +32,7 @@ def test_relate(juju: jubilant.Juju, provider: str, requirer: str):
     assert any(relation.related_app == requirer for relation in relations)
 
 
-@pytest.mark.parametrize('app', ['provider', 'requirer'])
-def test_lib_version(juju: jubilant.Juju, app: str):
-    result = juju.run(f'{app}/0', 'lib-version')
-    assert result.results['version'] == {{ cookiecutter.__pkg }}.__version__
+def test_lib_version(juju: jubilant.Juju, provider: str, requirer: str):
+    for app in (provider, requirer):
+        result = juju.run(f'{app}/0', 'lib-version')
+        assert result.results['version'] == {{ cookiecutter.__pkg }}.__version__

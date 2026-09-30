@@ -28,6 +28,9 @@ import pytest
 
 logger = logging.getLogger(__name__)
 
+# pack.sh packs charms/<id>-charm/ to .packed/<id>.charm, deployed below as the fixture's app name
+PACKED = pathlib.Path(__file__).parent / '.packed'
+
 
 def pytest_addoption(parser: pytest.OptionGroup):
     parser.addoption(
@@ -41,14 +44,14 @@ def pytest_addoption(parser: pytest.OptionGroup):
 {% if cookiecutter._interface -%}
 @pytest.fixture(scope='session')
 def provider() -> str:
-    """Return the provider charm name."""
-    return 'provider'  # determined by the test charms' charmcraft.yaml
+    """Return the provider app name, as deployed by the juju fixture."""
+    return 'provider'
 
 
 @pytest.fixture(scope='session')
 def requirer() -> str:
-    """Return the requirer charm name."""
-    return 'requirer'  # determined by the test charms' charmcraft.yaml
+    """Return the requirer app name, as deployed by the juju fixture."""
+    return 'requirer'
 
 
 @pytest.fixture(scope='module')
@@ -60,7 +63,9 @@ def juju(request: pytest.FixtureRequest, provider: str, requirer: str) -> Iterat
     keep_models = typing.cast('bool', request.config.getoption('--keep-models'))
     with jubilant.temp_model(keep=keep_models) as juju:
         juju.model_config({'logging-config': '<root>=INFO;unit=DEBUG'})
-        _deploy(juju)
+        # tag = os.environ.get('CHARMLIBS_TAG', '')  # get the tag if needed
+        juju.deploy(PACKED / 'provider.charm', app=provider)  # charm ID -> app name
+        juju.deploy(PACKED / 'requirer.charm', app=requirer)
         juju.wait(jubilant.all_active)
         yield juju
         if request.session.testsfailed:
@@ -68,18 +73,11 @@ def juju(request: pytest.FixtureRequest, provider: str, requirer: str) -> Iterat
             time.sleep(0.5)  # Wait for Juju to process logs.
             log = juju.debug_log(limit=1000)
             print(log, end='', file=sys.stderr)
-
-
-def _deploy(juju: jubilant.Juju) -> None:
-    # tag = os.environ.get('CHARMLIBS_TAG', '')  # get the tag if needed
-    packed = pathlib.Path(__file__).parent / '.packed'  # set by pack.sh
-    juju.deploy(packed / 'provider.charm')  # name set in charmcraft.yaml
-    juju.deploy(packed / 'requirer.charm')
 {%- else -%}
 @pytest.fixture(scope='session')
 def charm() -> str:
-    """Return the charm name."""
-    return 'test'  # determined by test charms' charmcraft.yaml
+    """Return the app name, as deployed by the juju fixture."""
+    return 'test'
 
 
 @pytest.fixture(scope='module')
@@ -91,7 +89,13 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
     keep_models = typing.cast('bool', request.config.getoption('--keep-models'))
     with jubilant.temp_model(keep=keep_models) as juju:
         juju.model_config({'logging-config': '<root>=INFO;unit=DEBUG'})
-        _deploy(juju)
+        substrate = os.environ['CHARMLIBS_SUBSTRATE']
+        # tag = os.environ.get('CHARMLIBS_TAG', '')  # get the tag if needed
+        path = PACKED / f'{substrate}.charm'  # the charm ID is the substrate
+        if substrate == 'k8s':
+            juju.deploy(path, app=charm, resources={'workload': 'ubuntu:latest'})
+        else:
+            juju.deploy(path, app=charm)
         juju.wait(jubilant.all_active)
         yield juju
         if request.session.testsfailed:
@@ -99,14 +103,4 @@ def juju(request: pytest.FixtureRequest, charm: str) -> Iterator[jubilant.Juju]:
             time.sleep(0.5)  # Wait for Juju to process logs.
             log = juju.debug_log(limit=1000)
             print(log, end='', file=sys.stderr)
-
-
-def _deploy(juju: jubilant.Juju) -> None:
-    substrate = os.environ['CHARMLIBS_SUBSTRATE']
-    # tag = os.environ.get('CHARMLIBS_TAG', '')  # get the tag if needed
-    path = pathlib.Path(__file__).parent / '.packed' / f'{substrate}.charm'  # set by pack.sh
-    if substrate == 'k8s':
-        juju.deploy(path, resources={'workload': 'ubuntu:latest'})  # name set in metadata.yaml
-    else:
-        juju.deploy(path)
 {%- endif %}
