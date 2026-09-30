@@ -133,6 +133,26 @@ def test_the_result_is_immutable_and_reusable(function: typing.Callable[..., typ
     assert function() is not function()
 
 
+@pytest.mark.parametrize(
+    'function', [certificate_transfer_testing.provider, certificate_transfer_testing.requirer]
+)
+def test_the_metadata_is_deeply_frozen(function: typing.Callable[..., typing.Any]):
+    """OP093: meta can't be changed through one result and so affect every other result."""
+    data = function()
+    role = 'provides' if 'provides' in data.meta else 'requires'
+    with pytest.raises(TypeError):
+        data.meta['name'] = 'x'
+    with pytest.raises(TypeError):
+        data.meta[role] = {}
+    with pytest.raises(TypeError):
+        data.meta[role]['certificates'] = {}
+    with pytest.raises(TypeError):
+        data.meta[role]['certificates']['interface'] = 'x'
+    other = function()
+    assert other.meta == data.meta
+    assert other.meta[role]['certificates'] == {'interface': 'certificate_transfer'}
+
+
 def test_the_stand_in_charm_classes_are_private():
     """Nothing a test does with a stand-in needs the concrete class."""
     for data in (certificate_transfer_testing.provider(), certificate_transfer_testing.requirer()):
