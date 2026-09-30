@@ -121,6 +121,24 @@ def test_the_result_is_immutable_and_reusable(function: typing.Callable[..., typ
     assert function() is not function()
 
 
+@pytest.mark.parametrize('function', [tracing_testing.provider, tracing_testing.requirer])
+def test_the_metadata_is_deeply_frozen(function: typing.Callable[..., typing.Any]):
+    """OP093: meta can't be changed through one result and so affect every other result."""
+    data = function()
+    role = 'provides' if 'provides' in data.meta else 'requires'
+    with pytest.raises(TypeError):
+        data.meta['name'] = 'x'
+    with pytest.raises(TypeError):
+        data.meta[role] = {}
+    with pytest.raises(TypeError):
+        data.meta[role]['tracing'] = {}
+    with pytest.raises(TypeError):
+        data.meta[role]['tracing']['interface'] = 'x'
+    other = function()
+    assert other.meta == data.meta
+    assert other.meta[role]['tracing'] == {'interface': 'tracing'}
+
+
 def test_the_stand_in_charm_classes_are_private():
     """Nothing a test does with a stand-in needs the concrete class."""
     for data in (tracing_testing.provider(), tracing_testing.requirer()):
