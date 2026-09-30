@@ -1,5 +1,3 @@
-# no containers or resources, so this same charm deploys on both K8s and machine substrates
-
 name: provider
 type: charm
 summary: A small provider charm for use in integration tests.

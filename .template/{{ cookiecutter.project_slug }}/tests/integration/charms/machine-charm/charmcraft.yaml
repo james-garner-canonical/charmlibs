@@ -1,5 +1,3 @@
-# machine charms have no containers or resources
-
 name: test
 type: charm
 summary: A small charm for use in integration tests.
