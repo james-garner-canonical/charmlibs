@@ -28,7 +28,7 @@ from charmlibs.pathops import (
     LocalPath,
     _constants,
     ensure_contents,
-    ensure_text,
+    ensure_text_transform,
 )
 from charmlibs.pathops._functions import _get_fileinfo
 
@@ -120,7 +120,7 @@ def test_get_fileinfo(
 @pytest.mark.parametrize(
     ('contents', 'translated'), [(b'hel\rl\r\no\n', 'hel\nl\no\n'), (b'', '')]
 )
-def test_ensure_text(
+def test_ensure_text_transform(
     tmp_path: pathlib.Path,
     container: ops.Container,
     path_type: type[str] | type[pathlib.Path] | type[ContainerPath],
@@ -147,7 +147,7 @@ def test_ensure_text(
         text = translated if existing is None else existing
         return text + 'x\n' if edit else text
 
-    changed = ensure_text(target, transform, mode=mode)
+    changed = ensure_text_transform(target, transform, mode=mode)
     assert calls == [translated if exists else None]
     expected = (translated + 'x\n' if edit else translated).encode()
     assert changed == (not exists or expected != contents or mode != _constants.DEFAULT_WRITE_MODE)

@@ -25,7 +25,7 @@ import pytest
 from ops import pebble
 
 import utils
-from charmlibs.pathops import ContainerPath, LocalPath, _constants, ensure_text
+from charmlibs.pathops import ContainerPath, LocalPath, _constants, ensure_text_transform
 from charmlibs.pathops._functions import _get_fileinfo
 
 if typing.TYPE_CHECKING:
@@ -68,7 +68,7 @@ def test_get_fileinfo_reraises_unhandled_pebble_errors(
         (None, 'a\r\nb\r', None, b'a\r\nb\r', True),
     ),
 )
-def test_ensure_text(
+def test_ensure_text_transform(
     tmp_path: pathlib.Path,
     path_type: type[str] | type[pathlib.Path],
     initial: bytes | None,
@@ -88,7 +88,7 @@ def test_ensure_text(
         calls.append(existing)
         return result
 
-    assert ensure_text(path_type(path), transform) == changed
+    assert ensure_text_transform(path_type(path), transform) == changed
     assert calls == [expected_arg]
     assert path.read_bytes() == expected_bytes
     assert stat.S_IMODE(path.stat().st_mode) == _constants.DEFAULT_WRITE_MODE
@@ -99,34 +99,36 @@ def _identity(text: str | None) -> str:
     return text
 
 
-def test_ensure_text_enforces_mode_when_contents_unchanged(tmp_path: pathlib.Path):
+def test_ensure_text_transform_enforces_mode_when_contents_unchanged(tmp_path: pathlib.Path):
     path = tmp_path / 'path'
     path.write_bytes(b'x\n')
     path.chmod(0o600)
-    assert ensure_text(path, _identity, mode=0o640)
+    assert ensure_text_transform(path, _identity, mode=0o640)
     assert stat.S_IMODE(path.stat().st_mode) == 0o640
     assert path.read_bytes() == b'x\n'
-    assert not ensure_text(path, _identity, mode=0o640)
+    assert not ensure_text_transform(path, _identity, mode=0o640)
 
 
-def test_ensure_text_normalises_newlines_once(tmp_path: pathlib.Path):
+def test_ensure_text_transform_normalises_newlines_once(tmp_path: pathlib.Path):
     path = tmp_path / 'path'
     path.write_bytes(b'a\r\nb\r')
     path.chmod(_constants.DEFAULT_WRITE_MODE)
-    assert ensure_text(path, _identity)
+    assert ensure_text_transform(path, _identity)
     assert path.read_bytes() == b'a\nb\n'
-    assert not ensure_text(path, _identity)
+    assert not ensure_text_transform(path, _identity)
 
 
 @pytest.mark.parametrize('bad', [None, b'x'])
 @pytest.mark.parametrize('exists', [True, False])
-def test_ensure_text_rejects_wrong_return_type(tmp_path: pathlib.Path, bad: object, exists: bool):
+def test_ensure_text_transform_rejects_wrong_return_type(
+    tmp_path: pathlib.Path, bad: object, exists: bool
+):
     path = tmp_path / 'path'
     if exists:
         path.write_bytes(b'x')
         path.chmod(0o600)
     with pytest.raises(TypeError):
-        ensure_text(path, lambda _: bad, mode=0o644)  # type: ignore
+        ensure_text_transform(path, lambda _: bad, mode=0o644)  # type: ignore
     if exists:
         assert path.read_bytes() == b'x'
         assert stat.S_IMODE(path.stat().st_mode) == 0o600
@@ -143,7 +145,7 @@ def _raise(_: object) -> typing.NoReturn:
 
 
 @pytest.mark.parametrize('exists', [True, False])
-def test_ensure_text_propagates_transform_errors_without_changes(
+def test_ensure_text_transform_propagates_transform_errors_without_changes(
     tmp_path: pathlib.Path, exists: bool
 ):
     path = tmp_path / 'parent' / 'path'
@@ -152,7 +154,7 @@ def test_ensure_text_propagates_transform_errors_without_changes(
         path.write_bytes(b'x')
         path.chmod(0o600)
     with pytest.raises(_TransformError):
-        ensure_text(path, _raise, mode=0o644)
+        ensure_text_transform(path, _raise, mode=0o644)
     if exists:
         assert path.read_bytes() == b'x'
         assert stat.S_IMODE(path.stat().st_mode) == 0o600
@@ -160,7 +162,7 @@ def test_ensure_text_propagates_transform_errors_without_changes(
         assert not path.parent.exists()
 
 
-def test_ensure_text_propagates_decode_errors_without_changes(tmp_path: pathlib.Path):
+def test_ensure_text_transform_propagates_decode_errors_without_changes(tmp_path: pathlib.Path):
     path = tmp_path / 'path'
     path.write_bytes(b'\xff')
     path.chmod(0o600)
@@ -171,7 +173,7 @@ def test_ensure_text_propagates_decode_errors_without_changes(tmp_path: pathlib.
         return ''
 
     with pytest.raises(UnicodeDecodeError):
-        ensure_text(path, transform, mode=0o644)
+        ensure_text_transform(path, transform, mode=0o644)
     assert not calls
     assert path.read_bytes() == b'\xff'
     assert stat.S_IMODE(path.stat().st_mode) == 0o600

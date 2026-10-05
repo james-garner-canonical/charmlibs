@@ -81,7 +81,7 @@ def ensure_contents(
     return True
 
 
-def ensure_text(
+def ensure_text_transform(
     path: str | os.PathLike[str] | PathProtocol,
     transform: Callable[[str | None], str],
     *,
