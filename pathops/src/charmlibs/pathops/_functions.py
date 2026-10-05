@@ -147,18 +147,18 @@ def ensure_text(
     if existing_bytes is None:
         transformed_bytes = _encode_text(transform(None))
         path.parent.mkdir(parents=True, exist_ok=True)
-        write = True
-    else:
-        existing_text = existing_bytes.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
-        transformed_bytes = _encode_text(transform(existing_text))
-        if transformed_bytes != existing_bytes:
-            write = True
-        else:
-            info = _get_fileinfo(path)
-            write = not _metadata_matches(info, mode=mode, user=user, group=group)
-    if write:
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
-    return write
+        return True
+    existing_text = existing_bytes.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
+    transformed_bytes = _encode_text(transform(existing_text))
+    if transformed_bytes != existing_bytes:
+        path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
+        return True
+    info = _get_fileinfo(path)
+    if not _metadata_matches(info, mode=mode, user=user, group=group):
+        path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
+        return True
+    return False
 
 
 def _encode_text(text: str) -> bytes:
