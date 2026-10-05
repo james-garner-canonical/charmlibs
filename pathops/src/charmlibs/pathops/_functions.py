@@ -60,6 +60,7 @@ def ensure_contents(
 
     Raises:
         LookupError: if the user or group is unknown.
+        IsADirectoryError: if ``path`` is a directory.
         NotADirectoryError: if the parent exists as a non-directory file.
         PermissionError: if the user does not have permissions for the operation.
         :class:`PebbleConnectionError`: if the remote Pebble client cannot be reached.
@@ -91,12 +92,11 @@ def ensure_text(
 ) -> bool:
     r"""Ensure ``path`` contains the text from ``transform``. Return True if any changes were made.
 
-    The existing contents of ``path`` are read once and decoded as UTF-8, then passed to
-    ``transform``, which is called exactly once. If the file doesn't exist, ``transform``
-    receives ``None``. An empty file supplies ``''``. ``transform`` must return the desired
-    complete contents of the file as a ``str``, which is encoded as UTF-8 and written if it
-    differs from the file's current contents. A missing file is always created, even if the
-    result is empty.
+    ``transform`` is called exactly once with the existing contents of ``path``, or ``None`` if the
+    file doesn't exist. The contents are decoded as UTF-8 and newlines are normalized to ``'\n'``.
+    The result of ``transform`` is encoded as UTF-8 and written to ``path`` if the bytes differ
+    from the current contents, or if ``path`` doesn't have the desired permissions and ownership.
+    Like :func:`ensure_contents`, missing parent directories are created if needed.
 
     Newlines are handled as by :meth:`PathProtocol.read_text` and
     :meth:`PathProtocol.write_text`: ``transform`` receives the text with all newlines
@@ -105,10 +105,6 @@ def ensure_text(
     that if the file uses ``'\r\n'`` or ``'\r'`` line endings, the first call rewrites it with
     ``'\n'`` line endings (and returns ``True``), even if ``transform`` returns its input
     unchanged.
-
-    Like :func:`ensure_contents`, missing parent directories are created, and the file's
-    permissions (``mode``) and ownership (``user`` and ``group``) are enforced even when the
-    contents are unchanged.
 
     ``transform`` is responsible for any editing policy (for example, appending a line only if
     it's not already present), and for its own idempotence. The read and the write are separate
@@ -126,14 +122,14 @@ def ensure_text(
         group: The desired group, or ``None`` to not change the group.
 
     Returns:
-        ``True`` if any changes were made, including file creation, permissions, or ownership,
-        otherwise ``False``.
+        ``True`` if any changes were made (including file creation, newline normalization,
+        and permissions or ownership changes), otherwise ``False``.
 
     Raises:
         TypeError: if ``transform`` doesn't return a ``str``.
         UnicodeDecodeError: if the existing contents aren't valid UTF-8.
-        IsADirectoryError: if ``path`` is a directory.
         LookupError: if the user or group is unknown.
+        IsADirectoryError: if ``path`` is a directory.
         NotADirectoryError: if the parent exists as a non-directory file.
         PermissionError: if the user does not have permissions for the operation.
         :class:`PebbleConnectionError`: if the remote Pebble client cannot be reached.
