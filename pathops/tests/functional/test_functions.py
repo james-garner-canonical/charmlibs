@@ -23,7 +23,14 @@ import typing
 import pytest
 
 import utils
-from charmlibs.pathops import ContainerPath, LocalPath, _constants, ensure_contents
+from charmlibs.pathops import (
+    ContainerPath,
+    LocalPath,
+    _constants,
+    ensure_bytes,
+    ensure_contents,
+    ensure_text,
+)
 from charmlibs.pathops._functions import _get_fileinfo
 
 if typing.TYPE_CHECKING:
@@ -105,3 +112,50 @@ def test_get_fileinfo(
         synthetic_dict = utils.info_to_dict(synthetic_result, exclude=exclude)
         pebble_dict = utils.info_to_dict(pebble_result, exclude=exclude)
         assert synthetic_dict == pebble_dict
+
+
+@pytest.mark.parametrize('exists', [True, False])
+@pytest.mark.parametrize('mode', [_constants.DEFAULT_WRITE_MODE, 0o600])
+@pytest.mark.parametrize('kind', ['text', 'bytes'])
+@pytest.mark.parametrize('path_type', [str, pathlib.Path, LocalPath, ContainerPath])
+@pytest.mark.parametrize('contents', [b'hel\rl\r\no\n', b''])
+def test_ensure_text_and_bytes(
+    tmp_path: pathlib.Path,
+    container: ops.Container,
+    path_type: type[str] | type[pathlib.Path] | type[ContainerPath],
+    contents: bytes,
+    kind: Literal['text', 'bytes'],
+    mode: int,
+    exists: bool,
+):
+    parent = tmp_path / 'parent'
+    path = parent / 'path'
+    if exists:
+        parent.mkdir()
+        path.write_bytes(contents)
+        path.chmod(_constants.DEFAULT_WRITE_MODE)
+    if issubclass(path_type, ContainerPath):
+        target = ContainerPath(path, container=container)
+    else:
+        target = path_type(path)
+    calls: list[str | bytes | None] = []
+    if kind == 'text':
+
+        def text_transform(existing: str | None) -> str:
+            calls.append(existing)
+            return contents.decode()
+
+        changed = ensure_text(target, text_transform, mode=mode)
+        expected_arg = contents.decode() if exists else None
+    else:
+
+        def bytes_transform(existing: bytes | None) -> bytes:
+            calls.append(existing)
+            return contents
+
+        changed = ensure_bytes(target, bytes_transform, mode=mode)
+        expected_arg = contents if exists else None
+    assert calls == [expected_arg]
+    assert changed == (not exists or mode != _constants.DEFAULT_WRITE_MODE)
+    assert path.read_bytes() == contents
+    assert _get_fileinfo(path).permissions == mode

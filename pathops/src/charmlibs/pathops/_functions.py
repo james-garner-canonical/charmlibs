@@ -25,6 +25,7 @@ from ._local_path import LocalPath
 
 if typing.TYPE_CHECKING:
     import os
+    from collections.abc import Callable
     from typing import BinaryIO, TextIO
 
     from ops import pebble
@@ -80,6 +81,150 @@ def ensure_contents(
             return False  # everything matches, so writing is not required
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(source, mode=mode, user=user, group=group)
+    return True
+
+
+def ensure_text(
+    path: str | os.PathLike[str] | PathProtocol,
+    transform: Callable[[str | None], str],
+    *,
+    mode: int = _constants.DEFAULT_WRITE_MODE,
+    user: str | None = None,
+    group: str | None = None,
+) -> bool:
+    """Ensure ``path`` contains the text from ``transform``. Return True if any changes were made.
+
+    The existing contents of ``path`` are read once and decoded as UTF-8, then passed to
+    ``transform``, which is called exactly once. If the file doesn't exist, ``transform``
+    receives ``None``. An empty file supplies ``''``. ``transform`` must return the desired
+    complete contents of the file as a ``str``, which are encoded as UTF-8 and written if they
+    differ from the existing contents. A missing file is always created, even if the result is
+    empty. No newline translation is performed.
+
+    Like :func:`ensure_contents`, missing parent directories are created, and the file's
+    permissions (``mode``) and ownership (``user`` and ``group``) are enforced even when the
+    contents are unchanged.
+
+    ``transform`` is responsible for any editing policy (for example, appending a line only if
+    it's not already present), and for its own idempotence. The read and the write are separate
+    operations, so concurrent modification of the file between them is not detected.
+
+    If reading, decoding, or ``transform`` raises an exception, it's propagated without the file
+    being written or its metadata being changed.
+
+    Args:
+        path: A local or remote filesystem path.
+        transform: Called with the existing text, or ``None`` if the file doesn't exist.
+            Returns the desired text.
+        mode: The desired file permissions.
+        user: The desired file owner, or ``None`` to not change the owner.
+        group: The desired group, or ``None`` to not change the group.
+
+    Returns:
+        ``True`` if any changes were made, including file creation, permissions, or ownership,
+        otherwise ``False``.
+
+    Raises:
+        TypeError: if ``transform`` doesn't return a ``str``.
+        UnicodeDecodeError: if the existing contents aren't valid UTF-8.
+        IsADirectoryError: if ``path`` is a directory.
+        LookupError: if the user or group is unknown.
+        NotADirectoryError: if the parent exists as a non-directory file.
+        PermissionError: if the user does not have permissions for the operation.
+        :class:`PebbleConnectionError`: if the remote Pebble client cannot be reached.
+    """
+
+    def transform_bytes(existing: bytes | None) -> bytes:
+        result = transform(None if existing is None else existing.decode('utf-8'))
+        if not isinstance(result, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError(f'transform must return str, not {type(result).__name__}')
+        return result.encode('utf-8')
+
+    return _ensure_transformed(path, transform_bytes, mode=mode, user=user, group=group)
+
+
+def ensure_bytes(
+    path: str | os.PathLike[str] | PathProtocol,
+    transform: Callable[[bytes | None], bytes],
+    *,
+    mode: int = _constants.DEFAULT_WRITE_MODE,
+    user: str | None = None,
+    group: str | None = None,
+) -> bool:
+    """Ensure ``path`` contains the bytes from ``transform``. Return True if any changes were made.
+
+    The existing contents of ``path`` are read once and passed to ``transform``, which is called
+    exactly once. If the file doesn't exist, ``transform`` receives ``None``. An empty file
+    supplies ``b''``. ``transform`` must return the desired complete contents of the file as
+    ``bytes``, which are written if they differ from the existing contents. A missing file is
+    always created, even if the result is empty.
+
+    Like :func:`ensure_contents`, missing parent directories are created, and the file's
+    permissions (``mode``) and ownership (``user`` and ``group``) are enforced even when the
+    contents are unchanged.
+
+    ``transform`` is responsible for any editing policy and for its own idempotence. The read and
+    the write are separate operations, so concurrent modification of the file between them is
+    not detected.
+
+    If reading or ``transform`` raises an exception, it's propagated without the file being
+    written or its metadata being changed.
+
+    Args:
+        path: A local or remote filesystem path.
+        transform: Called with the existing bytes, or ``None`` if the file doesn't exist.
+            Returns the desired bytes.
+        mode: The desired file permissions.
+        user: The desired file owner, or ``None`` to not change the owner.
+        group: The desired group, or ``None`` to not change the group.
+
+    Returns:
+        ``True`` if any changes were made, including file creation, permissions, or ownership,
+        otherwise ``False``.
+
+    Raises:
+        TypeError: if ``transform`` doesn't return ``bytes``.
+        IsADirectoryError: if ``path`` is a directory.
+        LookupError: if the user or group is unknown.
+        NotADirectoryError: if the parent exists as a non-directory file.
+        PermissionError: if the user does not have permissions for the operation.
+        :class:`PebbleConnectionError`: if the remote Pebble client cannot be reached.
+    """
+
+    def transform_bytes(existing: bytes | None) -> bytes:
+        result = transform(existing)
+        if not isinstance(result, bytes):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise TypeError(f'transform must return bytes, not {type(result).__name__}')
+        return result
+
+    return _ensure_transformed(path, transform_bytes, mode=mode, user=user, group=group)
+
+
+def _ensure_transformed(
+    path: str | os.PathLike[str] | PathProtocol,
+    transform: Callable[[bytes | None], bytes],
+    *,
+    mode: int,
+    user: str | None,
+    group: str | None,
+) -> bool:
+    if _is_str_pathlike(path):
+        path = LocalPath(path)
+    try:
+        existing = path.read_bytes()
+    except FileNotFoundError:
+        existing = None
+    desired = transform(existing)
+    if existing is not None and desired == existing:
+        info = _get_fileinfo(path)
+        if (
+            (info.permissions == mode)
+            and (user is None or info.user == user)
+            and (group is None or info.group == group)
+        ):
+            return False  # everything matches, so writing is not required
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(desired, mode=mode, user=user, group=group)
     return True
 
 
