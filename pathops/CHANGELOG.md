@@ -1,11 +1,8 @@
-# Unreleased
+# 1.4.0 - 5 October 2026
 
-Add `ensure_text`, which calls a `transform` function with the existing file contents (or `None` if the file doesn't exist) and ensures the file contains the result, with the same `mode`, `user`, `group`, and return value semantics as `ensure_contents`. Newlines are translated to `'\n'` before `transform` sees them, as with `read_text`, and the file always ends up containing exactly the text that `transform` returns.
-
-`ContainerPath` now provides `is_relative_to` and `with_stem`, matching `pathlib.Path` on Python 3.9+.
-`with_stem` is also part of `PathProtocol`; `is_relative_to` is not, because `pathlib`'s signature doesn't settle until Python 3.12.
-`ContainerPath.match` now accepts a `str | os.PathLike[str]` pattern, matching `pathlib.Path.match` on Python 3.12+.
-`ContainerPath.match` also explicitly rejects `ContainerPath` arguments with a `TypeError` (since `ContainerPath` is not `os.PathLike`), restoring the pre-3.14 behaviour: Python 3.14's `pathlib.PurePath.match` accepts any object that implements `with_segments`, which would otherwise silently let a `ContainerPath` through.
+* Add `ensure_text_transform`, which calls a user-supplied `transform` function with the existing file contents and writes the result if needed.
+* `ContainerPath` now provides `is_relative_to` and `with_stem`, matching `pathlib.Path` on Python 3.9+. `with_stem` is also part of `PathProtocol`; `is_relative_to` is not, because `pathlib`'s signature doesn't settle until Python 3.12.
+* `ContainerPath.match` now accepts a `str | os.PathLike[str]` pattern, matching `pathlib.Path.match` on Python 3.12+. `ContainerPath.match` also explicitly rejects `ContainerPath` arguments with a `TypeError` (since `ContainerPath` is not `os.PathLike`), restoring the pre-3.14 behaviour: Python 3.14's `pathlib.PurePath.match` accepts any object that implements `with_segments`, which would otherwise silently let a `ContainerPath` through.
 
 # 1.3.0.post0 - 16 June 2026
 
