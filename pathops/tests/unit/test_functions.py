@@ -61,9 +61,8 @@ def test_get_fileinfo_reraises_unhandled_pebble_errors(
         (b'', 'x', '', b'x', True),
         ('héllo\n'.encode(), 'héllo\n', 'héllo\n', 'héllo\n'.encode(), False),
         (b'hello', '', 'hello', b'', True),
-        # newlines are translated to '\n' for transform
-        # but the file is only rewritten if the text changes
-        (b'a\r\nb\rc\n', 'a\nb\nc\n', 'a\nb\nc\n', b'a\r\nb\rc\n', False),
+        # newlines are translated to '\n' for transform, and the file ends up with the result
+        (b'a\r\nb\rc\n', 'a\nb\nc\n', 'a\nb\nc\n', b'a\nb\nc\n', True),
         (b'a\r\nb\rc\n', 'a\nb\nc\nd\n', 'a\nb\nc\n', b'a\nb\nc\nd\n', True),
         # returned text is written as is
         (None, 'a\r\nb\r', None, b'a\r\nb\r', True),
@@ -102,12 +101,21 @@ def _identity(text: str | None) -> str:
 
 def test_ensure_text_enforces_mode_when_contents_unchanged(tmp_path: pathlib.Path):
     path = tmp_path / 'path'
-    path.write_bytes(b'x\r\n')
+    path.write_bytes(b'x\n')
     path.chmod(0o600)
     assert ensure_text(path, _identity, mode=0o640)
     assert stat.S_IMODE(path.stat().st_mode) == 0o640
-    assert path.read_bytes() == b'x\r\n'
+    assert path.read_bytes() == b'x\n'
     assert not ensure_text(path, _identity, mode=0o640)
+
+
+def test_ensure_text_normalises_newlines_once(tmp_path: pathlib.Path):
+    path = tmp_path / 'path'
+    path.write_bytes(b'a\r\nb\r')
+    path.chmod(_constants.DEFAULT_WRITE_MODE)
+    assert ensure_text(path, _identity)
+    assert path.read_bytes() == b'a\nb\n'
+    assert not ensure_text(path, _identity)
 
 
 @pytest.mark.parametrize('bad', [None, b'x'])

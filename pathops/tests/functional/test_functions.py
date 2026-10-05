@@ -149,11 +149,7 @@ def test_ensure_text(
 
     changed = ensure_text(target, transform, mode=mode)
     assert calls == [translated if exists else None]
-    assert changed == (not exists or edit or mode != _constants.DEFAULT_WRITE_MODE)
-    if edit:
-        assert path.read_text() == translated + 'x\n'
-    elif exists:
-        assert path.read_bytes() == contents
-    else:
-        assert path.read_text() == translated
+    expected = (translated + 'x\n' if edit else translated).encode()
+    assert changed == (not exists or expected != contents or mode != _constants.DEFAULT_WRITE_MODE)
+    assert path.read_bytes() == expected
     assert _get_fileinfo(path).permissions == mode

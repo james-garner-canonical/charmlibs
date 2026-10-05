@@ -95,16 +95,16 @@ def ensure_text(
     ``transform``, which is called exactly once. If the file doesn't exist, ``transform``
     receives ``None``. An empty file supplies ``''``. ``transform`` must return the desired
     complete contents of the file as a ``str``, which is encoded as UTF-8 and written if it
-    differs from the text that ``transform`` received. A missing file is always created, even if
-    the result is empty.
+    differs from the file's current contents. A missing file is always created, even if the
+    result is empty.
 
     Newlines are handled as by :meth:`PathProtocol.read_text` and
     :meth:`PathProtocol.write_text`: ``transform`` receives the text with all newlines
     (``'\r\n'``, ``'\r'``, and ``'\n'``) translated to ``'\n'``, and the text it returns is
-    written as is. So if the file uses ``'\r\n'`` line endings, returning the text unchanged
-    leaves the file untouched, but any other change rewrites the whole file with ``'\n'`` line
-    endings. If only the permissions or ownership need changing, the original line endings are
-    kept.
+    written as is, so the file always ends up containing exactly the returned text. This means
+    that if the file uses ``'\r\n'`` or ``'\r'`` line endings, the first call rewrites it with
+    ``'\n'`` line endings (and returns ``True``), even if ``transform`` returns its input
+    unchanged.
 
     Like :func:`ensure_contents`, missing parent directories are created, and the file's
     permissions (``mode``) and ownership (``user`` and ``group``) are enforced even when the
@@ -141,26 +141,24 @@ def ensure_text(
     if _is_str_pathlike(path):
         path = LocalPath(path)
     # Not read_text, as LocalPath inherits pathlib's locale-dependent default encoding.
-    # The raw bytes are kept so that a metadata-only fix preserves the original line endings.
     try:
-        existing_bytes = path.read_bytes()
+        existing = path.read_bytes()
     except FileNotFoundError:
-        existing_bytes = None
         existing = None
-    else:
-        existing = existing_bytes.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
-    desired = transform(existing)
-    if not isinstance(desired, str):  # pyright: ignore[reportUnnecessaryIsInstance]
-        raise TypeError(f'transform must return str, not {type(desired).__name__}')
-    if existing_bytes is not None and desired == existing:
+    text = transform(
+        None
+        if existing is None
+        else existing.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
+    )
+    if not isinstance(text, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+        raise TypeError(f'transform must return str, not {type(text).__name__}')
+    desired = text.encode('utf-8')
+    if existing is not None and desired == existing:
         info = _get_fileinfo(path)
         if _metadata_matches(info, mode=mode, user=user, group=group):
             return False  # everything matches, so writing is not required
-        data = existing_bytes
-    else:
-        data = desired.encode('utf-8')
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(data, mode=mode, user=user, group=group)
+    path.write_bytes(desired, mode=mode, user=user, group=group)
     return True
 
 
