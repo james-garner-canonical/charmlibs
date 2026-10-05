@@ -118,7 +118,7 @@ def ensure_vitality_hint(snap: str) -> object:
     snapd sets ``OOMScoreAdjust`` to ``-900`` plus the snap's position in the list: ``-899``
     for the first snap, ``-898`` for the second, and so on, up to ``-800`` for the 100th.
     Unlisted snaps' services keep the default of ``0``, like most other processes.
-    So a listed snap's service (-899 - -800) can only killed ahead of an unlisted process (0)
+    So a listed snap's service (-899 - -800) can only be killed ahead of an unlisted process (0)
     if it uses memory on the order of 80-90% of the system's total memory.
     Between listed snaps, memory use differences are the more significant factor.
 
@@ -135,6 +135,7 @@ def ensure_vitality_hint(snap: str) -> object:
             trailing whitespace, or is "snapd" (whose services are always at ``-900``).
         ChangeError: if snapd rejects the updated list: if the snap name is not a valid snap
             name, or if the list would contain too many snaps (snapd's current limit is 100).
+        BadResponseError: if snapd returns a non-string value for the vitality hint.
     """
     _utils.raise_if_not_comma_list_safe(snap, label='snap name')
     if snap == 'snapd':
