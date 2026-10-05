@@ -142,7 +142,8 @@ def ensure_text_transform(
         existing_bytes = None
     if existing_bytes is None:
         # The file doesn't exist yet. Create it with the transformed content.
-        transformed_bytes = _encode_text(transform(None))
+        transformed_text = transform(None)
+        transformed_bytes = _encode_text(transformed_text)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
         return True
