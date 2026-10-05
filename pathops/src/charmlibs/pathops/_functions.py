@@ -141,10 +141,16 @@ def ensure_text(
     if _is_str_pathlike(path):
         path = LocalPath(path)
     try:
-        existing_bytes = path.read_bytes()  # Avoid Path.read_text's locale-dependent encoding.
+        # path.read_bytes() rather than path.read_text() because:
+        # 1) We compare raw bytes so \r\n or \r line endings beingconverted to \n triggers
+        #    a rewrite even if the transform function returns its input unchanged.
+        # 2) We decode and encode as UTF-8, whereas (before Python 3.15) pathlib's read_text
+        #    uses the locale's encoding by default (which LocalPath inherits).
+        existing_bytes = path.read_bytes()
     except FileNotFoundError:
         existing_bytes = None
     if existing_bytes is None:
+        # The file doesn't exist yet. Create it with the transformed content.
         transformed_bytes = _encode_text(transform(None))
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
@@ -152,12 +158,16 @@ def ensure_text(
     existing_text = existing_bytes.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
     transformed_bytes = _encode_text(transform(existing_text))
     if transformed_bytes != existing_bytes:
+        # The file exists but its contents differ from the transformed content
+        # (due to line ending normalization or genuine transformation).
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
         return True
     info = _get_fileinfo(path)
     if not _metadata_matches(info, mode=mode, user=user, group=group):
+        # The file exists and has the same content, but its metadata is different.
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
         return True
+    # The file exists and has the same content and metadata. No action is needed.
     return False
 
 
