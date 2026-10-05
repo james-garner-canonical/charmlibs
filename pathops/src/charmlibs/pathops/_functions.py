@@ -145,12 +145,12 @@ def ensure_text(
     except FileNotFoundError:
         existing_bytes = None
     if existing_bytes is None:
-        transformed_bytes = _transform(transform, None)
+        transformed_bytes = _encode_text(transform(None))
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
         return True
     existing_text = existing_bytes.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
-    transformed_bytes = _transform(transform, existing_text)
+    transformed_bytes = _encode_text(transform(existing_text))
     if transformed_bytes == existing_bytes:
         info = _get_fileinfo(path)
         if _metadata_matches(info, mode=mode, user=user, group=group):
@@ -159,11 +159,10 @@ def ensure_text(
     return True
 
 
-def _transform(transform: Callable[[str | None], str], existing_text: str | None) -> bytes:
-    transformed_text = transform(existing_text)
-    if not isinstance(transformed_text, str):  # pyright: ignore[reportUnnecessaryIsInstance]
-        raise TypeError(f'transform must return str, not {type(transformed_text).__name__}')
-    return transformed_text.encode('utf-8')
+def _encode_text(text: str) -> bytes:
+    if not isinstance(text, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+        raise TypeError(f'transform must return str, not {type(text).__name__}')
+    return text.encode('utf-8')
 
 
 def _metadata_matches(
