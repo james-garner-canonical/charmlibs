@@ -72,10 +72,10 @@ def ensure_contents(
     except FileNotFoundError:
         pass  # file doesn't exist, so writing is required
     else:  # check if metadata and contents already match
-        if _metadata_matches(info, mode=mode, user=user, group=group) and (
-            path.read_bytes() == source
-        ):
-            return False  # everything matches, so writing is not required
+        if _metadata_matches(info, mode=mode, user=user, group=group):
+            existing_bytes = path.read_bytes()
+            if existing_bytes == source:
+                return False  # everything matches, so writing is not required
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(source, mode=mode, user=user, group=group)
     return True
