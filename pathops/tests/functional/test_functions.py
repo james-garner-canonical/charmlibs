@@ -27,7 +27,6 @@ from charmlibs.pathops import (
     ContainerPath,
     LocalPath,
     _constants,
-    ensure_bytes,
     ensure_contents,
     ensure_text,
 )
@@ -116,15 +115,18 @@ def test_get_fileinfo(
 
 @pytest.mark.parametrize('exists', [True, False])
 @pytest.mark.parametrize('mode', [_constants.DEFAULT_WRITE_MODE, 0o600])
-@pytest.mark.parametrize('kind', ['text', 'bytes'])
+@pytest.mark.parametrize('edit', [True, False])
 @pytest.mark.parametrize('path_type', [str, pathlib.Path, LocalPath, ContainerPath])
-@pytest.mark.parametrize('contents', [b'hel\rl\r\no\n', b''])
-def test_ensure_text_and_bytes(
+@pytest.mark.parametrize(
+    ('contents', 'translated'), [(b'hel\rl\r\no\n', 'hel\nl\no\n'), (b'', '')]
+)
+def test_ensure_text(
     tmp_path: pathlib.Path,
     container: ops.Container,
     path_type: type[str] | type[pathlib.Path] | type[ContainerPath],
     contents: bytes,
-    kind: Literal['text', 'bytes'],
+    translated: str,
+    edit: bool,
     mode: int,
     exists: bool,
 ):
@@ -138,24 +140,20 @@ def test_ensure_text_and_bytes(
         target = ContainerPath(path, container=container)
     else:
         target = path_type(path)
-    calls: list[str | bytes | None] = []
-    if kind == 'text':
+    calls: list[str | None] = []
 
-        def text_transform(existing: str | None) -> str:
-            calls.append(existing)
-            return contents.decode()
+    def transform(existing: str | None) -> str:
+        calls.append(existing)
+        text = translated if existing is None else existing
+        return text + 'x\n' if edit else text
 
-        changed = ensure_text(target, text_transform, mode=mode)
-        expected_arg = contents.decode() if exists else None
+    changed = ensure_text(target, transform, mode=mode)
+    assert calls == [translated if exists else None]
+    assert changed == (not exists or edit or mode != _constants.DEFAULT_WRITE_MODE)
+    if edit:
+        assert path.read_text() == translated + 'x\n'
+    elif exists:
+        assert path.read_bytes() == contents
     else:
-
-        def bytes_transform(existing: bytes | None) -> bytes:
-            calls.append(existing)
-            return contents
-
-        changed = ensure_bytes(target, bytes_transform, mode=mode)
-        expected_arg = contents if exists else None
-    assert calls == [expected_arg]
-    assert changed == (not exists or mode != _constants.DEFAULT_WRITE_MODE)
-    assert path.read_bytes() == contents
+        assert path.read_text() == translated
     assert _get_fileinfo(path).permissions == mode
