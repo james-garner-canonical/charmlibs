@@ -16,8 +16,6 @@
 
 from . import _errors, _snapd_conf, _snapd_snaps, _utils
 
-_VITALITY_HINT = 'resilience.vitality-hint'
-
 
 def ensure_installed(
     snap: str,
@@ -113,10 +111,10 @@ def ensure_vitality_hint(snap: str) -> object:
     A running service keeps its current score until it next starts, so use :func:`restart`
     if you want the hint applied immediately.
 
-    This works by setting each service's ``OOMScoreAdjust``, which ranges from ``-1000``
-    (special: never killed) to ``1000``, with a default of ``0``. Lower values mean more protection.
-    When the system runs out of memory, the kernel kills the process with the highest score based on
-    its share of memory (1000 * 0.1 -> 100, 1000 * 0.5 -> 500) plus its ``OOMScoreAdjust``.
+    This works by setting each service's ``OOMScoreAdjust``, which ranges from -1000
+    (special: never killed) to 1000, with a default of 0. Lower values mean more protection.
+    When the system runs out of memory, the kernel kills the process with the highest score based
+    on its share of memory (1000 * 0.1 -> 100, 1000 * 0.5 -> 500) plus its ``OOMScoreAdjust``.
     snapd sets ``OOMScoreAdjust`` to ``-900`` plus the snap's position in the list: ``-899``
     for the first snap, ``-898`` for the second, and so on, up to ``-800`` for the 100th.
     Unlisted snaps' services keep the default of ``0``, like most other processes.
@@ -141,18 +139,19 @@ def ensure_vitality_hint(snap: str) -> object:
     _utils.raise_if_not_comma_list_safe(snap, label='snap name')
     if snap == 'snapd':
         raise ValueError('snap name cannot be "snapd"')
+    vitality_hint = 'resilience.vitality-hint'
     try:
-        current = _snapd_conf.get_one('system', _VITALITY_HINT)
+        current = _snapd_conf.get_one('system', vitality_hint)
     except _errors.OptionNotFoundError:
         current = ''
     if not isinstance(current, str):
         # NOTE: This should never happen as snapd rejects malformed values for this option.
-        msg = f'Unexpected config type {type(current).__name__!r} for {_VITALITY_HINT!r} (expected a "str")'  # noqa: E501
+        msg = f'Unexpected config type {type(current).__name__!r} for {vitality_hint!r} (expected a "str")'  # noqa: E501
         raise _errors.BadResponseError(msg, response=current)
     hints = current.split(',') if current else []  # Treat '' as an empty list.
     if snap in hints:
         return False
-    _snapd_conf.set('system', {_VITALITY_HINT: ','.join([*hints, snap])})
+    _snapd_conf.set('system', {vitality_hint: ','.join([*hints, snap])})
     return True
 
 
