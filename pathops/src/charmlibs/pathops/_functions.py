@@ -152,7 +152,8 @@ def ensure_text(
         path.write_bytes(transformed_bytes, mode=mode, user=user, group=group)
         return True
     existing_text = existing_bytes.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
-    transformed_bytes = _encode_text(transform(existing_text))
+    transformed_text = transform(existing_text)
+    transformed_bytes = _encode_text(transformed_text)
     if transformed_bytes != existing_bytes:
         # The file exists but its contents differ from the transformed content
         # (due to line ending normalization or genuine transformation).
