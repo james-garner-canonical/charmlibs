@@ -44,5 +44,5 @@ class Charm(common.Charm):
         ...
 
 
-if __name__ == '__main__':  # pragma: nocover
+if __name__ == '__main__':  # pragma: no cover
     ops.main(Charm)
