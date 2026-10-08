@@ -29,6 +29,7 @@ class Charm(common.Charm):
 
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
+        # Initialize your library's requirer object here.
         # self.lib_obj = {{ cookiecutter.__pkg }}.<...>Requirer(self, ENDPOINT, ...)
         framework.observe(self.on[ENDPOINT].relation_changed, self._reconcile)
         framework.observe(self.on.start, self._on_start)
