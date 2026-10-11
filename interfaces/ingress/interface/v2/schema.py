@@ -11,10 +11,10 @@ Examples:
 
     Requirer:
         unit: {
-              "name": "app-name",
               "host": "hostname"
               }
         app: {
+              "name": "app-name",
               "port": 4242,
               "model": "model-name"
               }
