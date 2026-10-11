@@ -36,15 +36,15 @@ The requirer and the provider need to adhere to a certain set of criteria to be 
 
 [\[JSON Schema\]](./schemas/provider.json)
 
-Exposes a `urls` field containing a mapping from unit name to the url at which ingress is available for that unit. Should be placed in the **application** databag, encoded as yaml and nested in a "data" field.
+Exposes an `ingress` field containing a mapping from unit name to an object whose `url` field is the url at which ingress is available for that unit. Should be placed in the **application** databag, encoded as yaml.
 
 #### Example
 
 ```yaml
 application_data: {
-  urls: { 
-    unit_name: "http://foo.bar:80/model_name-unit_name/0" 
-  }
+  ingress: |
+    unit_name/0:
+      url: "http://foo.bar:80/model_name-unit_name/0"
 }
 ```
 
