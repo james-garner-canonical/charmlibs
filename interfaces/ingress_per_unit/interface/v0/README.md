@@ -52,7 +52,7 @@ application_data: {
 
 [\[JSON Schema\]](./schemas/requirer.json)
 
-Exposes the unit name, model name, hostname and port at which ingress should be provided. Should be placed in the **unit** databag of _each unit_ of the requirer application.
+Exposes the unit name, model name, hostname and port at which ingress should be provided. Optionally also exposes the mode (`http` or `tcp`), the scheme, and whether to strip the prefix (`strip-prefix`) and redirect to HTTPS (`redirect-https`). Should be placed in the **unit** databag of _each unit_ of the requirer application.
 
 #### Example
 ```yaml
@@ -60,7 +60,11 @@ unit-data: {
  name: "unit-name",
  host: "hostname",
  port: 4242,
- model: "model-name"
+ model: "model-name",
+ mode: "http",
+ scheme: "https",
+ strip-prefix: true,
+ redirect-https: true
 }
 ```
 
