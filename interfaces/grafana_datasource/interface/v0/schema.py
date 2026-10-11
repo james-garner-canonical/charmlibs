@@ -48,6 +48,11 @@ class RequirerAppData(BaseModel):
         description="UID of the requirer application.",
         examples=['foo-0000-0000-0000-0000-grafana-1'],
     )
+    grafana_base_url: str | None = Field(
+        default=None,
+        description="Base URL of the requirer application, which may be ingressed.",
+        examples=['http://grafana.example.com/cos-grafana'],
+    )
 
 
 RequirerUnitData = None
