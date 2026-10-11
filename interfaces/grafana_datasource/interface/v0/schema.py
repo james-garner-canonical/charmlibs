@@ -27,13 +27,13 @@ class GrafanaSourceData(BaseModel):
 
 
 class ProviderAppData(BaseModel):
-    """Application databag model for the requirer side of this interface."""
+    """Application databag model for the provider side of this interface."""
 
     grafana_source_data: GrafanaSourceData
 
 
 class ProviderUnitData(BaseModel):
-    """Application databag model for the requirer side of this interface."""
+    """Unit databag model for the provider side of this interface."""
 
     grafana_source_host: str = Field(
         description="Hostname of a source server.", examples=['localhost:80']
