@@ -87,6 +87,14 @@
 # /interfaces/gateway_metadata/
 /interfaces/gateway_metadata @canonical/service-mesh
 
+# /interfaces/ingress/
+/interfaces/ingress/interface/ @canonical/platform-engineering
+/interfaces/ingress/ruff.toml @canonical/platform-engineering
+
+# /interfaces/ingress_per_unit/
+/interfaces/ingress_per_unit/interface/ @canonical/platform-engineering
+/interfaces/ingress_per_unit/ruff.toml @canonical/platform-engineering
+
 # /interfaces/istio_ingress_route/
 /interfaces/istio_ingress_route @canonical/service-mesh
 
