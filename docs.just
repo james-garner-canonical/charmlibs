@@ -52,15 +52,20 @@ _packages *packages: _package_docs
     inventory_dir = (BUILD_DIR / '_inventories').resolve()
     inventory_dir.mkdir(parents=True, exist_ok=True)
     conf = runpy.run_path('conf.py', init_globals={'tags': set()})
+    attempts = 3
     for name, (url, _) in conf['intersphinx_mapping'].items():
-        for attempt in range(3):
+        for attempt in range(1, attempts + 1):
             try:
                 with urllib.request.urlopen(f'{url}/objects.inv', timeout=30) as response:
                     (inventory_dir / f'{name}.inv').write_bytes(response.read())
                 break
             except OSError as e:
-                print(f'Failed to download {name} inventory (attempt {attempt + 1}): {e}', file=sys.stderr)
-                time.sleep(2**attempt)
+                print(f'Failed to download {name} inventory (attempt {attempt}/{attempts}): {e}', file=sys.stderr)
+                if attempt < attempts:
+                    time.sleep(2**attempt)
+        else:
+            fallback = 'a previously downloaded copy' if (inventory_dir / f'{name}.inv').exists() else 'the remote'
+            print(f'Giving up on downloading {name} inventory, builds will use {fallback}.', file=sys.stderr)
     env = {**os.environ, 'CHARMLIBS_DOCS_INVENTORY_DIR': str(inventory_dir)}
 
     def build(package):
