@@ -1,6 +1,8 @@
 set working-directory := '.docs'
 
 build_dir := env('READTHEDOCS_OUTPUT', '_build')
+# read by conf.py to use the intersphinx inventories downloaded by the `_inventories` recipe
+export CHARMLIBS_DOCS_INVENTORY_DIR := build_dir / '_inventories'
 
 # this is the first recipe in the file, so it will run if just is called without a recipe
 [doc("""
@@ -22,6 +24,35 @@ _package_docs:
     ./scripts/package_docs_preprocessor.py
 
 [doc("""
+Download the intersphinx inventories once, for conf.py to read from CHARMLIBS_DOCS_INVENTORY_DIR.
+
+Otherwise every parallel package build fetches them at the same time, which gets connections reset.
+Fails if any inventory can't be downloaded, rather than letting each package build fail separately.
+""")]
+_inventories:
+    #!/usr/bin/env -S uv run --script --no-project
+    import os, pathlib, runpy, sys, time, urllib.request
+    inventory_dir = pathlib.Path(os.environ['CHARMLIBS_DOCS_INVENTORY_DIR'])
+    inventory_dir.mkdir(parents=True, exist_ok=True)
+    conf = runpy.run_path('conf.py', init_globals={'tags': set()})
+    attempts = 3
+    failed = []
+    for name, (url, _) in conf['intersphinx_mapping'].items():
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(f'{url}/objects.inv', timeout=30) as response:
+                    (inventory_dir / f'{name}.inv').write_bytes(response.read())
+                break
+            except OSError as e:
+                print(f'Failed to download {name} inventory (attempt {attempt}/{attempts}): {e}', file=sys.stderr)
+                if attempt < attempts:
+                    time.sleep(2**attempt)
+        else:
+            failed.append(name)
+    if failed:
+        sys.exit(f'Failed to download intersphinx inventories: {", ".join(failed)}')
+
+[doc("""
 Run html builder once per package, with its deps installed, setting the package argument and suppressing reference warnings.
 
 This allows us to generate the reference docs for that package with autodoc, saving the doctrees and reference information
@@ -34,9 +65,9 @@ recipe, injecting their own automodule in-memory during source-read (see
 builds don't race on the source tree. Each build's captured stdout/stderr is printed atomically
 after it finishes.
 """)]
-_packages *packages: _package_docs
+_packages *packages: _package_docs _inventories
     #!/usr/bin/env -S uv run --script --no-project
-    import concurrent.futures, json, os, pathlib, runpy, subprocess, sys, time, urllib.request
+    import concurrent.futures, json, os, pathlib, subprocess, sys
     ROOT = pathlib.Path('{{justfile_directory()}}')
     BUILD_DIR = pathlib.Path('{{build_dir}}')
     packages = '{{packages}}'.split()
@@ -45,28 +76,6 @@ _packages *packages: _package_docs
     if not packages:
         cmd = [ROOT / '.scripts/ls.py', 'packages', '--exclude-examples', '--exclude-placeholders']
         packages = json.loads(subprocess.check_output(cmd, text=True))
-
-    # Download each intersphinx inventory once, rather than having every parallel build fetch them
-    # all at the same time, which gets connections reset. conf.py reads CHARMLIBS_DOCS_INVENTORY_DIR,
-    # and falls back to fetching from the remote for any inventory that couldn't be downloaded here.
-    inventory_dir = (BUILD_DIR / '_inventories').resolve()
-    inventory_dir.mkdir(parents=True, exist_ok=True)
-    conf = runpy.run_path('conf.py', init_globals={'tags': set()})
-    attempts = 3
-    for name, (url, _) in conf['intersphinx_mapping'].items():
-        for attempt in range(1, attempts + 1):
-            try:
-                with urllib.request.urlopen(f'{url}/objects.inv', timeout=30) as response:
-                    (inventory_dir / f'{name}.inv').write_bytes(response.read())
-                break
-            except OSError as e:
-                print(f'Failed to download {name} inventory (attempt {attempt}/{attempts}): {e}', file=sys.stderr)
-                if attempt < attempts:
-                    time.sleep(2**attempt)
-        else:
-            fallback = 'a previously downloaded copy' if (inventory_dir / f'{name}.inv').exists() else 'the remote'
-            print(f'Giving up on downloading {name} inventory, builds will use {fallback}.', file=sys.stderr)
-    env = {**os.environ, 'CHARMLIBS_DOCS_INVENTORY_DIR': str(inventory_dir)}
 
     def build(package):
         # Isolate per-build outputs (html, doctree cache) so parallel builds don't clobber each
@@ -92,7 +101,7 @@ _packages *packages: _package_docs
             '-D', 'suppress_warnings=ref.ref,ref.doc,myst.xref_missing',
             '.', str(outdir),
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         return package, cmd, result
 
     max_workers = min(len(packages), os.cpu_count() or 1)
