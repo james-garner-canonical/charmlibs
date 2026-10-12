@@ -198,6 +198,14 @@ intersphinx_mapping = {
     'juju': ('https://documentation.ubuntu.com/juju/3.6', None),
     'charmcraft': ('https://documentation.ubuntu.com/charmcraft/latest', None),
 }
+# The parallel per-package builds (the `_packages` recipe in docs.just) download each inventory
+# once up front, as many simultaneous fetches of the same inventory get connections reset.
+# Prefer those local copies, falling back to the remote inventory if one is missing.
+if _inventory_dir := os.environ.get('CHARMLIBS_DOCS_INVENTORY_DIR'):
+    for _name, (_url, _) in intersphinx_mapping.items():
+        _inventory = pathlib.Path(_inventory_dir, f'{_name}.inv')
+        if _inventory.exists():
+            intersphinx_mapping[_name] = (_url, (str(_inventory), None))
 
 maximum_signature_line_length = 80
 add_function_parentheses = False  # don't automatically add parentheses after func and method refs

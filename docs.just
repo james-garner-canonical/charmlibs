@@ -36,7 +36,7 @@ after it finishes.
 """)]
 _packages *packages: _package_docs
     #!/usr/bin/env -S uv run --script --no-project
-    import concurrent.futures, json, os, pathlib, subprocess, sys
+    import concurrent.futures, json, os, pathlib, runpy, subprocess, sys, time, urllib.request
     ROOT = pathlib.Path('{{justfile_directory()}}')
     BUILD_DIR = pathlib.Path('{{build_dir}}')
     packages = '{{packages}}'.split()
@@ -45,6 +45,23 @@ _packages *packages: _package_docs
     if not packages:
         cmd = [ROOT / '.scripts/ls.py', 'packages', '--exclude-examples', '--exclude-placeholders']
         packages = json.loads(subprocess.check_output(cmd, text=True))
+
+    # Download each intersphinx inventory once, rather than having every parallel build fetch them
+    # all at the same time, which gets connections reset. conf.py reads CHARMLIBS_DOCS_INVENTORY_DIR,
+    # and falls back to fetching from the remote for any inventory that couldn't be downloaded here.
+    inventory_dir = (BUILD_DIR / '_inventories').resolve()
+    inventory_dir.mkdir(parents=True, exist_ok=True)
+    conf = runpy.run_path('conf.py', init_globals={'tags': set()})
+    for name, (url, _) in conf['intersphinx_mapping'].items():
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(f'{url}/objects.inv', timeout=30) as response:
+                    (inventory_dir / f'{name}.inv').write_bytes(response.read())
+                break
+            except OSError as e:
+                print(f'Failed to download {name} inventory (attempt {attempt + 1}): {e}', file=sys.stderr)
+                time.sleep(2**attempt)
+    env = {**os.environ, 'CHARMLIBS_DOCS_INVENTORY_DIR': str(inventory_dir)}
 
     def build(package):
         # Isolate per-build outputs (html, doctree cache) so parallel builds don't clobber each
@@ -70,7 +87,7 @@ _packages *packages: _package_docs
             '-D', 'suppress_warnings=ref.ref,ref.doc,myst.xref_missing',
             '.', str(outdir),
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env)
         return package, cmd, result
 
     max_workers = min(len(packages), os.cpu_count() or 1)
