@@ -28,7 +28,7 @@ The requirer and the provider need to adhere to a certain set of criteria to be 
 
 ### Requirer
 
-- Is expected to be able to provide a hostname, a port, a unit name and a model name (namespace). 
+- Is expected to be able to provide a hostname, a port, a unit name and a model name (namespace).
 
 ## Relation Data
 
@@ -41,11 +41,10 @@ Exposes an `ingress` field containing a mapping from unit name to an object whos
 #### Example
 
 ```yaml
-application_data: {
+application_data:
   ingress: |
     unit_name/0:
       url: "http://foo.bar:80/model_name-unit_name/0"
-}
 ```
 
 ### Requirer
