@@ -10,4 +10,4 @@ requirers:
   - name: kyuubi-k8s
     url: https://github.com/canonical/kyuubi-k8s-operator
 
-maintainer: data-bigdata
+maintainer: processing

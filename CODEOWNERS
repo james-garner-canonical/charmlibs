@@ -227,8 +227,8 @@
 /interfaces/smtp/ruff.toml @canonical/platform-engineering
 
 # /interfaces/spark_service_account/
-/interfaces/spark_service_account/interface/ @canonical/data-bigdata
-/interfaces/spark_service_account/ruff.toml @canonical/data-bigdata
+/interfaces/spark_service_account/interface/ @canonical/processing
+/interfaces/spark_service_account/ruff.toml @canonical/processing
 
 # /interfaces/tempo_cluster/
 /interfaces/tempo_cluster/interface/ @canonical/tracing-and-profiling
