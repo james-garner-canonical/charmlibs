@@ -11,9 +11,9 @@ myst:
 When designing the charm-facing API of an interface library, follow this high-level approach:
 
 1. Write a plain class for each side of the relation, constructed from `ops.Model`.
-2. Provide a readiness check, a getter for the data that you read, and a method that publishes the data that you write, for the charm to call when it reconciles.
-3. Don't emit or observe events.
-4. Provide an `events` method, so that charms that handle each event separately can use the library too.
+2. Give charms their own types, and keep the relation data format private.
+3. Provide a readiness check, getters named after the data that the charm uses, and one method that publishes everything, for the charm to call when it reconciles.
+4. Don't emit or observe events. Instead, provide an `events` method, so that charms that handle each event separately can use the library too.
 5. Make sure that bad remote data can't put the charm into an error state, and ship tests that show it.
 
 This guide provides rules for the charm-facing API. For the relation data format, see {ref}`design-relation-interfaces`.
@@ -22,6 +22,8 @@ This guide provides rules for the charm-facing API. For the relation data format
 These rules apply to new interface libraries, and to new major versions of existing ones.
 A library that doesn't follow them isn't broken, and doesn't need to be rewritten.
 ```
+
+The examples on this page implement a `foo` interface, in which a provider publishes the endpoints where it serves its API, and a requirer uses one of them.
 
 ## Why is it important to follow these rules?
 
@@ -36,6 +38,9 @@ Deferred custom events add more paths again.
 A library that reads and writes only when it's called has none of these problems.
 
 Not every charm reconciles yet, so a library should also provide a way for a charm that handles each event separately to call it at the right times, without rewriting the charm.
+
+The relation data format has to stay compatible with every version of the library on the other side of the relation, and carries details that only the library needs.
+If charms use it directly, every change to the format is a change to every charm.
 
 A charm's `__init__` must complete for the charm to handle any event, and a complex charm constructs many library objects there.
 A library can't know whether it's critical to a particular charm, so malformed data from a remote application must never stop the charm from handling events.
@@ -114,7 +119,7 @@ class ReconcilingCharm(ops.CharmBase):
         if not self.foo.is_ready:
             self.unit.status = ops.WaitingStatus(f'foo not ready: {self.foo.rich_status}')
             return
-        data = self.foo.get_data()
+        endpoint = self.foo.get_endpoint()
         ...
 ```
 
@@ -124,10 +129,115 @@ The rest of this guide shows how.
 ### Require a recent `ops`
 
 Read and write relation data with `ops.Relation.load` and `ops.Relation.save`, and require `ops>=3.8.1,<4`.
-Before `ops` 3.8.1, `load` JSON-decoded every key in the databag, not just the fields of your data class.
+Before `ops` 3.8.1, `load` JSON-decoded every key in the databag, not just the fields of your data model.
 That fails on any key that isn't JSON, including `ingress-address`, which Juju sets in every unit databag.
 
 Read more: {ref}`python-package-deps`
+
+(interface-library-private-format)=
+## Keep the relation data format private
+
+The data model that you load and save describes the relation data format.
+It has to follow the rules in {ref}`design-relation-interfaces`: every field is optional, collections are sets in a stable order, and old fields can't be reused.
+It also carries details that only the library needs, such as a format version.
+None of that is the charm's concern.
+
+Keep the data model private, and give charms their own types that describe what they use.
+Don't return the data model from a getter, or take it as an argument to `publish`.
+
+### Give charms their own types
+
+Write a plain class with read-only properties:
+
+```py
+PROTOCOLS = ('grpc', 'http')  # in order of preference
+
+
+class FooEndpoint:
+    """An endpoint where a foo provider serves its API."""
+
+    def __init__(self, *, url: str, protocol: str = 'http') -> None:
+        if protocol not in PROTOCOLS:
+            raise ValueError(f'protocol must be one of {PROTOCOLS}, not {protocol!r}')
+        self._url = url
+        self._protocol = protocol
+
+    @property
+    def url(self) -> str:
+        return self._url
+
+    @property
+    def protocol(self) -> str:
+        return self._protocol
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, FooEndpoint):
+            return NotImplemented
+        return (self.url, self.protocol) == (other.url, other.protocol)
+
+    def __hash__(self) -> int:
+        return hash((self.url, self.protocol))
+
+    def __repr__(self) -> str:
+        return f'FooEndpoint(url={self.url!r}, protocol={self.protocol!r})'
+```
+
+Follow these rules for charm-facing types:
+
+- **Use a plain class.** A dataclass, named tuple, or pydantic model adds API that you didn't design, such as `dataclasses.astuple`, positional construction, or `model_dump`. Charms come to rely on it, and then you can't change it.
+- **Make properties read-only.** The library doesn't write these objects back to the databag, so changing one would do nothing.
+- **Take keyword-only constructor arguments**, so that you can add new ones with defaults later.
+- **Decide on equality from the start.** If charms compare values or collect them in sets, define `__eq__` and `__hash__` together. Adding `__eq__` later, without `__hash__`, makes the class unhashable.
+- **Validate in the constructor**, and raise `ValueError`, so that an invalid value can't exist.
+- **Be stricter than the relation data format.** `url` is required here, even though it's optional on the wire, because the library never returns an endpoint without one.
+
+### Convert in one place
+
+Keep the data model and the conversion private:
+
+```py
+class _Endpoint(pydantic.BaseModel, frozen=True):
+    url: str | None = None
+    protocol: str | None = None
+
+
+class _ProviderData(pydantic.BaseModel):
+    version: int | None = None
+    endpoints: frozenset[_Endpoint] | None = None
+
+    @pydantic.field_serializer('endpoints')
+    def _sorted(self, endpoints: frozenset[_Endpoint] | None) -> list[_Endpoint] | None:
+        if endpoints is None:
+            return None
+        return sorted(endpoints, key=lambda e: (e.url or '', e.protocol or ''))
+
+
+def _to_wire(endpoints: Iterable[FooEndpoint]) -> _ProviderData:
+    wire = frozenset(_Endpoint(url=e.url, protocol=e.protocol) for e in endpoints)
+    return _ProviderData(version=1, endpoints=wire)
+
+
+def _from_wire(data: _ProviderData) -> frozenset[FooEndpoint]:
+    # Skip endpoints that this version of the library can't use, rather than rejecting them all.
+    return frozenset(
+        FooEndpoint(url=e.url, protocol=e.protocol or 'http')
+        for e in data.endpoints or ()
+        if e.url and (e.protocol or 'http') in PROTOCOLS
+    )
+```
+
+The conversion is the one place that knows about the relation data format, so it's where to:
+
+- **Read older formats.** When the format changes, both versions convert to the same charm-facing type, and charms don't change.
+- **Interpret missing values.** Here, a missing protocol means HTTP.
+- **Skip what this version can't use**, such as a protocol added in a later version of the interface, without rejecting the rest.
+- **Add and remove details that only the library needs**, such as a format version, request IDs, or the ID of a Juju secret. If the library shares data through a secret, give the charm the secret's content, not its ID.
+- **Sort collections.** Pydantic serialises a set in an order that varies between processes, so without sorting, the same data produces a different databag and wakes up the remote application with `relation-changed`.
+
+The testing package should take charm-facing values too, such as `relation_for_requirer('foo', endpoints=[...])`, and use the private conversion to build the relation data.
+Because the testing package depends on an exact version of the library, it can use private names.
+
+Read more: {ref}`how-to-provide-data-for-charm-tests`
 
 ## Provide the API
 
@@ -141,40 +251,36 @@ The readiness check must:
 - return `False` when the data is missing, can't be parsed, or isn't usable
 
 ```py
-class FooData(pydantic.BaseModel):
-    host: str | None = None
-    port: int | None = None
-
-
 class FooRequirer:
     ...
 
     @property
     def is_ready(self) -> bool:
-        """Whether the provider has published usable data. Never raises."""
-        data, _ = self._load()
-        return data is not None
+        """Whether the provider offers at least one usable endpoint. Never raises."""
+        endpoints, _ = self._load()
+        return bool(endpoints)
 
-    def _load(self) -> tuple[FooData | None, str | None]:
+    def _load(self) -> tuple[frozenset[FooEndpoint], str | None]:
         relations = self._model.relations.get(self._relation_name, ())
         if not relations:
-            return None, f'no {self._relation_name} relation'
+            return frozenset(), f'no {self._relation_name} relation'
         if len(relations) > 1:
-            return None, f'{len(relations)} {self._relation_name} relations, expected one'
+            return frozenset(), f'{len(relations)} {self._relation_name} relations, expected one'
         relation = relations[0]
         if relation.app is None or not relation.data[relation.app]:
-            return None, f'waiting for {self._relation_name} data'
+            return frozenset(), f'waiting for {self._relation_name} data'
         try:
-            data = relation.load(FooData, relation.app)
+            data = relation.load(_ProviderData, relation.app)
         except ValueError as e:
             logger.warning('Invalid %s data: %s', self._relation_name, e)
-            return None, f'invalid {self._relation_name} data'
-        if data.host is None:
-            return None, 'host is missing'
-        return data, None
+            return frozenset(), f'invalid {self._relation_name} data'
+        endpoints = _from_wire(data)
+        if not endpoints:
+            return endpoints, 'no usable endpoints'
+        return endpoints, None
 ```
 
-`_load` returns the reason along with the data, so that the getter and the {ref}`status API <interface-library-status>` can share it.
+`_load` returns the reason along with the endpoints, so that the getters and the {ref}`status API <interface-library-status>` can share it.
 
 Some details to get right:
 
@@ -184,7 +290,7 @@ Some details to get right:
 - Don't add a cache for relation data. `ops` reads each databag once per hook. Note that `ops.Model.get_secret()` isn't cached.
 
 The example is a property, because the endpoint has one relation.
-A provider with many relations can use `is_ready(relation)` instead, and an endpoint that's ready for some purposes before others can provide one property per purpose, such as `is_upstream_ready`.
+A provider with many relations can use `is_ready(relation)` instead, and an endpoint whose data is useful for different purposes at different times can provide one property per purpose, such as `is_upstream_ready`.
 
 Test readiness with good data:
 
@@ -200,86 +306,102 @@ class MyCharm(ops.CharmBase):
 
 def test_is_ready_with_good_data():
     ctx = testing.Context(MyCharm, meta=META)
-    relation = testing.Relation('foo', remote_app_data={'host': '"foo.example"', 'new': '"x"'})
+    endpoints = [
+        {'url': 'http://foo.example:4318'},
+        {'url': 'grpc://foo.example:4317', 'protocol': 'grpc', 'new-field': 'x'},
+    ]
+    relation = testing.Relation('foo', remote_app_data={'endpoints': json.dumps(endpoints)})
     with ctx(ctx.on.relation_changed(relation), testing.State(relations={relation})) as mgr:
         assert mgr.charm.foo.is_ready
-        assert mgr.charm.foo.get_data().host == 'foo.example'
+        assert mgr.charm.foo.get_endpoint() == FooEndpoint(
+            url='grpc://foo.example:4317', protocol='grpc'
+        )
 ```
 
-### Read data with a getter
+### Read data with getters
 
-Provide a getter that returns the parsed data, and raises if there isn't any:
+Name each getter after the data that the charm uses:
 
 ```py
 class FooNotReadyError(Exception):
-    """Raised by FooRequirer.get_data when no usable data is available."""
+    """Raised by FooRequirer.get_endpoint when there's no usable endpoint."""
 
 
 class FooRequirer:
     ...
 
-    def get_data(self) -> FooData:
-        """Return the provider's data.
+    def get_endpoints(self) -> frozenset[FooEndpoint]:
+        """Every usable endpoint that the provider offers. Empty if there are none."""
+        endpoints, _ = self._load()
+        return endpoints
+
+    def get_endpoint(self) -> FooEndpoint:
+        """The endpoint to use: the most preferred protocol, then the first URL.
 
         Raises:
-            FooNotReadyError: if there's no usable data. Check ``is_ready`` first.
+            FooNotReadyError: if there's no usable endpoint. Check ``is_ready`` first.
         """
-        data, problem = self._load()
-        if data is None:
+        endpoints, problem = self._load()
+        if not endpoints:
             raise FooNotReadyError(problem)
-        return data
+        return min(endpoints, key=lambda e: (PROTOCOLS.index(e.protocol), e.url))
 ```
 
-The readiness check and the getter do different jobs.
-The readiness check is safe to call anywhere, including in the charm's `__init__`.
-The getter returns data that the charm can use without checking for `None`.
+- **A getter that returns a collection returns it empty** when there's nothing usable.
+- **A getter that returns one value raises** when there's no value to return. The charm checks readiness first, and gets a value that it doesn't need to check for `None`.
+- **Make choices for the charm.** If the provider offers alternatives, as here, a getter that returns the one to use saves every charm from implementing the same choice. Charms that need all the alternatives can still have them.
 
-If the endpoint combines data from several relations, such as a set of trusted CA certificates, return the combined collection instead of raising.
+The readiness check and the getters do different jobs.
+The readiness check is safe to call anywhere, including in the charm's `__init__`.
+The getters return data that the charm can use directly.
+
+If the endpoint combines data from several relations, such as a set of trusted CA certificates, return the combined collection.
 A relation with unusable data should contribute nothing, so that one bad remote application can't affect data from the others.
 
-Choose the arguments of the getter to match the endpoint:
+Choose the arguments of the getters to match the endpoint:
 
 | Endpoint | Readiness | Getter |
 | --- | --- | --- |
-| Requirer with `limit: 1` | `is_ready` | `get_data()` |
-| Requirer that combines data from many relations | `is_ready` | `get_data()`, returning the combined data |
-| Provider that reads data from each requirer | `is_ready(relation)` | `get_data(relation)` |
+| Requirer with `limit: 1` | `is_ready` | `get_<thing>()` |
+| Requirer that combines data from many relations | `is_ready` | `get_<thing>()`, returning the combined data |
+| Provider that reads data from each requirer | `is_ready(relation)` | `get_<thing>(relation)` |
 
 Never silently pick one relation out of several.
 
 ### Publish data
 
-Provide a method that writes the whole payload:
+Provide one method that publishes everything, as soon as it's called:
 
 ```py
 class FooProvider:
     ...
 
-    def publish(self, data: FooData) -> None:
-        """Publish data to every related application. Does nothing on a non-leader unit."""
+    def publish(self, endpoints: Iterable[FooEndpoint]) -> None:
+        """Publish every endpoint that this provider serves, replacing what was published before.
+
+        Does nothing on a non-leader unit.
+        """
+        data = _to_wire(endpoints)
         if not self._model.unit.is_leader():
             return
         for relation in self._model.relations.get(self._relation_name, ()):
             relation.save(data, self._model.app)
 ```
 
-Follow these rules when writing data:
+Follow these rules when publishing:
 
+- **Write when called.** Don't provide methods such as `add_endpoint()` that change something in memory for a later call to publish. A charm that forgets the second call publishes nothing, and anything kept in memory is lost when the hook ends anyway.
+- **Take the whole payload.** The charm calls `publish()` with everything that should be published, every time, and the library replaces what it published before. Methods such as `remove_endpoint()` would have to read back what the library wrote, which makes the databag the record of the library's own state.
+- **Take charm-facing values.** Take charm-facing types, or plain keyword arguments for simple values. Never take the data model, a dictionary, or JSON.
 - **Check leadership before writing to the application databag.** Only the leader can write it, so skip the write on other units. Don't skip writes to the unit databag, which every unit owns.
-- **Take the whole payload, not changes to it.** The charm calls `publish()` with everything that should be published, every time. Methods such as `add_endpoint()` and `remove_endpoint()` have to read back what they wrote, which makes the databag the record of the library's own state.
-- **Know what `save` does.** `Relation.save` writes every field of the model, writes `None` as `null`, and leaves keys that aren't in the model alone.
-- **Publish collections in a stable order.** Pydantic serialises a `set` or `frozenset` in an order that varies between processes, so the same data produces a different databag and wakes up the remote application with `relation-changed`. Sort collections when serialising:
-
-  ```py
-  @pydantic.field_serializer('endpoints')
-  def _sorted(self, endpoints: frozenset[str]) -> list[str]:
-      return sorted(endpoints)
-  ```
-
+- **Raise `ValueError` for bad arguments.** If the charm passes a value that the interface can't represent, raising is the most helpful thing to do, because the charm is on the stack. Here, `FooEndpoint` raises when it's constructed.
 - **Make it idempotent.** The charm may call `publish()` from any event. Anything that the method creates outside the databag must be safe to create again. For example, Juju rejects a second secret with the same label, so look up the secret by label before adding it.
-- **Raise `ValueError` for bad arguments.** If the charm passes a value that the interface can't represent, raising is the most helpful thing to do, because the charm is on the stack.
 
-If the published data depends on which application you're writing to, such as credentials for each requirer, take the relation: `publish(relation, data)`.
+A single method also keeps `Relation.save` safe.
+`save` writes every field of the data model, writing `None` as `null`, and leaves keys that aren't in the model alone.
+Two methods that each save part of the same data model would overwrite each other's fields.
+
+If the published data depends on which application you're writing to, such as credentials for each requirer, take the relation: `publish(relation, ...)`.
 
 (interface-library-status)=
 ### Report why the endpoint isn't ready
@@ -298,20 +420,12 @@ class FooRequirer:
         return problem
 ```
 
-In the charm:
-
-```py
-if not self.foo.is_ready:
-    self.unit.status = ops.WaitingStatus(f'foo not ready: {self.foo.rich_status}')
-    return
-```
-
 The charm decides the status and the start of the message, and the library provides the explanation:
 
 ```text
-Waiting(foo not ready: host is missing)
+Waiting(foo not ready: no usable endpoints)
 charm  ^^^^^^^^^^^^^^
-library                ^^^^^^^^^^^^^^^
+library                ^^^^^^^^^^^^^^^^^^^
 ```
 
 Don't set the unit status from the library, and don't raise from the status API.
@@ -323,10 +437,11 @@ Test that the explanation reaches the status, using the `ReconcilingCharm` from 
 ```py
 def test_status_explains_what_is_missing():
     ctx = testing.Context(ReconcilingCharm, meta=META)
-    relation = testing.Relation('foo', remote_app_data={'port': '80'})
+    endpoints = [{'url': 'quic://foo.example', 'protocol': 'quic'}]
+    relation = testing.Relation('foo', remote_app_data={'endpoints': json.dumps(endpoints)})
     state = ctx.run(ctx.on.relation_changed(relation), testing.State(relations={relation}))
     assert isinstance(state.unit_status, ops.WaitingStatus)
-    assert 'host is missing' in state.unit_status.message
+    assert 'no usable endpoints' in state.unit_status.message
 ```
 
 (interface-library-events)=
@@ -341,7 +456,7 @@ class FooRequirer:
     ...
 
     def events(self, on: ops.CharmEvents) -> tuple[ops.BoundEvent, ...]:
-        """Juju events after which the result of get_data may change."""
+        """Juju events after which the endpoints may change."""
         relation = on[self._relation_name]
         return (relation.relation_changed, relation.relation_broken)
 ```
@@ -363,7 +478,7 @@ class DeltaCharm(ops.CharmBase):
 
 What to return depends on the side of the relation:
 
-- **For data that the library reads**, return the events after which the getter may return something different. That's usually `relation-changed` and `relation-broken` for the endpoint. During `relation-broken`, `ops` already excludes the departing relation from `model.relations`, so calling the getter gives the right answer.
+- **For data that the library reads**, return the events after which the getters may return something different. That's usually `relation-changed` and `relation-broken` for the endpoint. During `relation-broken`, `ops` already excludes the departing relation from `model.relations`, so calling the getters gives the right answer.
 - **For data that the library writes**, return the events after which the charm must publish again. That's usually only `relation-created`, because the charm already knows when its own data changes.
 - **If the library depends on other events**, such as `secret-changed` for a secret shared over the relation, or `secret-expired` for a renewal deadline, include them.
 
@@ -388,7 +503,7 @@ A status API, if you provide one, shouldn't raise either.
 - **Catch `ValueError` around `Relation.load`.** This covers both values that aren't valid JSON and pydantic validation errors.
 - **Let other exceptions propagate.** A mistake in the charm, such as an undeclared relation name, should fail loudly. So should a hook command that fails unexpectedly, such as `relation-get` raising `ops.ModelError`, because Juju retries the hook. Don't wrap the readiness check in `except Exception`.
 
-The getter may raise, because the charm can check readiness first.
+A getter that returns one value may raise, because the charm can check readiness first.
 
 Test that bad data doesn't raise, by checking readiness in the charm's `__init__`:
 
@@ -401,10 +516,11 @@ class MyCharm(ops.CharmBase):
 
 
 @pytest.mark.parametrize('data', [
-    {},                     # nothing published yet
-    {'host': 'not json'},   # not JSON
-    {'host': '42'},         # wrong type
-    {'port': '80'},         # host is missing
+    {},                                                                # nothing published yet
+    {'endpoints': 'not json'},                                         # not JSON
+    {'endpoints': '{"url": "http://foo.example"}'},                    # not a list
+    {'endpoints': '[{"url": 42}]'},                                    # wrong type
+    {'endpoints': '[{"url": "quic://foo.example", "protocol": "quic"}]'},  # nothing usable
 ])
 def test_bad_remote_data_does_not_raise(data: dict[str, str]):
     ctx = testing.Context(MyCharm, meta=META)
@@ -419,8 +535,9 @@ def test_bad_remote_data_does_not_raise(data: dict[str, str]):
 In some interfaces, the requirer publishes a request and the provider answers it.
 Both sides then read and publish.
 
-On the provider, provide `get_requests()` to read the requests, take the relation in `publish(relation, response)`, and include `relation-changed` in `events`.
-To avoid repeating work, compare each request with the response already published on that relation, or with the state of the workload.
+On the provider, provide `get_requests()` to return charm-facing request objects, provide `publish(request, ...)` to answer one of them, and include `relation-changed` in `events`.
+The request object identifies the relation and the request for the library, so the charm never handles request IDs.
+To avoid repeating work, compare each request with the response already published for it, or with the state of the workload.
 Don't keep a record of requests in `ops.StoredState`.
 For this to work, the response must identify what was provided, and the comparison must run on the leader, because only the leader can read its own application databag.
 
@@ -439,11 +556,12 @@ They still shouldn't decide when that work happens:
 | Thing | Use | Not |
 | --- | --- | --- |
 | Classes | `<Name>Provider`, `<Name>Requirer` | `<Name>Provides`, `<Name>Requires`, `<Name>Consumer`, version numbers |
+| Charm-facing types | What the charm uses, such as `FooEndpoint` | Names of the relation data format, such as `FooAppData` or `FooDatabag` |
 | Relation argument | `relation_name` | `relationship_name` |
 | Default endpoint | `DEFAULT_RELATION_NAME` | |
 | Readiness | `is_ready`, or `is_<purpose>_ready` | `ready()`, `check_ready()` |
-| Read | `get_data()`, or `get_<thing>()` for several things | bare nouns, `fetch_*` |
-| Write | `publish()`, or `publish_<thing>()` | `update_*`, `set_*`, `submit_*`, `provide_*` |
+| Read | `get_<thing>()`, named after what the charm uses | `get_data()`, bare nouns, `fetch_*` |
+| Write | `publish()` | `add_*`, `remove_*`, `update_*`, `set_*`, `submit_*`, `provide_*` |
 | Events | `events(on)` | |
 
 Use one acronym casing for every name in the library, including the data models.
@@ -459,6 +577,8 @@ Use one acronym casing for every name in the library, including the data models.
 | Published collections are in a stable order ({ref}`design-relation-interfaces`) | Must |
 | The library is a plain class constructed from `ops.Model` | Should |
 | The library doesn't emit or observe events | Should |
+| The relation data format is private, and charms use their own types | Should |
+| One `publish` method writes everything when it's called | Should |
 | The library provides an `events` method for charms that don't reconcile | Should |
 | The library provides a status API | Should |
 | The library follows the naming conventions | Should |
