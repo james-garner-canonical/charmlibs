@@ -168,8 +168,8 @@ When creating a new library, it’s fine to declare the latest `ops` release as 
 
 Interface libraries that read relation data with `ops.Relation.load` need `ops>=3.8.1,<4`.
 Before that release, `load` decoded every value in the databag before filtering down to the fields your data class declares, so a single value that wasn't JSON failed the whole load -- including `egress-subnets`, `ingress-address`, and `private-address`, which Juju writes into every unit databag as bare strings.
-The fix wasn't backported to the `ops` 2.23 LTS series, and a patch-level floor needs `>=` rather than `~=`, because `ops~=3.8` allows 3.8.0.
-Requiring `ops` 3 also requires Python 3.10, which every interface library in this repository already does.
+The fix is also in `ops` 2.23.6, but there's no need to allow the 2.23 series: it exists for Python 3.8 and 3.9, and every interface library in this repository already requires Python 3.10.
+A patch-level floor needs `>=` rather than `~=`, because `ops~=3.8` allows 3.8.0.
 
 Read more: {ref}`design-interface-library-apis`
 
