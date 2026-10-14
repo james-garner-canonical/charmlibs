@@ -51,7 +51,7 @@ Charm-facing API (see [how to design an interface library API](https://canonical
 - [ ] The API follows the guide; where it departs from a recommendation, this PR says why.
 - [ ] The endpoint class provides a readiness API, and neither constructing the object nor calling that API raises because of relation data.
 - [ ] Unit tests demonstrate both: bad remote data does not raise, and readiness is correct for good data.
-- [ ] If the library needs the charm to route particular Juju events to it, the class docstring names them.
+- [ ] If the charm needs to call the library after particular Juju events, the library returns them from an `events(on)` method.
 
 ## Commit strategy
 
