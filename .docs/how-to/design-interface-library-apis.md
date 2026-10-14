@@ -1,7 +1,7 @@
 ---
 myst:
   html_meta:
-    description: Design the charm-facing API of an interface library as a plain accessor over relation data, so that any charm can call it from its own event handlers.
+    description: Design the charm-facing API of an interface library for charms that reconcile, as a plain accessor over relation data with no events of its own.
 ---
 
 (design-interface-library-apis)=
@@ -11,9 +11,10 @@ myst:
 When designing the charm-facing API of an interface library, follow this high-level approach:
 
 1. Write a plain class for each side of the relation, constructed from `ops.Model`.
-2. Provide a readiness check, a getter for the data that you read, and a method that publishes the data that you write.
-3. Don't emit or observe events. Instead, tell the charm which Juju events to call you after.
-4. Make sure that bad remote data can't put the charm into an error state, and ship tests that show it.
+2. Provide a readiness check, a getter for the data that you read, and a method that publishes the data that you write, for the charm to call when it reconciles.
+3. Don't emit or observe events.
+4. Provide an `events` method, so that charms that handle each event separately can use the library too.
+5. Make sure that bad remote data can't put the charm into an error state, and ship tests that show it.
 
 This guide provides rules for the charm-facing API. For the relation data format, see {ref}`design-relation-interfaces`.
 
@@ -24,18 +25,25 @@ A library that doesn't follow them isn't broken, and doesn't need to be rewritte
 
 ## Why is it important to follow these rules?
 
-Charms handle events in different ways.
-Some handle each Juju event separately, while others recompute everything from a single handler.
-A library that observes events and emits its own has to choose the timing for every charm that uses it, and the result fits neither style well.
-Charms end up observing custom events only to ask the library what changed, passing `refresh_event` arguments to hand some of the timing back, or copying relation data elsewhere so that they can use it outside the library's events.
+Reconciling is the most reliable way to write a charm.
+A Juju event tells the charm that something changed, but not what, so even a charm that handles each event separately ends up recomputing its state.
+A reconciling charm does that directly: it observes the events it cares about with a single handler, reads all the state it needs, and writes everything that should change.
 
-A library that reads and writes only when it's called works with both styles, because the charm decides when to call it.
+An interface library should fit into that handler.
+A library that observes events and emits its own works against it.
+The charm has to observe custom events that only say "something changed", pass `refresh_event` arguments to hand some of the timing back to the library, or copy relation data elsewhere so that it can use the data outside the library's events.
+Deferred custom events add more paths again.
+A library that reads and writes only when it's called has none of these problems.
+
+Not every charm reconciles yet, so a library should also provide a way for a charm that handles each event separately to call it at the right times, without rewriting the charm.
 
 A charm's `__init__` must complete for the charm to handle any event, and a complex charm constructs many library objects there.
 A library can't know whether it's critical to a particular charm, so malformed data from a remote application must never stop the charm from handling events.
 
 Finally, charm authors use many interface libraries.
 When the libraries agree on their shape and names, learning one teaches the next.
+
+Read more: {ref}`Ops | Holistic vs delta charms <ops:holistic-vs-delta-charms>`
 
 ## General requirements
 
@@ -84,7 +92,34 @@ Don't take data to publish, events, or callbacks in the constructor.
 The library shouldn't define custom events, call `framework.observe`, or accept `refresh_event` arguments or callbacks.
 The charm observes Juju events, and calls the library from its own handlers.
 
-To make sure the charm calls the library at the right times, {ref}`tell the charm which events matter <interface-library-events>`.
+(interface-library-reconcile)=
+### Design for a reconciling charm
+
+A reconciling charm calls the library from its reconcile handler, which it observes for every event it cares about, including the relation events for the library's endpoint:
+
+```py
+class ReconcilingCharm(ops.CharmBase):
+    def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        self.foo = FooRequirer(self.model)
+        events = [
+            self.on.config_changed,
+            self.on['foo'].relation_changed,
+            self.on['foo'].relation_broken,
+        ]
+        for event in events:
+            framework.observe(event, self._reconcile)
+
+    def _reconcile(self, _: ops.EventBase):
+        if not self.foo.is_ready:
+            self.unit.status = ops.WaitingStatus(f'foo not ready: {self.foo.rich_status}')
+            return
+        data = self.foo.get_data()
+        ...
+```
+
+Every method that the charm calls should be safe to call from any event, as often as the charm likes.
+The rest of this guide shows how.
 
 ### Require a recent `ops`
 
@@ -283,7 +318,7 @@ Don't set the unit status from the library, and don't raise from the status API.
 Write the explanations yourself, rather than passing on validation error messages, which change between pydantic versions.
 If some problems need an operator to act, such as data that can't be parsed, while others resolve themselves, such as waiting for the remote application, consider also providing a boolean that tells them apart, so that the charm can choose between blocked and waiting status.
 
-Test that the explanation reaches the status, using the `ReconcilingCharm` from {ref}`interface-library-events`:
+Test that the explanation reaches the status, using the `ReconcilingCharm` from {ref}`interface-library-reconcile`:
 
 ```py
 def test_status_explains_what_is_missing():
@@ -295,10 +330,11 @@ def test_status_explains_what_is_missing():
 ```
 
 (interface-library-events)=
-### Tell the charm which events matter
+### Support charms that handle events separately
 
-The library should provide an `events` method that returns the Juju events that the charm should call the library after.
-It takes the charm's `on` attribute, because the library doesn't hold the charm:
+A charm that handles each event separately doesn't have a reconcile handler to call the library from.
+So that it can use the library without switching to reconciling, the library should provide an `events` method that returns the Juju events after which the charm should call it.
+The method takes the charm's `on` attribute, because the library doesn't hold the charm:
 
 ```py
 class FooRequirer:
@@ -310,38 +346,33 @@ class FooRequirer:
         return (relation.relation_changed, relation.relation_broken)
 ```
 
-A charm that recomputes everything from one handler observes these events along with its own:
+The charm observes them with a handler dedicated to the library:
 
 ```py
-class ReconcilingCharm(ops.CharmBase):
+class DeltaCharm(ops.CharmBase):
     def __init__(self, framework: ops.Framework):
         super().__init__(framework)
         self.foo = FooRequirer(self.model)
-        for event in (self.on.config_changed, *self.foo.events(self.on)):
-            framework.observe(event, self._reconcile)
-
-    def _reconcile(self, _: ops.EventBase):
-        if not self.foo.is_ready:
-            self.unit.status = ops.WaitingStatus(f'foo not ready: {self.foo.rich_status}')
-            return
-        data = self.foo.get_data()
-        ...
-```
-
-A charm that handles events separately observes them with a handler dedicated to the library:
-
-```py
         for event in self.foo.events(self.on):
             framework.observe(event, self._on_foo_changed)
+
+    def _on_foo_changed(self, _: ops.EventBase):
+        if self.foo.is_ready:
+            ...
 ```
 
 What to return depends on the side of the relation:
 
-- **For data that the library reads**, return the events after which the getter may return something different. That's usually `relation-changed` and `relation-broken` for the endpoint. During `relation-broken`, `ops` already excludes the departing relation from `model.relations`, so recomputing gives the right answer.
+- **For data that the library reads**, return the events after which the getter may return something different. That's usually `relation-changed` and `relation-broken` for the endpoint. During `relation-broken`, `ops` already excludes the departing relation from `model.relations`, so calling the getter gives the right answer.
 - **For data that the library writes**, return the events after which the charm must publish again. That's usually only `relation-created`, because the charm already knows when its own data changes.
-- **If the library depends on other events**, such as `secret-changed` for a secret shared over the relation, or `secret-expired` for a renewal deadline, include them. These events aren't specific to your library, so the charm's handler also runs for other secrets. Make sure your methods are safe to call at any time.
+- **If the library depends on other events**, such as `secret-changed` for a secret shared over the relation, or `secret-expired` for a renewal deadline, include them.
+
+Some of these events, such as `secret-changed`, aren't specific to your library.
+If two libraries return the same event, the charm's handlers for both of them run.
+This is another reason for every method to be safe to call from any event.
 
 A library can change the events that it returns in a later version, and charms that loop over the result pick up the change without any code changes.
+A reconciling charm doesn't need `events`, but can use it in a unit test to check that it observes everything the library relies on.
 
 Some events need dedicated handling, such as cleaning up resources when a relation is removed.
 Don't return those from `events`. Instead, document them in the class docstring.
@@ -388,7 +419,7 @@ def test_bad_remote_data_does_not_raise(data: dict[str, str]):
 In some interfaces, the requirer publishes a request and the provider answers it.
 Both sides then read and publish.
 
-On the provider, include `relation-changed` in `events`, provide `get_requests()` to read the requests, and take the relation in `publish(relation, response)`.
+On the provider, provide `get_requests()` to read the requests, take the relation in `publish(relation, response)`, and include `relation-changed` in `events`.
 To avoid repeating work, compare each request with the response already published on that relation, or with the state of the workload.
 Don't keep a record of requests in `ops.StoredState`.
 For this to work, the response must identify what was provided, and the comparison must run on the leader, because only the leader can read its own application databag.
@@ -399,7 +430,7 @@ For this to work, the response must identify what was provided, and the comparis
 Some libraries do real work, such as generating private keys and renewing certificates.
 They still shouldn't decide when that work happens:
 
-- **Constructive work goes in one idempotent method**, such as `sync()`, which the charm calls after the events returned by `events`. If the work has a deadline, schedule a wake-up that Juju delivers, such as a secret expiry, and include `secret-expired` in `events`.
+- **Constructive work goes in one idempotent method**, such as `sync()`, which a reconciling charm calls from its reconcile handler. If the work has a deadline, schedule a wake-up that Juju delivers, such as a secret expiry. Then say in the class docstring that the charm must observe `secret-expired`, and include it in `events`.
 - **Destructive work goes in a separate method**, such as `clean_up(relation)`, which the charm calls from `relation-broken`. Never destroy resources in `sync()`: from inside a single event, a relation that was just removed looks the same as one that hasn't been created yet.
 - **Values that only a particular event provides become method arguments.** For example, `secret-remove` provides the revision to remove, and nothing else does. Take the revision as an argument, and document which event the charm should call the method from.
 
@@ -428,7 +459,7 @@ Use one acronym casing for every name in the library, including the data models.
 | Published collections are in a stable order ({ref}`design-relation-interfaces`) | Must |
 | The library is a plain class constructed from `ops.Model` | Should |
 | The library doesn't emit or observe events | Should |
-| The library provides an `events` method | Should |
+| The library provides an `events` method for charms that don't reconcile | Should |
 | The library provides a status API | Should |
 | The library follows the naming conventions | Should |
 
