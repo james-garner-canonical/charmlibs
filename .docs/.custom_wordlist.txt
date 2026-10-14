@@ -12,11 +12,9 @@ args
 armor
 autocomplete
 autocompletions
-backported
 balancer
 boolean
 bugfixes
-callables
 charmcraft
 Charmhub
 charmlib
@@ -26,7 +24,6 @@ codebase
 ContainerPath
 databag
 databags
-dataclass
 DCO
 deserialised
 dev
@@ -55,7 +52,6 @@ hashable
 HPC
 HTTPS
 IAM
-idempotence
 implementer
 implementers
 installable
@@ -93,7 +89,6 @@ OCI
 OEM
 OID
 OLM
-parameterises
 pathlib
 pathops
 PEM
@@ -112,8 +107,6 @@ Quickstart
 radix
 ReadMe
 READMEs
-recoverability
-reimplement
 reimplemented
 repo
 requirer
@@ -142,9 +135,6 @@ tooltip
 tooltips
 Ubuntu
 UI
-unparseable
-untyped
-unwritable
 URI
 URIs
 userinfo
