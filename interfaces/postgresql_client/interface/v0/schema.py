@@ -121,22 +121,6 @@ class ProviderAppData(_BareStringDatabag):
         title="TLS secret",
     )
 
-    entity_name: str | None = Field(
-        None,
-        alias="entity-name",
-        description="Name for the requested custom entity. A bare string on the wire, but usually delivered in a Juju secret instead, in which case the key is absent from the databag",
-        examples=["custom-role"],
-        title="Entity name",
-    )
-
-    entity_password: str | None = Field(
-        None,
-        alias="entity-password",
-        description="Password for the requested custom entity. A bare string on the wire, but usually delivered in a Juju secret instead, in which case the key is absent from the databag",
-        examples=["alphanum-32byte-random"],
-        title="Entity password",
-    )
-
     prefix_databases: str | None = Field(
         None,
         alias="prefix-databases",
