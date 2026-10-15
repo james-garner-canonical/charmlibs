@@ -2,7 +2,7 @@
 
 import json
 import pathlib
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_serializer, field_validator
 
@@ -97,7 +97,7 @@ class ProviderAppData(_BareStringDatabag):
         title="Resource group",
     )
 
-    version: Literal["1"] | None = Field(
+    version: str | None = Field(
         default=None,
         description="The schema version the provider is using. Absent for the oldest providers.",
         examples=["1"],
@@ -164,7 +164,7 @@ class RequirerAppData(_BareStringDatabag):
         title="Requested secrets",
     )
 
-    version: Literal["1"] | None = Field(
+    version: str | None = Field(
         default=None,
         description="The schema version the requirer is using. Absent for the oldest requirers.",
         examples=["1"],

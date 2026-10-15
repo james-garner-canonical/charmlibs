@@ -2,7 +2,7 @@
 
 import json
 from enum import Enum, IntEnum
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_serializer, field_validator
 
@@ -43,7 +43,7 @@ class ProviderAppData(_BareStringDatabag):
         title="Bucket name",
     )
 
-    version: Literal["1"] | None = Field(
+    version: str | None = Field(
         default=None,
         description=(
             "The schema version the provider is using. Absent for providers that predate it,"
@@ -254,7 +254,7 @@ class RequirerAppData(_BareStringDatabag):
         title="Bucket",
     )
 
-    version: Literal["1"] | None = Field(
+    version: str | None = Field(
         default=None,
         description=(
             "The schema version the requirer is using. Absent for requirers that predate it,"
