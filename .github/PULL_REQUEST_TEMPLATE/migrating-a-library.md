@@ -54,10 +54,7 @@ Tests and docs:
 - [ ] Directory name exactly matches the interface name as written in `charmcraft.yaml`.
 - [ ] Interface metadata added (or updated if necessary), or an issue created and tracked to do this as a follow-up task.
 - [ ] Testing package added under `interfaces/<name>/testing/` exporting `relation_for_provider` and `relation_for_requirer` if needed (see [how-to guide](https://canonical.com/juju/docs/charmlibs/how-to/provide-relation-data-for-charm-tests/)), or an issue created and tracked to do this as a follow-up task.
-
-Charm-facing API (see [how to design an interface library API](https://canonical.com/juju/docs/charmlibs/how-to/design-interface-library-apis/)):
-- [ ] The API has been read against the guide, and this PR records where it conforms and where it does not. A bug-compatible migration is a valid answer — the guide applies at the next major version, not on arrival here.
-- [ ] If the library has no readiness API, or its readiness API can raise, this PR notes it and tracks a follow-up. Adding one is additive, but it is not required to land the migration.
+- [ ] The charm-facing API has been checked against [how to design an interface library API](https://canonical.com/juju/docs/charmlibs/how-to/design-interface-library-apis/), and this PR documents where it differs.
 
 
 ## Commit strategy
