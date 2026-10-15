@@ -111,16 +111,23 @@ def ensure_vitality_hint(snap: str) -> object:
     A running service keeps its current score until it next starts, so use :func:`restart`
     if you want the hint applied immediately.
 
-    This works by setting each service's ``OOMScoreAdjust``, which ranges from -1000
-    (special: never killed) to 1000, with a default of 0. Lower values mean more protection.
-    When the system runs out of memory, the kernel kills the process with the highest score based
-    on its share of memory (1000 * 0.1 -> 100, 1000 * 0.5 -> 500) plus its ``OOMScoreAdjust``.
-    snapd sets ``OOMScoreAdjust`` to ``-900`` plus the snap's position in the list: ``-899``
-    for the first snap, ``-898`` for the second, and so on, up to ``-800`` for the 100th.
-    Unlisted snaps' services keep the default of ``0``, like most other processes.
-    So a listed snap's service (-899 - -800) can only be killed ahead of an unlisted process (0)
-    if it uses memory on the order of 80-90% of the system's total memory.
-    Between listed snaps, memory use differences are the more significant factor.
+    The snap is appended to the list, because this leaves the position of every other listed
+    snap unchanged. When a snap's position changes, snapd rewrites its service units and starts
+    any of its enabled services that are stopped, so inserting earlier in the list would affect
+    every snap after it.
+
+    Being on the list matters far more than the position on it. snapd sets the
+    ``OOMScoreAdjust`` of a listed snap's services to ``-900`` plus the snap's position in the
+    list: ``-899`` for the first snap, ``-898`` for the second, and so on, up to ``-800`` for the
+    100th. Unlisted snaps' services keep the default of ``0``, like most other processes. When the
+    system runs out of memory, the kernel kills the process with the highest score: its
+    ``OOMScoreAdjust`` plus 10 points for each 1% of total memory (including swap) that it uses.
+    This means that:
+
+    - A listed snap's service is only killed ahead of an unlisted process if it uses around
+      80-90% more of total memory than that process.
+    - Each position in the list is worth only 0.1% of total memory, so between listed snaps,
+      memory use decides which is killed first.
 
     Args:
         snap: The name of the snap to add to the list. A snap instance name, such as

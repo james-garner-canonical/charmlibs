@@ -94,6 +94,7 @@ def test_ensure_vitality_hint_more_than_100_snaps_raises():
     _snapd_conf.set('system', {_VITALITY_HINT: ','.join(f'snap{i}' for i in range(100))})
     with pytest.raises(_errors.ChangeError, match='cannot set more than 100 snaps'):
         _functions.ensure_vitality_hint(_ABSENT_SNAP)
+    assert _vitality_hint() == ','.join(f'snap{i}' for i in range(100))
 
 
 @pytest.mark.usefixtures('unset_vitality_hint')
@@ -102,11 +103,13 @@ def test_ensure_vitality_hint_rewrites_running_service_without_restarting_it():
     # running process is left alone, so the caller must restart it for the score to apply.
     ensure_installed_local(_SERVICE_SNAP)
     _snapd_apps.start(_SERVICE_SNAP, enable=True)
-    _snapd_conf.set('system', {_VITALITY_HINT: 'foo'})
-    pid = _systemctl_show('MainPID')
-    assert _systemctl_show('OOMScoreAdjust') == '0'
-    did_something = _functions.ensure_vitality_hint(_SERVICE_SNAP)
-    assert did_something is True
-    assert _systemctl_show('OOMScoreAdjust') == '-898'  # Second in the list.
-    assert _systemctl_show('MainPID') == pid
-    _snapd_apps.stop(_SERVICE_SNAP, disable=True)
+    try:
+        _snapd_conf.set('system', {_VITALITY_HINT: 'foo'})
+        pid = _systemctl_show('MainPID')
+        assert _systemctl_show('OOMScoreAdjust') == '0'
+        did_something = _functions.ensure_vitality_hint(_SERVICE_SNAP)
+        assert did_something is True
+        assert _systemctl_show('OOMScoreAdjust') == '-898'  # Second in the list.
+        assert _systemctl_show('MainPID') == pid
+    finally:
+        _snapd_apps.stop(_SERVICE_SNAP, disable=True)

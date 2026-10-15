@@ -1,6 +1,6 @@
 # 2.1.0 - 5 October 2026
 
-Add `ensure_vitality_hint`, a helper to ensure the specified snap is listed in snapd's [resilience.vitality-hint](https://snapcraft.io/docs/reference/administration/system-options/#system-resilience-vitality-hint), which configures the Linux kernel's out-of-memory killer to deprioritise the snap's services.
+Add `ensure_vitality_hint`, a helper to ensure the specified snap is listed in snapd's [resilience.vitality-hint](https://snapcraft.io/docs/reference/administration/system-options/#system-resilience-vitality-hint), which configures the Linux kernel's out-of-memory killer to reduce the likelihood of the snap's services being killed when memory pressure is high.
 
 # 2.0.0 - 31 August 2026
 
