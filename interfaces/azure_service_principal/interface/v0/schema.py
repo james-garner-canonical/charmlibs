@@ -1,6 +1,9 @@
 """This file defines the schemas for the provider and requirer sides of the azure_service_principal interface."""
 
-from pydantic import BaseModel, ConfigDict, Field
+import json
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class _BareStringDatabag(BaseModel):
@@ -50,6 +53,87 @@ class ProviderAppData(_BareStringDatabag):
     )
 
 
-RequirerAppData = None
+class RequirerAppData(ProviderAppData):
+    """The requirer's application databag.
+
+    The current library copies the provider's databag here for its own use. Requirers on the
+    older data_interfaces v0 based library (such as velero-operator) write requested-secrets and
+    provided-secrets instead. The provider reads neither.
+    """
+
+    requested_secrets: list[str] | None = Field(
+        default=None,
+        alias="requested-secrets",
+        description="Provider fields the requirer wants delivered as Juju secrets. A JSON array on the wire.",
+        examples=[["client-id", "client-secret"]],
+        title="Requested secrets",
+    )
+
+    provided_secrets: list[str] | None = Field(
+        default=None,
+        alias="provided-secrets",
+        description="Requirer fields the library would deliver as Juju secrets. A JSON array on the wire.",
+        examples=[["username", "password", "tls", "tls-ca", "uris"]],
+        title="Provided secrets",
+    )
+
+    @field_validator("requested_secrets", "provided_secrets", mode="before")
+    @classmethod
+    def _load_json(cls, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value  # __init__ argument was already deserialized.
+        return json.loads(value)
+
+    @field_serializer("requested_secrets", "provided_secrets")
+    def _dump_json(self, value: object) -> str | None:
+        if value is None:
+            return None
+        return json.dumps(value)
+
+
+class RequirerUnitData(_BareStringDatabag):
+    """The requirer's unit databag, written by the older data_interfaces v0 based library for its own use."""
+
+    model_config = ConfigDict(strict=True, populate_by_name=True)
+
+    requested_secrets: list[str] | None = Field(
+        default=None,
+        alias="requested-secrets",
+        description="A copy of requested-secrets from the application databag. A JSON array on the wire.",
+        examples=[["client-id", "client-secret"]],
+        title="Requested secrets",
+    )
+
+    provided_secrets: list[str] | None = Field(
+        default=None,
+        alias="provided-secrets",
+        description="A copy of provided-secrets from the application databag. A JSON array on the wire.",
+        examples=[["username", "password", "tls", "tls-ca", "uris"]],
+        title="Provided secrets",
+    )
+
+    data: dict[str, str] | None = Field(
+        default=None,
+        description=(
+            "The provider's application databag as last seen by the requirer, used by the"
+            " library to compute diffs. A JSON object on the wire."
+        ),
+        examples=[{"subscription-id": "12345678-1234-1234-1234-1234567890ab"}],
+        title="Last seen provider data",
+    )
+
+    @field_validator("requested_secrets", "provided_secrets", "data", mode="before")
+    @classmethod
+    def _load_json(cls, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value  # __init__ argument was already deserialized.
+        return json.loads(value)
+
+    @field_serializer("requested_secrets", "provided_secrets", "data")
+    def _dump_json(self, value: object) -> str | None:
+        if value is None:
+            return None
+        return json.dumps(value)
+
+
 ProviderUnitData = None
-RequirerUnitData = None
