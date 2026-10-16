@@ -93,41 +93,61 @@ class ExternalIdpProvider(BaseModel):
             )
         ],
     )
-    tenant_id: str | None = Field(examples=[None])
-    private_key: str | None = Field(examples=[None])
-    private_key_id: str | None = Field(examples=[None])
-    team_id: str | None = Field(examples=[None])
+    tenant_id: str | None
+    private_key: str | None
+    private_key_id: str | None
+    team_id: str | None
     issuer_url: str | None
 
     @field_validator("tenant_id")
     def provider_must_be_microsoft(cls, v, info):
-        if v and info.data.get("provider") != "microsoft":
+        if v and info.data.get("provider") != Provider.microsoft:
             raise ValueError("Provider must be microsoft to use key: `tenant_id`")
-        elif not v and info.data.get("provider") == "microsoft":
+        elif not v and info.data.get("provider") == Provider.microsoft:
             raise ValueError("`tenant_id` is required with provider microsoft")
         return v
 
     @field_validator("private_key", "private_key_id", "team_id")
     def provider_must_be_apple(cls, v, info):
-        if v and info.data.get("provider") != "apple":
-            raise ValueError(f"Provider must be apple to use key: `{info.data.get('name')}`")
-        elif not v and info.data.get("provider") == "apple":
-            raise ValueError(f"`{info.data.get('name')}` is required with apple provider")
+        if v and info.data.get("provider") != Provider.apple:
+            raise ValueError(f"Provider must be apple to use key: `{info.field_name}`")
+        elif not v and info.data.get("provider") == Provider.apple:
+            raise ValueError(f"`{info.field_name}` is required with apple provider")
         return v
 
     @field_validator("issuer_url")
     def issuer_url_allowed(cls, v, info):
-        if v and info.data.get("provider") in ["generic", "auth0"]:
-            raise ValueError(
-                f"`issuer_url` not allowed with provider: {info.data.get('provider')}"
-            )
-        elif not v and info.data.get("provider") in ["generic", "auth0"]:
-            raise ValueError("`issuer_url` is required with {values['provider'] provider")
+        provider = info.data.get("provider")
+        if provider is None:  # `provider` itself failed validation.
+            return v
+        if v and provider not in (Provider.generic, Provider.auth0):
+            raise ValueError(f"`issuer_url` not allowed with provider: {provider.value}")
+        elif not v and provider in (Provider.generic, Provider.auth0):
+            raise ValueError(f"`issuer_url` is required with provider {provider.value}")
         return v
 
 
 class ProviderAppData(BaseModel):
-    providers: list[ExternalIdpProvider]
+    providers: list[ExternalIdpProvider] = Field(
+        examples=[
+            [
+                {
+                    "client_id": "client_id",
+                    "client_secret": "cl1ent-s3cRet",
+                    "secret_backend": "relation",
+                    "provider": "microsoft",
+                    "scope": "profile email",
+                    "provider_id": "microsoft",
+                    "jsonnet_mapper": None,
+                    "tenant_id": "4242424242424242",
+                    "private_key": None,
+                    "private_key_id": None,
+                    "team_id": None,
+                    "issuer_url": None,
+                }
+            ]
+        ],
+    )
 
 
 class ExternalIdpRequirer(BaseModel):
