@@ -93,10 +93,10 @@ class ExternalIdpProvider(BaseModel):
             )
         ],
     )
-    tenant_id: str | None
-    private_key: str | None
-    private_key_id: str | None
-    team_id: str | None
+    tenant_id: str | None = Field(examples=[None])
+    private_key: str | None = Field(examples=[None])
+    private_key_id: str | None = Field(examples=[None])
+    team_id: str | None = Field(examples=[None])
     issuer_url: str | None
 
     @field_validator("tenant_id")
@@ -127,26 +127,7 @@ class ExternalIdpProvider(BaseModel):
 
 
 class ProviderAppData(BaseModel):
-    providers: list[ExternalIdpProvider] = Field(
-        examples=[
-            [
-                {
-                    "client_id": "client_id",
-                    "client_secret": "cl1ent-s3cRet",
-                    "secret_backend": "relation",
-                    "provider": "google",
-                    "scope": "profile email",
-                    "provider_id": "google",
-                    "jsonnet_mapper": None,
-                    "tenant_id": None,
-                    "private_key": None,
-                    "private_key_id": None,
-                    "team_id": None,
-                    "issuer_url": None,
-                }
-            ]
-        ],
-    )
+    providers: list[ExternalIdpProvider]
 
 
 class ExternalIdpRequirer(BaseModel):
