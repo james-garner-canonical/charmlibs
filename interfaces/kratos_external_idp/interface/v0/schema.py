@@ -136,7 +136,19 @@ class ExternalIdpRequirer(BaseModel):
 
 
 class RequirerAppData(BaseModel):
-    providers: list[ExternalIdpRequirer]
+    providers: list[ExternalIdpRequirer] = Field(
+        description="The redirect URI and provider ID for each external identity provider.",
+        examples=[
+            [
+                {
+                    "redirect_uri": {
+                        "url": "https://example.kratos.com/self-service/methods/oidc/callback/microsoft"
+                    },
+                    "provider_id": "microsoft",
+                }
+            ]
+        ],
+    )
 
 
 ProviderUnitData = None

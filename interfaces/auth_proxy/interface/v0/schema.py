@@ -21,13 +21,16 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 class RequirerAppData(BaseModel):
     protected_urls: list[AnyHttpUrl] = Field(
-        description="List of urls to be protected by Identity and Access Proxy."
+        description="List of urls to be protected by Identity and Access Proxy.",
+        examples=[["https://10.64.140.43/unit-0", "https://10.64.140.43/unit-1"]],
     )
     allowed_endpoints: list[str] | None = Field(
-        description="List of endpoints that are allowed to bypass authentication."
+        description="List of endpoints that are allowed to bypass authentication.",
+        examples=[["about/app"]],
     )
     headers: list[str] | None = Field(
-        description="List of headers to be returned upon a successful authentication."
+        description="List of headers to be returned upon a successful authentication.",
+        examples=[["X-User"]],
     )
 
 
