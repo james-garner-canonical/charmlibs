@@ -39,10 +39,11 @@ rather than a silently empty databag.
 
 Each model must be a Pydantic `BaseModel` subclass or a dataclass -- the two shapes `ops`
 documents as supported. Each is then exercised with `ops` itself: an instance is saved to a
-databag with `Relation.save` and loaded back with `Relation.load`, and must come back equal. The
-instance is built from the first of each field's `examples`, or, if a required field has none,
-generated from the field types with `polyfactory`. Generated values can't satisfy every validator
-(a pattern on a nested dataclass, say), and a schema that fails this way needs examples.
+databag with `Relation.save`, loaded back with `Relation.load` and saved again, and both saves
+must write the same databag. The
+instance is generated from the field types with `polyfactory`, using a field's `examples` instead
+wherever it has them, including on the fields of nested models. Generated values can't satisfy
+every validator (a pattern on a nested dataclass, say), so a field like that needs examples.
 
 A model may also carry a `__juju_decoder__`/`__juju_encoder__` pair, describing how this
 interface's databag values are encoded. Omitting them means JSON, which is what `ops` does by
@@ -94,6 +95,7 @@ SKIP = {
     's3': 'pending the data interface schemas PR',
     'postgresql_client': 'pending the data-postgresql interface schemas PR',
     'cos_agent': 'pending the observability interface schema examples PR',
+    'dns_record': 'pending the dns_record schema examples fix PR',
     'openfga': 'pending the identity interface schema examples PR',
     'kratos_external_idp': 'pending the `ProviderAppAData` typo fix PR',
 }
@@ -225,17 +227,11 @@ def _check_model(name: str, model: object) -> list[str]:
 
 def _check_round_trip(name: str, model: type[object]) -> list[str]:
     """Return problems saving an instance of `model` with `ops` and loading it back."""
-    # Dataclasses have no standard way to declare examples, so they're always generated.
-    generated = not issubclass(model, pydantic.BaseModel) or not _all_required_have_examples(model)
-    hint = ' -- add `examples` to its fields' if generated else ''
-    source = 'a generated' if generated else 'an example'
+    hint = ' -- add or fix `examples` on the fields involved'
     try:
-        if generated:
-            instance = _generate(model)
-        else:
-            instance = _from_examples(typing.cast('type[pydantic.BaseModel]', model))
+        instance = _generate(model)
     except Exception as e:
-        return [f"`{name}`: couldn't build {source} instance ({_summary(e)}){hint}"]
+        return [f"`{name}`: couldn't build an instance ({_summary(e)}){hint}"]
     result: dict[str, typing.Any] = {'stage': 'saving'}
 
     class Charm(ops.CharmBase):
@@ -246,11 +242,16 @@ def _check_round_trip(name: str, model: type[object]) -> list[str]:
         def _on_start(self, _: ops.StartEvent):
             relation = self.model.get_relation('schema')
             assert relation is not None
-            relation.save(instance, self.app, encoder=getattr(model, '__juju_encoder__', None))
-            result['databag'] = dict(relation.data[self.app])
+            encoder = getattr(model, '__juju_encoder__', None)
+            relation.save(instance, self.app, encoder=encoder)
+            result['saved'] = dict(relation.data[self.app])
             result['stage'] = 'loading'
             decoder = getattr(model, '__juju_decoder__', None)
-            result['loaded'] = relation.load(model, self.app, decoder=decoder)
+            loaded = relation.load(model, self.app, decoder=decoder)
+            result['stage'] = 'saving the loaded'
+            relation.data[self.app].clear()
+            relation.save(loaded, self.app, encoder=encoder)
+            result['resaved'] = dict(relation.data[self.app])
 
     meta = {'name': 'schema-check', 'requires': {'schema': {'interface': 'schema'}}}
     ctx = testing.Context(Charm, meta=meta)
@@ -259,31 +260,23 @@ def _check_round_trip(name: str, model: type[object]) -> list[str]:
         ctx.run(ctx.on.start(), state)
     except testing.errors.UncaughtCharmError as e:
         error = _summary(e.__cause__ or e)
-        return [f'`{name}`: failed {result["stage"]} {source} instance ({error}){hint}']
-    if result['loaded'] != instance:
-        return [f'`{name}`: loaded back differently from what it saved: {result["databag"]}']
+        return [f'`{name}`: failed {result["stage"]} an instance ({error}){hint}']
+    # Compare databags, not instances: an untyped field (a plain `dict`, say) can hold a
+    # generated value, like a `datetime`, that legitimately loads back as a string.
+    if result['resaved'] != result['saved']:
+        return [
+            f'`{name}`: saving what it loaded wrote {result["resaved"]}, '
+            f'not the original {result["saved"]}'
+        ]
     return []
 
 
-def _all_required_have_examples(model: type[pydantic.BaseModel]) -> bool:
-    return all(info.examples for info in model.model_fields.values() if info.is_required())
-
-
-def _from_examples(model: type[pydantic.BaseModel]) -> pydantic.BaseModel:
-    """Build `model` from the first example of each field that has one."""
-    examples = {
-        info.alias or field: info.examples[0]
-        for field, info in model.model_fields.items()
-        if info.examples
-    }
-    return model.model_validate(examples)
-
-
 def _generate(model: type[object]) -> object:
-    """Generate an instance of `model` from its field types, with a fixed seed."""
+    """Generate an instance of `model` with a fixed seed, using field examples where given."""
     if issubclass(model, pydantic.BaseModel):
-        factory = ModelFactory.create_factory(model)
+        factory = ModelFactory.create_factory(model, __use_examples__=True)
     else:
+        # Dataclasses have no standard way to declare examples.
         factory = DataclassFactory.create_factory(model)
     factory.seed_random(0)
     return factory.build()

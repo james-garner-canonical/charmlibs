@@ -188,8 +188,9 @@ interfaces/<interface>/
 ## Validate your work
 
 CI checks the schema of every interface against the format described here.
-It also builds each model from the first of each field's `examples`, saves it to a databag with `Relation.save`, and checks that `Relation.load` gives it back unchanged.
-If a required field has no examples, CI generates a value from the field's type instead, which fails if a validator needs something more specific.
+It also builds an instance of each model, saves it to a databag with `Relation.save`, and checks that `Relation.load` gives it back unchanged.
+Each field's value is taken from its `examples`, or generated from its type if it has none, and this applies to the fields of nested models too.
+A generated value fails if a validator needs something more specific, so a field like that needs an example.
 To check as you work, run:
 
 ```bash
