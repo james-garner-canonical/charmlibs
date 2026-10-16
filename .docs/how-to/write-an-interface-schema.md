@@ -121,13 +121,20 @@ class ProviderAppData(_BareStringDatabag, pydantic.BaseModel):
     model_config = pydantic.ConfigDict(validate_by_name=True)
 
     endpoints: str | None = pydantic.Field(
-        default=None, description='A bare string.'
+        default=None,
+        description='Comma-separated host:port pairs, as a bare string.',
+        examples=['10.0.0.1:6379,10.0.0.2:6379'],
     )
     port: int | None = pydantic.Field(
-        default=None, description='A bare string, such as "6379".'
+        default=None,
+        description='The port to connect on, as a bare string.',
+        examples=[6379],
     )
     requested_secrets: list[str] | None = pydantic.Field(
-        default=None, alias='requested-secrets', description='JSON on the wire.'
+        default=None,
+        alias='requested-secrets',
+        description='Secret fields the requirer needs, as a JSON array.',
+        examples=[['username', 'password']],
     )
 
     @pydantic.field_validator('requested_secrets', mode='before')
