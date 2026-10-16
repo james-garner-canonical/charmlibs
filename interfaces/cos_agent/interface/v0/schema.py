@@ -111,7 +111,42 @@ class ProviderUnitData(BaseModel):
     """Unit databag model for `cos-agent` relation."""
 
     config: NestedDataModel = Field(
-        description='When dumped into a databag in JSON format, this configuration data will be nested under the key defaulted to "config".'
+        description='When dumped into a databag in JSON format, this configuration data will be nested under the key defaulted to "config".',
+        examples=[
+            {
+                'metrics_alert_rules': {
+                    'groups': [
+                        {
+                            'name': 'test_58b48ff0_zookeeper_cos_23790144_zinc',
+                            'rules': [
+                                {
+                                    'alert': 'ZincTargetMissing',
+                                    'annotations': {
+                                        'description': 'A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}',
+                                        'summary': 'Prometheus target missing (instance {{ $labels.instance}})',
+                                    },
+                                    'expr': 'up{juju_application="zinc2"} == 0',
+                                    'for': '0m',
+                                    'labels': {
+                                        'app_group': 'cloud',
+                                        'juju_application': 'zookeeper',
+                                        'juju_charm': 'zookeeper',
+                                        'juju_model': 'test',
+                                        'juju_model_uuid': '58b48ff0-608b-435f-83b9-ea643e0b98db',
+                                        'severity': 'critical',
+                                    },
+                                }
+                            ],
+                        }
+                    ]
+                },
+                'log_alert_rules': {},
+                # Non-empty dashboards fail to serialize: the PlainSerializer returns a function.
+                'dashboards': [],
+                'metrics_scrape_jobs': [{'job_name': 'kafka_0', 'path': '/metrics', 'port': 9101}],
+                'log_slots': ['charmed-zookeeper:logs'],
+            }
+        ],
     )
 
 
