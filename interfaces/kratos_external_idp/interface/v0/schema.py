@@ -128,7 +128,6 @@ class ExternalIdpProvider(BaseModel):
 
 class ProviderAppData(BaseModel):
     providers: list[ExternalIdpProvider] = Field(
-        description="External identity providers that Kratos should configure",
         examples=[
             [
                 {
