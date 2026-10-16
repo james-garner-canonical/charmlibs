@@ -90,14 +90,14 @@ CODEC_NAMES = ('__juju_decoder__', '__juju_encoder__')
 BLOCKED_IMPORTS = ('ops', 'polyfactory', 'faker')
 #: Interfaces not checked yet, each waiting on a pending PR. Remove an entry when its PR lands.
 SKIP = {
-    'azure_service_principal': 'pending the data interface schemas PR',
-    'azure_storage': 'pending the data interface schemas PR',
-    's3': 'pending the data interface schemas PR',
-    'postgresql_client': 'pending the data-postgresql interface schemas PR',
-    'cos_agent': 'pending the observability interface schema examples PR',
-    'dns_record': 'pending the dns_record schema examples fix PR',
-    'openfga': 'pending the identity interface schema examples PR',
-    'kratos_external_idp': 'pending the `ProviderAppAData` typo fix PR',
+    'azure_service_principal': 'pending #661',
+    'azure_storage': 'pending #661',
+    's3': 'pending #661',
+    'postgresql_client': 'pending #671',
+    'cos_agent': 'pending #746',
+    'dns_record': 'pending #745',
+    'openfga': 'pending #744',
+    'kratos_external_idp': 'pending #742',
 }
 
 
