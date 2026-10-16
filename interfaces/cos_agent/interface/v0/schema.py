@@ -79,7 +79,7 @@ GrafanaDashboard = Annotated[
     AfterValidator(
         lambda x: json.loads(lzma.decompress(base64.b64decode(x.encode("utf-8"))).decode())
     ),
-    PlainSerializer(lambda x: _serialize_grafana_dashboard, return_type=str),
+    PlainSerializer(lambda x: _serialize_grafana_dashboard(json.dumps(x)), return_type=str),
     WithJsonSchema({'type': 'string'}, mode='serialization'),
 ]
 
@@ -98,8 +98,12 @@ class NestedDataModel(BaseModel):
     )
     dashboards: list[GrafanaDashboard] = Field(
         description="List of GrafanaDashboard objects. Each dashboard is base64 encoded, lzma-compressed, json-dumped dashboard data.",
-        # Empty because a non-empty list can't be saved: the PlainSerializer returns a function.
-        examples=[[]],
+        examples=[
+            [
+                '/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4AA3ADFdAD2IiobUVOndN3jT8g7gD9oHqQlq037uICk5rBvF'
+                'MhyjVbieEsN2a/n5hEz/g3D59wAAAAAAc5BFC+r0bSYAAU04/TxTTR+2830BAAAAAARZWg=='
+            ]
+        ],
     )
     metrics_scrape_jobs: list[dict] = Field(
         description="A list of dictionaries representing a prometheus_scrape-like data structure for jobs."
