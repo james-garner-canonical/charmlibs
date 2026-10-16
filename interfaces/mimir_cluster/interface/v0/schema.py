@@ -36,19 +36,7 @@ class Scheme(str, enum.Enum):
 
 
 class ProviderAppData(pydantic.BaseModel):
-    mimir_config: dict[str, typing.Any] = pydantic.Field(
-        description="Mimir configuration for the workers to use.",
-        examples=[
-            {
-                'target': 'all',
-                'server': {'http_listen_port': 8080},
-                'blocks_storage': {
-                    'backend': 'filesystem',
-                    'filesystem': {'dir': '/data/blocks'},
-                },
-            }
-        ],
-    )
+    mimir_config: dict[str, typing.Any]
 
 
 class JujuTopology(pydantic.BaseModel):
@@ -61,32 +49,14 @@ class JujuTopology(pydantic.BaseModel):
 
 
 class RequirerUnitData(pydantic.BaseModel):
-    juju_topology: JujuTopology = pydantic.Field(
-        description="Juju topology of the worker unit.",
-        examples=[
-            {
-                'unit': 'worker/0',
-                'app': 'worker',
-                'charm': 'mimir-worker-k8s',
-                'model': 'cos',
-                'model_uuid': '58b48ff0-608b-435f-83b9-ea643e0b98db',
-            }
-        ],
-    )
-    address: str = pydantic.Field(
-        description="Address of the worker unit.",
-        examples=['worker-0.worker-endpoints.cos.svc.cluster.local'],
-    )
-    port: int = pydantic.Field(description="Port of the worker unit.", examples=[8080])
-    scheme: Scheme = pydantic.Field(
-        description="Scheme used to reach the worker unit.", examples=['http']
-    )
+    juju_topology: JujuTopology
+    address: str
+    port: int
+    scheme: Scheme
 
 
 class RequirerAppData(pydantic.BaseModel):
-    roles: list[MimirRole] = pydantic.Field(
-        description="Roles the worker application runs with.", examples=[['read']]
-    )
+    roles: list[MimirRole]
 
 
 ProviderUnitData = None

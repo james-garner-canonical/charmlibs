@@ -29,19 +29,7 @@ class GrafanaSourceData(BaseModel):
 class ProviderAppData(BaseModel):
     """Application databag model for the requirer side of this interface."""
 
-    grafana_source_data: GrafanaSourceData = Field(
-        description="Datasource configuration for the requirer to register with Grafana.",
-        examples=[
-            {
-                'model': 'cos',
-                'model_uuid': '0000-0000-0000-0000',
-                'application': 'tempo',
-                'type': 'tempo',
-                'extra_fields': {'some': 'value'},
-                'secure_extra_fields': {'some': 'password'},
-            }
-        ],
-    )
+    grafana_source_data: GrafanaSourceData
 
 
 class ProviderUnitData(BaseModel):
@@ -55,10 +43,7 @@ class ProviderUnitData(BaseModel):
 class RequirerAppData(BaseModel):
     """Application databag model for the requirer side of this interface."""
 
-    datasource_uids: dict[str, str] = Field(
-        description="Mapping from provider unit names to the datasource UIDs assigned by Grafana.",
-        examples=[{'tempo/0': '0000-0000-0000-0001', 'tempo/1': '0000-0000-0000-0002'}],
-    )
+    datasource_uids: dict[str, str]
     grafana_uid: str = Field(
         description="UID of the requirer application.",
         examples=['foo-0000-0000-0000-0000-grafana-1'],
