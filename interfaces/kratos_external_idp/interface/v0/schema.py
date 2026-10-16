@@ -127,7 +127,27 @@ class ExternalIdpProvider(BaseModel):
 
 
 class ProviderAppData(BaseModel):
-    providers: list[ExternalIdpProvider]
+    providers: list[ExternalIdpProvider] = Field(
+        description="External identity providers that Kratos should configure",
+        examples=[
+            [
+                {
+                    "client_id": "client_id",
+                    "client_secret": "cl1ent-s3cRet",
+                    "secret_backend": "relation",
+                    "provider": "google",
+                    "scope": "profile email",
+                    "provider_id": "google",
+                    "jsonnet_mapper": None,
+                    "tenant_id": None,
+                    "private_key": None,
+                    "private_key_id": None,
+                    "team_id": None,
+                    "issuer_url": None,
+                }
+            ]
+        ],
+    )
 
 
 class ExternalIdpRequirer(BaseModel):
