@@ -500,6 +500,8 @@ def _scripts_static(argv: list[str]) -> int:
         f'--with-requirements={TEST_REQUIREMENTS}',
         '--with=pyyaml',  # for ls.py
         '--with=pydantic',  # for check-interface-schemas.py
+        '--with=ops[testing]',  # for check-interface-schemas.py
+        '--with=polyfactory',  # for check-interface-schemas.py
         '--python=3.12',
         'pyright',
     ]

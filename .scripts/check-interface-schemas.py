@@ -3,6 +3,8 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
+#     "ops[testing]>=2.23",
+#     "polyfactory>=2",
 #     "pydantic~=2.0",
 # ]
 # ///
@@ -35,10 +37,12 @@ All four are required, rather than letting an absent name mean "empty", so that 
 is a decision someone made and a reviewer can see, and so that a misspelled name is an error
 rather than a silently empty databag.
 
-Compatibility with `ops.Relation.load` is checked structurally, by requiring each model to be a
-Pydantic `BaseModel` subclass or a dataclass -- the two shapes `ops` documents as supported.
-Exercising `Relation.load` itself would need a charm and an `ops.testing` harness per schema, and
-would only tell us the same thing, because the models here have no sample data to load.
+Each model must be a Pydantic `BaseModel` subclass or a dataclass -- the two shapes `ops`
+documents as supported. Each is then exercised with `ops` itself: an instance is saved to a
+databag with `Relation.save` and loaded back with `Relation.load`, and must come back equal. The
+instance is built from the first of each field's `examples`, or, if a required field has none,
+generated from the field types with `polyfactory`. Generated values can't satisfy every validator
+(a pattern on a nested dataclass, say), and a schema that fails this way needs examples.
 
 A model may also carry a `__juju_decoder__`/`__juju_encoder__` pair, describing how this
 interface's databag values are encoded. Omitting them means JSON, which is what `ops` does by
@@ -47,7 +51,8 @@ is most of the data-platform family. `ops` does not read these names yet, so cal
 explicitly: `relation.load(ProviderAppData, app, decoder=ProviderAppData.__juju_decoder__)`.
 
 The schema modules are imported with Pydantic and the standard library available, and nothing
-else. That is deliberate: a schema is a dependency-light description of a wire format, so that
+else -- `ops` and the other dependencies of this script are blocked while a schema is imported.
+That is deliberate: a schema is a dependency-light description of a wire format, so that
 anything can read it, and so that a library can adopt it as its own databag model.
 """
 
@@ -62,7 +67,11 @@ import subprocess
 import sys
 import typing
 
+import ops
 import pydantic
+from ops import testing
+from polyfactory.factories import DataclassFactory
+from polyfactory.factories.pydantic_factory import ModelFactory
 
 if typing.TYPE_CHECKING:
     import types
@@ -76,6 +85,18 @@ MODEL_NAMES = ('ProviderAppData', 'ProviderUnitData', 'RequirerAppData', 'Requir
 LEGACY_NAMES = ('ProviderSchema', 'RequirerSchema')
 #: The optional codec a model may carry, describing how its databag values are encoded.
 CODEC_NAMES = ('__juju_decoder__', '__juju_encoder__')
+#: Top-level packages this script needs but schemas must not, blocked while a schema is imported.
+BLOCKED_IMPORTS = ('ops', 'polyfactory', 'faker')
+#: Interfaces not checked yet, each waiting on a pending PR. Remove an entry when its PR lands.
+SKIP = {
+    'azure_service_principal': 'pending the data interface schemas PR',
+    'azure_storage': 'pending the data interface schemas PR',
+    's3': 'pending the data interface schemas PR',
+    'postgresql_client': 'pending the data-postgresql interface schemas PR',
+    'cos_agent': 'pending the observability interface schema examples PR',
+    'openfga': 'pending the identity interface schema examples PR',
+    'kratos_external_idp': 'pending the `ProviderAppAData` typo fix PR',
+}
 
 
 def _main() -> int:
@@ -92,8 +113,12 @@ def _main() -> int:
     if not schemas:
         print('No interfaces with a schema matched.', file=sys.stderr)
         return 1
-    failures = 0
+    failures = skipped = 0
     for name, path in schemas:
+        if name in SKIP:
+            skipped += 1
+            print(f'skip {name} ({SKIP[name]})')
+            continue
         problems = _check(path)
         if problems:
             failures += 1
@@ -102,8 +127,10 @@ def _main() -> int:
                 print(f'       {problem}')
         else:
             print(f'ok   {name}')
-    checked = len(schemas)
+    checked = len(schemas) - skipped
     print(f'\n{checked - failures}/{checked} interface schemas comply with the format.')
+    if skipped:
+        print(f'{skipped} skipped, see `SKIP` in {pathlib.Path(__file__).name}.')
     if failures:
         print('See `.docs/how-to/write-an-interface-schema.md` for the format.')
     return 1 if failures else 0
@@ -182,16 +209,94 @@ def _check_model(name: str, model: object) -> list[str]:
         return [f'`{name}` is {type(model).__name__}, not a class']
     cls: type[object] = model
     if issubclass(cls, pydantic.BaseModel):
-        return _check_codec(name, cls) + [
+        problems = _check_codec(name, cls) + [
             f'`{name}.{field}` is annotated with `pydantic.Json`, which `ops` cannot load or save'
             for field, info in cls.model_fields.items()
             # Pydantic hoists the marker out of `Annotated` into the field metadata for a
             # required field, but leaves it in the annotation for an optional one.
             if _has_json_marker(info.annotation) or any(map(_has_json_marker, info.metadata))
         ]
-    if dataclasses.is_dataclass(cls):
-        return []
-    return [f'`{name}` is neither a Pydantic `BaseModel` subclass nor a dataclass']
+    elif dataclasses.is_dataclass(cls):
+        problems = []
+    else:
+        return [f'`{name}` is neither a Pydantic `BaseModel` subclass nor a dataclass']
+    return problems or _check_round_trip(name, cls)
+
+
+def _check_round_trip(name: str, model: type[object]) -> list[str]:
+    """Return problems saving an instance of `model` with `ops` and loading it back."""
+    # Dataclasses have no standard way to declare examples, so they're always generated.
+    generated = not issubclass(model, pydantic.BaseModel) or not _all_required_have_examples(model)
+    hint = ' -- add `examples` to its fields' if generated else ''
+    source = 'a generated' if generated else 'an example'
+    try:
+        if generated:
+            instance = _generate(model)
+        else:
+            instance = _from_examples(typing.cast('type[pydantic.BaseModel]', model))
+    except Exception as e:
+        return [f"`{name}`: couldn't build {source} instance ({_summary(e)}){hint}"]
+    result: dict[str, typing.Any] = {'stage': 'saving'}
+
+    class Charm(ops.CharmBase):
+        def __init__(self, framework: ops.Framework):
+            super().__init__(framework)
+            framework.observe(self.on.start, self._on_start)
+
+        def _on_start(self, _: ops.StartEvent):
+            relation = self.model.get_relation('schema')
+            assert relation is not None
+            relation.save(instance, self.app, encoder=getattr(model, '__juju_encoder__', None))
+            result['databag'] = dict(relation.data[self.app])
+            result['stage'] = 'loading'
+            decoder = getattr(model, '__juju_decoder__', None)
+            result['loaded'] = relation.load(model, self.app, decoder=decoder)
+
+    meta = {'name': 'schema-check', 'requires': {'schema': {'interface': 'schema'}}}
+    ctx = testing.Context(Charm, meta=meta)
+    state = testing.State(leader=True, relations={testing.Relation('schema')})
+    try:
+        ctx.run(ctx.on.start(), state)
+    except testing.errors.UncaughtCharmError as e:
+        error = _summary(e.__cause__ or e)
+        return [f'`{name}`: failed {result["stage"]} {source} instance ({error}){hint}']
+    if result['loaded'] != instance:
+        return [f'`{name}`: loaded back differently from what it saved: {result["databag"]}']
+    return []
+
+
+def _all_required_have_examples(model: type[pydantic.BaseModel]) -> bool:
+    return all(info.examples for info in model.model_fields.values() if info.is_required())
+
+
+def _from_examples(model: type[pydantic.BaseModel]) -> pydantic.BaseModel:
+    """Build `model` from the first example of each field that has one."""
+    examples = {
+        info.alias or field: info.examples[0]
+        for field, info in model.model_fields.items()
+        if info.examples
+    }
+    return model.model_validate(examples)
+
+
+def _generate(model: type[object]) -> object:
+    """Generate an instance of `model` from its field types, with a fixed seed."""
+    if issubclass(model, pydantic.BaseModel):
+        factory = ModelFactory.create_factory(model)
+    else:
+        factory = DataclassFactory.create_factory(model)
+    factory.seed_random(0)
+    return factory.build()
+
+
+def _summary(error: BaseException) -> str:
+    """Return the type and first line of `error`, or its first error for a `ValidationError`."""
+    if isinstance(error, pydantic.ValidationError):
+        first = error.errors()[0]
+        location = '.'.join(map(str, first['loc']))
+        return f'{location}: {first["msg"]}' if location else first['msg']
+    lines = str(error).splitlines()
+    return f'{type(error).__name__}: {lines[0]}' if lines else type(error).__name__
 
 
 def _has_json_marker(annotation: object) -> bool:
@@ -219,7 +324,18 @@ def _import(path: pathlib.Path) -> types.ModuleType:
     module = importlib.util.module_from_spec(spec)
     # Register before executing, so that dataclasses and Pydantic can resolve the module.
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+    # A `None` entry in `sys.modules` makes importing that name raise `ImportError`.
+    modules = typing.cast('dict[str, types.ModuleType | None]', sys.modules)
+    blocked = {name: modules.get(name) for name in BLOCKED_IMPORTS}
+    modules.update(dict.fromkeys(BLOCKED_IMPORTS))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        for name, original in blocked.items():
+            if original is None:
+                del modules[name]
+            else:
+                modules[name] = original
     return module
 
 

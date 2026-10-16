@@ -64,7 +64,8 @@ The `ProviderAppData` class can then be used to deserialize the relation data:
 data = event.relation.load(ProviderAppData, event.app)
 ```
 
-Fill in `description` and `examples` on each field. They are the source for what gets rendered in the interface's reference documentation.
+Fill in `description` and `examples` on each field.
+An example is a value of the field as the model holds it, so `6379` rather than the `'6379'` on the wire, and CI uses it to test the schema.
 
 ## Say how the values are encoded, if it isn't JSON
 
@@ -187,6 +188,8 @@ interfaces/<interface>/
 ## Validate your work
 
 CI checks the schema of every interface against the format described here.
+It also builds each model from the first of each field's `examples`, saves it to a databag with `Relation.save`, and checks that `Relation.load` gives it back unchanged.
+If a required field has no examples, CI generates a value from the field's type instead, which fails if a validator needs something more specific.
 To check as you work, run:
 
 ```bash
