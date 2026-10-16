@@ -20,33 +20,20 @@ from pydantic import BaseModel, Field
 
 class ProviderAppData(BaseModel):
     consent_url: str = Field(
-        description="Endpoint Hydra forwards users for consent related operations.",
-        examples=["http://identity-platform-login-ui-url/consent"],
+        description="Endpoint Hydra forwards users for consent related operations."
     )
     error_url: str = Field(
-        description="Endpoint Kratos forwards users to fetch full error messages.",
-        examples=["http://identity-platform-login-ui-url/error"],
+        description="Endpoint Kratos forwards users to fetch full error messages."
     )
     index_url: str = Field(
-        description="Endpoint Kratos forwards users to access index page of Public Login UI.",
-        examples=["http://identity-platform-login-ui-url/index"],
+        description="Endpoint Kratos forwards users to access index page of Public Login UI."
     )
-    login_url: str = Field(
-        description="Endpoint Hydra forwards users signing in.",
-        examples=["http://identity-platform-login-ui-url/login"],
-    )
+    login_url: str = Field(description="Endpoint Hydra forwards users signing in.")
     oidc_error_url: str = Field(
-        description="Endpoint Hydra forwards users to access error operations related to OpenID Connect.",
-        examples=["http://identity-platform-login-ui-url/oidc_error"],
+        description="Endpoint Hydra forwards users to access error operations related to OpenID Connect."
     )
-    registration_url: str = Field(
-        description="Endpoint Kratos forwards users to register.",
-        examples=["http://identity-platform-login-ui-url/registration"],
-    )
-    default_url: str = Field(
-        description="Default Browser endpoint Kratos forwards users to.",
-        examples=["http://identity-platform-login-ui-url"],
-    )
+    registration_url: str = Field(description="Endpoint Kratos forwards users to register.")
+    default_url: str = Field(description="Default Browser endpoint Kratos forwards users to.")
 
 
 ProviderUnitData = None

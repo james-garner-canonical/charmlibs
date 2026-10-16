@@ -4,34 +4,26 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class ProviderAppData(BaseModel):
-    admin_endpoint: AnyHttpUrl = Field(
-        description="Kratos admin URL.", examples=["http://10.64.140.44/testing-kratos"]
-    )
-    public_endpoint: AnyHttpUrl = Field(
-        description="Kratos public URL.", examples=["http://10.64.140.45/testing-kratos"]
-    )
+    admin_endpoint: AnyHttpUrl = Field(description="Kratos admin URL.")
+    public_endpoint: AnyHttpUrl = Field(description="Kratos public URL.")
     login_browser_endpoint: AnyHttpUrl = Field(
-        description="The Kratos endpoint that initializes a browser-based user login flow.",
-        examples=["http://10.64.140.45/testing-kratos/self-service/login/browser"],
+        description="The Kratos endpoint that initializes a browser-based user login flow."
     )
     sessions_endpoint: AnyHttpUrl = Field(
-        description="The Kratos endpoint to check who the current session belongs to.",
-        examples=["http://10.64.140.45/testing-kratos/sessions/whoami"],
+        description="The Kratos endpoint to check who the current session belongs to."
     )
     providers_configmap_name: str = Field(
-        description="The name of the ConfigMap that contains the providers configuration.",
-        examples=["providers"],
+        description="The name of the ConfigMap that contains the providers configuration."
     )
     schemas_configmap_name: str = Field(
-        description="The name of the ConfigMap that contains the identity schemas configuration.",
-        examples=["identity-schemas"],
+        description="The name of the ConfigMap that contains the identity schemas configuration."
     )
     configmaps_namespace: str = Field(
-        description="The namespace where the ConfigMaps are located.", examples=["testing"]
+        description="The namespace where the ConfigMaps are located."
     )
-    mfa_enabled: bool = Field(description="Whether MFA is enabled.", examples=[False])
+    mfa_enabled: bool = Field(description="Whether MFA is enabled.")
     oidc_webauthn_sequencing_enabled: bool = Field(
-        description="Whether OIDC WebAuthn sequencing is enabled.", examples=[False]
+        description="Whether OIDC WebAuthn sequencing is enabled."
     )
 
 

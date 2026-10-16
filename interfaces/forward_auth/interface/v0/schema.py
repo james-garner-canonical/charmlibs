@@ -24,25 +24,18 @@ from pydantic import BaseModel, Field
 class ProviderAppData(BaseModel):
     """ForwardAuthProvider model."""
 
-    decisions_address: str = Field(
-        description='The internal decisions endpoint address.',
-        examples=[
-            'https://oathkeeper-0.oathkeeper-endpoints.namespace.svc.cluster.local:4456/decisions'
-        ],
-    )
+    decisions_address: str = Field(description='The internal decisions endpoint address.')
     app_names: list[str] = Field(
         description=(
             'List of names of applications requesting to be protected '
             'by Identity and Access Proxy.'
-        ),
-        examples=[['charmed-app', 'other-charmed-app']],
+        )
     )
     headers: list[str] | None = Field(
         description=(
             'List of headers to copy from the authentication server '
             'response and set on forwarded requests.'
-        ),
-        examples=[['X-User', 'X-Some-Header']],
+        )
     )
 
 
@@ -50,8 +43,7 @@ class RequirerAppData(BaseModel):
     """ForwardAuthRequirer model."""
 
     ingress_app_names: list[str] = Field(
-        description='List of names of applications that are related via ingress.',
-        examples=[['charmed-app', 'other-charmed-app']],
+        description='List of names of applications that are related via ingress.'
     )
 
 
