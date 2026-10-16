@@ -180,9 +180,9 @@ interfaces/<interface>/
 │       ├── README.md
 │       └── schema.py -> ../../src/charmlibs/interfaces/<interface>/_schema.py
 └── src/charmlibs/interfaces/<interface>/
-    ├── _init__.py     # Export the package's public API.
-    ├── _schema.py     # The since source of truth for databag models.
-    └── interface>.py  # Library logic, importing from `._schema`.
+    ├── __init__.py      # Export the package's public API.
+    ├── _<interface>.py  # Library logic, importing from `._schema`.
+    └── _schema.py       # The single source of truth for databag models.
 ```
 
 ## Validate your work
