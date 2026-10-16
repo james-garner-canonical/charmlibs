@@ -7,18 +7,9 @@ myst:
 (how-to-write-an-interface-schema)=
 # How to write an interface schema
 
-Every interface in the monorepo can declare a `schema.py`, which describes the relation data the interface carries. The schema is the machine-readable counterpart to the prose in the interface's `README.md`: the README says what each side is expected to do, and the schema says exactly what goes in the databags.
-
-CI checks the schema of every interface against the format described here. To check as you work:
-
-```bash
-just interface-schemas              # every interface
-just interface-schemas tls-certificates
-```
-
-```{note}
-Only the latest version of each interface is checked. Older versions are kept for reference and are not held to this format.
-```
+Every interface definition should be accompanied by a `schema.py`, which describes how the serialized relation data on the wire is transformed into meaningful objects.
+This document explains how to format the schema.
+To learn how to design the relation data format, read  {ref}`design-relation-interfaces`.
 
 ## Name all four databags
 
@@ -31,76 +22,67 @@ A relation has four databags, and a schema must account for every one of them, u
 | `RequirerAppData` | The requirer's application databag. |
 | `RequirerUnitData` | The requirer's unit databag. |
 
-Most interfaces only use one or two of them. Set the rest to `None`, which says the databag is always empty:
+Any that aren't used by a specific interface must be explicitly set to `None`, like this:
 
 ```py
-ProviderAppData = TracingProviderData
+class ProviderAppData:
+    ....
+
 ProviderUnitData = None
-RequirerAppData = TracingRequirerData
+RequirerAppData = None
 RequirerUnitData = None
 ```
 
-Declaring all four, rather than letting an absent name mean "empty", means an empty databag is a decision someone made and a reviewer can see — and it means a misspelled name is an error rather than a silently empty databag.
-
-Keep the four together in this order at the end of the module, so the whole wire format can be read at a glance. If a model already has one of the four names, it is the declaration and needs no entry in the block.
-
-Each model that isn't `None` must be a [Pydantic](https://docs.pydantic.dev/) `BaseModel` subclass or a standard library dataclass, because those are the two shapes [`ops.Relation.load`](https://canonical.com/juju/docs/ops/latest/reference/ops-module/#ops.Relation.load) and `ops.Relation.save` accept. Field names must match the keys in the databag, or carry an alias that does:
+Each model that isn't `None` must be a class that can be passed to [`ops.Relation.load`](https://canonical.com/juju/docs/ops/latest/reference/ops-module/#ops.Relation.load) and successfully load all permitted relation data for this interface.
+It's common to use a [Pydantic](https://docs.pydantic.dev/) `BaseModel` subclass, but a standard library dataclass works if you want to avoid the dependency.
 
 ```py
-from pydantic import BaseModel, Field, Json
+import pydantic
 
 
-class Receiver(BaseModel):
+class Receiver(pydantic.BaseModel):
     """A single endpoint the provider is listening on."""
 
     protocol: str
     url: str
 
 
-class ProviderAppData(BaseModel):
+class ProviderAppData(pydantic.BaseModel):
     """The provider's application databag."""
 
-    receivers: Json[list[Receiver]] | None = Field(
+    receivers: list[Receiver] | None = pydantic.Field(
         default=None,
         description='Endpoints the provider accepts traces on.',
         examples=[[{'protocol': 'otlp_http', 'url': 'http://tempo:4318'}]],
     )
 ```
 
-Charms then read and write the databag with the model directly:
+The `ProviderAppData` class can then be used to deserialize the relation data:
 
 ```py
 data = event.relation.load(ProviderAppData, event.app)
 ```
 
-```{important}
-Don't annotate a field with `pydantic.Json`. `Relation.load` decodes each databag value before
-handing it to the model, and `Relation.save` encodes what the model gives back, so a `Json` field
-is decoded twice: it receives an already-decoded value and rejects it, and it can't be constructed
-from a real value in order to be saved. Annotate the decoded type instead — `list[Receiver]`, not
-`Json[list[Receiver]]`. CI rejects `Json` annotations.
-```
-
-Fill in `description` and `examples` on each field. They are the source for what gets rendered in the interface's reference documentation, and they are the only explanation a charm author gets when reading the schema on its own.
-
-Follow {ref}`design-relation-interfaces` when deciding what the fields should be — no mandatory top-level fields, no field reuse, stable collection ordering, and so on. Those rules are about the wire format itself; this guide is only about how to express it.
+Fill in `description` and `examples` on each field. They are the source for what gets rendered in the interface's reference documentation.
 
 ## Say how the values are encoded, if it isn't JSON
 
-`ops` encodes each databag value as JSON, and most interfaces are happy with that: `Relation.load`
-runs `json.loads` over every value and `Relation.save` runs `json.dumps`. If that describes your
-interface, there is nothing to do.
+`ops` decodes each databag value as JSON by default.
+If that describes your interface, you don't need to do anything extra here.
+If you use a different format, for example writing strings as bare (rather than JSON-encoded) strings, you'll need to define custom encode and decoder functions.
 
-Some interfaces put bare strings in the databag instead — most of the data-platform family does,
-because `charms.data_platform_libs.data_interfaces` writes them that way. `json.loads` raises on
-`10.73.32.13:2379`, and `json.dumps` would write it back wrapped in quotes. Those interfaces say so
-by giving their models a `__juju_decoder__`/`__juju_encoder__` pair. With more than one model, put
-it on a shared base class; with one model, define the two methods on the model itself:
+If you define them as `__juju_encoder__` and `__juju_decoder__` on the databag model, then Charmlibs CI will automatically pass them through to `Relation.load` when validating the schema, like this:
 
 ```py
-class _BareStringDatabag(BaseModel):
-    """Base class for databag models that don't strictly JSON encode all entries."""
+data = event.relation.load(ProviderAppData, event.app, decoder=ProviderAppData.__juju_decoder__)
+relation.save(data, self.app, encoder=ProviderAppData.__juju_encoder__)
+```
 
+If all four databags use the same encoder and decoder, you can reduce repetition by defining them on a common base class.
+For example, this base class defines a decoder that passes the databag value through unmodified, because its values are string which it 'encodes' by passing them through unmodified as well (setting `''` for `None`, which erases the value from the databag).
+
+```py
+class _BareStringDatabag:
     @staticmethod
     def __juju_decoder__(value: str) -> str:
         """Pass Juju's string through unmodified to be decoded by individual field validators."""
@@ -112,25 +94,14 @@ class _BareStringDatabag(BaseModel):
         return '' if value is None else value
 ```
 
-Define both or neither — a codec describes both directions. `ops` does not read these names yet, so
-charms and libraries pass them explicitly:
+### Databags with mixed encodings
+
+Some databags have mixed encodings, for example using JSON encoding for lists and objects, but writing strings without encoding.
+This can be handled today using Pydantic's `field_validator` and `field_serializer` decorators to determine per-field behaviour.
+Decorated methods are called automatically for the appropriate fields when Ops creates or serializes a Pydantic model.
 
 ```py
-data = event.relation.load(ProviderAppData, event.app, decoder=ProviderAppData.__juju_decoder__)
-relation.save(data, self.app, encoder=ProviderAppData.__juju_encoder__)
-```
-
-They are `staticmethod`s rather than properties because `Relation.load` is handed the class, not an
-instance, so the codec has to be reachable from the class.
-
-### Then let each field decode itself
-
-Passing values through unchanged is what makes a databag that mixes encodings work: each value
-reaches the model as the string Juju is holding, so a field that really does carry encoded JSON can
-say so while its neighbours stay plain.
-
-```py
-class ProviderAppData(_BareStringDatabag):
+class ProviderAppData(_BareStringDatabag, pydantic.BaseModel):
     """The provider's application databag."""
 
     model_config = ConfigDict(strict=True, populate_by_name=True)
@@ -154,11 +125,8 @@ class ProviderAppData(_BareStringDatabag):
         return json.dumps(value)
 ```
 
-Both halves are needed. The validator handles loading; without the serializer, saving hands `ops` a
-list and raises `RelationDataTypeError`. The validator passes non-strings through so that a charm
-can build the model from real values in order to save it — that is the flaw `pydantic.Json` has.
-
-`ConfigDict(strict=True, ...)` matters more than it looks. Without it Pydantic quietly coerces, so
+`ConfigDict(strict=True, ...)` matters more than it looks.
+Without it Pydantic quietly coerces, so
 an `int` field turns `'06379'` into `6379` and writes back `'6379'`, and a `bool` field turns
 `'True'` into `True` and writes back `'true'`. Type a field `str` unless the wire genuinely holds
 something structured, and give enum fields `Field(strict=False)` so they still accept their own wire
@@ -167,7 +135,7 @@ hyphenated alias, which is not a valid Python keyword.
 
 Two types to avoid in a databag model: `pydantic.SecretStr` serializes as `'**********'`, so it
 needs a serializer returning `value.get_secret_value()` or the mask goes on the wire; and
-`pathlib.Path` normalises away a trailing slash, so store a validated `str` instead.
+`pathlib.Path` normalises away a trailing slash -- if that's important store a validated `str` instead.
 
 ## Depend on Pydantic and the standard library only
 
@@ -203,4 +171,17 @@ This arrangement is recommended but optional. An interface with no library in th
 
 ```{seealso}
 {ref}`design-relation-interfaces`
+```
+
+## Validate your work
+
+CI checks the schema of every interface against the format described here. To check as you work:
+
+```bash
+just interface-schemas                   # Check all interfaces.
+just interface-schemas tls-certificates  # Check named interfaces.
+```
+
+```{note}
+Only the latest version of each interface is checked. Older versions are kept for reference and are not held to this format.
 ```
