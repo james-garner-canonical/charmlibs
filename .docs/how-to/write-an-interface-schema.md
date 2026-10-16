@@ -34,6 +34,7 @@ RequirerUnitData = None
 ```
 
 Each model that isn't `None` must be a class that can be passed to [`ops.Relation.load`](https://canonical.com/juju/docs/ops/latest/reference/ops-module/#ops.Relation.load) and successfully load all permitted relation data for this interface.
+`Relation.load` requires Ops 2.23 or later.
 It's common to use a [Pydantic](https://docs.pydantic.dev/) `BaseModel` subclass, but a standard library dataclass works if you want to avoid the dependency.
 
 ```py
@@ -85,12 +86,18 @@ For example, this base class defines a decoder that passes the databag value thr
 class _BareStringDatabag:
     @staticmethod
     def __juju_decoder__(value: str) -> str:
-        """Pass Juju's string through unmodified to be decoded by individual field validators."""
+        """Pass Juju's string through unmodified.
+
+        We'll decode it with individual field validators.
+        """
         return value
 
     @staticmethod
     def __juju_encoder__(value: str | None) -> str:
-        """Convert `None` to "", erasing the value; Ops will error on a non-string."""
+        """Convert `None` to "", erasing the value; return other values unmodified.
+
+        We assume they're always a string. Ops will error on a non-string.
+        """
         return '' if value is None else value
 ```
 
@@ -104,78 +111,69 @@ Decorated methods are called automatically for the appropriate fields when Ops c
 class ProviderAppData(_BareStringDatabag, pydantic.BaseModel):
     """The provider's application databag."""
 
-    model_config = ConfigDict(strict=True, populate_by_name=True)
+    model_config = pydantic.ConfigDict(validate_by_name=True)
 
-    endpoints: str | None = Field(default=None, description='A bare string.')
-    requested_secrets: list[str] | None = Field(
-        default=None, alias='requested-secrets', description='A JSON array on the wire.'
+    endpoints: str | None = pydantic.Field(
+        default=None, description='A bare string.'
+    )
+    port: int | None = pydantic.Field(
+        default=None, description='A bare string, such as "6379".'
+    )
+    requested_secrets: list[str] | None = pydantic.Field(
+        default=None, alias='requested-secrets', description='JSON on the wire.'
     )
 
-    @field_validator('requested_secrets', mode='before')
+    @pydantic.field_validator('requested_secrets', mode='before')
     @classmethod
     def _load_json(cls, value: Any) -> Any:
         if not isinstance(value, str):
             return value  # __init__ argument was already deserialized.
         return json.loads(value)
 
-    @field_serializer('requested_secrets')
-    def _dump_json(self, value: object) -> str | None:
-        if value is None:
-            return None
-        return json.dumps(value)
+    @pydantic.field_serializer('requested_secrets')
+    def _dump_json(self, value: list[str] | None) -> str | None:
+        return None if value is None else json.dumps(value)
+
+    @pydantic.field_serializer('port')
+    def _dump_str(self, value: int | None) -> str | None:
+        return None if value is None else str(value)
 ```
 
-`ConfigDict(strict=True, ...)` matters more than it looks.
-Without it Pydantic quietly coerces, so
-an `int` field turns `'06379'` into `6379` and writes back `'6379'`, and a `bool` field turns
-`'True'` into `True` and writes back `'true'`. Type a field `str` unless the wire genuinely holds
-something structured, and give enum fields `Field(strict=False)` so they still accept their own wire
-string. `populate_by_name=True` is what lets a charm write `secret_tls=...` rather than the
-hyphenated alias, which is not a valid Python keyword.
+Pydantic converts a bare string to the field's type when the model is loaded, so a bare-string field can still be an `int`, `bool`, or enum, like `port`.
+Ops only saves strings, so give each such field a serializer that converts it back.
 
-Two types to avoid in a databag model: `pydantic.SecretStr` serializes as `'**********'`, so it
-needs a serializer returning `value.get_secret_value()` or the mask goes on the wire; and
-`pathlib.Path` normalises away a trailing slash -- if that's important store a validated `str` instead.
+Set `validate_by_name=True` in any model with aliased fields, so that charm code can write `ProviderAppData(requested_secrets=[...])`.
+Without it, that call doesn't raise an error -- Pydantic ignores the unrecognized argument, and the field keeps its default.
+`validate_by_name` requires Pydantic 2.11 or later, and earlier versions ignore it just as quietly, so declare `pydantic>=2.11` wherever the model is used.
 
 ## Depend on Pydantic and the standard library only
 
 A schema is imported with Pydantic and the standard library available, and nothing else. Keeping it that way is what lets the schema be read on its own, by tooling and by people, and lets a library adopt it as its own databag models without dragging in test dependencies.
 
-In particular, schemas must not import `interface_tester`. Earlier schemas wrapped their models in `ProviderSchema` and `RequirerSchema` classes inheriting from `pytest-interface-tester`'s `DataBagSchema`. That format is retired, and CI rejects both names.
-
-If a model you already have is named something else, alias it in the block rather than renaming it — especially when the existing name is part of a library's public API.
-
 (interface-schema-in-library)=
 ## Share the schema with the library
 
-When an interface has a library in this repo, the schema and the library's databag models describe the same wire format, and keeping two copies in step is a job nobody wants. Instead, put the models in the library as `_schema.py` and symlink the interface's `schema.py` at it:
+When an interface has a library in this repo, the schema and the library's databag models should describe the same wire format.
+Keeping two copies in sync is a job nobody wants.
+Instead, put the models in the library as a private `_schema.py` module and make the interface docs' `schema.py` a symlink to it:
 
 ```text
 interfaces/<interface>/
 ├── interface/
 │   └── v<N>/
+│       ├── interface.yaml
+│       ├── README.md
 │       └── schema.py -> ../../src/charmlibs/interfaces/<interface>/_schema.py
 └── src/charmlibs/interfaces/<interface>/
-    ├── _schema.py            # the models, and the source of truth
-    └── _<interface>.py       # the library, importing from ._schema
-```
-
-```bash
-cd interfaces/<interface>/interface/v<N>
-ln -s ../../src/charmlibs/interfaces/<interface>/_schema.py schema.py
-```
-
-The module keeps its underscore prefix because the models are not usually part of the library's public API — charm authors use the library's classes, not its databag models. Export them only if charm authors have a reason to construct them.
-
-This arrangement is recommended but optional. An interface with no library in this repo just keeps its models in `schema.py`, and an existing library can adopt the symlink whenever it suits its maintainers.
-
-```{seealso}
-{ref}`design-relation-interfaces`
+    ├── _schema.py            # The since source of truth for databag models.
+    └── _<interface>.py       # Library logic, importing from `._schema`.
+    └── __init__.py           # Export the package's public API.
 ```
 
 ## Validate your work
 
-CI checks the schema of every interface against the format described here. To check as you work:
+CI checks the schema of every interface against the format described here.
+To check as you work, run:
 
 ```bash
 just interface-schemas                   # Check all interfaces.
