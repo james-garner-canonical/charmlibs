@@ -747,16 +747,18 @@ Make sure that one does: set the expiry of a secret that the unit owns to the ti
 Juju emits it again every five minutes until the charm removes the expired revision, and setting new content on the secret clears its expiry, so set the expiry again after each renewal.
 Include `secret_expired` in what `events` returns, and say in the class docstring that the charm must observe it.
 
-### Remove things by comparing with what should exist
+### Remove what's no longer needed by comparing
 
-`sync()` only sees the relations that exist now.
-If the library can list what it created, it can compare that with what the current relations need, and remove the rest, as the charm does with tenants in {ref}`interface-library-requests`.
-This catches every relation that went away, and anything left over from a hook that failed.
+Relation data goes away with its relation, so it never needs cleaning up.
+What does is something durable that was created for a relation, such as a tenant in the workload.
 
-If the library can't list what it created, such as accounts in an external service that has no way to list them, the only time it learns that a relation went away is the `relation-broken` event.
-Provide a separate method, such as `clean_up(relation)`, and work out what to remove from the relation itself, such as its ID or the remote application's name, rather than from its relation data, which may be empty by then.
-The charm has to pass in the event's relation, so returning `relation-broken` from `events` isn't enough: the reconcile handler doesn't get the relation.
-Say in the class docstring that the charm needs a dedicated handler that calls `clean_up()`.
+Compare what exists with what the current relations need, and remove the difference.
+During `relation-broken`, `ops` already leaves the departing relation out of `model.relations`, so its leftovers are removed in that hook, and anything that a failed hook left behind is removed next time.
+Don't keep your own record of what was created: it can drift from what really exists.
+
+- If the charm manages the workload, the charm knows what exists. Give it a getter for what's still needed, as `get_tenants()` does in {ref}`interface-library-requests`, and let it remove the rest. Make that getter raise rather than return an incomplete result, and have the charm compare only what it created for relations.
+- If the library manages the workload itself, it can compare inside `sync()`.
+- If nothing can list what exists, provide `clean_up(relation)` as a last resort, and find what to remove from the relation's ID or the remote application's name. For example, `ops` can't list the secrets that a charm owns, so a library that creates a secret for each relation needs this. The charm calls `clean_up(event.relation)` from a dedicated `relation-broken` handler, so say so in the class docstring.
 
 ### Take values that only an event provides as arguments
 
