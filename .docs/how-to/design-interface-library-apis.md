@@ -464,7 +464,7 @@ Follow these rules when publishing:
 - **Take charm-facing values.** Take charm-facing types, or plain keyword arguments for simple values. Never take the data model, a dictionary, or JSON.
 - **Check leadership before writing to the application databag.** Only the leader can write it, so skip the write on other units. Don't skip writes to the unit databag, which every unit owns.
 - **Raise `ValueError` for bad arguments.** A value that the interface can't represent is a mistake in the charm, so raise, and the error points at the line in the charm that passed it. Here, `FooServer` raises when it's constructed.
-- **Make it idempotent.** A reconciling charm calls `publish()` in every hook, possibly more than once, and Juju runs a failed hook again, so calling `publish()` again with the same arguments must leave everything as it was. In the databag, that means writing the same keys and values every time, so that `save` sends nothing and the remote application isn't woken up for nothing. Sorting collections is part of this. Outside the databag, it means finding what an earlier call created before creating it again. For example, Juju rejects a second secret with the same label, so look up the secret by label, and only set its content if the content has changed.
+- **Make it idempotent.** A reconciling charm calls `publish()` in every hook, possibly more than once, and Juju runs a failed hook again, so calling `publish()` again with the same arguments must leave everything as it was. In the databag, that means writing the same keys and values every time, so that `save` sends nothing and the remote application isn't woken up for nothing. Sorting collections is part of this. Outside the databag, it means finding what an earlier call created before creating it again. For example, Juju rejects a second secret with the same label, so look up the secret by label, and only set its content if the content has changed. Juju 3.6 and later ignore identical content, but earlier versions create a new revision.
 
 Give each publishing method its own data model, with its own fields, as `_ServerData` and `_TenantData` are.
 `save` writes every field of the model that it's given, writing `None` as `null`, and leaves other keys alone.
@@ -742,8 +742,9 @@ In the certificates example, each call to `sync()`:
 
 Calling `sync()` again changes nothing, so the charm can call it from every event.
 
-If the work has a deadline, such as renewing a certificate, `sync()` only does it if some event happens before the deadline.
-Make sure that one does: set the expiry of a secret that the unit owns to the time that renewal is due, so that Juju emits `secret-expired` then.
+If the work has a deadline, such as renewing a certificate, `sync()` only does it if some event happens after the work is due and before the deadline.
+Make sure that one does: set the expiry of a secret that the unit owns to the time that renewal is due, so that Juju emits `secret-expired` then, to within about a minute.
+Juju emits it again every five minutes until the charm removes the expired revision, and setting new content on the secret clears its expiry, so set the expiry again after each renewal.
 Include `secret_expired` in what `events` returns, and say in the class docstring that the charm must observe it.
 
 ### Remove things by comparing with what should exist
@@ -753,14 +754,16 @@ If the library can list what it created, it can compare that with what the curre
 This catches every relation that went away, and anything left over from a hook that failed.
 
 If the library can't list what it created, such as accounts in an external service that has no way to list them, the only time it learns that a relation went away is the `relation-broken` event.
-Provide a separate method, such as `clean_up(relation)`, and work out what to remove from the relation itself, such as its ID or the remote application's name, rather than from its relation data.
-The charm has to pass in the event's relation, so it needs a dedicated handler: say so in the class docstring, rather than returning `relation-broken` from `events`.
+Provide a separate method, such as `clean_up(relation)`, and work out what to remove from the relation itself, such as its ID or the remote application's name, rather than from its relation data, which may be empty by then.
+The charm has to pass in the event's relation, so returning `relation-broken` from `events` isn't enough: the reconcile handler doesn't get the relation.
+Say in the class docstring that the charm needs a dedicated handler that calls `clean_up()`.
 
 ### Take values that only an event provides as arguments
 
 Some values are only available from a particular event.
 For example, when a library replaces the content of a secret that it shares over the relation, Juju emits `secret-remove` once no consumer is tracking an old revision, and only that event says which revision it is.
 Provide a method that takes the values as arguments, such as `remove_revision(secret, revision)`, and say in the docstring that the charm should call it from `secret-remove`.
+`secret-expired` is similar: it says which revision expired, and the event repeats until the charm removes that revision.
 
 ## Follow the naming conventions
 
