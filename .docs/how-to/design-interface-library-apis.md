@@ -9,8 +9,8 @@ myst:
 % Based on: OP083 - Relation Interface Design
 
 An interface library should give charms a plain object that reads and writes relation data only when the charm calls it, and that works in the charm's own types rather than the relation data format.
-A charm that reconciles calls it from its reconcile handler, and a charm that handles events separately asks it which events to call it after.
-Whatever a remote application sends, the library must never put the charm into an error state.
+A charm that reconciles calls it from its reconcile handler, and a charm that handles events separately calls it after the events that it lists.
+Whatever a remote application sends, constructing the library object and checking whether it's ready must never raise, and once it's ready, its getters shouldn't raise either.
 
 This guide provides rules for the charm-facing API. For the relation data format, see {ref}`design-relation-interfaces`.
 
@@ -56,6 +56,7 @@ A library that doesn't follow them isn't broken, and doesn't need to be rewritte
 
    A charm's `__init__` must complete for the charm to handle any event, and a complex charm constructs many library objects there.
    A library can't know whether it's critical to a particular charm, so malformed data from a remote application must never stop the charm from handling events.
+   The charm checks readiness first, and once the library is ready, the getters shouldn't raise.
 
 Read more: {ref}`Ops | Holistic vs delta charms <ops:holistic-vs-delta-charms>`
 
@@ -151,6 +152,14 @@ The rest of this guide shows how.
 Read and write relation data with `ops.Relation.load` and `ops.Relation.save`, and require `ops>=3.8.1,<4`.
 Before `ops` 3.8.1, `load` JSON-decoded every key in the databag, not just the fields of your data model.
 That fails on any key that isn't JSON, including `ingress-address`, which Juju sets in every unit databag.
+
+If the library must also support charms that are still on `ops` 2, the fix is in `ops` 2.23.6 too, but not in 3.0 to 3.8.0, so exclude those:
+
+```text
+ops>=2.23.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,!=3.8.0,<4
+```
+
+Everything on this page works with both ranges.
 
 Read more: {ref}`python-package-deps`
 
@@ -318,7 +327,7 @@ class FooRequirer:
         if len(relations) > 1:
             return None, f'{len(relations)} {self._relation_name} relations, expected one'
         relation = relations[0]
-        if relation.app is None or not relation.data[relation.app]:
+        if not relation.data[relation.app]:
             return None, f'waiting for {self._relation_name} data'
         try:
             data = relation.load(_ProviderAppData, relation.app)
@@ -341,10 +350,10 @@ Some details to get right:
 
 - Check for an empty databag before parsing. Because the data model has no mandatory fields, an empty databag parses successfully.
 - Count the relations yourself. `model.get_relation()` raises `ops.TooManyRelatedAppsError` if a second application is related, and a library can't enforce `limit: 1`.
-- If readiness depends on a Juju secret, read it with `Secret.peek_content()`, which doesn't change the revision that the charm tracks, and return `False` on `ops.SecretNotFoundError` or `ops.ModelError`.
+- If readiness depends on a Juju secret, read it with `Secret.peek_content()`, which doesn't change the revision that the charm tracks, and return `False` on `ops.ModelError`. That covers `ops.SecretNotFoundError`, a subclass, for a secret that's gone. It also covers a grant that hasn't reached this unit yet: Juju answers "permission denied", which `ops` raises as a plain `ModelError`, and at the API, a grant that's late can't be told apart from one that will never come. Catch `ModelError` only around secret reads.
 - Don't cache what you load. `ops` reads each databag once per hook and keeps the result, including what the charm writes during the hook, so loading again costs a JSON decode and a validation, not a hook command. A cache of your own would go stale when the library writes to a databag that it also reads, as the provider does with tenants. `ops.Model.get_secret()` isn't cached, though: each call runs a hook command.
 
-Make readiness a method, even when it takes no arguments, as `is_ready()` does here.
+Make readiness a method, not a property, even when it takes no arguments, as `is_ready()` does here.
 It does work each time it's called, it can take arguments in a later version without breaking charms, and charms then call every library's readiness check the same way.
 A provider with many relations can use `is_ready(relation)`, and a library that makes several independent requests can use `is_ready(request)`.
 An endpoint whose data is useful for different purposes at different times can provide one method per purpose, such as `is_upstream_ready()`.
@@ -505,7 +514,7 @@ class FooTenantRequest:
     @property
     def requirer(self) -> str:
         """Name of the requiring application."""
-        return self._relation.app.name if self._relation.app else ''
+        return self._relation.app.name
 
     ...  # __eq__, __hash__, and __repr__, comparing the relation ID
 
@@ -520,7 +529,7 @@ class FooProvider:
         return frozenset(
             FooTenantRequest(relation)
             for relation in self._model.relations.get(self._relation_name, ())
-            if relation.app is not None and not self._tenant(relation)
+            if not self._tenant(relation)
         )
 
     def publish_tenants(self, tenants: Mapping[FooTenantRequest, str]) -> None:
@@ -538,27 +547,20 @@ class FooProvider:
     def get_unused_tenants(self, tenants: Iterable[str]) -> frozenset[str]:
         """Which of the given tenants no current requirer has been given.
 
-        Empty on a non-leader unit, and on a unit that's being removed.
+        Empty on a non-leader unit. Don't call this on a unit that's being
+        removed, because the relations that it's leaving still need their tenants.
         """
         if not self._model.unit.is_leader():
             return frozenset()
         relations = self._model.relations.get(self._relation_name, ())
         published = {t for relation in relations if (t := self._tenant(relation))}
-        unused = frozenset(tenants) - published
-        if unused and _is_dying(self._model):
-            return frozenset()
-        return unused
+        return frozenset(tenants) - published
 
     def _tenant(self, relation: ops.Relation) -> str | None:
         try:
             return relation.load(_TenantData, self._model.app).tenant
         except ValueError:
             return None
-
-
-def _is_dying(model: ops.Model) -> bool:
-    """Whether this unit is being removed. Runs a hook command each time."""
-    return ops.hookcmds.goal_state().units[model.unit.name].status == 'dying'
 ```
 
 In the charm:
@@ -573,6 +575,8 @@ def _reconcile(self, _: ops.EventBase):
         for request in self.foo.get_outstanding_requests()
     }
     self.foo.publish_tenants(tenants)
+    if self._stored.removing:  # see "Remove what's no longer needed by comparing"
+        return
     for tenant in self.foo.get_unused_tenants(self._list_tenants()):
         self._delete_tenant(tenant)
 ```
@@ -585,7 +589,7 @@ Follow these rules when answering requests:
 - **Take a batch of answers, and leave other answers alone.** The charm answers every outstanding request in one call. Answers to other requests stay as they are.
 - **Keep answering idempotent.** Creating a tenant isn't idempotent, but the charm's reconcile handler still is: once the answers are published, the requests aren't outstanding any more, so the next call creates nothing. That's also why `publish_tenants()` can add answers without taking the whole payload, unlike `add_server()`. The library works out what's missing from what's published, so if the charm misses a call, the request is still outstanding next time.
 - **Let the outstanding requests do the job of a readiness check.** The charm can call `get_outstanding_requests()` from any event, and an empty result means that there's nothing to do.
-- **Let the charm remove what's no longer needed.** When a relation is removed, its relation data goes with it, but the tenant in the workload doesn't. The charm passes the tenants that it created in the workload to `get_unused_tenants()`, and deletes what it returns. This also deletes a tenant that the charm created in a hook that then failed, because Juju discarded the relation data that recorded it. `get_unused_tenants()` returns nothing on a unit that's being removed, because that unit is still the leader while its relations disappear. See {ref}`interface-library-clean-up`.
+- **Let the charm remove what's no longer needed.** When a relation is removed, its relation data goes with it, but the tenant in the workload doesn't. The charm passes the tenants that it created in the workload to `get_unused_tenants()`, and deletes what it returns. This also deletes a tenant that the charm created in a hook that then failed, because Juju discarded the relation data that recorded it. The charm skips this on a unit that's being removed, because that unit is still the leader while its relations disappear. See {ref}`interface-library-clean-up`.
 
 (interface-library-status)=
 ### Report why the endpoint isn't ready
@@ -704,9 +708,11 @@ A status API, if you provide one, shouldn't raise either.
 - **Don't load relation data in the constructor.** Load it when a method is called.
 - **Catch `ValueError` around `Relation.load`.** This covers both values that aren't valid JSON and pydantic validation errors.
 - **Guard the conversion too.** Data that loads can still fail to convert, so catching `ValueError` around `Relation.load` isn't enough on its own. Don't let the error reach the charm. If the value is one item in a collection, skip it, as `_from_wire` does with servers that `FooServer` rejects, so that the rest stay usable. If the endpoint can't work without the value, return the reason from `_load`, so that the readiness check returns `False` and the status API explains why. Either way, if nothing usable is left, the charm finds out from the readiness check. If the conversion parses values with another library, such as certificates with `cryptography`, catch that library's errors in the same way.
-- **Let other exceptions propagate.** A mistake in the charm, such as an undeclared relation name, should fail loudly. So should a hook command that fails unexpectedly, such as `relation-get` raising `ops.ModelError`, because Juju retries the hook. Don't wrap the readiness check in `except Exception`.
+- **Let other exceptions propagate.** A mistake in the charm, such as an undeclared relation name, should fail loudly. So should a hook command that fails unexpectedly, such as `relation-get` raising `ops.ModelError`, because Juju retries the hook. Secret reads are the exception, as described in the readiness check. Don't wrap the readiness check in `except Exception`.
 
-A getter that returns one value may raise, because the charm can check readiness first.
+A getter that returns one value may raise when the endpoint isn't ready, because the charm can check readiness first.
+Once the readiness check has returned `True`, the getters shouldn't raise.
+Sharing `_load` between them, as the examples do, makes sure of that.
 
 Test that bad data doesn't raise, by checking readiness in the charm's `__init__`:
 
@@ -753,7 +759,8 @@ Calling `sync()` again changes nothing, so the charm can call it from every even
 
 If the work has a deadline, such as renewing a certificate, `sync()` only does it if some event happens after the work is due and before the deadline.
 Make sure that one does: set the expiry of a secret that the unit owns to the time that renewal is due, so that Juju emits `secret-expired` then, to within about a minute.
-Juju emits it again every five minutes until the charm removes the expired revision, and setting new content on the secret clears its expiry, so set the expiry again after each renewal.
+Juju emits it again every five minutes until the charm removes the expired revision.
+Expiry belongs to a revision, so a new revision doesn't inherit it: set the expiry again with each renewal, and remove the old revision when it expires.
 Include `secret_expired` in what `events` returns, and say in the class docstring that the charm must observe it.
 
 (interface-library-clean-up)=
@@ -784,21 +791,32 @@ That's true even when other units remain, and when the application is scaled to 
 So a comparison on that unit would remove everything that's still in use.
 Skipping it is safe, because the next leader compares when it takes over.
 
-`ops` doesn't say whether the unit is being removed, but Juju's `goal-state` hook command does:
+`ops` doesn't say whether the unit is being removed, so the library can't tell, and the charm has to.
+Before a unit that's being removed gets `relation-broken` for a relation, it gets `relation-departed` for each remote unit, with itself as the departing unit.
+When only the relation is removed, the departing unit is always a remote one.
+So the charm can record the first, and stop comparing from then on:
 
 ```py
-def _is_dying(model: ops.Model) -> bool:
-    """Whether this unit is being removed. Runs a hook command each time."""
-    return ops.hookcmds.goal_state().units[model.unit.name].status == 'dying'
+class ProviderCharm(ops.CharmBase):
+    _stored = ops.StoredState()
+
+    def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        self._stored.set_default(removing=False)
+        framework.observe(self.on['foo'].relation_departed, self._on_foo_departed)
+        ...
+
+    def _on_foo_departed(self, event: ops.RelationDepartedEvent):
+        if event.departing_unit == self.unit:
+            self._stored.removing = True
 ```
 
-Call it only when there's something to remove, as `get_unused_tenants()` does in {ref}`interface-library-requests`, because each call runs a hook command.
-`ops.hookcmds` isn't covered by the `ops` semantic versioning policy, and `ops.testing` doesn't simulate hook commands, so keep the call in one function, and patch it in unit tests.
+Say in the docstring of the method that compares that the charm mustn't use it on a unit that's being removed, as `get_unused_tenants()` does.
 
 Who compares depends on what was created:
 
-- If the charm manages the workload, the charm knows what exists. Give it a getter that takes what exists and returns what's no longer needed, as `get_unused_tenants()` does. An empty result is then always safe, so return one on a non-leader unit and on a unit that's being removed. Have the charm pass only what it created for relations.
-- If the library manages the workload itself, it can compare inside `sync()`.
+- If the charm manages the workload, the charm knows what exists. Give it a getter that takes what exists and returns what's no longer needed, as `get_unused_tenants()` does. Return an empty result on a non-leader unit, because that's always safe. Have the charm pass only what it created for relations.
+- If the library manages the workload itself, it can compare inside `sync()`, but it needs the charm to say when the unit is being removed, such as with an argument to `sync()`.
 - If the library creates a Juju secret for each relation, there isn't yet a good way to compare. `ops` can't list the secrets that a charm owns. Juju's `secret-ids` hook command can, through `ops.hookcmds`, but it returns only IDs, so finding the library's secrets by label takes a hook command for every secret that the application owns, each time the library compares. Until there's a better way, leave the secret in place. If it holds a credential that the charm created in the workload, remove the credential by comparing, so that the secret left behind can't be used. Juju deletes the secret when the application is removed.
 
 ### Take values that only an event provides as arguments
@@ -833,12 +851,14 @@ Use one acronym casing for every name in the library, including the data models.
 | The readiness check has no side effects, doesn't raise because of relation data, and returns `False` when the endpoint isn't usable | Must |
 | Unit tests demonstrate the rules above | Must |
 | Published collections are in a stable order ({ref}`design-relation-interfaces`) | Must |
-| The library doesn't remove anything on a unit that's being removed | Must |
 | The library is a plain class constructed from `ops.Model` | Should |
 | The library doesn't emit or observe events | Should |
 | The relation data format is private, and charms use their own types | Should |
 | The library starts with the smallest API that charms need | Should |
+| Getters don't raise once the readiness check returns `True` | Should |
+| Every method is safe to call from any event, and publishing is idempotent | Should |
 | Publishing methods write when they're called | Should |
+| Methods that find what to remove say that the charm mustn't use them on a unit that's being removed | Should |
 | The library provides a status API | Should |
 | The library provides an `events` method for charms that don't reconcile | Should |
 | The library follows the naming conventions | Should |
