@@ -33,32 +33,42 @@ A library that doesn't follow them isn't broken, and doesn't need to be rewritte
    The timing of the library's work is then split between the library and the charm, and deferred custom events add more paths again.
    A library that reads and writes only when it's called has none of these problems.
 
-2. **Give charms their own types, and keep the relation data format private.**
+2. **Start with the smallest API that lets charms do their job.**
+
+   Every public method is one that charms might come to depend on, and removing one is a major release.
+
+3. **Give charms their own types, and keep the relation data format private.**
 
    The relation data format has to stay compatible with every version of the library on the other side of the relation, and carries details that only the library needs.
    If charms use it directly, every change to the format is a change to every charm.
-
-3. **Start with the smallest API that lets charms do their job.**
-
-   Every public method is one that charms might come to depend on, and removing one is a major release.
 
 4. **Provide a readiness check, getters named after the data that the charm uses, and methods that publish data when they're called.**
 
    These are what a reconciling charm calls from its handler.
    Charm authors use many interface libraries, so when the libraries agree on this shape and its names, learning one teaches the next.
 
-5. **Provide an `events` method, so that charms that handle each event separately can use the library too.**
-
-   Not every charm reconciles yet.
-   The method tells such a charm when to call the library, without rewriting the charm.
-
-6. **Make sure that bad remote data can't put the charm into an error state, and ship tests that show it.**
+5. **Make sure that bad remote data can't put the charm into an error state, and ship tests that show it.**
 
    A charm's `__init__` must complete for the charm to handle any event, and a complex charm constructs many library objects there.
    A library can't know whether it's critical to a particular charm, so malformed data from a remote application must never stop the charm from handling events.
    The charm checks readiness first, and once the library is ready, the getters shouldn't raise.
 
+6. **Provide an `events` method, so that charms that handle each event separately can use the library too.**
+
+   Not every charm reconciles yet.
+   The method tells such a charm when to call the library, without rewriting the charm.
+
 Read more: {ref}`Ops | Holistic vs delta charms <ops:holistic-vs-delta-charms>`
+
+## The example interface
+
+The examples on this page implement a `foo` interface.
+A provider publishes the servers where it serves its API, and creates a tenant in its workload for each requirer.
+A requirer connects to one of the servers, as its tenant.
+
+The requirer provides `is_ready()`, `get_server()`, `get_tenant()`, and `rich_status()`.
+The provider provides `publish()`, `get_outstanding_requests()`, `publish_tenants()`, and `get_unused_tenants()`.
+Both sides provide `events()`.
 
 ## General requirements
 
@@ -70,10 +80,6 @@ Being an `ops.Object` also means that the charm has to pass itself to the librar
 
 Take `ops.Model` as the first argument.
 It provides everything that an interface library needs: relations, the local application and unit, and Juju secrets.
-
-The examples on this page implement a `foo` interface.
-A provider publishes the servers where it serves its API, and creates a tenant in its workload for each requirer.
-A requirer connects to one of the servers, as its tenant.
 
 ```py
 _DEFAULT_RELATION_NAME = 'foo'
@@ -112,13 +118,11 @@ If you need a value from the charm, take the value rather than the charm.
 For example, take `is_subordinate: bool` rather than the charm object to read `charm.meta.subordinate`.
 Don't take data to publish, events, or callbacks in the constructor.
 
-### Don't emit or observe events
+(interface-library-reconcile)=
+### Leave events to the charm
 
 The library shouldn't define custom events, call `framework.observe`, or accept `refresh_event` arguments or callbacks.
 The charm observes Juju events, and calls the library from its own handlers.
-
-(interface-library-reconcile)=
-### Design for a reconciling charm
 
 A reconciling charm calls the library from its reconcile handler, which it observes for every event it cares about, including the relation events for the library's endpoint:
 
@@ -146,6 +150,19 @@ class ReconcilingCharm(ops.CharmBase):
 
 Every method that the charm calls should be safe to call from any event, as often as the charm likes.
 The rest of this guide shows how.
+
+(interface-library-smallest-api)=
+### Start with the smallest API
+
+Provide the methods that charms need to do their job, and no more.
+The methods listed for the `foo` interface are all that its charms need.
+
+It's tempting to also expose the data underneath, such as every server that the provider offers, or which requirer has which tenant.
+Wait until a charm needs it.
+Adding a method later is a minor release, but removing one is a major release, and every public method is one that charms might come to depend on, instead of the one that you intended them to use.
+
+When you do add a lower-level method, return the same charm-facing types, so that it's another view of the same data, rather than a second API.
+Never expose the relation data format, even as a lower-level option.
 
 ### Require a recent `ops`
 
@@ -281,20 +298,7 @@ Because the testing package depends on an exact version of the library, it can u
 
 Read more: {ref}`how-to-provide-data-for-charm-tests`
 
-## Provide the API
-
-(interface-library-smallest-api)=
-### Start with the smallest API
-
-Provide the methods that charms need to do their job, and no more.
-In the `foo` interface, a requirer needs `get_server()` and `get_tenant()`, and a provider needs `publish()`, `get_outstanding_requests()`, `publish_tenants()`, and `get_unused_tenants()`.
-
-It's tempting to also expose the data underneath, such as every server that the provider offers, or which requirer has which tenant.
-Wait until a charm needs it.
-Adding a method later is a minor release, but removing one is a major release, and every public method is one that charms might come to depend on, instead of the one that you intended them to use.
-
-When you do add a lower-level method, return the same charm-facing types, so that it's another view of the same data, rather than a second API.
-Never expose the relation data format, even as a lower-level option.
+## Read relation data
 
 ### Provide a readiness check
 
@@ -445,6 +449,87 @@ Choose the arguments of the getters to match the endpoint:
 
 Never silently pick one relation out of several.
 
+(interface-library-status)=
+### Report why the endpoint isn't ready
+
+The library should provide a way to explain why the endpoint isn't ready.
+A method that returns a short explanation, or `None`, is a good default:
+
+```py
+class FooRequirer:
+    ...
+
+    def rich_status(self) -> str | None:
+        """Why the endpoint isn't ready, or None if it is. Never raises."""
+        _, problem = self._load()
+        return problem
+```
+
+The charm decides the status and the start of the message, and the library provides the explanation:
+
+```text
+Waiting(foo not ready: no usable servers)
+charm  ^^^^^^^^^^^^^^
+library                ^^^^^^^^^^^^^^^^^
+```
+
+Don't set the unit status from the library, and don't raise from the status API.
+Write the explanations yourself, rather than passing on validation error messages, which change between pydantic versions.
+If some problems need an operator to act, such as data that can't be parsed, while others resolve themselves, such as waiting for the remote application, consider also providing a boolean that tells them apart, so that the charm can choose between blocked and waiting status.
+
+Test that the explanation reaches the status, using the `ReconcilingCharm` from {ref}`interface-library-reconcile`:
+
+```py
+def test_status_explains_what_is_missing():
+    ctx = testing.Context(ReconcilingCharm, meta=META)
+    servers = [{'url': 'quic://foo.example', 'protocol': 'quic'}]
+    relation = testing.Relation('foo', remote_app_data={'servers': json.dumps(servers)})
+    state = ctx.run(ctx.on.relation_changed(relation), testing.State(relations={relation}))
+    assert isinstance(state.unit_status, ops.WaitingStatus)
+    assert 'no usable servers' in state.unit_status.message
+```
+
+(interface-library-bad-data)=
+### Handle bad remote data
+
+Constructing the library object and calling the readiness check must not raise because of relation data.
+A status API, if you provide one, shouldn't raise either.
+
+- **Don't load relation data in the constructor.** Load it when a method is called.
+- **Catch `ValueError` around `Relation.load`.** This covers both values that aren't valid JSON and pydantic validation errors.
+- **Guard the conversion too.** Data that loads can still fail to convert, so catching `ValueError` around `Relation.load` isn't enough on its own. Don't let the error reach the charm. If the value is one item in a collection, skip it, as `_from_wire` does with servers that `FooServer` rejects, so that the rest stay usable. If the endpoint can't work without the value, return the reason from `_load`, so that the readiness check returns `False` and the status API explains why. Either way, if nothing usable is left, the charm finds out from the readiness check. If the conversion parses values with another library, such as certificates with `cryptography`, catch that library's errors in the same way.
+- **Let other exceptions propagate.** A mistake in the charm, such as an undeclared relation name, should fail loudly. So should a hook command that fails unexpectedly, such as `relation-get` raising `ops.ModelError`, because Juju retries the hook. Secret reads are the exception, as described in the readiness check. Don't wrap the readiness check in `except Exception`.
+
+A getter that returns one value may raise when the endpoint isn't ready, because the charm can check readiness first.
+Once the readiness check has returned `True`, the getters shouldn't raise.
+Sharing `_load` between them, as the examples do, makes sure of that.
+
+Test that bad data doesn't raise, by checking readiness in the charm's `__init__`:
+
+```py
+class AssertNotReadyCharm(ops.CharmBase):
+    def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        self.foo = FooRequirer(self.model)
+        assert not self.foo.is_ready()
+
+
+@pytest.mark.parametrize('data', [
+    {},                                                                  # nothing published yet
+    {'servers': 'not json'},                                             # not JSON
+    {'servers': '{"url": "http://foo.example"}'},                        # not a list
+    {'servers': '[{"url": 42}]'},                                        # wrong type
+    {'servers': '[{"url": "quic://foo.example", "protocol": "quic"}]'},  # nothing usable
+    {'servers': '[{"url": "http://foo.example"}]'},                      # no tenant yet
+])
+def test_bad_remote_data_does_not_raise(data: dict[str, str]):
+    ctx = testing.Context(AssertNotReadyCharm, meta=META)
+    relation = testing.Relation('foo', remote_app_data=data)
+    ctx.run(ctx.on.relation_changed(relation), testing.State(relations={relation}))
+```
+
+## Write relation data
+
 (interface-library-publish)=
 ### Publish data
 
@@ -589,50 +674,67 @@ Follow these rules when answering requests:
 - **Take a batch of answers, and leave other answers alone.** The charm answers every outstanding request in one call. Answers to other requests stay as they are.
 - **Keep answering idempotent.** Creating a tenant isn't idempotent, but the charm's reconcile handler still is: once the answers are published, the requests aren't outstanding any more, so the next call creates nothing. That's also why `publish_tenants()` can add answers without taking the whole payload, unlike `add_server()`. The library works out what's missing from what's published, so if the charm misses a call, the request is still outstanding next time.
 - **Let the outstanding requests do the job of a readiness check.** The charm can call `get_outstanding_requests()` from any event, and an empty result means that there's nothing to do.
-- **Let the charm remove what's no longer needed.** When a relation is removed, its relation data goes with it, but the tenant in the workload doesn't. The charm passes the tenants that it created in the workload to `get_unused_tenants()`, and deletes what it returns. This also deletes a tenant that the charm created in a hook that then failed, because Juju discarded the relation data that recorded it. The charm skips this on a unit that's being removed, because that unit is still the leader while its relations disappear. See {ref}`interface-library-clean-up`.
+- **Let the charm remove what's no longer needed.** When a relation is removed, its relation data goes with it, but the tenant in the workload doesn't. The charm passes the tenants that it created in the workload to `get_unused_tenants()`, and deletes what it returns, except on a unit that's being removed. See {ref}`interface-library-clean-up`.
 
-(interface-library-status)=
-### Report why the endpoint isn't ready
+(interface-library-clean-up)=
+### Remove what's no longer needed by comparing
 
-The library should provide a way to explain why the endpoint isn't ready.
-A method that returns a short explanation, or `None`, is a good default:
+Relation data goes away with its relation, so it never needs cleaning up.
+What does is something durable that was created for a relation, such as a tenant in the workload, or a Juju secret shared over the relation.
+
+If every requirer gets the same content, such as a CA certificate, avoid the problem: share one secret, and grant it to each relation.
+Then there's nothing to remove for each relation, and Juju deletes the secret when the application is removed.
+
+Otherwise, compare what exists with what the current relations need, and remove the difference.
+Don't keep your own record of what was created: it can drift from what really exists.
+Don't remove things from a dedicated `relation-broken` handler either, because `relation-broken` doesn't match up with removed relations:
+
+- Juju runs `relation-broken` on a unit that's being removed, for each of the unit's relations, even though the relations live on.
+- A removed relation might not produce `relation-broken` at all. If every unit of the application is removed, and then the relation is removed, no unit sees the relation end, and a unit added later doesn't get the event.
+
+Comparing covers both.
+During `relation-broken`, `ops` leaves the departing relation out of `model.relations`, so the leader removes its leftovers in that hook.
+Anything else is removed the next time the leader compares, such as a tenant that the charm created in a hook that then failed, because Juju discarded the relation data that recorded it.
+For a new leader, that's in `leader-elected`, so include it in what `events` returns.
+
+Who compares depends on what was created:
+
+- If the charm manages the workload, the charm knows what exists. Give it a getter that takes what exists and returns what's no longer needed, as `get_unused_tenants()` does. Return an empty result on a non-leader unit, because that's always safe. Have the charm pass only what it created for relations.
+- If the library manages the workload itself, it can compare inside `sync()`. See {ref}`interface-library-real-work`.
+- If the library creates a Juju secret for each relation, there isn't yet a good way to compare. `ops` can't list the secrets that a charm owns. Juju's `secret-ids` hook command can, through `ops.hookcmds`, but it returns only IDs, so finding the library's secrets by label takes a hook command for every secret that the application owns, each time the library compares. Until there's a better way, leave the secret in place. If it holds a credential that the charm created in the workload, remove the credential by comparing, so that the secret left behind can't be used. Juju deletes the secret when the application is removed.
+
+Don't remove anything on a unit that's being removed.
+Juju runs `relation-broken` for each of the unit's relations, then `stop` and `remove`, and `model.relations` shrinks with each `relation-broken`, until it's empty.
+The unit stays the leader until it's gone.
+That's true even when other units remain, and when the application is scaled to zero units, which keeps its relations, its relation data, and its secrets for when it's scaled up again.
+So a comparison on that unit would remove everything that's still in use.
+Skipping it is safe, because the next leader compares when it takes over.
+
+`ops` doesn't say whether the unit is being removed, so the library can't tell, and the charm has to.
+Before a unit that's being removed gets `relation-broken` for a relation, it gets `relation-departed` for each remote unit, with itself as the departing unit.
+When only the relation is removed, the departing unit is always a remote one.
+So the charm can record the first, and stop comparing from then on:
 
 ```py
-class FooRequirer:
-    ...
+class ProviderCharm(ops.CharmBase):
+    _stored = ops.StoredState()
 
-    def rich_status(self) -> str | None:
-        """Why the endpoint isn't ready, or None if it is. Never raises."""
-        _, problem = self._load()
-        return problem
+    def __init__(self, framework: ops.Framework):
+        super().__init__(framework)
+        self._stored.set_default(removing=False)
+        framework.observe(self.on['foo'].relation_departed, self._on_foo_departed)
+        ...
+
+    def _on_foo_departed(self, event: ops.RelationDepartedEvent):
+        if event.departing_unit == self.unit:
+            self._stored.removing = True
 ```
 
-The charm decides the status and the start of the message, and the library provides the explanation:
-
-```text
-Waiting(foo not ready: no usable servers)
-charm  ^^^^^^^^^^^^^^
-library                ^^^^^^^^^^^^^^^^^
-```
-
-Don't set the unit status from the library, and don't raise from the status API.
-Write the explanations yourself, rather than passing on validation error messages, which change between pydantic versions.
-If some problems need an operator to act, such as data that can't be parsed, while others resolve themselves, such as waiting for the remote application, consider also providing a boolean that tells them apart, so that the charm can choose between blocked and waiting status.
-
-Test that the explanation reaches the status, using the `ReconcilingCharm` from {ref}`interface-library-reconcile`:
-
-```py
-def test_status_explains_what_is_missing():
-    ctx = testing.Context(ReconcilingCharm, meta=META)
-    servers = [{'url': 'quic://foo.example', 'protocol': 'quic'}]
-    relation = testing.Relation('foo', remote_app_data={'servers': json.dumps(servers)})
-    state = ctx.run(ctx.on.relation_changed(relation), testing.State(relations={relation}))
-    assert isinstance(state.unit_status, ops.WaitingStatus)
-    assert 'no usable servers' in state.unit_status.message
-```
+Say in the docstring of the method that compares that the charm mustn't use it on a unit that's being removed, as `get_unused_tenants()` does.
+If the library compares inside `sync()`, have the charm say when the unit is being removed, such as with an argument to `sync()`.
 
 (interface-library-events)=
-### Support charms that handle events separately
+## Support charms that handle events separately
 
 A charm that handles each event separately doesn't have a reconcile handler to call the library from.
 So that it can use the library without switching to reconciling, the library should provide an `events` method that returns the Juju events after which the charm should call it.
@@ -696,47 +798,9 @@ def test_charm_observes_the_library_events():
 ```
 
 Some events need dedicated handling, because the library needs a value that only the event provides, such as the revision in `secret-remove`.
-Don't return those from `events`. Instead, document them in the class docstring.
+Document those in the class docstring, and return them from `events` only if the charm should also call the library after them, as with `secret-expired`.
 
-Read more: {ref}`interface-library-real-work`
-
-## Handle bad remote data
-
-Constructing the library object and calling the readiness check must not raise because of relation data.
-A status API, if you provide one, shouldn't raise either.
-
-- **Don't load relation data in the constructor.** Load it when a method is called.
-- **Catch `ValueError` around `Relation.load`.** This covers both values that aren't valid JSON and pydantic validation errors.
-- **Guard the conversion too.** Data that loads can still fail to convert, so catching `ValueError` around `Relation.load` isn't enough on its own. Don't let the error reach the charm. If the value is one item in a collection, skip it, as `_from_wire` does with servers that `FooServer` rejects, so that the rest stay usable. If the endpoint can't work without the value, return the reason from `_load`, so that the readiness check returns `False` and the status API explains why. Either way, if nothing usable is left, the charm finds out from the readiness check. If the conversion parses values with another library, such as certificates with `cryptography`, catch that library's errors in the same way.
-- **Let other exceptions propagate.** A mistake in the charm, such as an undeclared relation name, should fail loudly. So should a hook command that fails unexpectedly, such as `relation-get` raising `ops.ModelError`, because Juju retries the hook. Secret reads are the exception, as described in the readiness check. Don't wrap the readiness check in `except Exception`.
-
-A getter that returns one value may raise when the endpoint isn't ready, because the charm can check readiness first.
-Once the readiness check has returned `True`, the getters shouldn't raise.
-Sharing `_load` between them, as the examples do, makes sure of that.
-
-Test that bad data doesn't raise, by checking readiness in the charm's `__init__`:
-
-```py
-class AssertNotReadyCharm(ops.CharmBase):
-    def __init__(self, framework: ops.Framework):
-        super().__init__(framework)
-        self.foo = FooRequirer(self.model)
-        assert not self.foo.is_ready()
-
-
-@pytest.mark.parametrize('data', [
-    {},                                                                  # nothing published yet
-    {'servers': 'not json'},                                             # not JSON
-    {'servers': '{"url": "http://foo.example"}'},                        # not a list
-    {'servers': '[{"url": 42}]'},                                        # wrong type
-    {'servers': '[{"url": "quic://foo.example", "protocol": "quic"}]'},  # nothing usable
-    {'servers': '[{"url": "http://foo.example"}]'},                      # no tenant yet
-])
-def test_bad_remote_data_does_not_raise(data: dict[str, str]):
-    ctx = testing.Context(AssertNotReadyCharm, meta=META)
-    relation = testing.Relation('foo', remote_app_data=data)
-    ctx.run(ctx.on.relation_changed(relation), testing.State(relations={relation}))
-```
+Read more: {ref}`interface-library-event-values`
 
 (interface-library-real-work)=
 ## Libraries that do more than read and write
@@ -761,70 +825,16 @@ If the work has a deadline, such as renewing a certificate, `sync()` only does i
 Make sure that one does: set the expiry of a secret that the unit owns to the time that renewal is due, so that Juju emits `secret-expired` then, to within about a minute.
 Juju emits it again every five minutes until the charm removes the expired revision.
 Expiry belongs to a revision, so a new revision doesn't inherit it: set the expiry again with each renewal, and remove the old revision when it expires.
-Include `secret_expired` in what `events` returns, and say in the class docstring that the charm must observe it.
+Include `secret_expired` in what `events` returns, so that the charm calls `sync()` then.
+The event also says which revision expired, so the charm needs to handle it as well: see {ref}`interface-library-event-values`.
 
-(interface-library-clean-up)=
-### Remove what's no longer needed by comparing
-
-Relation data goes away with its relation, so it never needs cleaning up.
-What does is something durable that was created for a relation, such as a tenant in the workload, or a Juju secret shared over the relation.
-
-If every requirer gets the same content, such as a CA certificate, avoid the problem: share one secret, and grant it to each relation.
-Then there's nothing to remove for each relation, and Juju deletes the secret when the application is removed.
-
-Otherwise, compare what exists with what the current relations need, and remove the difference.
-Don't keep your own record of what was created: it can drift from what really exists.
-Don't remove things from a dedicated `relation-broken` handler either, because `relation-broken` doesn't match up with removed relations:
-
-- Juju runs `relation-broken` on a unit that's being removed, for each of the unit's relations, even though the relations live on.
-- A removed relation might not produce `relation-broken` at all. If every unit of the application is removed, and then the relation is removed, no unit sees the relation end, and a unit added later doesn't get the event.
-
-Comparing covers both.
-During `relation-broken`, `ops` leaves the departing relation out of `model.relations`, so the leader removes its leftovers in that hook.
-Anything else, such as what a failed hook left behind, is removed the next time the leader compares.
-For a new leader, that's in `leader-elected`, so include it in what `events` returns.
-
-Don't remove anything on a unit that's being removed.
-Juju runs `relation-broken` for each of the unit's relations, then `stop` and `remove`, and `model.relations` shrinks with each `relation-broken`, until it's empty.
-The unit stays the leader until it's gone.
-That's true even when other units remain, and when the application is scaled to zero units, which keeps its relations, its relation data, and its secrets for when it's scaled up again.
-So a comparison on that unit would remove everything that's still in use.
-Skipping it is safe, because the next leader compares when it takes over.
-
-`ops` doesn't say whether the unit is being removed, so the library can't tell, and the charm has to.
-Before a unit that's being removed gets `relation-broken` for a relation, it gets `relation-departed` for each remote unit, with itself as the departing unit.
-When only the relation is removed, the departing unit is always a remote one.
-So the charm can record the first, and stop comparing from then on:
-
-```py
-class ProviderCharm(ops.CharmBase):
-    _stored = ops.StoredState()
-
-    def __init__(self, framework: ops.Framework):
-        super().__init__(framework)
-        self._stored.set_default(removing=False)
-        framework.observe(self.on['foo'].relation_departed, self._on_foo_departed)
-        ...
-
-    def _on_foo_departed(self, event: ops.RelationDepartedEvent):
-        if event.departing_unit == self.unit:
-            self._stored.removing = True
-```
-
-Say in the docstring of the method that compares that the charm mustn't use it on a unit that's being removed, as `get_unused_tenants()` does.
-
-Who compares depends on what was created:
-
-- If the charm manages the workload, the charm knows what exists. Give it a getter that takes what exists and returns what's no longer needed, as `get_unused_tenants()` does. Return an empty result on a non-leader unit, because that's always safe. Have the charm pass only what it created for relations.
-- If the library manages the workload itself, it can compare inside `sync()`, but it needs the charm to say when the unit is being removed, such as with an argument to `sync()`.
-- If the library creates a Juju secret for each relation, there isn't yet a good way to compare. `ops` can't list the secrets that a charm owns. Juju's `secret-ids` hook command can, through `ops.hookcmds`, but it returns only IDs, so finding the library's secrets by label takes a hook command for every secret that the application owns, each time the library compares. Until there's a better way, leave the secret in place. If it holds a credential that the charm created in the workload, remove the credential by comparing, so that the secret left behind can't be used. Juju deletes the secret when the application is removed.
-
+(interface-library-event-values)=
 ### Take values that only an event provides as arguments
 
 Some values are only available from a particular event.
 For example, when a library replaces the content of a secret that it shares over the relation, Juju emits `secret-remove` once no consumer is tracking an old revision, and only that event says which revision it is.
 Provide a method that takes the values as arguments, such as `remove_revision(secret, revision)`, and say in the docstring that the charm should call it from `secret-remove`.
-`secret-expired` is similar: it says which revision expired, and the event repeats until the charm removes that revision.
+`secret-expired` is similar: it says which revision expired, and the event repeats until the charm removes that revision, so provide a method that takes the revision and removes it.
 
 ## Follow the naming conventions
 
@@ -849,17 +859,17 @@ Use one acronym casing for every name in the library, including the data models.
 | Constructing the library object doesn't raise because of relation data | Must |
 | The library provides a readiness check | Must |
 | The readiness check has no side effects, doesn't raise because of relation data, and returns `False` when the endpoint isn't usable | Must |
-| Unit tests demonstrate the rules above | Must |
 | Published collections are in a stable order ({ref}`design-relation-interfaces`) | Must |
+| Unit tests demonstrate the rules above | Must |
 | The library is a plain class constructed from `ops.Model` | Should |
 | The library doesn't emit or observe events | Should |
-| The relation data format is private, and charms use their own types | Should |
 | The library starts with the smallest API that charms need | Should |
+| The relation data format is private, and charms use their own types | Should |
 | Getters don't raise once the readiness check returns `True` | Should |
-| Every method is safe to call from any event, and publishing is idempotent | Should |
-| Publishing methods write when they're called | Should |
-| Methods that find what to remove say that the charm mustn't use them on a unit that's being removed | Should |
 | The library provides a status API | Should |
+| Publishing methods write when they're called | Should |
+| Every method is safe to call from any event, and publishing is idempotent | Should |
+| Methods that find what to remove say that the charm mustn't use them on a unit that's being removed | Should |
 | The library provides an `events` method for charms that don't reconcile | Should |
 | The library follows the naming conventions | Should |
 
