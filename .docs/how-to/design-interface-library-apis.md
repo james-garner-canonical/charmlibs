@@ -278,7 +278,7 @@ Read more: {ref}`how-to-provide-data-for-charm-tests`
 ### Start with the smallest API
 
 Provide the methods that charms need to do their job, and no more.
-In the `foo` interface, a requirer needs `get_server()` and `get_tenant()`, and a provider needs `publish()`, `get_outstanding_requests()`, `publish_tenants()`, and `get_tenants()`.
+In the `foo` interface, a requirer needs `get_server()` and `get_tenant()`, and a provider needs `publish()`, `get_outstanding_requests()`, `publish_tenants()`, and `get_unused_tenants()`.
 
 It's tempting to also expose the data underneath, such as every server that the provider offers, or which requirer has which tenant.
 Wait until a charm needs it.
@@ -535,22 +535,30 @@ class FooProvider:
         for request, tenant in tenants.items():
             request._relation.save(_TenantData(tenant=tenant), self._model.app)
 
-    def get_tenants(self) -> frozenset[str]:
-        """Tenants that current requirers have been given.
+    def get_unused_tenants(self, tenants: Iterable[str]) -> frozenset[str]:
+        """Which of the given tenants no current requirer has been given.
 
-        Raises:
-            RuntimeError: on a non-leader unit, which can't read what the leader published.
+        Empty on a non-leader unit, and on a unit that's being removed.
         """
         if not self._model.unit.is_leader():
-            raise RuntimeError('only the leader can read the published tenants')
+            return frozenset()
         relations = self._model.relations.get(self._relation_name, ())
-        return frozenset(t for relation in relations if (t := self._tenant(relation)))
+        published = {t for relation in relations if (t := self._tenant(relation))}
+        unused = frozenset(tenants) - published
+        if unused and _is_dying(self._model):
+            return frozenset()
+        return unused
 
     def _tenant(self, relation: ops.Relation) -> str | None:
         try:
             return relation.load(_TenantData, self._model.app).tenant
         except ValueError:
             return None
+
+
+def _is_dying(model: ops.Model) -> bool:
+    """Whether this unit is being removed. Runs a hook command each time."""
+    return ops.hookcmds.goal_state().units[model.unit.name].status == 'dying'
 ```
 
 In the charm:
@@ -565,19 +573,19 @@ def _reconcile(self, _: ops.EventBase):
         for request in self.foo.get_outstanding_requests()
     }
     self.foo.publish_tenants(tenants)
-    for tenant in self._list_tenants() - self.foo.get_tenants():
+    for tenant in self.foo.get_unused_tenants(self._list_tenants()):
         self._delete_tenant(tenant)
 ```
 
 Follow these rules when answering requests:
 
 - **Work out what's outstanding from what's published.** Compare the requests with the answers already in the databag, or with the state of the workload, not with a record kept in `ops.StoredState`.
-- **Say what each getter does on non-leader units.** Only the leader can read its own application databag. Return nothing if that's a safe answer, as `get_outstanding_requests()` does. Raise if the charm might act on an empty result: a charm that deleted every tenant not returned by `get_tenants()` would delete them all.
+- **Say what each getter does on non-leader units.** Only the leader can read its own application databag. Return nothing if that's a safe answer, as `get_outstanding_requests()` and `get_unused_tenants()` do. If the charm might act on an empty result, raise instead, or design the getter so that an empty result is safe. A charm that deleted every tenant not returned by a getter for the tenants in use would delete them all, but a charm that deletes what `get_unused_tenants()` returns deletes nothing.
 - **Give the charm request objects, not relation IDs.** A request object knows where its answer goes, so the charm never handles relation IDs or request IDs. Expose what the charm needs to make a decision, such as the name of the requiring application.
 - **Take a batch of answers, and leave other answers alone.** The charm answers every outstanding request in one call. Answers to other requests stay as they are.
 - **Keep answering idempotent.** Creating a tenant isn't idempotent, but the charm's reconcile handler still is: once the answers are published, the requests aren't outstanding any more, so the next call creates nothing. That's also why `publish_tenants()` can add answers without taking the whole payload, unlike `add_server()`. The library works out what's missing from what's published, so if the charm misses a call, the request is still outstanding next time.
 - **Let the outstanding requests do the job of a readiness check.** The charm can call `get_outstanding_requests()` from any event, and an empty result means that there's nothing to do.
-- **Let the charm remove what's no longer needed.** When a relation is removed, its relation data goes with it, but the tenant in the workload doesn't. With `get_tenants()`, the charm can compare the tenants that it created in the workload with the ones still published, and delete the rest. This also deletes a tenant that the charm created in a hook that then failed, because Juju discarded the relation data that recorded it.
+- **Let the charm remove what's no longer needed.** When a relation is removed, its relation data goes with it, but the tenant in the workload doesn't. The charm passes the tenants that it created in the workload to `get_unused_tenants()`, and deletes what it returns. This also deletes a tenant that the charm created in a hook that then failed, because Juju discarded the relation data that recorded it. `get_unused_tenants()` returns nothing on a unit that's being removed, because that unit is still the leader while its relations disappear. See {ref}`interface-library-clean-up`.
 
 (interface-library-status)=
 ### Report why the endpoint isn't ready
@@ -656,6 +664,7 @@ What to return depends on the side of the relation:
 - **For data that the library reads**, return the events after which the getters may return something different. That's usually `relation-changed` and `relation-broken` for the endpoint. During `relation-broken`, `ops` already excludes the departing relation from `model.relations`, so calling the getters gives the right answer.
 - **For data that the library writes**, return the events after which the charm must publish again. That's usually only `relation-created`, because the charm already knows when its own data changes.
 - **If the library depends on other events**, such as `secret-changed` for a secret shared over the relation, or `secret-expired` for a renewal deadline, include them.
+- **If the library does work that only the leader does**, such as answering requests or {ref}`removing what's no longer needed <interface-library-clean-up>`, include `leader-elected`, so that a new leader picks up whatever the previous one left.
 
 Some of these events, such as `secret-changed`, aren't specific to your library.
 If two libraries return the same event, the charm's handlers for both of them run.
@@ -682,7 +691,7 @@ def test_charm_observes_the_library_events():
         assert needed <= observed
 ```
 
-Some events need dedicated handling, such as cleaning up resources when a relation is removed.
+Some events need dedicated handling, because the library needs a value that only the event provides, such as the revision in `secret-remove`.
 Don't return those from `events`. Instead, document them in the class docstring.
 
 Read more: {ref}`interface-library-real-work`
@@ -747,18 +756,50 @@ Make sure that one does: set the expiry of a secret that the unit owns to the ti
 Juju emits it again every five minutes until the charm removes the expired revision, and setting new content on the secret clears its expiry, so set the expiry again after each renewal.
 Include `secret_expired` in what `events` returns, and say in the class docstring that the charm must observe it.
 
+(interface-library-clean-up)=
 ### Remove what's no longer needed by comparing
 
 Relation data goes away with its relation, so it never needs cleaning up.
-What does is something durable that was created for a relation, such as a tenant in the workload.
+What does is something durable that was created for a relation, such as a tenant in the workload, or a Juju secret shared over the relation.
 
-Compare what exists with what the current relations need, and remove the difference.
-During `relation-broken`, `ops` already leaves the departing relation out of `model.relations`, so its leftovers are removed in that hook, and anything that a failed hook left behind is removed next time.
+If every requirer gets the same content, such as a CA certificate, avoid the problem: share one secret, and grant it to each relation.
+Then there's nothing to remove for each relation, and Juju deletes the secret when the application is removed.
+
+Otherwise, compare what exists with what the current relations need, and remove the difference.
 Don't keep your own record of what was created: it can drift from what really exists.
+Don't remove things from a dedicated `relation-broken` handler either, because `relation-broken` doesn't match up with removed relations:
 
-- If the charm manages the workload, the charm knows what exists. Give it a getter for what's still needed, as `get_tenants()` does in {ref}`interface-library-requests`, and let it remove the rest. Make that getter raise rather than return an incomplete result, and have the charm compare only what it created for relations.
+- Juju runs `relation-broken` on a unit that's being removed, for each of the unit's relations, even though the relations live on.
+- A removed relation might not produce `relation-broken` at all. If every unit of the application is removed, and then the relation is removed, no unit sees the relation end, and a unit added later doesn't get the event.
+
+Comparing covers both.
+During `relation-broken`, `ops` leaves the departing relation out of `model.relations`, so the leader removes its leftovers in that hook.
+Anything else, such as what a failed hook left behind, is removed the next time the leader compares.
+For a new leader, that's in `leader-elected`, so include it in what `events` returns.
+
+Don't remove anything on a unit that's being removed.
+Juju runs `relation-broken` for each of the unit's relations, then `stop` and `remove`, and `model.relations` shrinks with each `relation-broken`, until it's empty.
+The unit stays the leader until it's gone.
+That's true even when other units remain, and when the application is scaled to zero units, which keeps its relations, its relation data, and its secrets for when it's scaled up again.
+So a comparison on that unit would remove everything that's still in use.
+Skipping it is safe, because the next leader compares when it takes over.
+
+`ops` doesn't say whether the unit is being removed, but Juju's `goal-state` hook command does:
+
+```py
+def _is_dying(model: ops.Model) -> bool:
+    """Whether this unit is being removed. Runs a hook command each time."""
+    return ops.hookcmds.goal_state().units[model.unit.name].status == 'dying'
+```
+
+Call it only when there's something to remove, as `get_unused_tenants()` does in {ref}`interface-library-requests`, because each call runs a hook command.
+`ops.hookcmds` isn't covered by the `ops` semantic versioning policy, and `ops.testing` doesn't simulate hook commands, so keep the call in one function, and patch it in unit tests.
+
+Who compares depends on what was created:
+
+- If the charm manages the workload, the charm knows what exists. Give it a getter that takes what exists and returns what's no longer needed, as `get_unused_tenants()` does. An empty result is then always safe, so return one on a non-leader unit and on a unit that's being removed. Have the charm pass only what it created for relations.
 - If the library manages the workload itself, it can compare inside `sync()`.
-- If nothing can list what exists, provide `clean_up(relation)` as a last resort, and find what to remove from the relation's ID or the remote application's name. For example, `ops` can't list the secrets that a charm owns, so a library that creates a secret for each relation needs this. The charm calls `clean_up(event.relation)` from a dedicated `relation-broken` handler, so say so in the class docstring.
+- If the library creates a Juju secret for each relation, there isn't yet a good way to compare. `ops` can't list the secrets that a charm owns. Juju's `secret-ids` hook command can, through `ops.hookcmds`, but it returns only IDs, so finding the library's secrets by label takes a hook command for every secret that the application owns, each time the library compares. Until there's a better way, leave the secret in place. If it holds a credential that the charm created in the workload, remove the credential by comparing, so that the secret left behind can't be used. Juju deletes the secret when the application is removed.
 
 ### Take values that only an event provides as arguments
 
@@ -792,6 +833,7 @@ Use one acronym casing for every name in the library, including the data models.
 | The readiness check has no side effects, doesn't raise because of relation data, and returns `False` when the endpoint isn't usable | Must |
 | Unit tests demonstrate the rules above | Must |
 | Published collections are in a stable order ({ref}`design-relation-interfaces`) | Must |
+| The library doesn't remove anything on a unit that's being removed | Must |
 | The library is a plain class constructed from `ops.Model` | Should |
 | The library doesn't emit or observe events | Should |
 | The relation data format is private, and charms use their own types | Should |
