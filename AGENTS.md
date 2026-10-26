@@ -153,6 +153,13 @@ Workshop configs are defined in `.workshop/`. Extra pytest flags are passed thro
 workshop exec noble -- sudo just functional snap -x -k test_install
 ```
 
+**Stop any workshop you launched or started once you're done with it.** Ready workshops keep running and are restarted automatically when the host boots, so forgotten ones accumulate across worktrees, using resources and preventing the host from suspending. Leave alone any workshops that were already running before you began.
+
+```bash
+workshop stop noble              # stop a workshop in the current project
+workshop list --global           # list workshops in all projects that aren't off
+```
+
 ## Commit and PR conventions
 
 **PRs are squash-merged.** The PR title becomes the single commit message on `main`. Branch commit messages are for local reference, and should follow conventional commits for clarity.

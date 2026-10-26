@@ -56,6 +56,8 @@ just add pathops 'pydantic>=2'
 
   Extra pytest flags are passed through, e.g. `workshop exec noble -- sudo just functional snap -x -k test_install`. Workshop configs are in `.workshop/`.
 
+  A workshop that has been launched or started keeps running until it's stopped, and is restarted automatically when your machine boots. Each worktree gets its own workshops, so they add up quickly, and running workshops can also prevent your machine from suspending. Run `workshop stop <name>` (e.g. `workshop stop noble`) when you're done testing, and `workshop list --global` to find any you've left running.
+
 - Integration tests involve packing real test charms and deploying them on a Juju cloud. Pack first with `just pack-k8s <package>` or `just pack-machine <package>`, then run `just integration-k8s <package>` or `just integration-machine <package>`.
 
 Read more: [the different types of tests](https://canonical.com/juju/docs/charmlibs/explanation/charmlibs-tests/).
